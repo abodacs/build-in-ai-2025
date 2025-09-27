@@ -19,10 +19,10 @@ export function HomePage() {
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Hero Section */}
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-foreground">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">
             Welcome to Chrome AI DevBench
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl text-gray-500 max-w-2xl mx-auto">
             Interactive learning playground for Chrome's built-in AI APIs.
             Test, experiment, and learn with on-device AI models.
           </p>
@@ -33,7 +33,7 @@ export function HomePage() {
           {aiCapabilities && Object.entries(aiCapabilities).map(([api, status]) => (
             <div
               key={api}
-              className="p-4 border border-border rounded-lg bg-card"
+              className="p-4 border border-border rounded-lg bg-white dark:bg-gray-950"
             >
               <div className="flex items-center gap-3">
                 <div
@@ -45,7 +45,7 @@ export function HomePage() {
                   {api.replace(/([A-Z])/g, ' $1').trim()}
                 </h3>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-gray-500 mt-1">
                 {status === 'available' ? 'Ready to use' : 'Not available'}
               </p>
             </div>
@@ -53,17 +53,17 @@ export function HomePage() {
         </div>
 
         {/* Current API Playground */}
-        <div className="border border-border rounded-lg bg-card p-6">
+        <div className="border border-border rounded-lg bg-white dark:bg-gray-950 p-6">
           <h2 className="text-2xl font-semibold mb-4">
             {activeApi.charAt(0).toUpperCase() + activeApi.slice(1)} API Playground
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-gray-500">
             Select an API from the sidebar to start experimenting with Chrome's built-in AI capabilities.
           </p>
 
-          <div className="mt-6 p-4 bg-muted rounded-lg">
+          <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
             <h3 className="font-medium mb-2">Getting Started</h3>
-            <ol className="text-sm text-muted-foreground space-y-1">
+            <ol className="text-sm text-gray-500 space-y-1">
               <li>1. Choose an AI API from the sidebar</li>
               <li>2. Try the interactive demo</li>
               <li>3. Copy the generated code for your project</li>
