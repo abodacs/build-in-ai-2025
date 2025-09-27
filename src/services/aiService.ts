@@ -1,76 +1,78 @@
-import { z } from 'zod'
-import type { ApiResult } from '@/stores/appStore'
+import { z } from 'zod';
 import {
   isSummarizerSupported,
   isRewriterSupported,
   isWriterSupported,
   isLanguageModelSupported,
   isTranslatorSupported,
-  isLanguageDetectorSupported
-} from '@/types/global'
+  isLanguageDetectorSupported,
+} from '@/types/global';
+import { TODO_TYPE } from '../types/global';
 
 // Type definitions for AI API responses
-export interface AiResponse<T = any> {
-  data: T | null
-  error: string | null
-  latency: number
+export interface AiResponse<T = TODO_TYPE> {
+  data: T | null;
+  error: string | null;
+  latency: number;
 }
 
 // Chrome AI API method parameters
 export interface SummarizerOptions {
-  input: string
-  type?: 'key-points' | 'tl-dr' | 'teaser' | 'headline'
-  format?: 'plain-text' | 'markdown'
-  length?: 'short' | 'medium' | 'long'
+  input: string;
+  type?: 'key-points' | 'tl-dr' | 'teaser' | 'headline';
+  format?: 'plain-text' | 'markdown';
+  length?: 'short' | 'medium' | 'long';
 }
 
 export interface TranslatorOptions {
-  input: string
-  sourceLanguage?: string
-  targetLanguage: string
+  input: string;
+  sourceLanguage?: string;
+  targetLanguage: string;
 }
 
 export interface WriterOptions {
-  input: string
-  tone?: 'formal' | 'casual' | 'neutral'
-  format?: 'plain-text' | 'markdown'
-  length?: 'short' | 'medium' | 'long'
+  input: string;
+  tone?: 'formal' | 'casual' | 'neutral';
+  format?: 'plain-text' | 'markdown';
+  length?: 'short' | 'medium' | 'long';
 }
 
 export interface RewriterOptions {
-  input: string
-  tone?: 'as-is' | 'more-formal' | 'more-casual'
-  format?: 'as-is' | 'plain-text' | 'markdown'
-  length?: 'as-is' | 'shorter' | 'longer'
+  input: string;
+  tone?: 'as-is' | 'more-formal' | 'more-casual';
+  format?: 'as-is' | 'plain-text' | 'markdown';
+  length?: 'as-is' | 'shorter' | 'longer';
 }
 
 export interface ProofreaderOptions {
-  input: string
+  input: string;
 }
 
 export interface PromptOptions {
-  input: string
-  context?: string
-  systemPrompt?: string
+  input: string;
+  context?: string;
+  systemPrompt?: string;
 }
 
 // Validation schemas
 const AiResponseSchema = z.object({
-  data: z.any().nullable(),
+  data: z.union([z.unknown(), z.null()]),
   error: z.string().nullable(),
   latency: z.number().min(0),
-})
+});
 
 /**
  * Checks for Chrome AI availability using the new API structure
  */
 export function isAiAvailable(): boolean {
-  return isSummarizerSupported() ||
-         isRewriterSupported() ||
-         isWriterSupported() ||
-         isLanguageModelSupported() ||
-         isTranslatorSupported() ||
-         isLanguageDetectorSupported()
+  return (
+    isSummarizerSupported() ||
+    isRewriterSupported() ||
+    isWriterSupported() ||
+    isLanguageModelSupported() ||
+    isTranslatorSupported() ||
+    isLanguageDetectorSupported()
+  );
 }
 
 /**
@@ -78,211 +80,227 @@ export function isAiAvailable(): boolean {
  */
 export async function runAiTask<T>(
   taskName: string,
-  task: () => Promise<T>
+  task: () => Promise<T>,
 ): Promise<AiResponse<T>> {
-  const startTime = performance.now()
+  const startTime = performance.now();
 
   try {
     if (!isAiAvailable()) {
-      throw new Error('Chrome AI APIs not available. Please use Chrome 136.0.7103.0+ (Canary) with AI features enabled.')
+      throw new Error(
+        'Chrome AI APIs not available. Please use Chrome 136.0.7103.0+ (Canary) with AI features enabled.',
+      );
     }
 
-    const result = await task()
-    const endTime = performance.now()
-    const latency = Math.round(endTime - startTime)
+    const result = await task();
+    const endTime = performance.now();
+    const latency = Math.round(endTime - startTime);
 
     const response: AiResponse<T> = {
       data: result,
       error: null,
       latency,
-    }
+    };
 
     // Validate response structure
-    AiResponseSchema.parse(response)
-    return response
+    AiResponseSchema.parse(response);
+    return response;
   } catch (error) {
-    const endTime = performance.now()
-    const latency = Math.round(endTime - startTime)
+    const endTime = performance.now();
+    const latency = Math.round(endTime - startTime);
 
-    console.error(`AI Task "${taskName}" failed:`, error)
+    console.error(`AI Task "${taskName}" failed:`, error);
 
     return {
       data: null,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
       latency,
-    }
+    };
   }
 }
 
 /**
  * Summarizer API wrapper
  */
-export async function summarizeText(options: SummarizerOptions): Promise<AiResponse<string>> {
+export async function summarizeText(
+  options: SummarizerOptions,
+): Promise<AiResponse<string>> {
   return runAiTask('summarizeText', async () => {
     if (!isSummarizerSupported()) {
-      throw new Error('Summarizer API not available')
+      throw new Error('Summarizer API not available');
     }
 
-    const summarizerClass = (globalThis as any).Summarizer
+    const summarizerClass = (globalThis as TODO_TYPE).Summarizer;
     const summarizer = await summarizerClass.create({
       type: options.type || 'tl-dr',
       format: options.format || 'plain-text',
       length: options.length || 'medium',
-    })
+    });
 
     try {
-      const result = await summarizer.summarize(options.input)
-      return result
+      const result = await summarizer.summarize(options.input);
+      return result;
     } finally {
-      summarizer.destroy()
+      summarizer.destroy();
     }
-  })
+  });
 }
 
 /**
  * Translator API wrapper
  */
-export async function translateText(options: TranslatorOptions): Promise<AiResponse<string>> {
+export async function translateText(
+  options: TranslatorOptions,
+): Promise<AiResponse<string>> {
   return runAiTask('translateText', async () => {
     if (!isTranslatorSupported()) {
-      throw new Error('Translator API not available')
+      throw new Error('Translator API not available');
     }
 
-    const translatorClass = (globalThis as any).Translator
+    const translatorClass = (globalThis as TODO_TYPE).Translator;
     const translator = await translatorClass.create({
       sourceLanguage: options.sourceLanguage || 'en',
       targetLanguage: options.targetLanguage,
-    })
+    });
 
     try {
-      const result = await translator.translate(options.input)
-      return result
+      const result = await translator.translate(options.input);
+      return result;
     } finally {
-      translator.destroy()
+      translator.destroy();
     }
-  })
+  });
 }
 
 /**
  * Writer API wrapper
  */
-export async function generateText(options: WriterOptions): Promise<AiResponse<string>> {
+export async function generateText(
+  options: WriterOptions,
+): Promise<AiResponse<string>> {
   return runAiTask('generateText', async () => {
     if (!isWriterSupported()) {
-      throw new Error('Writer API not available')
+      throw new Error('Writer API not available');
     }
 
-    const writerClass = (globalThis as any).Writer
+    const writerClass = (globalThis as TODO_TYPE).Writer;
     const writer = await writerClass.create({
       tone: options.tone || 'neutral',
       format: options.format || 'plain-text',
       length: options.length || 'medium',
-    })
+    });
 
     try {
-      const result = await writer.write(options.input)
-      return result
+      const result = await writer.write(options.input);
+      return result;
     } finally {
-      writer.destroy()
+      writer.destroy();
     }
-  })
+  });
 }
 
 /**
  * Rewriter API wrapper
  */
-export async function rewriteText(options: RewriterOptions): Promise<AiResponse<string>> {
+export async function rewriteText(
+  options: RewriterOptions,
+): Promise<AiResponse<string>> {
   return runAiTask('rewriteText', async () => {
     if (!isRewriterSupported()) {
-      throw new Error('Rewriter API not available')
+      throw new Error('Rewriter API not available');
     }
 
-    const rewriterClass = (globalThis as any).Rewriter
+    const rewriterClass = (globalThis as TODO_TYPE).Rewriter;
     const rewriter = await rewriterClass.create({
       tone: options.tone || 'as-is',
       format: options.format || 'as-is',
       length: options.length || 'as-is',
-    })
+    });
 
     try {
-      const result = await rewriter.rewrite(options.input)
-      return result
+      const result = await rewriter.rewrite(options.input);
+      return result;
     } finally {
-      rewriter.destroy()
+      rewriter.destroy();
     }
-  })
+  });
 }
 
 /**
  * Proofreader API wrapper
  */
-export async function proofreadText(options: ProofreaderOptions): Promise<AiResponse<string>> {
+export async function proofreadText(
+  options: ProofreaderOptions,
+): Promise<AiResponse<string>> {
   return runAiTask('proofreadText', async () => {
     // Proofreader API might not be available yet, check for it
-    const proofreaderClass = (globalThis as any).Proofreader
+    const proofreaderClass = (globalThis as TODO_TYPE).Proofreader;
     if (!proofreaderClass) {
-      throw new Error('Proofreader API not available')
+      throw new Error('Proofreader API not available');
     }
 
-    const proofreader = await proofreaderClass.create()
+    const proofreader = await proofreaderClass.create();
 
     try {
-      const result = await proofreader.proofread(options.input)
-      return result
+      const result = await proofreader.proofread(options.input);
+      return result;
     } finally {
-      proofreader.destroy()
+      proofreader.destroy();
     }
-  })
+  });
 }
 
 /**
  * Prompt API wrapper (Language Model)
  */
-export async function generatePrompt(options: PromptOptions): Promise<AiResponse<string>> {
+export async function generatePrompt(
+  options: PromptOptions,
+): Promise<AiResponse<string>> {
   return runAiTask('generatePrompt', async () => {
     if (!isLanguageModelSupported()) {
-      throw new Error('Prompt API (Language Model) not available')
+      throw new Error('Prompt API (Language Model) not available');
     }
 
-    const languageModelClass = (globalThis as any).LanguageModel
+    const languageModelClass = (globalThis as TODO_TYPE).LanguageModel;
     const session = await languageModelClass.create({
       systemPrompt: options.systemPrompt,
-    })
+    });
 
     try {
       const prompt = options.context
         ? `Context: ${options.context}\n\nInput: ${options.input}`
-        : options.input
+        : options.input;
 
-      const result = await session.prompt(prompt)
-      return result
+      const result = await session.prompt(prompt);
+      return result;
     } finally {
-      session.destroy()
+      session.destroy();
     }
-  })
+  });
 }
 
 /**
  * Language Detection API wrapper
  */
-export async function detectLanguage(text: string): Promise<AiResponse<string>> {
+export async function detectLanguage(
+  text: string,
+): Promise<AiResponse<string>> {
   return runAiTask('detectLanguage', async () => {
     if (!isLanguageDetectorSupported()) {
-      throw new Error('Language Detection API not available')
+      throw new Error('Language Detection API not available');
     }
 
-    const languageDetectorClass = (globalThis as any).LanguageDetector
-    const detector = await languageDetectorClass.create()
+    const languageDetectorClass = (globalThis as TODO_TYPE).LanguageDetector;
+    const detector = await languageDetectorClass.create();
 
     try {
-      const results = await detector.detect(text)
+      const results = await detector.detect(text);
       // Return the most confident result
-      const topResult = results[0]
-      return topResult?.detectedLanguage || 'unknown'
+      const topResult = results[0];
+      return topResult?.detectedLanguage || 'unknown';
     } finally {
-      detector.destroy()
+      detector.destroy();
     }
-  })
+  });
 }
 
 /**
@@ -290,49 +308,69 @@ export async function detectLanguage(text: string): Promise<AiResponse<string>> 
  */
 export async function simulateError(): Promise<AiResponse<never>> {
   return runAiTask('simulateError', async () => {
-    await new Promise(resolve => setTimeout(resolve, 500)) // Simulate network delay
-    throw new Error('Simulated API error for testing purposes')
-  })
+    await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network delay
+    throw new Error('Simulated API error for testing purposes');
+  });
 }
 
 /**
  * Test AI API availability
  */
 export async function testAiAvailability() {
-  const checkCapability = async (apiName: string, checkFunction: () => boolean) => {
+  const checkCapability = async (
+    apiName: string,
+    checkFunction: () => boolean,
+  ) => {
     try {
-      if (!checkFunction()) return 'unavailable'
+      if (!checkFunction()) return 'unavailable';
 
       // Try to check if we can actually create an instance
-      const apiClass = (globalThis as any)[apiName]
+      const apiClass = (globalThis as TODO_TYPE)[apiName];
       if (!apiClass || typeof apiClass.create !== 'function') {
-        return 'unavailable'
+        return 'unavailable';
       }
 
       // For now, assume it's available if the class exists
-      return 'available'
-    } catch (error) {
-      return 'unavailable'
+      return 'available';
+    } catch {
+      return 'unavailable';
     }
-  }
+  };
 
-  const [summarizer, translator, writer, rewriter, proofreader, prompt, languageDetection] = await Promise.allSettled([
+  const [
+    summarizer,
+    translator,
+    writer,
+    rewriter,
+    proofreader,
+    prompt,
+    languageDetection,
+  ] = await Promise.allSettled([
     checkCapability('Summarizer', isSummarizerSupported),
     checkCapability('Translator', isTranslatorSupported),
     checkCapability('Writer', isWriterSupported),
     checkCapability('Rewriter', isRewriterSupported),
-    checkCapability('Proofreader', () => typeof (globalThis as any).Proofreader !== 'undefined'),
+    checkCapability(
+      'Proofreader',
+      () => typeof (globalThis as TODO_TYPE).Proofreader !== 'undefined',
+    ),
     checkCapability('LanguageModel', isLanguageModelSupported),
     checkCapability('LanguageDetector', isLanguageDetectorSupported),
-  ])
+  ]);
 
   return {
-    summarizer: summarizer.status === 'fulfilled' ? summarizer.value : 'unavailable',
-    translator: translator.status === 'fulfilled' ? translator.value : 'unavailable',
+    summarizer:
+      summarizer.status === 'fulfilled' ? summarizer.value : 'unavailable',
+    translator:
+      translator.status === 'fulfilled' ? translator.value : 'unavailable',
     writer: writer.status === 'fulfilled' ? writer.value : 'unavailable',
     rewriter: rewriter.status === 'fulfilled' ? rewriter.value : 'unavailable',
-    proofreader: proofreader.status === 'fulfilled' ? proofreader.value : 'unavailable',
+    proofreader:
+      proofreader.status === 'fulfilled' ? proofreader.value : 'unavailable',
     prompt: prompt.status === 'fulfilled' ? prompt.value : 'unavailable',
-    languageDetection: languageDetection.status === 'fulfilled' ? languageDetection.value : 'unavailable',
-  }
+    languageDetection:
+      languageDetection.status === 'fulfilled'
+        ? languageDetection.value
+        : 'unavailable',
+  };
 }

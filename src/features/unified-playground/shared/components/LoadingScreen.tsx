@@ -2,6 +2,7 @@
  * Beautiful Loading Screen - 30-Second Wow Factor
  * Stunning loading experience with smooth animations and immediate visual impact
  */
+/* eslint-disable react-refresh/only-export-components */
 
 import { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
@@ -14,7 +15,7 @@ import {
   Cpu,
   Bot,
   CheckCircle,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 
 interface LoadingScreenProps {
@@ -74,7 +75,7 @@ export function LoadingScreen({
   onComplete,
   duration = 4000,
   showProgress = true,
-  variant = 'detailed'
+  variant = 'detailed',
 }: LoadingScreenProps) {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -82,14 +83,14 @@ export function LoadingScreen({
   const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout | undefined;
-    let intervalId: NodeJS.Timeout | undefined;
+    let timeoutId: number | undefined;
+    let intervalId: number | undefined;
 
     if (variant === 'minimal') {
       // Simple progress animation for minimal variant
       intervalId = setInterval(() => {
         setProgress((prev) => {
-          const next = prev + (100 / (duration / 50));
+          const next = prev + 100 / (duration / 50);
           if (next >= 100) {
             clearInterval(intervalId);
             setIsComplete(true);
@@ -112,11 +113,11 @@ export function LoadingScreen({
 
           const stepDuration = (step.duration / duration) * duration;
           const stepInterval = setInterval(() => {
-            stepProgress += (100 / (stepDuration / 50));
+            stepProgress += 100 / (stepDuration / 50);
 
             if (stepProgress >= 100) {
               clearInterval(stepInterval);
-              setCompletedSteps(prev => new Set([...prev, step.id]));
+              setCompletedSteps((prev) => new Set([...prev, step.id]));
               stepProgress = 0;
               stepIndex++;
 
@@ -128,8 +129,9 @@ export function LoadingScreen({
               }
             }
 
-            const totalProgress = ((stepIndex / loadingSteps.length) * 100) +
-                                (stepProgress / loadingSteps.length);
+            const totalProgress =
+              (stepIndex / loadingSteps.length) * 100 +
+              stepProgress / loadingSteps.length;
             setProgress(Math.min(totalProgress, 100));
           }, 50);
         }
@@ -199,7 +201,7 @@ export function LoadingScreen({
               Chrome AI DevBench
             </h1>
             <p className="text-lg text-muted-foreground">
-              Interactive playground for Chrome's built-in AI APIs
+              Interactive playground for Chrome&apos;s built-in AI APIs
             </p>
           </div>
 
@@ -235,15 +237,18 @@ export function LoadingScreen({
                     ${isPending ? 'opacity-40' : ''}
                   `}
                 >
-                  <div className={`
+                  <div
+                    className={`
                     flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300
-                    ${isCompleted
-                      ? 'bg-green-500 text-white'
-                      : isActive
-                        ? 'bg-primary text-primary-foreground animate-pulse'
-                        : 'bg-muted text-muted-foreground'
+                    ${
+                      isCompleted
+                        ? 'bg-green-500 text-white'
+                        : isActive
+                          ? 'bg-primary text-primary-foreground animate-pulse'
+                          : 'bg-muted text-muted-foreground'
                     }
-                  `}>
+                  `}
+                  >
                     {isCompleted ? (
                       <CheckCircle className="w-5 h-5" />
                     ) : isActive ? (
@@ -254,10 +259,12 @@ export function LoadingScreen({
                   </div>
 
                   <div className="flex-1">
-                    <h3 className={`
+                    <h3
+                      className={`
                       font-semibold transition-colors duration-300
                       ${isActive ? 'text-foreground' : 'text-muted-foreground'}
-                    `}>
+                    `}
+                    >
                       {step.label}
                     </h3>
                     <p className="text-sm text-muted-foreground">
@@ -275,7 +282,10 @@ export function LoadingScreen({
 
                   {isCompleted && (
                     <div className="animate-fadeInRight">
-                      <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                      <Badge
+                        variant="default"
+                        className="bg-green-500 hover:bg-green-600"
+                      >
                         ✓ Complete
                       </Badge>
                     </div>
@@ -293,7 +303,8 @@ export function LoadingScreen({
                 <span className="font-semibold">Ready to explore!</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                Your AI playground is now ready. Let's build something amazing!
+                Your AI playground is now ready. Let&apos;s build something
+                amazing!
               </p>
             </div>
           )}
@@ -330,7 +341,7 @@ export function useLoadingState(initialState = false) {
 
   const startLoading = () => setIsLoading(true);
   const stopLoading = () => setIsLoading(false);
-  const toggleLoading = () => setIsLoading(prev => !prev);
+  const toggleLoading = () => setIsLoading((prev) => !prev);
 
   return {
     isLoading,

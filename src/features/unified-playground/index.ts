@@ -11,7 +11,7 @@ export { ThemeToggle, useTheme } from './shared/components/ThemeToggle';
 export {
   LoadingScreen,
   LoadingSpinner,
-  useLoadingState
+  useLoadingState,
 } from './shared/components/LoadingScreen';
 
 // Design system
@@ -32,14 +32,14 @@ export type {
   TimingTokens,
   EasingTokens,
   GridTokens,
-  ComponentSizeTokens
+  ComponentSizeTokens,
 } from './shared/design-system/tokens';
 
 export type {
   ResponsiveDesign,
   Breakpoint,
   BreakpointRange,
-  ContainerSize
+  ContainerSize,
 } from './shared/design-system/breakpoints';
 
 export type {
@@ -48,5 +48,5 @@ export type {
   ColoredShadowKey,
   InteractiveShadowType,
   GlowEffectType,
-  ComponentShadowType
+  ComponentShadowType,
 } from './shared/design-system/shadows';

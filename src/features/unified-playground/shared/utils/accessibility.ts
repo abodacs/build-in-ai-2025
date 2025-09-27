@@ -3,7 +3,7 @@
  * WCAG 2.1 AA compliant accessibility features and utilities
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 // ============================================================================
 // Accessibility Constants
@@ -20,17 +20,23 @@ export const ARIA_LABELS = {
   performanceMetrics: 'Performance Metrics',
   themeToggle: 'Toggle Theme',
   refreshButton: 'Refresh AI Capabilities',
-  securityStatus: 'Security Validation Status'
-} as const
+  securityStatus: 'Security Validation Status',
+} as const;
 
 export const ARIA_DESCRIPTIONS = {
-  playground: 'Interactive playground for testing and exploring Chrome built-in AI APIs with security validation and performance monitoring',
-  apiInput: 'Text input with real-time validation and security checking. Use Tab to navigate, Enter to submit.',
-  configPanel: 'Adjust API-specific settings. Use arrow keys to navigate options, Space to select.',
-  resultsPanel: 'AI processing results with performance metrics. Results are announced to screen readers automatically.',
-  errorMessages: 'Validation errors and security warnings. Press Escape to dismiss.',
-  loadingProgress: 'AI processing progress. Estimated completion time is announced.'
-} as const
+  playground:
+    'Interactive playground for testing and exploring Chrome built-in AI APIs with security validation and performance monitoring',
+  apiInput:
+    'Text input with real-time validation and security checking. Use Tab to navigate, Enter to submit.',
+  configPanel:
+    'Adjust API-specific settings. Use arrow keys to navigate options, Space to select.',
+  resultsPanel:
+    'AI processing results with performance metrics. Results are announced to screen readers automatically.',
+  errorMessages:
+    'Validation errors and security warnings. Press Escape to dismiss.',
+  loadingProgress:
+    'AI processing progress. Estimated completion time is announced.',
+} as const;
 
 // ============================================================================
 // Keyboard Navigation Constants
@@ -56,7 +62,7 @@ export const KEYBOARD_SHORTCUTS = {
   FOCUS_INPUT: 'i', // Alt+I
   FOCUS_CONFIG: 'c', // Alt+C
   FOCUS_RESULTS: 'o', // Alt+O (for Output)
-} as const
+} as const;
 
 // ============================================================================
 // Color Contrast Utilities
@@ -66,22 +72,25 @@ export const KEYBOARD_SHORTCUTS = {
  * Calculate relative luminance for WCAG contrast calculation
  */
 function getRelativeLuminance(r: number, g: number, b: number): number {
-  const [rs, gs, bs] = [r, g, b].map(c => {
-    c = c / 255
-    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
-  })
-  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs
+  const [rs, gs, bs] = [r, g, b].map((c) => {
+    c = c / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
 }
 
 /**
  * Calculate contrast ratio between two colors
  */
-function getContrastRatio(color1: [number, number, number], color2: [number, number, number]): number {
-  const l1 = getRelativeLuminance(...color1)
-  const l2 = getRelativeLuminance(...color2)
-  const lighter = Math.max(l1, l2)
-  const darker = Math.min(l1, l2)
-  return (lighter + 0.05) / (darker + 0.05)
+function getContrastRatio(
+  color1: [number, number, number],
+  color2: [number, number, number],
+): number {
+  const l1 = getRelativeLuminance(...color1);
+  const l2 = getRelativeLuminance(...color2);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
 }
 
 /**
@@ -91,15 +100,15 @@ export function meetsContrastRequirement(
   foreground: [number, number, number],
   background: [number, number, number],
   level: 'AA' | 'AAA' = 'AA',
-  large: boolean = false
+  large: boolean = false,
 ): boolean {
-  const ratio = getContrastRatio(foreground, background)
+  const ratio = getContrastRatio(foreground, background);
 
   if (level === 'AAA') {
-    return large ? ratio >= 4.5 : ratio >= 7
+    return large ? ratio >= 4.5 : ratio >= 7;
   }
 
-  return large ? ratio >= 3 : ratio >= 4.5
+  return large ? ratio >= 3 : ratio >= 4.5;
 }
 
 // ============================================================================
@@ -107,41 +116,47 @@ export function meetsContrastRequirement(
 // ============================================================================
 
 export function useFocusManagement() {
-  const [focusedElement, setFocusedElement] = useState<string | null>(null)
-  const [focusHistory, setFocusHistory] = useState<string[]>([])
-  const focusableElementsRef = useRef<Map<string, HTMLElement>>(new Map())
+  const [focusedElement, setFocusedElement] = useState<string | null>(null);
+  const [focusHistory, setFocusHistory] = useState<string[]>([]);
+  const focusableElementsRef = useRef<Map<string, HTMLElement>>(new Map());
 
-  const registerFocusableElement = useCallback((id: string, element: HTMLElement) => {
-    focusableElementsRef.current.set(id, element)
-  }, [])
+  const registerFocusableElement = useCallback(
+    (id: string, element: HTMLElement) => {
+      focusableElementsRef.current.set(id, element);
+    },
+    [],
+  );
 
   const unregisterFocusableElement = useCallback((id: string) => {
-    focusableElementsRef.current.delete(id)
-  }, [])
+    focusableElementsRef.current.delete(id);
+  }, []);
 
-  const focusElement = useCallback((id: string, saveToHistory: boolean = true) => {
-    const element = focusableElementsRef.current.get(id)
-    if (element) {
-      element.focus()
-      setFocusedElement(id)
+  const focusElement = useCallback(
+    (id: string, saveToHistory: boolean = true) => {
+      const element = focusableElementsRef.current.get(id);
+      if (element) {
+        element.focus();
+        setFocusedElement(id);
 
-      if (saveToHistory) {
-        setFocusHistory(prev => [...prev.slice(-10), id])
+        if (saveToHistory) {
+          setFocusHistory((prev) => [...prev.slice(-10), id]);
+        }
       }
-    }
-  }, [])
+    },
+    [],
+  );
 
   const focusPrevious = useCallback(() => {
     if (focusHistory.length > 1) {
-      const previousId = focusHistory[focusHistory.length - 2]
-      focusElement(previousId, false)
-      setFocusHistory(prev => prev.slice(0, -1))
+      const previousId = focusHistory[focusHistory.length - 2];
+      focusElement(previousId, false);
+      setFocusHistory((prev) => prev.slice(0, -1));
     }
-  }, [focusHistory, focusElement])
+  }, [focusHistory, focusElement]);
 
   const getFocusableElements = useCallback((): string[] => {
-    return Array.from(focusableElementsRef.current.keys())
-  }, [])
+    return Array.from(focusableElementsRef.current.keys());
+  }, []);
 
   return {
     focusedElement,
@@ -150,8 +165,8 @@ export function useFocusManagement() {
     unregisterFocusableElement,
     focusElement,
     focusPrevious,
-    getFocusableElements
-  }
+    getFocusableElements,
+  };
 }
 
 // ============================================================================
@@ -159,100 +174,120 @@ export function useFocusManagement() {
 // ============================================================================
 
 export function useKeyboardNavigation() {
-  const [isKeyboardMode, setIsKeyboardMode] = useState(false)
-  const [shortcuts, setShortcuts] = useState<Map<string, () => void>>(new Map())
+  const [isKeyboardMode, setIsKeyboardMode] = useState(false);
+  const [shortcuts, setShortcuts] = useState<Map<string, () => void>>(
+    new Map(),
+  );
 
-  const registerShortcut = useCallback((key: string, handler: () => void, ctrlKey: boolean = false, altKey: boolean = false) => {
-    const shortcutKey = `${ctrlKey ? 'ctrl+' : ''}${altKey ? 'alt+' : ''}${key.toLowerCase()}`
-    setShortcuts(prev => new Map(prev).set(shortcutKey, handler))
-  }, [])
+  const registerShortcut = useCallback(
+    (
+      key: string,
+      handler: () => void,
+      ctrlKey: boolean = false,
+      altKey: boolean = false,
+    ) => {
+      const shortcutKey = `${ctrlKey ? 'ctrl+' : ''}${altKey ? 'alt+' : ''}${key.toLowerCase()}`;
+      setShortcuts((prev) => new Map(prev).set(shortcutKey, handler));
+    },
+    [],
+  );
 
-  const unregisterShortcut = useCallback((key: string, ctrlKey: boolean = false, altKey: boolean = false) => {
-    const shortcutKey = `${ctrlKey ? 'ctrl+' : ''}${altKey ? 'alt+' : ''}${key.toLowerCase()}`
-    setShortcuts(prev => {
-      const newMap = new Map(prev)
-      newMap.delete(shortcutKey)
-      return newMap
-    })
-  }, [])
+  const unregisterShortcut = useCallback(
+    (key: string, ctrlKey: boolean = false, altKey: boolean = false) => {
+      const shortcutKey = `${ctrlKey ? 'ctrl+' : ''}${altKey ? 'alt+' : ''}${key.toLowerCase()}`;
+      setShortcuts((prev) => {
+        const newMap = new Map(prev);
+        newMap.delete(shortcutKey);
+        return newMap;
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Detect keyboard usage
-      setIsKeyboardMode(true)
+      setIsKeyboardMode(true);
 
       // Build shortcut key
-      const shortcutKey = `${event.ctrlKey || event.metaKey ? 'ctrl+' : ''}${event.altKey ? 'alt+' : ''}${event.key.toLowerCase()}`
+      const shortcutKey = `${event.ctrlKey || event.metaKey ? 'ctrl+' : ''}${event.altKey ? 'alt+' : ''}${event.key.toLowerCase()}`;
 
       // Execute shortcut if registered
-      const handler = shortcuts.get(shortcutKey)
+      const handler = shortcuts.get(shortcutKey);
       if (handler) {
-        event.preventDefault()
-        handler()
+        event.preventDefault();
+        handler();
       }
 
       // Handle escape key globally
       if (event.key === KEYBOARD_SHORTCUTS.ESCAPE) {
         // Close any open modals, dismiss errors, etc.
-        document.dispatchEvent(new CustomEvent('playground:escape'))
+        document.dispatchEvent(new CustomEvent('playground:escape'));
       }
-    }
+    };
 
     const handleMouseDown = () => {
-      setIsKeyboardMode(false)
-    }
+      setIsKeyboardMode(false);
+    };
 
-    document.addEventListener('keydown', handleKeyDown)
-    document.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleMouseDown);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-      document.removeEventListener('mousedown', handleMouseDown)
-    }
-  }, [shortcuts])
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, [shortcuts]);
 
   return {
     isKeyboardMode,
     registerShortcut,
     unregisterShortcut,
-    shortcuts: Array.from(shortcuts.keys())
-  }
+    shortcuts: Array.from(shortcuts.keys()),
+  };
 }
 
 // ============================================================================
 // Screen Reader Utilities
 // ============================================================================
 
-export function announceToScreenReader(message: string, priority: 'polite' | 'assertive' = 'polite') {
-  const announcement = document.createElement('div')
-  announcement.setAttribute('aria-live', priority)
-  announcement.setAttribute('aria-atomic', 'true')
-  announcement.className = 'sr-only'
-  announcement.textContent = message
+export function announceToScreenReader(
+  message: string,
+  priority: 'polite' | 'assertive' = 'polite',
+) {
+  const announcement = document.createElement('div');
+  announcement.setAttribute('aria-live', priority);
+  announcement.setAttribute('aria-atomic', 'true');
+  announcement.className = 'sr-only';
+  announcement.textContent = message;
 
-  document.body.appendChild(announcement)
+  document.body.appendChild(announcement);
 
   // Remove after announcement
   setTimeout(() => {
-    document.body.removeChild(announcement)
-  }, 1000)
+    document.body.removeChild(announcement);
+  }, 1000);
 }
 
 export function announcePageLoad(pageName: string) {
-  announceToScreenReader(`${pageName} loaded successfully`, 'polite')
+  announceToScreenReader(`${pageName} loaded successfully`, 'polite');
 }
 
 export function announceError(error: string) {
-  announceToScreenReader(`Error: ${error}`, 'assertive')
+  announceToScreenReader(`Error: ${error}`, 'assertive');
 }
 
 export function announceSuccess(message: string) {
-  announceToScreenReader(`Success: ${message}`, 'polite')
+  announceToScreenReader(`Success: ${message}`, 'polite');
 }
 
-export function announceProgress(current: number, total: number, taskName: string = 'Processing') {
-  const percentage = Math.round((current / total) * 100)
-  announceToScreenReader(`${taskName} ${percentage}% complete`, 'polite')
+export function announceProgress(
+  current: number,
+  total: number,
+  taskName: string = 'Processing',
+) {
+  const percentage = Math.round((current / total) * 100);
+  announceToScreenReader(`${taskName} ${percentage}% complete`, 'polite');
 }
 
 // ============================================================================
@@ -260,44 +295,44 @@ export function announceProgress(current: number, total: number, taskName: strin
 // ============================================================================
 
 export function useFocusTrap(isActive: boolean = false) {
-  const containerRef = useRef<HTMLElement>(null)
+  const containerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (!isActive || !containerRef.current) return
+    if (!isActive || !containerRef.current) return;
 
-    const container = containerRef.current
+    const container = containerRef.current;
     const focusableElements = container.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    ) as NodeListOf<HTMLElement>
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    ) as NodeList;
 
-    const firstElement = focusableElements[0]
-    const lastElement = focusableElements[focusableElements.length - 1]
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
 
     const handleTabKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Tab') return
+      if (event.key !== 'Tab') return;
 
       if (event.shiftKey) {
         if (document.activeElement === firstElement) {
-          event.preventDefault()
-          lastElement.focus()
+          event.preventDefault();
+          lastElement.focus();
         }
       } else {
         if (document.activeElement === lastElement) {
-          event.preventDefault()
-          firstElement.focus()
+          event.preventDefault();
+          firstElement.focus();
         }
       }
-    }
+    };
 
-    container.addEventListener('keydown', handleTabKey)
-    firstElement?.focus()
+    container.addEventListener('keydown', handleTabKey);
+    firstElement?.focus();
 
     return () => {
-      container.removeEventListener('keydown', handleTabKey)
-    }
-  }, [isActive])
+      container.removeEventListener('keydown', handleTabKey);
+    };
+  }, [isActive]);
 
-  return containerRef
+  return containerRef;
 }
 
 // ============================================================================
@@ -305,25 +340,26 @@ export function useFocusTrap(isActive: boolean = false) {
 // ============================================================================
 
 export function useMotionPreferences() {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setPrefersReducedMotion(mediaQuery.matches)
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
 
     const handleChange = (event: MediaQueryListEvent) => {
-      setPrefersReducedMotion(event.matches)
-    }
+      setPrefersReducedMotion(event.matches);
+    };
 
-    mediaQuery.addEventListener('change', handleChange)
-    return () => mediaQuery.removeEventListener('change', handleChange)
-  }, [])
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   return {
     prefersReducedMotion,
-    getAnimationDuration: (defaultMs: number) => prefersReducedMotion ? 0 : defaultMs,
-    shouldAnimate: !prefersReducedMotion
-  }
+    getAnimationDuration: (defaultMs: number) =>
+      prefersReducedMotion ? 0 : defaultMs,
+    shouldAnimate: !prefersReducedMotion,
+  };
 }
 
 // ============================================================================
@@ -331,68 +367,74 @@ export function useMotionPreferences() {
 // ============================================================================
 
 export function validateAccessibility(element: HTMLElement): {
-  isValid: boolean
-  issues: string[]
-  suggestions: string[]
+  isValid: boolean;
+  issues: string[];
+  suggestions: string[];
 } {
-  const issues: string[] = []
-  const suggestions: string[] = []
+  const issues: string[] = [];
+  const suggestions: string[] = [];
 
   // Check for alt text on images
-  const images = element.querySelectorAll('img')
+  const images = element.querySelectorAll('img');
   images.forEach((img, index) => {
     if (!img.alt && !img.getAttribute('aria-label')) {
-      issues.push(`Image ${index + 1} missing alt text`)
-      suggestions.push('Add descriptive alt text to all images')
+      issues.push(`Image ${index + 1} missing alt text`);
+      suggestions.push('Add descriptive alt text to all images');
     }
-  })
+  });
 
   // Check for form labels
-  const inputs = element.querySelectorAll('input, textarea, select')
+  const inputs = element.querySelectorAll('input, textarea, select');
   inputs.forEach((input, index) => {
-    const hasLabel = input.getAttribute('aria-label') ||
-                    input.getAttribute('aria-labelledby') ||
-                    element.querySelector(`label[for="${input.id}"]`)
+    const hasLabel =
+      input.getAttribute('aria-label') ||
+      input.getAttribute('aria-labelledby') ||
+      element.querySelector(`label[for="${input.id}"]`);
 
     if (!hasLabel) {
-      issues.push(`Form input ${index + 1} missing label`)
-      suggestions.push('Associate all form inputs with descriptive labels')
+      issues.push(`Form input ${index + 1} missing label`);
+      suggestions.push('Associate all form inputs with descriptive labels');
     }
-  })
+  });
 
   // Check for button text
-  const buttons = element.querySelectorAll('button')
+  const buttons = element.querySelectorAll('button');
   buttons.forEach((button, index) => {
-    const hasText = button.textContent?.trim() ||
-                   button.getAttribute('aria-label') ||
-                   button.getAttribute('aria-labelledby')
+    const hasText =
+      button.textContent?.trim() ||
+      button.getAttribute('aria-label') ||
+      button.getAttribute('aria-labelledby');
 
     if (!hasText) {
-      issues.push(`Button ${index + 1} missing accessible text`)
-      suggestions.push('Ensure all buttons have descriptive text or aria-labels')
+      issues.push(`Button ${index + 1} missing accessible text`);
+      suggestions.push(
+        'Ensure all buttons have descriptive text or aria-labels',
+      );
     }
-  })
+  });
 
   // Check for heading hierarchy
-  const headings = element.querySelectorAll('h1, h2, h3, h4, h5, h6')
-  let previousLevel = 0
+  const headings = element.querySelectorAll('h1, h2, h3, h4, h5, h6');
+  let previousLevel = 0;
   headings.forEach((heading, index) => {
-    const level = parseInt(heading.tagName[1])
+    const level = parseInt(heading.tagName[1]);
     if (index === 0 && level !== 1) {
-      issues.push('Page should start with h1 heading')
+      issues.push('Page should start with h1 heading');
     }
     if (level > previousLevel + 1) {
-      issues.push(`Heading level ${level} skips levels (should be ${previousLevel + 1})`)
-      suggestions.push('Maintain logical heading hierarchy (h1 → h2 → h3...)')
+      issues.push(
+        `Heading level ${level} skips levels (should be ${previousLevel + 1})`,
+      );
+      suggestions.push('Maintain logical heading hierarchy (h1 → h2 → h3...)');
     }
-    previousLevel = level
-  })
+    previousLevel = level;
+  });
 
   return {
     isValid: issues.length === 0,
     issues,
-    suggestions: [...new Set(suggestions)] // Remove duplicates
-  }
+    suggestions: [...new Set(suggestions)], // Remove duplicates
+  };
 }
 
 // ============================================================================
@@ -400,32 +442,35 @@ export function validateAccessibility(element: HTMLElement): {
 // ============================================================================
 
 export function useAriaLiveRegion() {
-  const liveRegionRef = useRef<HTMLDivElement>(null)
+  const liveRegionRef = useRef<HTMLDivElement>(null);
 
-  const announce = useCallback((message: string, priority: 'polite' | 'assertive' = 'polite') => {
-    if (liveRegionRef.current) {
-      liveRegionRef.current.setAttribute('aria-live', priority)
-      liveRegionRef.current.textContent = message
+  const announce = useCallback(
+    (message: string, priority: 'polite' | 'assertive' = 'polite') => {
+      if (liveRegionRef.current) {
+        liveRegionRef.current.setAttribute('aria-live', priority);
+        liveRegionRef.current.textContent = message;
 
-      // Clear after announcement
-      setTimeout(() => {
-        if (liveRegionRef.current) {
-          liveRegionRef.current.textContent = ''
-        }
-      }, 1000)
-    }
-  }, [])
+        // Clear after announcement
+        setTimeout(() => {
+          if (liveRegionRef.current) {
+            liveRegionRef.current.textContent = '';
+          }
+        }, 1000);
+      }
+    },
+    [],
+  );
 
   const LiveRegion = useCallback(() => {
     return React.createElement('div', {
       ref: liveRegionRef,
       'aria-live': 'polite',
       'aria-atomic': 'true',
-      className: 'sr-only'
-    })
-  }, [])
+      className: 'sr-only',
+    });
+  }, []);
 
-  return { announce, LiveRegion }
+  return { announce, LiveRegion };
 }
 
 // ============================================================================
@@ -433,22 +478,22 @@ export function useAriaLiveRegion() {
 // ============================================================================
 
 export interface AccessibilityContextValue {
-  focusManagement: ReturnType<typeof useFocusManagement>
-  keyboardNavigation: ReturnType<typeof useKeyboardNavigation>
-  motionPreferences: ReturnType<typeof useMotionPreferences>
-  liveRegion: ReturnType<typeof useAriaLiveRegion>
+  focusManagement: ReturnType<typeof useFocusManagement>;
+  keyboardNavigation: ReturnType<typeof useKeyboardNavigation>;
+  motionPreferences: ReturnType<typeof useMotionPreferences>;
+  liveRegion: ReturnType<typeof useAriaLiveRegion>;
 }
 
 export function useAccessibilityContext(): AccessibilityContextValue {
-  const focusManagement = useFocusManagement()
-  const keyboardNavigation = useKeyboardNavigation()
-  const motionPreferences = useMotionPreferences()
-  const liveRegion = useAriaLiveRegion()
+  const focusManagement = useFocusManagement();
+  const keyboardNavigation = useKeyboardNavigation();
+  const motionPreferences = useMotionPreferences();
+  const liveRegion = useAriaLiveRegion();
 
   return {
     focusManagement,
     keyboardNavigation,
     motionPreferences,
-    liveRegion
-  }
+    liveRegion,
+  };
 }

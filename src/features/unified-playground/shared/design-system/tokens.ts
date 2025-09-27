@@ -76,15 +76,15 @@ export const typography = {
   },
 
   fontSize: {
-    xs: '0.75rem',    // 12px
-    sm: '0.875rem',   // 14px
-    base: '1rem',     // 16px
-    lg: '1.125rem',   // 18px
-    xl: '1.25rem',    // 20px
-    '2xl': '1.5rem',  // 24px
+    xs: '0.75rem', // 12px
+    sm: '0.875rem', // 14px
+    base: '1rem', // 16px
+    lg: '1.125rem', // 18px
+    xl: '1.25rem', // 20px
+    '2xl': '1.5rem', // 24px
     '3xl': '1.875rem', // 30px
-    '4xl': '2.25rem',  // 36px
-    '5xl': '3rem',     // 48px
+    '4xl': '2.25rem', // 36px
+    '5xl': '3rem', // 48px
   },
 
   fontWeight: {
@@ -106,30 +106,30 @@ export const typography = {
 // Spacing System - Rhythm and harmony
 export const spacing = {
   0: '0',
-  1: '0.25rem',   // 4px
-  2: '0.5rem',    // 8px
-  3: '0.75rem',   // 12px
-  4: '1rem',      // 16px
-  5: '1.25rem',   // 20px
-  6: '1.5rem',    // 24px
-  8: '2rem',      // 32px
-  10: '2.5rem',   // 40px
-  12: '3rem',     // 48px
-  16: '4rem',     // 64px
-  20: '5rem',     // 80px
-  24: '6rem',     // 96px
-  32: '8rem',     // 128px
+  1: '0.25rem', // 4px
+  2: '0.5rem', // 8px
+  3: '0.75rem', // 12px
+  4: '1rem', // 16px
+  5: '1.25rem', // 20px
+  6: '1.5rem', // 24px
+  8: '2rem', // 32px
+  10: '2.5rem', // 40px
+  12: '3rem', // 48px
+  16: '4rem', // 64px
+  20: '5rem', // 80px
+  24: '6rem', // 96px
+  32: '8rem', // 128px
 } as const;
 
 // Border Radius - Soft, modern feel
 export const borderRadius = {
   none: '0',
-  sm: '0.125rem',   // 2px
+  sm: '0.125rem', // 2px
   base: '0.375rem', // 6px
-  md: '0.5rem',     // 8px
-  lg: '0.75rem',    // 12px
-  xl: '1rem',       // 16px
-  '2xl': '1.5rem',  // 24px
+  md: '0.5rem', // 8px
+  lg: '0.75rem', // 12px
+  xl: '1rem', // 16px
+  '2xl': '1.5rem', // 24px
   full: '9999px',
 } as const;
 
@@ -208,27 +208,27 @@ export const grid = {
 // Component Variants - Consistent sizing
 export const componentSizes = {
   xs: {
-    height: '1.5rem',   // 24px
+    height: '1.5rem', // 24px
     padding: `${spacing[1]} ${spacing[2]}`, // 4px 8px
     fontSize: typography.fontSize.xs,
   },
   sm: {
-    height: '2rem',     // 32px
+    height: '2rem', // 32px
     padding: `${spacing[2]} ${spacing[3]}`, // 8px 12px
     fontSize: typography.fontSize.sm,
   },
   md: {
-    height: '2.5rem',   // 40px
+    height: '2.5rem', // 40px
     padding: `${spacing[2]} ${spacing[4]}`, // 8px 16px
     fontSize: typography.fontSize.base,
   },
   lg: {
-    height: '3rem',     // 48px
+    height: '3rem', // 48px
     padding: `${spacing[3]} ${spacing[5]}`, // 12px 20px
     fontSize: typography.fontSize.lg,
   },
   xl: {
-    height: '3.5rem',   // 56px
+    height: '3.5rem', // 56px
     padding: `${spacing[4]} ${spacing[6]}`, // 16px 24px
     fontSize: typography.fontSize.xl,
   },

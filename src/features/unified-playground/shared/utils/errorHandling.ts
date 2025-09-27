@@ -3,39 +3,47 @@
  * Comprehensive error handling, retry mechanisms, and recovery strategies
  */
 
-import React, { useCallback, useEffect, useState, useRef } from 'react'
+import { TODO_TYPE } from '../../../../types/global';
+
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 
 // ============================================================================
 // Error Types and Interfaces
 // ============================================================================
 
 export interface PlaygroundError {
-  id: string
-  type: 'network' | 'api' | 'validation' | 'security' | 'permission' | 'unknown'
-  severity: 'low' | 'medium' | 'high' | 'critical'
-  message: string
-  details?: string
-  stack?: string
-  timestamp: number
-  context?: Record<string, any>
-  recoverable: boolean
-  retryable: boolean
+  id: string;
+  type:
+  | 'network'
+  | 'api'
+  | 'validation'
+  | 'security'
+  | 'permission'
+  | 'unknown';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  message: string;
+  details?: string;
+  stack?: string;
+  timestamp: number;
+  context?: Record<string, TODO_TYPE>;
+  recoverable: boolean;
+  retryable: boolean;
 }
 
 export interface RetryConfig {
-  maxAttempts: number
-  baseDelay: number
-  maxDelay: number
-  backoffMultiplier: number
-  retryCondition?: (error: PlaygroundError) => boolean
+  maxAttempts: number;
+  baseDelay: number;
+  maxDelay: number;
+  backoffMultiplier: number;
+  retryCondition?: (error: PlaygroundError) => boolean;
 }
 
 export interface ErrorRecoveryAction {
-  id: string
-  label: string
-  description: string
-  action: () => void | Promise<void>
-  primary?: boolean
+  id: string;
+  label: string;
+  description: string;
+  action: () => void | Promise<void>;
+  primary?: boolean;
 }
 
 // ============================================================================
@@ -43,8 +51,8 @@ export interface ErrorRecoveryAction {
 // ============================================================================
 
 export function classifyError(error: unknown): PlaygroundError {
-  const timestamp = Date.now()
-  const id = `error-${timestamp}-${Math.random().toString(36).substr(2, 9)}`
+  const timestamp = Date.now();
+  const id = `error-${timestamp}-${Math.random().toString(36).substr(2, 9)}`;
 
   // Network errors
   if (error instanceof TypeError && error.message.includes('fetch')) {
@@ -53,35 +61,44 @@ export function classifyError(error: unknown): PlaygroundError {
       type: 'network',
       severity: 'medium',
       message: 'Network connection error',
-      details: 'Unable to connect to the AI service. Check your internet connection.',
+      details:
+        'Unable to connect to the AI service. Check your internet connection.',
       timestamp,
       recoverable: true,
       retryable: true,
-      stack: error.stack
-    }
+      stack: error.stack,
+    };
   }
 
   // Chrome AI API specific errors
   if (error instanceof Error) {
-    if (error.message.includes('not available') || error.message.includes('not supported')) {
+    if (
+      error.message.includes('not available') ||
+      error.message.includes('not supported')
+    ) {
       return {
         id,
         type: 'api',
         severity: 'high',
         message: 'Chrome AI API not available',
-        details: 'This feature requires Chrome 139+ with experimental AI flags enabled.',
+        details:
+          'This feature requires Chrome 139+ with experimental AI flags enabled.',
         timestamp,
         recoverable: false,
         retryable: false,
         stack: error.stack,
         context: {
           userAgent: navigator.userAgent,
-          chromeVersion: navigator.userAgent.match(/Chrome\\/(\\d+)/)?.[1] || 'unknown'
-        }
-      }
+          chromeVersion:
+            navigator.userAgent.match(/Chrome\/(\d+)/)?.[1] || 'unknown',
+        },
+      };
     }
 
-    if (error.message.includes('quota') || error.message.includes('rate limit')) {
+    if (
+      error.message.includes('quota') ||
+      error.message.includes('rate limit')
+    ) {
       return {
         id,
         type: 'api',
@@ -91,25 +108,32 @@ export function classifyError(error: unknown): PlaygroundError {
         timestamp,
         recoverable: true,
         retryable: true,
-        stack: error.stack
-      }
+        stack: error.stack,
+      };
     }
 
-    if (error.message.includes('permission') || error.message.includes('denied')) {
+    if (
+      error.message.includes('permission') ||
+      error.message.includes('denied')
+    ) {
       return {
         id,
         type: 'permission',
         severity: 'high',
         message: 'Permission denied',
-        details: 'Browser denied access to AI features. Check site permissions.',
+        details:
+          'Browser denied access to AI features. Check site permissions.',
         timestamp,
         recoverable: true,
         retryable: false,
-        stack: error.stack
-      }
+        stack: error.stack,
+      };
     }
 
-    if (error.message.includes('validation') || error.message.includes('invalid')) {
+    if (
+      error.message.includes('validation') ||
+      error.message.includes('invalid')
+    ) {
       return {
         id,
         type: 'validation',
@@ -119,11 +143,14 @@ export function classifyError(error: unknown): PlaygroundError {
         timestamp,
         recoverable: true,
         retryable: false,
-        stack: error.stack
-      }
+        stack: error.stack,
+      };
     }
 
-    if (error.message.includes('unsafe') || error.message.includes('security')) {
+    if (
+      error.message.includes('unsafe') ||
+      error.message.includes('security')
+    ) {
       return {
         id,
         type: 'security',
@@ -133,8 +160,8 @@ export function classifyError(error: unknown): PlaygroundError {
         timestamp,
         recoverable: true,
         retryable: false,
-        stack: error.stack
-      }
+        stack: error.stack,
+      };
     }
   }
 
@@ -143,14 +170,15 @@ export function classifyError(error: unknown): PlaygroundError {
     id,
     type: 'unknown',
     severity: 'medium',
-    message: error instanceof Error ? error.message : 'An unexpected error occurred',
+    message:
+      error instanceof Error ? error.message : 'An unexpected error occurred',
     details: 'Please try again or contact support if the problem persists.',
     timestamp,
     recoverable: true,
     retryable: true,
     stack: error instanceof Error ? error.stack : undefined,
-    context: { originalError: error }
-  }
+    context: { originalError: error },
+  };
 }
 
 // ============================================================================
@@ -159,42 +187,42 @@ export function classifyError(error: unknown): PlaygroundError {
 
 export async function withRetry<T>(
   operation: () => Promise<T>,
-  config: Partial<RetryConfig> = {}
+  config: Partial<RetryConfig> = {},
 ): Promise<T> {
   const {
     maxAttempts = 3,
     baseDelay = 1000,
     maxDelay = 10000,
     backoffMultiplier = 2,
-    retryCondition = (error) => error.retryable
-  } = config
+    retryCondition = (error) => error.retryable,
+  } = config;
 
-  let lastError: PlaygroundError
+  let lastError: PlaygroundError;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      return await operation()
+      return await operation();
     } catch (error) {
-      lastError = classifyError(error)
+      lastError = classifyError(error);
 
       // Don't retry if not retryable or on last attempt
       if (!retryCondition(lastError) || attempt === maxAttempts) {
-        throw lastError
+        throw lastError;
       }
 
       // Calculate delay with exponential backoff
       const delay = Math.min(
         baseDelay * Math.pow(backoffMultiplier, attempt - 1),
-        maxDelay
-      )
+        maxDelay,
+      );
 
       // Add jitter to prevent thundering herd
-      const jitter = Math.random() * 0.1 * delay
-      await new Promise(resolve => setTimeout(resolve, delay + jitter))
+      const jitter = Math.random() * 0.1 * delay;
+      await new Promise((resolve) => setTimeout(resolve, delay + jitter));
     }
   }
 
-  throw lastError!
+  throw lastError!;
 }
 
 // ============================================================================
@@ -202,178 +230,191 @@ export async function withRetry<T>(
 // ============================================================================
 
 export function useErrorRecovery() {
-  const [errors, setErrors] = useState<PlaygroundError[]>([])
-  const [isRecovering, setIsRecovering] = useState(false)
-  const errorLogRef = useRef<PlaygroundError[]>([])
-
-  const addError = useCallback((error: unknown) => {
-    const classifiedError = classifyError(error)
-
-    // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Playground Error:', classifiedError)
-    }
-
-    // Add to error log
-    errorLogRef.current.push(classifiedError)
-
-    // Add to visible errors
-    setErrors(prev => [...prev, classifiedError])
-
-    // Auto-dismiss low severity errors after 5 seconds
-    if (classifiedError.severity === 'low') {
-      setTimeout(() => {
-        dismissError(classifiedError.id)
-      }, 5000)
-    }
-
-    return classifiedError
-  }, [])
+  const [errors, setErrors] = useState<PlaygroundError[]>([]);
+  const [isRecovering, setIsRecovering] = useState(false);
+  const errorLogRef = useRef<PlaygroundError[]>([]);
 
   const dismissError = useCallback((errorId: string) => {
-    setErrors(prev => prev.filter(error => error.id !== errorId))
-  }, [])
+    setErrors((prev) => prev.filter((error) => error.id !== errorId));
+  }, []);
+
+  const addError = useCallback(
+    (error: unknown) => {
+      const classifiedError = classifyError(error);
+
+      // Log to console in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Playground Error:', classifiedError);
+      }
+
+      // Add to error log
+      errorLogRef.current.push(classifiedError);
+
+      // Add to visible errors
+      setErrors((prev) => [...prev, classifiedError]);
+
+      // Auto-dismiss low severity errors after 5 seconds
+      if (classifiedError.severity === 'low') {
+        setTimeout(() => {
+          dismissError(classifiedError.id);
+        }, 5000);
+      }
+
+      return classifiedError;
+    },
+    [dismissError],
+  );
 
   const dismissAllErrors = useCallback(() => {
-    setErrors([])
-  }, [])
+    setErrors([]);
+  }, []);
 
-  const retryOperation = useCallback(async (
-    operation: () => Promise<void>,
-    errorId?: string
-  ) => {
-    setIsRecovering(true)
+  const retryOperation = useCallback(
+    async (operation: () => Promise<void>, errorId?: string) => {
+      setIsRecovering(true);
 
-    try {
-      await withRetry(operation, {
-        maxAttempts: 3,
-        baseDelay: 1000
-      })
+      try {
+        await withRetry(operation, {
+          maxAttempts: 3,
+          baseDelay: 1000,
+        });
 
-      // Dismiss specific error if successful
-      if (errorId) {
-        dismissError(errorId)
-      }
-    } catch (error) {
-      addError(error)
-    } finally {
-      setIsRecovering(false)
-    }
-  }, [addError, dismissError])
-
-  const getRecoveryActions = useCallback((error: PlaygroundError): ErrorRecoveryAction[] => {
-    const actions: ErrorRecoveryAction[] = []
-
-    switch (error.type) {
-      case 'network':
-        actions.push({
-          id: 'retry-network',
-          label: 'Retry',
-          description: 'Try the operation again',
-          action: () => retryOperation(() => Promise.resolve()),
-          primary: true
-        })
-        actions.push({
-          id: 'check-connection',
-          label: 'Check Connection',
-          description: 'Test your internet connection',
-          action: () => {
-            window.open('https://www.google.com', '_blank')
-          }
-        })
-        break
-
-      case 'api':
-        if (error.message.includes('not available')) {
-          actions.push({
-            id: 'enable-flags',
-            label: 'Enable AI Features',
-            description: 'Learn how to enable Chrome AI features',
-            action: () => {
-              window.open('https://developer.chrome.com/docs/ai/built-in', '_blank')
-            },
-            primary: true
-          })
-        } else {
-          actions.push({
-            id: 'retry-api',
-            label: 'Retry',
-            description: 'Try the API call again',
-            action: () => retryOperation(() => Promise.resolve()),
-            primary: true
-          })
+        // Dismiss specific error if successful
+        if (errorId) {
+          dismissError(errorId);
         }
-        break
+      } catch (error) {
+        addError(error);
+      } finally {
+        setIsRecovering(false);
+      }
+    },
+    [addError, dismissError],
+  );
 
-      case 'permission':
-        actions.push({
-          id: 'check-permissions',
-          label: 'Check Permissions',
-          description: 'Review site permissions',
-          action: () => {
-            // Focus on address bar for user to check permissions
-            window.focus()
-          },
-          primary: true
-        })
-        break
+  const getRecoveryActions = useCallback(
+    (error: PlaygroundError): ErrorRecoveryAction[] => {
+      const actions: ErrorRecoveryAction[] = [];
 
-      case 'validation':
-        actions.push({
-          id: 'fix-input',
-          label: 'Fix Input',
-          description: 'Correct the input and try again',
-          action: () => {
-            // Focus on the input element
-            const input = document.querySelector('[data-playground-input]') as HTMLElement
-            input?.focus()
-          },
-          primary: true
-        })
-        break
+      switch (error.type) {
+        case 'network':
+          actions.push({
+            id: 'retry-network',
+            label: 'Retry',
+            description: 'Try the operation again',
+            action: () => retryOperation(() => Promise.resolve()),
+            primary: true,
+          });
+          actions.push({
+            id: 'check-connection',
+            label: 'Check Connection',
+            description: 'Test your internet connection',
+            action: () => {
+              window.open('https://www.google.com', '_blank');
+            },
+          });
+          break;
 
-      case 'security':
-        actions.push({
-          id: 'review-input',
-          label: 'Review Input',
-          description: 'Check your input for security issues',
-          action: () => {
-            const input = document.querySelector('[data-playground-input]') as HTMLElement
-            input?.focus()
-          },
-          primary: true
-        })
-        break
+        case 'api':
+          if (error.message.includes('not available')) {
+            actions.push({
+              id: 'enable-flags',
+              label: 'Enable AI Features',
+              description: 'Learn how to enable Chrome AI features',
+              action: () => {
+                window.open(
+                  'https://developer.chrome.com/docs/ai/built-in',
+                  '_blank',
+                );
+              },
+              primary: true,
+            });
+          } else {
+            actions.push({
+              id: 'retry-api',
+              label: 'Retry',
+              description: 'Try the API call again',
+              action: () => retryOperation(() => Promise.resolve()),
+              primary: true,
+            });
+          }
+          break;
 
-      default:
-        actions.push({
-          id: 'reload-page',
-          label: 'Reload Page',
-          description: 'Refresh the page and try again',
-          action: () => window.location.reload(),
-          primary: true
-        })
-    }
+        case 'permission':
+          actions.push({
+            id: 'check-permissions',
+            label: 'Check Permissions',
+            description: 'Review site permissions',
+            action: () => {
+              // Focus on address bar for user to check permissions
+              window.focus();
+            },
+            primary: true,
+          });
+          break;
 
-    // Always add dismiss action
-    actions.push({
-      id: 'dismiss',
-      label: 'Dismiss',
-      description: 'Hide this error message',
-      action: () => dismissError(error.id)
-    })
+        case 'validation':
+          actions.push({
+            id: 'fix-input',
+            label: 'Fix Input',
+            description: 'Correct the input and try again',
+            action: () => {
+              // Focus on the input element
+              const input = document.querySelector(
+                '[data-playground-input]',
+              ) as HTMLElement;
+              input?.focus();
+            },
+            primary: true,
+          });
+          break;
 
-    return actions
-  }, [retryOperation, dismissError])
+        case 'security':
+          actions.push({
+            id: 'review-input',
+            label: 'Review Input',
+            description: 'Check your input for security issues',
+            action: () => {
+              const input = document.querySelector(
+                '[data-playground-input]',
+              ) as HTMLElement;
+              input?.focus();
+            },
+            primary: true,
+          });
+          break;
+
+        default:
+          actions.push({
+            id: 'reload-page',
+            label: 'Reload Page',
+            description: 'Refresh the page and try again',
+            action: () => window.location.reload(),
+            primary: true,
+          });
+      }
+
+      // Always add dismiss action
+      actions.push({
+        id: 'dismiss',
+        label: 'Dismiss',
+        description: 'Hide this error message',
+        action: () => dismissError(error.id),
+      });
+
+      return actions;
+    },
+    [retryOperation, dismissError],
+  );
 
   const getErrorSummary = useCallback(() => {
-    const critical = errors.filter(e => e.severity === 'critical').length
-    const high = errors.filter(e => e.severity === 'high').length
-    const medium = errors.filter(e => e.severity === 'medium').length
-    const low = errors.filter(e => e.severity === 'low').length
+    const critical = errors.filter((e) => e.severity === 'critical').length;
+    const high = errors.filter((e) => e.severity === 'high').length;
+    const medium = errors.filter((e) => e.severity === 'medium').length;
+    const low = errors.filter((e) => e.severity === 'low').length;
 
-    return { critical, high, medium, low, total: errors.length }
-  }, [errors])
+    return { critical, high, medium, low, total: errors.length };
+  }, [errors]);
 
   return {
     errors,
@@ -386,8 +427,8 @@ export function useErrorRecovery() {
     getRecoveryActions,
     getErrorSummary,
     hasErrors: errors.length > 0,
-    hasCriticalErrors: errors.some(e => e.severity === 'critical')
-  }
+    hasCriticalErrors: errors.some((e) => e.severity === 'critical'),
+  };
 }
 
 // ============================================================================
@@ -395,60 +436,65 @@ export function useErrorRecovery() {
 // ============================================================================
 
 export function useOfflineSupport() {
-  const [isOnline, setIsOnline] = useState(navigator.onLine)
-  const [wasOffline, setWasOffline] = useState(false)
-  const queuedOperationsRef = useRef<Array<() => Promise<void>>>([])
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [wasOffline, setWasOffline] = useState(false);
+  const queuedOperationsRef = useRef<Array<() => Promise<void>>>([]);
 
   useEffect(() => {
     const handleOnline = () => {
-      setIsOnline(true)
+      setIsOnline(true);
 
       if (wasOffline) {
-        setWasOffline(false)
+        setWasOffline(false);
 
         // Process queued operations
-        const operations = queuedOperationsRef.current
-        queuedOperationsRef.current = []
+        const operations = queuedOperationsRef.current;
+        queuedOperationsRef.current = [];
 
-        operations.forEach(async operation => {
+        operations.forEach(async (operation) => {
           try {
-            await operation()
+            await operation();
           } catch (error) {
-            console.error('Failed to process queued operation:', error)
+            console.error('Failed to process queued operation:', error);
           }
-        })
+        });
       }
-    }
+    };
 
     const handleOffline = () => {
-      setIsOnline(false)
-      setWasOffline(true)
-    }
+      setIsOnline(false);
+      setWasOffline(true);
+    };
 
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
-  }, [wasOffline])
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [wasOffline]);
 
-  const queueOperation = useCallback((operation: () => Promise<void>) => {
-    if (isOnline) {
-      return operation()
-    } else {
-      queuedOperationsRef.current.push(operation)
-      return Promise.reject(new Error('Operation queued for when connection is restored'))
-    }
-  }, [isOnline])
+  const queueOperation = useCallback(
+    (operation: () => Promise<void>) => {
+      if (isOnline) {
+        return operation();
+      } else {
+        queuedOperationsRef.current.push(operation);
+        return Promise.reject(
+          new Error('Operation queued for when connection is restored'),
+        );
+      }
+    },
+    [isOnline],
+  );
 
   return {
     isOnline,
     wasOffline,
     queueOperation,
-    queuedCount: queuedOperationsRef.current.length
-  }
+    queuedCount: queuedOperationsRef.current.length,
+  };
 }
 
 // ============================================================================
@@ -461,55 +507,59 @@ export function useGracefulDegradation() {
     localStorage: false,
     webWorkers: false,
     indexedDB: false,
-    serviceWorker: false
-  })
+    serviceWorker: false,
+  });
 
-  const [fallbackMode, setFallbackMode] = useState(false)
+  const [fallbackMode, setFallbackMode] = useState(false);
 
   useEffect(() => {
     const checkCapabilities = async () => {
       const newCapabilities = {
-        chromeAI: typeof (globalThis as any).ai !== 'undefined',
+        chromeAI: typeof (globalThis as TODO_TYPE) !== 'undefined',
         localStorage: typeof Storage !== 'undefined',
         webWorkers: typeof Worker !== 'undefined',
         indexedDB: typeof indexedDB !== 'undefined',
-        serviceWorker: 'serviceWorker' in navigator
-      }
+        serviceWorker: 'serviceWorker' in navigator,
+      };
 
-      setCapabilities(newCapabilities)
+      setCapabilities(newCapabilities);
 
       // Enable fallback mode if critical features are missing
-      const hasCriticalFeatures = newCapabilities.chromeAI || newCapabilities.localStorage
-      setFallbackMode(!hasCriticalFeatures)
-    }
+      const hasCriticalFeatures =
+        newCapabilities.chromeAI || newCapabilities.localStorage;
+      setFallbackMode(!hasCriticalFeatures);
+    };
 
-    checkCapabilities()
-  }, [])
+    checkCapabilities();
+  }, []);
 
-  const getFallbackMessage = useCallback((feature: keyof typeof capabilities): string => {
-    switch (feature) {
-      case 'chromeAI':
-        return 'Chrome AI features are not available. The playground will work in demo mode with mock responses.'
-      case 'localStorage':
-        return 'Local storage is not available. Settings and preferences will not be saved.'
-      case 'webWorkers':
-        return 'Web Workers are not available. Some operations may be slower.'
-      case 'indexedDB':
-        return 'IndexedDB is not available. Offline data storage is limited.'
-      case 'serviceWorker':
-        return 'Service Workers are not available. Offline functionality is limited.'
-      default:
-        return 'Some features may not work as expected in this browser.'
-    }
-  }, [])
+  const getFallbackMessage = useCallback(
+    (feature: keyof typeof capabilities): string => {
+      switch (feature) {
+        case 'chromeAI':
+          return 'Chrome AI features are not available. The playground will work in demo mode with mock responses.';
+        case 'localStorage':
+          return 'Local storage is not available. Settings and preferences will not be saved.';
+        case 'webWorkers':
+          return 'Web Workers are not available. Some operations may be slower.';
+        case 'indexedDB':
+          return 'IndexedDB is not available. Offline data storage is limited.';
+        case 'serviceWorker':
+          return 'Service Workers are not available. Offline functionality is limited.';
+        default:
+          return 'Some features may not work as expected in this browser.';
+      }
+    },
+    [],
+  );
 
   return {
     capabilities,
     fallbackMode,
     getFallbackMessage,
     hasMinimumCapabilities: capabilities.localStorage,
-    hasOptimalCapabilities: Object.values(capabilities).every(Boolean)
-  }
+    hasOptimalCapabilities: Object.values(capabilities).every(Boolean),
+  };
 }
 
 // ============================================================================
@@ -517,43 +567,42 @@ export function useGracefulDegradation() {
 // ============================================================================
 
 export class CircuitBreaker {
-  private failures = 0
-  private lastFailureTime = 0
-  private state: 'CLOSED' | 'OPEN' | 'HALF_OPEN' = 'CLOSED'
+  private failures = 0;
+  private lastFailureTime = 0;
+  private state: 'CLOSED' | 'OPEN' | 'HALF_OPEN' = 'CLOSED';
 
   constructor(
     private readonly failureThreshold: number = 5,
-    private readonly timeoutWindow: number = 60000, // 1 minute
-    private readonly retryTimeout: number = 30000 // 30 seconds
-  ) {}
+    private readonly retryTimeout: number = 30000, // 30 seconds
+  ) { }
 
   async execute<T>(operation: () => Promise<T>): Promise<T> {
     if (this.state === 'OPEN') {
       if (Date.now() - this.lastFailureTime > this.retryTimeout) {
-        this.state = 'HALF_OPEN'
+        this.state = 'HALF_OPEN';
       } else {
-        throw new Error('Circuit breaker is OPEN - operation not allowed')
+        throw new Error('Circuit breaker is OPEN - operation not allowed');
       }
     }
 
     try {
-      const result = await operation()
+      const result = await operation();
 
       if (this.state === 'HALF_OPEN') {
-        this.state = 'CLOSED'
-        this.failures = 0
+        this.state = 'CLOSED';
+        this.failures = 0;
       }
 
-      return result
+      return result;
     } catch (error) {
-      this.failures++
-      this.lastFailureTime = Date.now()
+      this.failures++;
+      this.lastFailureTime = Date.now();
 
       if (this.failures >= this.failureThreshold) {
-        this.state = 'OPEN'
+        this.state = 'OPEN';
       }
 
-      throw error
+      throw error;
     }
   }
 
@@ -561,14 +610,14 @@ export class CircuitBreaker {
     return {
       state: this.state,
       failures: this.failures,
-      isOpen: this.state === 'OPEN'
-    }
+      isOpen: this.state === 'OPEN',
+    };
   }
 
   reset() {
-    this.state = 'CLOSED'
-    this.failures = 0
-    this.lastFailureTime = 0
+    this.state = 'CLOSED';
+    this.failures = 0;
+    this.lastFailureTime = 0;
   }
 }
 
@@ -576,47 +625,50 @@ export class CircuitBreaker {
 // Error Boundary Helper
 // ============================================================================
 
-export function createErrorBoundary(fallbackComponent: React.ComponentType<{
-  error: PlaygroundError
-  resetError: () => void
-}>) {
+export function createErrorBoundary(
+  fallbackComponent: React.ComponentType<{
+    error: PlaygroundError;
+    resetError: () => void;
+  }>,
+) {
   return class PlaygroundErrorBoundary extends React.Component<
     { children: React.ReactNode },
     { error: PlaygroundError | null }
   > {
     constructor(props: { children: React.ReactNode }) {
-      super(props)
-      this.state = { error: null }
+      super(props);
+      this.state = { error: null };
     }
 
     static getDerivedStateFromError(error: Error): { error: PlaygroundError } {
-      return { error: classifyError(error) }
+      return { error: classifyError(error) };
     }
 
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-      console.error('ErrorBoundary caught an error:', error, errorInfo)
+      console.error('ErrorBoundary caught an error:', error, errorInfo);
 
       // Log error for telemetry
       if (process.env.NODE_ENV === 'production') {
+        // @typescript-eslint/no-explicit-any
         // Send to error tracking service
         // Example: Sentry.captureException(error, { extra: errorInfo })
       }
     }
 
     resetError = () => {
-      this.setState({ error: null })
-    }
+      this.setState({ error: null });
+    };
 
     render() {
       if (this.state.error) {
-        const FallbackComponent = fallbackComponent
+        const FallbackComponent = fallbackComponent;
         return React.createElement(FallbackComponent, {
           error: this.state.error,
-          resetError: this.resetError
-        })
+          resetError: this.resetError,
+        });
       }
 
-      return this.props.children
+      return this.props.children;
     }
-  }
+  };
 }

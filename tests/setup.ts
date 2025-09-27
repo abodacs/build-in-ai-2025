@@ -1,5 +1,5 @@
-import '@testing-library/jest-dom'
-import { vi } from 'vitest'
+import '@testing-library/jest-dom';
+import { vi } from 'vitest';
 
 // Mock Chrome AI APIs for testing using the new global structure
 Object.defineProperty(globalThis, 'Summarizer', {
@@ -8,7 +8,7 @@ Object.defineProperty(globalThis, 'Summarizer', {
     create: vi.fn(),
     capabilities: vi.fn(),
   },
-})
+});
 
 Object.defineProperty(globalThis, 'Translator', {
   writable: true,
@@ -16,7 +16,7 @@ Object.defineProperty(globalThis, 'Translator', {
     create: vi.fn(),
     capabilities: vi.fn(),
   },
-})
+});
 
 Object.defineProperty(globalThis, 'Writer', {
   writable: true,
@@ -24,7 +24,7 @@ Object.defineProperty(globalThis, 'Writer', {
     create: vi.fn(),
     capabilities: vi.fn(),
   },
-})
+});
 
 Object.defineProperty(globalThis, 'Rewriter', {
   writable: true,
@@ -32,7 +32,7 @@ Object.defineProperty(globalThis, 'Rewriter', {
     create: vi.fn(),
     capabilities: vi.fn(),
   },
-})
+});
 
 Object.defineProperty(globalThis, 'Proofreader', {
   writable: true,
@@ -40,7 +40,7 @@ Object.defineProperty(globalThis, 'Proofreader', {
     create: vi.fn(),
     capabilities: vi.fn(),
   },
-})
+});
 
 Object.defineProperty(globalThis, 'LanguageModel', {
   writable: true,
@@ -48,7 +48,7 @@ Object.defineProperty(globalThis, 'LanguageModel', {
     create: vi.fn(),
     capabilities: vi.fn(),
   },
-})
+});
 
 Object.defineProperty(globalThis, 'LanguageDetector', {
   writable: true,
@@ -56,7 +56,7 @@ Object.defineProperty(globalThis, 'LanguageDetector', {
     create: vi.fn(),
     capabilities: vi.fn(),
   },
-})
+});
 
 // Mock performance.now for testing
 Object.defineProperty(window, 'performance', {
@@ -64,4 +64,4 @@ Object.defineProperty(window, 'performance', {
   value: {
     now: vi.fn(() => Date.now()),
   },
-})
+});

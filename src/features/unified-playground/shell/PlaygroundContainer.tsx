@@ -5,15 +5,26 @@
 
 import { useState, useCallback, Suspense, startTransition } from 'react';
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
-import { LoadingScreen, LoadingSpinner } from '../shared/components/LoadingScreen';
+import {
+  LoadingScreen,
+  LoadingSpinner,
+} from '../shared/components/LoadingScreen';
 import { ThemeToggle } from '../shared/components/ThemeToggle';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, RefreshCw, Zap, Sparkles, Shield, Activity } from 'lucide-react';
+import {
+  AlertTriangle,
+  RefreshCw,
+  Zap,
+  Sparkles,
+  Shield,
+  Activity,
+} from 'lucide-react';
 import { usePlaygroundState } from '../shared/hooks/usePlaygroundState';
 import { usePerformanceMetrics } from '../shared/hooks/usePerformanceMetrics';
 import { cn } from '@/lib/utils';
+import { TODO_TYPE } from '../../../types/global';
 
 // ============================================================================
 // Types & Interfaces
@@ -27,7 +38,7 @@ interface PlaygroundContainerProps {
 }
 
 interface PlaygroundHeaderProps {
-  capabilities: Record<string, any>;
+  capabilities: Record<string, TODO_TYPE>;
   performanceScore: number;
   onRefresh: () => void;
 }
@@ -63,7 +74,8 @@ function PlaygroundErrorFallback({
         </h2>
 
         <p className="text-sm text-muted-foreground mb-4">
-          An unexpected error occurred in the unified playground. This error has been logged for investigation.
+          An unexpected error occurred in the unified playground. This error has
+          been logged for investigation.
         </p>
 
         {error && (
@@ -99,57 +111,71 @@ function PlaygroundSuspenseFallback() {
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="text-center animate-fadeInUp">
         <LoadingSpinner size="lg" className="mb-4" />
-        <p className="text-sm text-muted-foreground">Initializing secure playground...</p>
+        <p className="text-sm text-muted-foreground">
+          Initializing secure playground...
+        </p>
       </div>
     </div>
   );
 }
 
 // API Status Indicator Component
-function APIStatusIndicator({ apiName, status, error }: APIStatusIndicatorProps) {
+function APIStatusIndicator({
+  apiName,
+  status,
+  error,
+}: APIStatusIndicatorProps) {
   const getStatusColor = () => {
     switch (status) {
-      case 'available': return 'bg-green-500 hover:bg-green-600 text-white'
-      case 'loading': return 'bg-blue-500 animate-pulse text-white'
-      case 'error': return 'bg-red-500 hover:bg-red-600 text-white'
-      default: return 'bg-muted text-muted-foreground'
+      case 'available':
+        return 'bg-green-500 hover:bg-green-600 text-white';
+      case 'loading':
+        return 'bg-blue-500 animate-pulse text-white';
+      case 'error':
+        return 'bg-red-500 hover:bg-red-600 text-white';
+      default:
+        return 'bg-muted text-muted-foreground';
     }
-  }
+  };
 
   return (
     <Badge
       className={cn(
         'text-xs transition-all duration-200 cursor-pointer',
-        getStatusColor()
+        getStatusColor(),
       )}
       title={error || `${apiName} is ${status}`}
     >
       {apiName}
     </Badge>
-  )
+  );
 }
 
 // Performance indicator component
 function PerformanceIndicator({ score }: { score: number }) {
   const getScoreColor = () => {
-    if (score >= 90) return 'text-green-600'
-    if (score >= 70) return 'text-yellow-600'
-    return 'text-red-600'
-  }
+    if (score >= 90) return 'text-green-600';
+    if (score >= 70) return 'text-yellow-600';
+    return 'text-red-600';
+  };
 
   return (
     <div className="flex items-center gap-1 text-xs">
       <Activity className="w-3 h-3" />
-      <span className={cn('font-medium', getScoreColor())}>
-        {score}/100
-      </span>
+      <span className={cn('font-medium', getScoreColor())}>{score}/100</span>
     </div>
-  )
+  );
 }
 
 // Playground Header Component
-function PlaygroundHeader({ capabilities, performanceScore, onRefresh }: PlaygroundHeaderProps) {
-  const availableApis = Object.values(capabilities).filter((cap: any) => cap.status === 'available')
+function PlaygroundHeader({
+  capabilities,
+  performanceScore,
+  onRefresh,
+}: PlaygroundHeaderProps) {
+  const availableApis = Object.values(capabilities).filter(
+    (cap: TODO_TYPE) => cap.status === 'available',
+  );
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/50 bg-background/95 backdrop-blur-sm">
@@ -161,7 +187,10 @@ function PlaygroundHeader({ capabilities, performanceScore, onRefresh }: Playgro
               <Zap className="w-5 h-5 text-white" />
             </div>
             <div className="absolute -top-1 -right-1">
-              <Shield className="w-3 h-3 text-green-500" title="Secure & Validated" />
+              <Shield
+                className="w-3 h-3 text-green-500"
+                aria-label="Secure & Validated"
+              />
             </div>
           </div>
 
@@ -180,14 +209,16 @@ function PlaygroundHeader({ capabilities, performanceScore, onRefresh }: Playgro
           <span className="text-xs text-muted-foreground mr-2">
             AI Status ({availableApis.length}/7):
           </span>
-          {Object.entries(capabilities).map(([apiName, capability]: [string, any]) => (
-            <APIStatusIndicator
-              key={apiName}
-              apiName={apiName}
-              status={capability.status}
-              error={capability.error}
-            />
-          ))}
+          {Object.entries(capabilities).map(
+            ([apiName, capability]: [string, TODO_TYPE]) => (
+              <APIStatusIndicator
+                key={apiName}
+                apiName={apiName}
+                status={capability.status}
+                error={capability.error}
+              />
+            ),
+          )}
         </div>
 
         {/* Actions */}
@@ -206,7 +237,7 @@ function PlaygroundHeader({ capabilities, performanceScore, onRefresh }: Playgro
         </div>
       </div>
     </header>
-  )
+  );
 }
 
 // ============================================================================
@@ -217,7 +248,6 @@ export function PlaygroundContainer({
   children,
   className,
   showPerformanceMetrics = true,
-  enableKeyboardShortcuts = true
 }: PlaygroundContainerProps) {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
@@ -225,19 +255,18 @@ export function PlaygroundContainer({
   const {
     capabilities,
     errors,
-    isLoading,
     checkAllCapabilities,
     clearErrors,
     hasAvailableApis,
-    availableApiCount
-  } = usePlaygroundState()
+    availableApiCount,
+  } = usePlaygroundState();
 
   const {
     performanceScore,
     measureComponentRender,
     measureInteractionLatency,
-    optimizationSuggestions
-  } = usePerformanceMetrics()
+    optimizationSuggestions,
+  } = usePerformanceMetrics();
 
   // ============================================================================
   // Event Handlers
@@ -245,33 +274,24 @@ export function PlaygroundContainer({
 
   const handleLoadingComplete = useCallback(() => {
     startTransition(() => {
-      setIsInitialLoading(false)
-    })
-  }, [])
+      setIsInitialLoading(false);
+    });
+  }, []);
 
   const handleRefresh = useCallback(() => {
-    const stopMeasuring = measureInteractionLatency('refresh_capabilities')
+    const stopMeasuring = measureInteractionLatency('refresh_capabilities');
     startTransition(() => {
-      checkAllCapabilities()
-      clearErrors()
-      stopMeasuring()
-    })
-  }, [checkAllCapabilities, clearErrors, measureInteractionLatency])
-
-  const handleErrorReset = useCallback(() => {
-    const stopMeasuring = measureInteractionLatency('error_reset')
-    startTransition(() => {
-      clearErrors()
-      setIsInitialLoading(false)
-      stopMeasuring()
-    })
-  }, [clearErrors, measureInteractionLatency])
+      checkAllCapabilities();
+      clearErrors();
+      stopMeasuring();
+    });
+  }, [checkAllCapabilities, clearErrors, measureInteractionLatency]);
 
   // ============================================================================
   // Performance Tracking
   // ============================================================================
 
-  const stopRenderMeasuring = measureComponentRender('PlaygroundContainer')
+  const stopRenderMeasuring = measureComponentRender('PlaygroundContainer');
 
   // ============================================================================
   // Loading State
@@ -285,7 +305,7 @@ export function PlaygroundContainer({
         variant="showcase"
         showProgress={true}
       />
-    )
+    );
   }
 
   // ============================================================================
@@ -293,14 +313,16 @@ export function PlaygroundContainer({
   // ============================================================================
 
   // Complete render measurement
-  stopRenderMeasuring()
+  stopRenderMeasuring();
 
   return (
     <ErrorBoundary fallback={PlaygroundErrorFallback}>
-      <div className={cn(
-        "min-h-screen bg-background transition-colors duration-200",
-        className
-      )}>
+      <div
+        className={cn(
+          'min-h-screen bg-background transition-colors duration-200',
+          className,
+        )}
+      >
         <PlaygroundHeader
           capabilities={capabilities}
           performanceScore={performanceScore}
@@ -316,7 +338,9 @@ export function PlaygroundContainer({
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <h3 className="font-semibold text-destructive mb-2">Issues Detected</h3>
+                    <h3 className="font-semibold text-destructive mb-2">
+                      Issues Detected
+                    </h3>
                     <ul className="space-y-1 text-sm text-destructive/80">
                       {errors.map((error, index) => (
                         <li key={index}>• {error}</li>
@@ -343,11 +367,15 @@ export function PlaygroundContainer({
                 <div className="flex items-start gap-3">
                   <Activity className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <h3 className="font-semibold text-yellow-700 mb-2">Performance Optimization</h3>
+                    <h3 className="font-semibold text-yellow-700 mb-2">
+                      Performance Optimization
+                    </h3>
                     <ul className="space-y-1 text-sm text-yellow-700/80">
-                      {optimizationSuggestions.slice(0, 3).map((suggestion, index) => (
-                        <li key={index}>• {suggestion}</li>
-                      ))}
+                      {optimizationSuggestions
+                        .slice(0, 3)
+                        .map((suggestion, index) => (
+                          <li key={index}>• {suggestion}</li>
+                        ))}
                     </ul>
                   </div>
                 </div>
@@ -371,8 +399,8 @@ export function PlaygroundContainer({
                     </h2>
 
                     <p className="text-lg text-muted-foreground mb-4">
-                      Enterprise-grade playground for Chrome's built-in AI APIs.
-                      Secure, performant, and production-ready.
+                      Enterprise-grade playground for Chrome&apos;s built-in AI
+                      APIs. Secure, performant, and production-ready.
                     </p>
 
                     {/* Status Summary */}
@@ -398,7 +426,8 @@ export function PlaygroundContainer({
                           Security First
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          Input validation, XSS protection, and enterprise security standards.
+                          Input validation, XSS protection, and enterprise
+                          security standards.
                         </p>
                       </Card>
 
@@ -408,7 +437,8 @@ export function PlaygroundContainer({
                           Performance Optimized
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          Real-time metrics, Core Web Vitals tracking, and optimization hints.
+                          Real-time metrics, Core Web Vitals tracking, and
+                          optimization hints.
                         </p>
                       </Card>
 
@@ -418,7 +448,8 @@ export function PlaygroundContainer({
                           Production Ready
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          TypeScript, error boundaries, and enterprise-grade architecture.
+                          TypeScript, error boundaries, and enterprise-grade
+                          architecture.
                         </p>
                       </Card>
                     </div>
@@ -428,7 +459,9 @@ export function PlaygroundContainer({
                       className="transition-all duration-200 hover:scale-105 hover-glow"
                       disabled={!hasAvailableApis}
                     >
-                      {hasAvailableApis ? 'Start Exploring APIs' : 'APIs Unavailable'}
+                      {hasAvailableApis
+                        ? 'Start Exploring APIs'
+                        : 'APIs Unavailable'}
                       <Sparkles className="w-4 h-4 ml-2" />
                     </Button>
 
@@ -476,7 +509,7 @@ export function PlaygroundContainer({
         </footer>
       </div>
     </ErrorBoundary>
-  )
+  );
 }
 
 // ============================================================================
@@ -489,5 +522,5 @@ export const Playground = {
   StatusIndicator: APIStatusIndicator,
   PerformanceIndicator,
   ErrorFallback: PlaygroundErrorFallback,
-  SuspenseFallback: PlaygroundSuspenseFallback
-} as const
+  SuspenseFallback: PlaygroundSuspenseFallback,
+} as const;
