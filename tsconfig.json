@@ -30,7 +30,8 @@
       "@/stores/*": ["./src/stores/*"],
       "@/types/*": ["./src/types/*"],
       "@/utils/*": ["./src/utils/*"],
-      "@/lib/*": ["./src/lib/*"]
+      "@/lib/*": ["./src/lib/*"],
+      "@/features/*": ["./src/features/*"]
     },
 
     /* Chrome AI Types */

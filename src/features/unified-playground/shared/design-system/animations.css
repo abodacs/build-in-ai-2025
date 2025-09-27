@@ -1,0 +1,429 @@
+/**
+ * CSS-Only Animations for Chrome AI DevBench
+ * Designed for immediate visual delight and 30-second wow factor
+ */
+
+/* ==========================================================================
+   KEYFRAME ANIMATIONS
+   ========================================================================== */
+
+/* Fade animations - Smooth entrance/exit */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale animations - Attention-grabbing */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scaleOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* AI-specific animations */
+@keyframes aiPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+@keyframes aiGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+    transform: translate3d(0, -30px, 0);
+  }
+  70% {
+    animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+    transform: translate3d(0, -15px, 0);
+  }
+  90% {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Loading animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Theme transition animation */
+@keyframes themeSwitch {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ==========================================================================
+   ANIMATION CLASSES
+   ========================================================================== */
+
+/* Entrance animations */
+.animate-fadeIn {
+  animation: fadeIn 250ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 300ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-fadeInDown {
+  animation: fadeInDown 300ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 200ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 300ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Interactive animations */
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-aiPulse {
+  animation: aiPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-aiGlow {
+  animation: aiGlow 2s ease-in-out infinite;
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-ping {
+  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Theme transition */
+.animate-themeSwitch {
+  animation: themeSwitch 200ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Shimmer effect for loading states */
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transform: translateX(-100%);
+  animation: shimmer 2s infinite;
+}
+
+/* ==========================================================================
+   TRANSITION UTILITIES
+   ========================================================================== */
+
+/* Base transitions */
+.transition-smooth {
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-medium {
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-slow {
+  transition: all 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Specific property transitions */
+.transition-colors {
+  transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-transform {
+  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-opacity {
+  transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-shadow {
+  transition: box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Spring transitions for interactive elements */
+.transition-spring {
+  transition: all 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.transition-bounce {
+  transition: all 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ==========================================================================
+   HOVER EFFECTS
+   ========================================================================== */
+
+/* Scale hover effects */
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-scale-sm:hover {
+  transform: scale(1.02);
+}
+
+.hover-scale-lg:hover {
+  transform: scale(1.1);
+}
+
+/* Glow hover effects */
+.hover-glow:hover {
+  box-shadow: 0 0 20px currentColor;
+}
+
+.hover-glow-sm:hover {
+  box-shadow: 0 0 10px currentColor;
+}
+
+.hover-glow-lg:hover {
+  box-shadow: 0 0 30px currentColor, 0 0 40px currentColor;
+}
+
+/* Lift hover effects */
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.hover-lift-sm:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.hover-lift-lg:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   FOCUS EFFECTS
+   ========================================================================== */
+
+.focus-ring {
+  outline: none;
+  transition: box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.focus-ring:focus {
+  box-shadow: 0 0 0 2px hsl(217, 91%, 60%);
+}
+
+.focus-ring-inset:focus {
+  box-shadow: inset 0 0 0 2px hsl(217, 91%, 60%);
+}
+
+/* ==========================================================================
+   LOADING STATES
+   ========================================================================== */
+
+.loading-dots {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.loading-dots::before,
+.loading-dots::after {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: currentColor;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.loading-dots::before {
+  animation-delay: 0.5s;
+}
+
+.loading-dots::after {
+  animation-delay: 1s;
+}
+
+/* ==========================================================================
+   STAGGER ANIMATIONS
+   ========================================================================== */
+
+.stagger-children > * {
+  animation-delay: calc(var(--stagger-delay, 0.1s) * var(--index, 0));
+}
+
+/* ==========================================================================
+   REDUCED MOTION SUPPORT
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-pulse,
+  .animate-aiPulse,
+  .animate-aiGlow,
+  .animate-bounce,
+  .animate-spin,
+  .animate-ping,
+  .animate-shimmer::before {
+    animation: none !important;
+  }
+}

@@ -7,6 +7,7 @@ import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary'
 
 // Lazy load feature components for better performance
 import { HomePage } from '@/features/api-playground/components/HomePage'
+import { PlaygroundContainer } from '@/features/unified-playground'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/playground" element={<HomePage />} />
+              <Route path="/unified" element={<PlaygroundContainer />} />
               <Route
                 path="/security"
                 element={
