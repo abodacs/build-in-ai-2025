@@ -37,10 +37,10 @@ export function Header() {
           <span className="text-white font-bold text-sm">AI</span>
         </div>
         <div>
-          <h1 className="text-lg font-semibold text-foreground">
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Chrome AI DevBench
           </h1>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-gray-500">
             Interactive AI API Playground
           </p>
         </div>
@@ -58,20 +58,20 @@ export function Header() {
               (aiStatus === 'loading' || isCheckingAi) && 'bg-yellow-500 animate-pulse'
             )}
           />
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-gray-500">
             AI APIs {aiStatus === 'loading' || isCheckingAi ? 'Checking...' : aiStatus}
           </span>
         </div>
 
         {/* Language Toggle */}
-        <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
           <button
             onClick={() => setCodeLanguage('js')}
             className={cn(
               'px-3 py-1 text-xs font-medium rounded-md transition-colors',
               codeLanguage === 'js'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 shadow-sm'
+                : 'text-gray-500 hover:text-gray-900 dark:text-gray-100'
             )}
           >
             JavaScript
@@ -81,8 +81,8 @@ export function Header() {
             className={cn(
               'px-3 py-1 text-xs font-medium rounded-md transition-colors',
               codeLanguage === 'ts'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 shadow-sm'
+                : 'text-gray-500 hover:text-gray-900 dark:text-gray-100'
             )}
           >
             TypeScript
@@ -90,7 +90,7 @@ export function Header() {
         </div>
 
         {/* Version indicator */}
-        <div className="text-xs text-muted-foreground border border-border rounded px-2 py-1">
+        <div className="text-xs text-gray-500 border border-border rounded px-2 py-1">
           v1.2.0
         </div>
       </div>

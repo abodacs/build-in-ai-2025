@@ -1,61 +1,62 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
+@source "../../src/**/*.{js,ts,jsx,tsx}";
+
+@layer theme {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
+    --color-background: 0 0% 100%;
+    --color-foreground: 240 10% 3.9%;
+    --color-card: 0 0% 100%;
+    --color-card-foreground: 240 10% 3.9%;
+    --color-popover: 0 0% 100%;
+    --color-popover-foreground: 240 10% 3.9%;
+    --color-primary: 240 5.9% 10%;
+    --color-primary-foreground: 0 0% 98%;
+    --color-secondary: 240 4.8% 95.9%;
+    --color-secondary-foreground: 240 5.9% 10%;
+    --color-muted: 240 4.8% 95.9%;
+    --color-muted-foreground: 240 3.8% 46.1%;
+    --color-accent: 240 4.8% 95.9%;
+    --color-accent-foreground: 240 5.9% 10%;
+    --color-destructive: 0 84.2% 60.2%;
+    --color-destructive-foreground: 0 0% 98%;
+    --color-border: 240 5.9% 90%;
+    --color-input: 240 5.9% 90%;
+    --color-ring: 240 10% 3.9%;
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --color-background: 240 10% 3.9%;
+    --color-foreground: 0 0% 98%;
+    --color-card: 240 10% 3.9%;
+    --color-card-foreground: 0 0% 98%;
+    --color-popover: 240 10% 3.9%;
+    --color-popover-foreground: 0 0% 98%;
+    --color-primary: 0 0% 98%;
+    --color-primary-foreground: 240 5.9% 10%;
+    --color-secondary: 240 3.7% 15.9%;
+    --color-secondary-foreground: 0 0% 98%;
+    --color-muted: 240 3.7% 15.9%;
+    --color-muted-foreground: 240 5% 64.9%;
+    --color-accent: 240 3.7% 15.9%;
+    --color-accent-foreground: 0 0% 98%;
+    --color-destructive: 0 62.8% 30.6%;
+    --color-destructive-foreground: 0 0% 98%;
+    --color-border: 240 3.7% 15.9%;
+    --color-input: 240 3.7% 15.9%;
+    --color-ring: 240 4.9% 83.9%;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--color-border));
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--color-background));
+    color: hsl(var(--color-foreground));
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
@@ -63,28 +64,59 @@
 @layer components {
   /* Chrome AI specific styles */
   .ai-status-indicator {
-    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
   }
 
   .ai-status-available {
-    @apply bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400;
+    background-color: rgb(220 252 231);
+    color: rgb(22 101 52);
+  }
+
+  .dark .ai-status-available {
+    background-color: rgb(20 83 45 / 0.2);
+    color: rgb(74 222 128);
   }
 
   .ai-status-unavailable {
-    @apply bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400;
+    background-color: rgb(254 226 226);
+    color: rgb(153 27 27);
+  }
+
+  .dark .ai-status-unavailable {
+    background-color: rgb(127 29 29 / 0.2);
+    color: rgb(248 113 113);
   }
 
   .ai-status-loading {
-    @apply bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400;
+    background-color: rgb(219 234 254);
+    color: rgb(30 64 175);
+  }
+
+  .dark .ai-status-loading {
+    background-color: rgb(30 58 138 / 0.2);
+    color: rgb(96 165 250);
   }
 
   /* Code syntax highlighting */
   .code-block {
-    @apply bg-muted/50 border rounded-lg p-4 font-mono text-sm;
+    background-color: hsl(var(--color-muted) / 0.5);
+    border: 1px solid hsl(var(--color-border));
+    border-radius: 0.5rem;
+    padding: 1rem;
+    font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+    font-size: 0.875rem;
   }
 
   .code-block pre {
-    @apply overflow-x-auto whitespace-pre-wrap break-words;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-words;
   }
 
   /* Loading animations */
@@ -119,18 +151,24 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-muted/30;
+  background-color: hsl(var(--color-muted) / 0.3);
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/30 rounded-full;
+  background-color: hsl(var(--color-muted-foreground) / 0.3);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/50;
+  background-color: hsl(var(--color-muted-foreground) / 0.5);
 }
 
 /* Focus rings */
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
+  outline: none;
+}
+
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--color-ring));
 }
