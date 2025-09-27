@@ -1,0 +1,15 @@
+{
+  "status": "success",
+  "data": "This is a simulated cloud AI response. In a real application, this would come from a remote AI service like Google Cloud AI, OpenAI API, or Firebase AI. The response demonstrates how your application could gracefully fallback to cloud processing when on-device AI is unavailable.",
+  "provider": "Mock Cloud AI Service",
+  "model": "cloud-ai-v1",
+  "latency": 450,
+  "timestamp": "2024-01-01T12:00:00Z",
+  "metadata": {
+    "processingLocation": "cloud",
+    "fallbackReason": "on-device-unavailable",
+    "cost": 0.002,
+    "confidence": 0.95
+  },
+  "educational_note": "This is a demonstration of the hybrid AI pattern. Chrome AI APIs actually run 100% on-device and don't require cloud fallback. This mock endpoint shows how you could architect resilient AI applications that gracefully handle service unavailability."
+}

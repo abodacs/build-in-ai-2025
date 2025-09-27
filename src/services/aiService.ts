@@ -1,13 +1,29 @@
 import { z } from 'zod'
 import type { ApiResult } from '@/stores/appStore'
-import {
-  isSummarizerSupported,
-  isRewriterSupported,
-  isWriterSupported,
-  isLanguageModelSupported,
-  isTranslatorSupported,
-  isLanguageDetectorSupported
-} from '@/types/global'
+// API Detection Helpers (inlined to avoid import issues)
+function isSummarizerSupported(): boolean {
+  return typeof globalThis !== "undefined" && typeof (globalThis as unknown as { Summarizer?: unknown }).Summarizer !== "undefined";
+}
+
+function isRewriterSupported(): boolean {
+  return typeof globalThis !== "undefined" && typeof (globalThis as unknown as { Rewriter?: unknown }).Rewriter !== "undefined";
+}
+
+function isWriterSupported(): boolean {
+  return typeof globalThis !== "undefined" && typeof (globalThis as unknown as { Writer?: unknown }).Writer !== "undefined";
+}
+
+function isLanguageModelSupported(): boolean {
+  return typeof globalThis !== "undefined" && typeof (globalThis as unknown as { LanguageModel?: unknown }).LanguageModel !== "undefined";
+}
+
+function isTranslatorSupported(): boolean {
+  return typeof globalThis !== "undefined" && typeof (globalThis as unknown as { Translator?: unknown }).Translator !== "undefined";
+}
+
+function isLanguageDetectorSupported(): boolean {
+  return typeof globalThis !== "undefined" && typeof (globalThis as unknown as { LanguageDetector?: unknown }).LanguageDetector !== "undefined";
+}
 
 // Type definitions for AI API responses
 export interface AiResponse<T = any> {
