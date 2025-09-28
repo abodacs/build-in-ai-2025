@@ -1,6 +1,5 @@
 import * as React from 'react';
 import * as RechartsPrimitive from 'recharts';
-// LegendProps removed as it's no longer used
 
 import { cn } from '@/lib/utils';
 
@@ -277,11 +276,11 @@ function ChartLegendContent({
   verticalAlign = 'bottom',
   nameKey,
 }: React.ComponentProps<'div'> & {
-    hideIcon?: boolean;
-    nameKey?: string;
-    payload?: any[];
-    verticalAlign?: 'top' | 'middle' | 'bottom';
-  }) {
+  hideIcon?: boolean;
+  nameKey?: string;
+  payload?: any[];
+  verticalAlign?: 'top' | 'middle' | 'bottom';
+}) {
   const { config } = useChart();
 
   if (!payload?.length) {

@@ -442,7 +442,7 @@ describe('Sidebar Component', () => {
 
   describe('Ultrathink Test Suite - Advanced Edge Cases', () => {
     describe('Complex State Management and Transitions', () => {
-      it('ultrathink: should handle rapid API selection changes without state conflicts', async () => {
+      it('should handle rapid API selection changes without state conflicts', async () => {
         const user = userEvent.setup();
         render(<Sidebar />);
 
@@ -478,7 +478,7 @@ describe('Sidebar Component', () => {
         expect(mockSetActiveApi).toHaveBeenCalledTimes(7);
       });
 
-      it('ultrathink: should handle invalid activeApi states gracefully', () => {
+      it('should handle invalid activeApi states gracefully', () => {
         const invalidStates = [
           'nonexistent-api',
           '',
@@ -518,7 +518,7 @@ describe('Sidebar Component', () => {
         });
       });
 
-      it('ultrathink: should maintain visual state consistency during store updates', async () => {
+      it('should maintain visual state consistency during store updates', async () => {
         let currentActiveApi = 'summarizer';
 
         mockUseAppStore.mockImplementation((selector) => {
@@ -562,7 +562,7 @@ describe('Sidebar Component', () => {
     });
 
     describe('Advanced User Interaction Patterns', () => {
-      it('ultrathink: should handle complex keyboard navigation sequences', async () => {
+      it('should handle complex keyboard navigation sequences', async () => {
         const user = userEvent.setup();
         render(<Sidebar />);
 
@@ -584,7 +584,7 @@ describe('Sidebar Component', () => {
         expect(mockSetActiveApi).toHaveBeenCalledWith('summarizer');
       });
 
-      it('ultrathink: should handle mouse and keyboard interactions simultaneously', async () => {
+      it('should handle mouse and keyboard interactions simultaneously', async () => {
         const user = userEvent.setup();
         render(<Sidebar />);
 
@@ -606,7 +606,7 @@ describe('Sidebar Component', () => {
         expect(mockSetActiveApi).toHaveBeenCalledWith('writer'); // Should activate focused element
       });
 
-      it('ultrathink: should handle double-click and rapid click events', async () => {
+      it('should handle double-click and rapid click events', async () => {
         const user = userEvent.setup();
         render(<Sidebar />);
 
@@ -629,7 +629,7 @@ describe('Sidebar Component', () => {
     });
 
     describe('Icon and Visual Component Integrity', () => {
-      it('ultrathink: should handle missing or corrupted icon components gracefully', () => {
+      it('should handle missing or corrupted icon components gracefully', () => {
         // Mock icons to throw errors
         vi.doMock('lucide-react', () => ({
           Zap: () => {
@@ -654,7 +654,7 @@ describe('Sidebar Component', () => {
         expect(screen.getByText('Writer API')).toBeInTheDocument();
       });
 
-      it('ultrathink: should maintain icon-API association integrity', () => {
+      it('should maintain icon-API association integrity', () => {
         render(<Sidebar />);
 
         const expectedIconMapping = [
@@ -676,7 +676,7 @@ describe('Sidebar Component', () => {
         });
       });
 
-      it('ultrathink: should handle dynamic icon size and style changes', () => {
+      it('should handle dynamic icon size and style changes', () => {
         render(<Sidebar />);
 
         const iconContainers = document.querySelectorAll(
@@ -692,17 +692,7 @@ describe('Sidebar Component', () => {
     });
 
     describe('Layout and Responsive Behavior', () => {
-      it('ultrathink: should handle content overflow in API names and descriptions', () => {
-        // Mock long API names and descriptions
-        [
-          {
-            id: 'summarizer',
-            name: 'Extremely Long Summarizer API Name That Could Potentially Overflow',
-            description:
-              'This is an extremely long description that tests how the component handles text overflow and truncation in various scenarios',
-          },
-        ];
-
+      it('should handle content overflow in API names and descriptions', () => {
         render(<Sidebar />);
 
         // Check truncation classes are applied
@@ -714,7 +704,7 @@ describe('Sidebar Component', () => {
         expect(contentContainers.length).toBeGreaterThan(0);
       });
 
-      it('ultrathink: should maintain proper spacing and alignment with varying content lengths', () => {
+      it('should maintain proper spacing and alignment with varying content lengths', () => {
         render(<Sidebar />);
 
         const buttons = screen.getAllByRole('button');
@@ -732,7 +722,7 @@ describe('Sidebar Component', () => {
         });
       });
 
-      it('ultrathink: should handle dynamic list length changes', () => {
+      it('should handle dynamic list length changes', () => {
         const { rerender } = render(<Sidebar />);
 
         // Verify initial count
@@ -747,7 +737,7 @@ describe('Sidebar Component', () => {
     });
 
     describe('Advanced Accessibility and ARIA Support', () => {
-      it('ultrathink: should provide comprehensive screen reader support', () => {
+      it('should provide comprehensive screen reader support', () => {
         render(<Sidebar />);
 
         // Check ARIA landmarks
@@ -769,7 +759,7 @@ describe('Sidebar Component', () => {
         });
       });
 
-      it('ultrathink: should support assistive technology state announcements', () => {
+      it('should support assistive technology state announcements', () => {
         render(<Sidebar />);
 
         const activeButton = screen.getByRole('button', {
@@ -784,7 +774,7 @@ describe('Sidebar Component', () => {
         expect(activeApiName).toBeInTheDocument();
       });
 
-      it('ultrathink: should handle focus management during dynamic updates', async () => {
+      it('should handle focus management during dynamic updates', async () => {
         const user = userEvent.setup();
         let currentActive = 'summarizer';
 
@@ -824,7 +814,7 @@ describe('Sidebar Component', () => {
     });
 
     describe('Performance Optimization and Memory Management', () => {
-      it('ultrathink: should efficiently handle large numbers of interactions', async () => {
+      it('should efficiently handle large numbers of interactions', async () => {
         const user = userEvent.setup();
         render(<Sidebar />);
 
@@ -845,7 +835,7 @@ describe('Sidebar Component', () => {
         expect(mockSetActiveApi).toHaveBeenCalledTimes(50);
       });
 
-      it('ultrathink: should prevent memory leaks during frequent re-renders', () => {
+      it('should prevent memory leaks during frequent re-renders', () => {
         const { rerender, unmount } = render(<Sidebar />);
 
         // Perform many re-renders
@@ -857,7 +847,7 @@ describe('Sidebar Component', () => {
         expect(() => unmount()).not.toThrow();
       });
 
-      it("ultrathink: should optimize re-renders when store state hasn't changed", () => {
+      it("should optimize re-renders when store state hasn't changed", () => {
         const { rerender } = render(<Sidebar />);
 
         const initialCallCount = mockSetActiveApi.mock.calls.length;
@@ -877,7 +867,7 @@ describe('Sidebar Component', () => {
     });
 
     describe('Error Recovery and Resilience', () => {
-      it('ultrathink: should recover from store disconnection gracefully', () => {
+      it('should recover from store disconnection gracefully', () => {
         // First render with working store
         render(<Sidebar />);
         expect(screen.getByText('Available APIs')).toBeInTheDocument();
@@ -897,7 +887,7 @@ describe('Sidebar Component', () => {
         expect(screen.getAllByRole('button')).toHaveLength(7);
       });
 
-      it('ultrathink: should handle component remounting with preserved functionality', async () => {
+      it('should handle component remounting with preserved functionality', async () => {
         const user = userEvent.setup();
         const { unmount } = render(<Sidebar />);
 
@@ -917,7 +907,7 @@ describe('Sidebar Component', () => {
         expect(mockSetActiveApi).toHaveBeenCalledWith('translator');
       });
 
-      it('ultrathink: should handle concurrent state updates safely', async () => {
+      it('should handle concurrent state updates safely', async () => {
         const user = userEvent.setup();
         render(<Sidebar />);
 

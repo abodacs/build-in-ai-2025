@@ -95,4 +95,23 @@ export default [
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
+  {
+    files: [
+      '**/__tests__/**/*.{ts,tsx}',
+      '**/tests/**/*.{ts,tsx}',
+      '**/utils/**/*.{ts,tsx}',
+      '**/lib/**/*.{ts,tsx}',
+      '**/types/**/*.{ts,tsx}',
+      '**/constants/**/*.{ts,tsx}',
+      '**/config/**/*.{ts,tsx}',
+      '**/helpers/**/*.{ts,tsx}',
+      '**/stores/**/*.{ts,tsx}',
+      '**/services/**/*.{ts,tsx}',
+      '**/hooks/**/*.{ts,tsx}',
+      '**/components/ui/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ]

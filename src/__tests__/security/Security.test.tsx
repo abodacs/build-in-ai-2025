@@ -84,7 +84,9 @@ describe('Security Tests', () => {
 
         // Should not execute JavaScript
         expect(mockAlert).not.toHaveBeenCalled();
-        expect((contextInput as HTMLInputElement).value).toContain('javascript');
+        expect((contextInput as HTMLInputElement).value).toContain(
+          'javascript',
+        );
       }
 
       mockAlert.mockRestore();

@@ -530,13 +530,15 @@ describe('Header Component', () => {
         ];
 
         for (let i = 0; i < stateSequence.length; i++) {
-          mockUseAppStore.mockImplementation((selector: (state: any) => any) => {
-            const state = {
-              aiCapabilities: stateSequence[i],
-              setAiCapabilities: mockSetAiCapabilities,
-            };
-            return selector(state);
-          });
+          mockUseAppStore.mockImplementation(
+            (selector: (state: any) => any) => {
+              const state = {
+                aiCapabilities: stateSequence[i],
+                setAiCapabilities: mockSetAiCapabilities,
+              };
+              return selector(state);
+            },
+          );
 
           const { rerender } = render(<Header />);
           rerender(<Header />);
@@ -751,7 +753,9 @@ describe('Header Component', () => {
           setAiCapabilities: mockSetAiCapabilities,
         };
 
-        mockUseAppStore.mockImplementation((selector: (state: any) => any) => selector(storeState));
+        mockUseAppStore.mockImplementation((selector: (state: any) => any) =>
+          selector(storeState),
+        );
 
         const { rerender } = render(<Header />);
 
@@ -765,7 +769,7 @@ describe('Header Component', () => {
             rewriter: 'unavailable',
             proofreader: 'unavailable',
             prompt: 'unavailable',
-            languageDetection: 'unavailable'
+            languageDetection: 'unavailable',
           },
         };
 

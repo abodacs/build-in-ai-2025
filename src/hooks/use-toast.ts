@@ -11,7 +11,12 @@ interface Toast {
 export function useToast() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const toast = ({ title, description, action, variant = 'default' }: Omit<Toast, 'id'>) => {
+  const toast = ({
+    title,
+    description,
+    action,
+    variant = 'default',
+  }: Omit<Toast, 'id'>) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newToast: Toast = {
       id,
@@ -35,9 +40,7 @@ export function useToast() {
   };
 
   const dismiss = (toastId?: string) => {
-    setToasts((prev) =>
-      toastId ? prev.filter((t) => t.id !== toastId) : []
-    );
+    setToasts((prev) => (toastId ? prev.filter((t) => t.id !== toastId) : []));
   };
 
   return {

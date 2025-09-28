@@ -161,10 +161,13 @@ export function ChromeAIPlayground() {
   const [inputText, setInputText] = useState('');
   const [output, setOutput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [performanceMetrics, setPerformanceMetrics] = useState<{
-    duration: number;
-    tokens?: number;
-  } | undefined>(undefined);
+  const [performanceMetrics, setPerformanceMetrics] = useState<
+    | {
+        duration: number;
+        tokens?: number;
+      }
+    | undefined
+  >(undefined);
   const [codeLanguage, setCodeLanguage] = useState<'javascript' | 'typescript'>(
     'javascript',
   );
@@ -575,37 +578,37 @@ export function ChromeAIPlayground() {
       case 'translator':
         return (
           <Suspense fallback={<TranslatorResultSkeleton />}>
-              <TranslatorResult {...resultProps} />
+            <TranslatorResult {...resultProps} />
           </Suspense>
         );
       case 'writer':
         return (
           <Suspense fallback={<WriterResultSkeleton />}>
-              <WriterResult {...resultProps} />
+            <WriterResult {...resultProps} />
           </Suspense>
         );
       case 'rewriter':
         return (
           <Suspense fallback={<RewriterResultSkeleton />}>
-              <RewriterResult {...resultProps} />
+            <RewriterResult {...resultProps} />
           </Suspense>
         );
       case 'proofreader':
         return (
           <Suspense fallback={<ProofreaderResultSkeleton />}>
-              <ProofreaderResult {...resultProps} />
+            <ProofreaderResult {...resultProps} />
           </Suspense>
         );
       case 'prompt':
         return (
           <Suspense fallback={<PromptResultSkeleton />}>
-              <PromptResult {...resultProps} />
+            <PromptResult {...resultProps} />
           </Suspense>
         );
       case 'language-detection':
         return (
           <Suspense fallback={<LanguageDetectionResultSkeleton />}>
-              <LanguageDetectionResult {...resultProps} />
+            <LanguageDetectionResult {...resultProps} />
           </Suspense>
         );
       default:

@@ -14,12 +14,12 @@ import React, { useCallback, useEffect, useState, useRef } from 'react';
 export interface PlaygroundError {
   id: string;
   type:
-  | 'network'
-  | 'api'
-  | 'validation'
-  | 'security'
-  | 'permission'
-  | 'unknown';
+    | 'network'
+    | 'api'
+    | 'validation'
+    | 'security'
+    | 'permission'
+    | 'unknown';
   severity: 'low' | 'medium' | 'high' | 'critical';
   message: string;
   details?: string;
@@ -574,7 +574,7 @@ export class CircuitBreaker {
   constructor(
     private readonly failureThreshold: number = 5,
     private readonly retryTimeout: number = 30000, // 30 seconds
-  ) { }
+  ) {}
 
   async execute<T>(operation: () => Promise<T>): Promise<T> {
     if (this.state === 'OPEN') {
