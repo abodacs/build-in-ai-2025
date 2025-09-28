@@ -88,4 +88,4 @@ jobs:
           projectName: chrome-ai-devbench
           directory: dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          wranglerVersion: '3'
+          wranglerVersion: '4'

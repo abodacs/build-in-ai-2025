@@ -1,12 +1,13 @@
-import { Routes, Route } from 'react-router-dom'
-import { Suspense } from 'react'
+import { Routes, Route } from 'react-router-dom';
+import { Suspense } from 'react';
 
-import { Layout } from '@/components/layout/Layout'
-import { LoadingSpinner } from '@/components/common/loading-spinner/LoadingSpinner'
-import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary'
+import { Layout } from '@/components/layout/Layout';
+import { LoadingSpinner } from '@/components/common/loading-spinner/LoadingSpinner';
+import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
 
 // Lazy load feature components for better performance
-import { HomePage } from '@/features/api-playground/components/HomePage'
+import { HomePage } from '@/features/api-playground/components/HomePage';
+import { PlaygroundContainer } from '@/features/unified-playground';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/playground" element={<HomePage />} />
+              <Route path="/unified" element={<PlaygroundContainer />} />
               <Route
                 path="/security"
                 element={
@@ -41,7 +43,7 @@ function App() {
                   <div className="p-8 text-center">
                     <h1 className="text-2xl font-bold">404 - Page Not Found</h1>
                     <p className="text-muted-foreground mt-2">
-                      The page you're looking for doesn't exist.
+                      The page you&apos;re looking for doesn&apos;t exist.
                     </p>
                   </div>
                 }
@@ -51,7 +53,7 @@ function App() {
         </Layout>
       </div>
     </ErrorBoundary>
-  )
+  );
 }
 
-export default App
+export default App;

@@ -1,31 +1,34 @@
-import { ReactNode } from 'react'
-import { Header } from './header/Header'
-import { Sidebar } from './sidebar/Sidebar'
+import { ReactNode } from 'react';
+import { Header } from './header/Header';
+import { Sidebar } from './sidebar/Sidebar';
+import { WarningBanner } from './header/WarningBanner';
 
 interface LayoutProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export function Layout({ children }: LayoutProps) {
   return (
-    <div className="flex h-screen bg-white dark:bg-gray-950">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
-        <Sidebar />
-      </aside>
-
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-white">
+      {/* Centered container with max width */}
+      <div className="max-w-7xl mx-auto bg-white">
         {/* Header */}
-        <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
-          <Header />
-        </header>
+        <Header />
 
-        {/* Main content */}
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
+        {/* Warning Banner */}
+        <WarningBanner />
+
+        {/* Two-column layout */}
+        <div className="flex">
+          {/* Sidebar */}
+          <aside className="w-80 bg-white">
+            <Sidebar />
+          </aside>
+
+          {/* Main content area */}
+          <main className="flex-1 bg-white">{children}</main>
+        </div>
       </div>
     </div>
-  )
+  );
 }
