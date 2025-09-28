@@ -5,11 +5,11 @@
 
 export const breakpoints = {
   // Base breakpoints
-  xs: '480px',   // Extra small devices (phones)
-  sm: '640px',   // Small devices (large phones)
-  md: '768px',   // Medium devices (tablets)
-  lg: '1024px',  // Large devices (laptops)
-  xl: '1280px',  // Extra large devices (desktops)
+  xs: '480px', // Extra small devices (phones)
+  sm: '640px', // Small devices (large phones)
+  md: '768px', // Medium devices (tablets)
+  lg: '1024px', // Large devices (laptops)
+  xl: '1280px', // Extra large devices (desktops)
   '2xl': '1536px', // 2X large devices (large desktops)
 } as const;
 
@@ -37,18 +37,18 @@ export const containerSizes = {
 export const gridSystem = {
   columns: 12,
   gutter: {
-    xs: '1rem',   // 16px
+    xs: '1rem', // 16px
     sm: '1.5rem', // 24px
-    md: '2rem',   // 32px
+    md: '2rem', // 32px
     lg: '2.5rem', // 40px
-    xl: '3rem',   // 48px
+    xl: '3rem', // 48px
   },
   margins: {
-    xs: '1rem',   // 16px
+    xs: '1rem', // 16px
     sm: '1.5rem', // 24px
-    md: '2rem',   // 32px
-    lg: '3rem',   // 48px
-    xl: '4rem',   // 64px
+    md: '2rem', // 32px
+    lg: '3rem', // 48px
+    xl: '4rem', // 64px
   },
 } as const;
 
@@ -112,33 +112,33 @@ export const componentBreakpoints = {
 // Responsive font sizes
 export const responsiveFontSizes = {
   'display-xl': {
-    xs: '2.25rem',  // 36px
-    sm: '3rem',     // 48px
-    md: '3.75rem',  // 60px
-    lg: '4.5rem',   // 72px
+    xs: '2.25rem', // 36px
+    sm: '3rem', // 48px
+    md: '3.75rem', // 60px
+    lg: '4.5rem', // 72px
   },
   'display-lg': {
     xs: '1.875rem', // 30px
-    sm: '2.25rem',  // 36px
-    md: '3rem',     // 48px
-    lg: '3.75rem',  // 60px
+    sm: '2.25rem', // 36px
+    md: '3rem', // 48px
+    lg: '3.75rem', // 60px
   },
   'display-md': {
-    xs: '1.5rem',   // 24px
+    xs: '1.5rem', // 24px
     sm: '1.875rem', // 30px
-    md: '2.25rem',  // 36px
-    lg: '3rem',     // 48px
+    md: '2.25rem', // 36px
+    lg: '3rem', // 48px
   },
   heading: {
-    xs: '1.25rem',  // 20px
-    sm: '1.5rem',   // 24px
+    xs: '1.25rem', // 20px
+    sm: '1.5rem', // 24px
     md: '1.875rem', // 30px
-    lg: '2.25rem',  // 36px
+    lg: '2.25rem', // 36px
   },
   body: {
     xs: '0.875rem', // 14px
-    sm: '1rem',     // 16px
-    md: '1rem',     // 16px
+    sm: '1rem', // 16px
+    md: '1rem', // 16px
     lg: '1.125rem', // 18px
   },
 } as const;
@@ -146,23 +146,23 @@ export const responsiveFontSizes = {
 // Responsive spacing
 export const responsiveSpacing = {
   section: {
-    xs: '2rem',   // 32px
-    sm: '3rem',   // 48px
-    md: '4rem',   // 64px
-    lg: '5rem',   // 80px
-    xl: '6rem',   // 96px
+    xs: '2rem', // 32px
+    sm: '3rem', // 48px
+    md: '4rem', // 64px
+    lg: '5rem', // 80px
+    xl: '6rem', // 96px
   },
   component: {
-    xs: '1rem',   // 16px
+    xs: '1rem', // 16px
     sm: '1.5rem', // 24px
-    md: '2rem',   // 32px
+    md: '2rem', // 32px
     lg: '2.5rem', // 40px
-    xl: '3rem',   // 48px
+    xl: '3rem', // 48px
   },
   element: {
     xs: '0.5rem', // 8px
     sm: '0.75rem', // 12px
-    md: '1rem',   // 16px
+    md: '1rem', // 16px
     lg: '1.25rem', // 20px
     xl: '1.5rem', // 24px
   },

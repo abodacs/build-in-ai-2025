@@ -2,6 +2,7 @@
  * Theme Toggle Component - Instant Wow Factor
  * Beautiful light/dark/system theme switching with pure CSS transitions
  */
+/* eslint-disable react-refresh/only-export-components */
 
 import { useEffect, useState, startTransition } from 'react';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sun, Moon, Monitor, Palette } from 'lucide-react';
 
@@ -24,7 +25,7 @@ interface ThemeToggleProps {
 export function ThemeToggle({
   className = '',
   showLabel = false,
-  variant = 'dropdown'
+  variant = 'dropdown',
 }: ThemeToggleProps) {
   const [theme, setTheme] = useState<Theme>('system');
   const [mounted, setMounted] = useState(false);
@@ -32,7 +33,7 @@ export function ThemeToggle({
   // Ensure component is mounted before rendering (prevent hydration mismatch)
   useEffect(() => {
     setMounted(true);
-    const savedTheme = localStorage.getItem('theme') as Theme || 'system';
+    const savedTheme = (localStorage.getItem('theme') as Theme) || 'system';
     setTheme(savedTheme);
     applyTheme(savedTheme);
   }, []);
@@ -44,7 +45,8 @@ export function ThemeToggle({
     root.classList.remove('light', 'dark');
 
     if (newTheme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
+        .matches
         ? 'dark'
         : 'light';
       root.classList.add(systemTheme);
@@ -70,7 +72,9 @@ export function ThemeToggle({
   // Don't render until mounted to prevent hydration issues
   if (!mounted) {
     return (
-      <div className={`w-9 h-9 rounded-md animate-pulse bg-muted ${className}`} />
+      <div
+        className={`w-9 h-9 rounded-md animate-pulse bg-muted ${className}`}
+      />
     );
   }
 
@@ -102,7 +106,8 @@ export function ThemeToggle({
 
   // Simple icon button variant
   if (variant === 'icon') {
-    const nextTheme: Theme = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light';
+    const nextTheme: Theme =
+      theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light';
 
     return (
       <Button
@@ -142,9 +147,10 @@ export function ThemeToggle({
             className={`
               transition-all duration-200 ease-out
               hover:scale-105 focus-ring rounded-md
-              ${theme === themeOption
-                ? 'bg-primary text-primary-foreground shadow-md'
-                : 'hover:bg-muted/80'
+              ${
+                theme === themeOption
+                  ? 'bg-primary text-primary-foreground shadow-md'
+                  : 'hover:bg-muted/80'
               }
             `}
             aria-label={`Switch to ${getThemeLabel(themeOption)} theme`}
@@ -207,9 +213,7 @@ export function ThemeToggle({
             <div className="transition-transform duration-200 ease-out group-hover:rotate-12">
               {getThemeIcon(themeOption)}
             </div>
-            <span className="font-medium">
-              {getThemeLabel(themeOption)}
-            </span>
+            <span className="font-medium">{getThemeLabel(themeOption)}</span>
             {theme === themeOption && (
               <div className="ml-auto w-2 h-2 bg-primary rounded-full animate-pulse" />
             )}
@@ -226,12 +230,13 @@ export function useTheme() {
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as Theme || 'system';
+    const savedTheme = (localStorage.getItem('theme') as Theme) || 'system';
     setTheme(savedTheme);
 
     const updateResolvedTheme = () => {
       if (savedTheme === 'system') {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
+          .matches
           ? 'dark'
           : 'light';
         setResolvedTheme(systemTheme);

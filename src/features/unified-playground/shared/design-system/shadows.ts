@@ -104,9 +104,12 @@ export const glowEffects = {
   // Strong glows for wow factor
   strong: {
     blue: '0 0 30px rgb(59 130 246 / 0.5), 0 0 60px rgb(59 130 246 / 0.3), 0 0 90px rgb(59 130 246 / 0.1)',
-    green: '0 0 30px rgb(34 197 94 / 0.5), 0 0 60px rgb(34 197 94 / 0.3), 0 0 90px rgb(34 197 94 / 0.1)',
-    purple: '0 0 30px rgb(168 85 247 / 0.5), 0 0 60px rgb(168 85 247 / 0.3), 0 0 90px rgb(168 85 247 / 0.1)',
-    rainbow: '0 0 30px rgb(59 130 246 / 0.3), 0 0 60px rgb(168 85 247 / 0.3), 0 0 90px rgb(34 197 94 / 0.2)',
+    green:
+      '0 0 30px rgb(34 197 94 / 0.5), 0 0 60px rgb(34 197 94 / 0.3), 0 0 90px rgb(34 197 94 / 0.1)',
+    purple:
+      '0 0 30px rgb(168 85 247 / 0.5), 0 0 60px rgb(168 85 247 / 0.3), 0 0 90px rgb(168 85 247 / 0.1)',
+    rainbow:
+      '0 0 30px rgb(59 130 246 / 0.3), 0 0 60px rgb(168 85 247 / 0.3), 0 0 90px rgb(34 197 94 / 0.2)',
   },
 } as const;
 
@@ -211,7 +214,10 @@ export const createShadow = {
     `0 4px ${blur}px ${color.replace(')', ` / ${opacity})`)}`,
 
   // Create a glow effect
-  glow: (color: string, intensity: 'subtle' | 'medium' | 'strong' = 'medium') => {
+  glow: (
+    color: string,
+    intensity: 'subtle' | 'medium' | 'strong' = 'medium',
+  ) => {
     const intensities = {
       subtle: '0 0 10px',
       medium: '0 0 20px, 0 0 40px',
