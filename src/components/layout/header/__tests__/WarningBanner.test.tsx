@@ -284,7 +284,7 @@ describe('WarningBanner Component', () => {
         expect(banners).toHaveLength(3);
 
         // Each banner should have identical structure and content
-        banners.forEach((banner, index) => {
+        banners.forEach((banner, _index) => {
           expect(banner).toHaveClass(
             'bg-red-50',
             'border',
@@ -348,7 +348,7 @@ describe('WarningBanner Component', () => {
           ),
         ];
 
-        containers.forEach((Container, index) => {
+        containers.forEach((Container, _index) => {
           const { container } = render(
             <Container>
               <WarningBanner />
@@ -667,7 +667,7 @@ describe('WarningBanner Component', () => {
           },
         ];
 
-        scenarios.forEach(({ name, render: renderScenario }) => {
+        scenarios.forEach(({ name: _name, render: renderScenario }) => {
           const { unmount } = renderScenario();
           expect(() => renderScenario()).not.toThrow();
 

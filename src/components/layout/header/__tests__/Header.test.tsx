@@ -53,7 +53,7 @@ describe('Header Component', () => {
       reset: vi.fn(),
     };
 
-    mockUseAppStore.mockImplementation((selector) => {
+    mockUseAppStore.mockImplementation((selector: (state: any) => any) => {
       if (selector) {
         return selector(defaultState);
       }
@@ -170,7 +170,7 @@ describe('Header Component', () => {
     });
 
     it('shows unavailable state when all APIs are unavailable', () => {
-      mockUseAppStore.mockImplementation((selector) => {
+      mockUseAppStore.mockImplementation((selector: (state: any) => any) => {
         const state = {
           aiCapabilities: {
             summarizer: 'unavailable',
@@ -193,7 +193,7 @@ describe('Header Component', () => {
     });
 
     it('shows available state when at least one API is available', () => {
-      mockUseAppStore.mockImplementation((selector) => {
+      mockUseAppStore.mockImplementation((selector: (state: any) => any) => {
         const state = {
           aiCapabilities: {
             summarizer: 'available',
@@ -530,7 +530,7 @@ describe('Header Component', () => {
         ];
 
         for (let i = 0; i < stateSequence.length; i++) {
-          mockUseAppStore.mockImplementation((selector) => {
+          mockUseAppStore.mockImplementation((selector: (state: any) => any) => {
             const state = {
               aiCapabilities: stateSequence[i],
               setAiCapabilities: mockSetAiCapabilities,
@@ -746,19 +746,27 @@ describe('Header Component', () => {
 
     describe('Integration and Component Boundaries', () => {
       it('ultrathink: should handle store updates from external sources', async () => {
-        let storeState = {
+        let storeState: any = {
           aiCapabilities: null,
           setAiCapabilities: mockSetAiCapabilities,
         };
 
-        mockUseAppStore.mockImplementation((selector) => selector(storeState));
+        mockUseAppStore.mockImplementation((selector: (state: any) => any) => selector(storeState));
 
         const { rerender } = render(<Header />);
 
         // Simulate external store update
         storeState = {
           ...storeState,
-          aiCapabilities: { summarizer: 'available' },
+          aiCapabilities: {
+            summarizer: 'available',
+            translator: 'unavailable',
+            writer: 'unavailable',
+            rewriter: 'unavailable',
+            proofreader: 'unavailable',
+            prompt: 'unavailable',
+            languageDetection: 'unavailable'
+          },
         };
 
         rerender(<Header />);
@@ -781,7 +789,7 @@ describe('Header Component', () => {
           ),
         ];
 
-        wrappers.forEach((Wrapper, index) => {
+        wrappers.forEach((Wrapper, _index) => {
           const { container } = render(
             <Wrapper>
               <Header />

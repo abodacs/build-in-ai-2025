@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -84,7 +84,7 @@ describe('Security Tests', () => {
 
         // Should not execute JavaScript
         expect(mockAlert).not.toHaveBeenCalled();
-        expect(contextInput.value).toContain('javascript');
+        expect((contextInput as HTMLInputElement).value).toContain('javascript');
       }
 
       mockAlert.mockRestore();
@@ -117,7 +117,7 @@ describe('Security Tests', () => {
       try {
         const parsed = JSON.parse(maliciousInput);
         expect(parsed.__proto__).toBeDefined();
-        expect(Object.prototype.polluted).toBeUndefined();
+        expect((Object.prototype as any).polluted).toBeUndefined();
       } catch (error) {
         // JSON.parse should handle this safely
         expect(error).toBeInstanceOf(Error);
@@ -166,14 +166,14 @@ describe('Security Tests', () => {
       // Test with potentially dangerous content
       const dangerousContent =
         '<form name="location"><input name="href" value="javascript:alert(1)"></form>';
-      const sanitized = DOMPurify.sanitize(dangerousContent);
+      DOMPurify.sanitize(dangerousContent);
 
       // Should not affect global objects
       expect(window.location.href).toContain('localhost');
     });
 
     it('handles URL injection safely', async () => {
-      const user = userEvent.setup();
+      userEvent.setup();
       renderApp();
 
       const docButton = screen.getByText('Documentation');
@@ -337,8 +337,8 @@ describe('Security Tests', () => {
       vi.mocked(testAiAvailability).mockResolvedValue({
         maliciousField: '<script>alert("XSS")</script>',
         __proto__: { polluted: true },
-        constructor: { name: 'Object' },
-      });
+        constructor: Function as any,
+      } as any);
 
       expect(() => renderApp()).not.toThrow();
     });
@@ -371,7 +371,7 @@ describe('Security Tests', () => {
         await user.type(contextInput, maliciousContext);
 
         // Input should be accepted but handled safely
-        expect(contextInput.value).toContain('harmful');
+        expect((contextInput as HTMLInputElement).value).toContain('harmful');
       }
     });
   });

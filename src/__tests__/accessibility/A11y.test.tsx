@@ -417,7 +417,7 @@ describe('Accessibility Tests (WCAG 2.1 AA Compliance)', () => {
     });
 
     it('provides proper state announcements', async () => {
-      const user = userEvent.setup();
+      userEvent.setup();
       renderApp();
 
       // Active API should be announced to screen readers

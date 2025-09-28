@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HomePage } from '../HomePage';
@@ -608,7 +608,7 @@ describe('HomePage Component', () => {
       });
 
       it('ultrathink: should maintain tab state consistency across API changes', async () => {
-        const user = userEvent.setup();
+        userEvent.setup();
 
         // Start with summarizer
         render(<HomePage />);
@@ -836,7 +836,7 @@ describe('HomePage Component', () => {
       });
 
       it('ultrathink: should maintain accessibility during dynamic content updates', async () => {
-        const user = userEvent.setup();
+        userEvent.setup();
         render(<HomePage />);
 
         // Test heading hierarchy remains intact during API switches

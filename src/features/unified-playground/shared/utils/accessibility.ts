@@ -314,18 +314,18 @@ export function useFocusTrap(isActive: boolean = false) {
       if (event.shiftKey) {
         if (document.activeElement === firstElement) {
           event.preventDefault();
-          lastElement.focus();
+          (lastElement as HTMLElement).focus();
         }
       } else {
         if (document.activeElement === lastElement) {
           event.preventDefault();
-          firstElement.focus();
+          (firstElement as HTMLElement).focus();
         }
       }
     };
 
     container.addEventListener('keydown', handleTabKey);
-    firstElement?.focus();
+    (firstElement as HTMLElement)?.focus();
 
     return () => {
       container.removeEventListener('keydown', handleTabKey);

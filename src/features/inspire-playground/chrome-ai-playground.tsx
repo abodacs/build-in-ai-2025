@@ -59,7 +59,7 @@ import {
   Scissors,
   TrendingUp,
 } from 'lucide-react';
-import { unstable_ViewTransition as ViewTransition } from 'react';
+// ViewTransition is not available in React, removing this import
 
 import {
   SummarizerResult,
@@ -164,7 +164,7 @@ export function ChromeAIPlayground() {
   const [performanceMetrics, setPerformanceMetrics] = useState<{
     duration: number;
     tokens?: number;
-  } | null>(null);
+  } | undefined>(undefined);
   const [codeLanguage, setCodeLanguage] = useState<'javascript' | 'typescript'>(
     'javascript',
   );
@@ -568,59 +568,45 @@ export function ChromeAIPlayground() {
     switch (selectedAPI) {
       case 'summarizer':
         return (
-          <ViewTransition>
-            <Suspense fallback={<SummarizerResultSkeleton />}>
-              <SummarizerResult {...resultProps} />
-            </Suspense>
-          </ViewTransition>
+          <Suspense fallback={<SummarizerResultSkeleton />}>
+            <SummarizerResult {...resultProps} />
+          </Suspense>
         );
       case 'translator':
         return (
-          <ViewTransition>
-            <Suspense fallback={<TranslatorResultSkeleton />}>
+          <Suspense fallback={<TranslatorResultSkeleton />}>
               <TranslatorResult {...resultProps} />
-            </Suspense>
-          </ViewTransition>
+          </Suspense>
         );
       case 'writer':
         return (
-          <ViewTransition>
-            <Suspense fallback={<WriterResultSkeleton />}>
+          <Suspense fallback={<WriterResultSkeleton />}>
               <WriterResult {...resultProps} />
-            </Suspense>
-          </ViewTransition>
+          </Suspense>
         );
       case 'rewriter':
         return (
-          <ViewTransition>
-            <Suspense fallback={<RewriterResultSkeleton />}>
+          <Suspense fallback={<RewriterResultSkeleton />}>
               <RewriterResult {...resultProps} />
-            </Suspense>
-          </ViewTransition>
+          </Suspense>
         );
       case 'proofreader':
         return (
-          <ViewTransition>
-            <Suspense fallback={<ProofreaderResultSkeleton />}>
+          <Suspense fallback={<ProofreaderResultSkeleton />}>
               <ProofreaderResult {...resultProps} />
-            </Suspense>
-          </ViewTransition>
+          </Suspense>
         );
       case 'prompt':
         return (
-          <ViewTransition>
-            <Suspense fallback={<PromptResultSkeleton />}>
+          <Suspense fallback={<PromptResultSkeleton />}>
               <PromptResult {...resultProps} />
-            </Suspense>
-          </ViewTransition>
+          </Suspense>
         );
       case 'language-detection':
         return (
-          <ViewTransition>
-            <Suspense fallback={<LanguageDetectionResultSkeleton />}>
+          <Suspense fallback={<LanguageDetectionResultSkeleton />}>
               <LanguageDetectionResult {...resultProps} />
-            </Suspense>
-          </ViewTransition>
+          </Suspense>
         );
       default:
         return (

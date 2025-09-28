@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Sidebar } from '../Sidebar';
@@ -588,7 +588,7 @@ describe('Sidebar Component', () => {
         const user = userEvent.setup();
         render(<Sidebar />);
 
-        const translatorButton = screen.getByRole('button', {
+        screen.getByRole('button', {
           name: /Translator API/,
         });
         const writerButton = screen.getByRole('button', { name: /Writer API/ });
@@ -694,7 +694,7 @@ describe('Sidebar Component', () => {
     describe('Layout and Responsive Behavior', () => {
       it('ultrathink: should handle content overflow in API names and descriptions', () => {
         // Mock long API names and descriptions
-        const originalAPIs = [
+        [
           {
             id: 'summarizer',
             name: 'Extremely Long Summarizer API Name That Could Potentially Overflow',

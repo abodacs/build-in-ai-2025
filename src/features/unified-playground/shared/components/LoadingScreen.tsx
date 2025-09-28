@@ -83,8 +83,8 @@ export function LoadingScreen({
   const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
-    let timeoutId: number | undefined;
-    let intervalId: number | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    let intervalId: ReturnType<typeof setInterval> | undefined;
 
     if (variant === 'minimal') {
       // Simple progress animation for minimal variant

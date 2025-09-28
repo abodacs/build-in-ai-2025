@@ -170,7 +170,7 @@ describe('App Shell Integration Tests', () => {
 
   describe('Tab Navigation Integration', () => {
     it('switches between Demo, Code, and Security tabs', async () => {
-      const user = userEvent.setup();
+      userEvent.setup();
       renderApp();
 
       // Demo tab should be active by default
@@ -348,7 +348,7 @@ describe('App Shell Integration Tests', () => {
     });
 
     it('provides complete keyboard navigation', async () => {
-      const user = userEvent.setup();
+      userEvent.setup();
       renderApp();
 
       // Should be able to navigate to documentation button

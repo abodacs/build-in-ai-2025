@@ -89,4 +89,10 @@ export default [
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
+  {
+    files: ['**/components/ui/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
 ]

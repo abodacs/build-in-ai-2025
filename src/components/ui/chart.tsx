@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as RechartsPrimitive from 'recharts';
-import type { TooltipProps, LegendProps } from 'recharts';
+// LegendProps removed as it's no longer used
 
 import { cn } from '@/lib/utils';
 
@@ -133,6 +133,9 @@ function ChartTooltipContent({
     indicator?: 'line' | 'dot' | 'dashed';
     nameKey?: string;
     labelKey?: string;
+    payload?: any[];
+    label?: string | number;
+    active?: boolean;
   }) {
   const { config } = useChart();
 
@@ -273,10 +276,11 @@ function ChartLegendContent({
   payload,
   verticalAlign = 'bottom',
   nameKey,
-}: React.ComponentProps<'div'> &
-  Pick<LegendProps<any, any>, 'payload' | 'verticalAlign'> & {
+}: React.ComponentProps<'div'> & {
     hideIcon?: boolean;
     nameKey?: string;
+    payload?: any[];
+    verticalAlign?: 'top' | 'middle' | 'bottom';
   }) {
   const { config } = useChart();
 
