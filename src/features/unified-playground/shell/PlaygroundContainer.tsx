@@ -3,12 +3,9 @@
  * Enterprise-grade component with proper architecture patterns, security, and performance
  */
 
-import { useState, useCallback, Suspense, startTransition } from 'react';
+import { useCallback, useEffect, Suspense, startTransition } from 'react';
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
-import {
-  LoadingScreen,
-  LoadingSpinner,
-} from '../shared/components/LoadingScreen';
+import { LoadingSpinner } from '../shared/components/LoadingScreen';
 import { ThemeToggle } from '../shared/components/ThemeToggle';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -249,8 +246,6 @@ export function PlaygroundContainer({
   className,
   showPerformanceMetrics = true,
 }: PlaygroundContainerProps) {
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-
   // State management with custom hooks
   const {
     capabilities,
@@ -272,12 +267,6 @@ export function PlaygroundContainer({
   // Event Handlers
   // ============================================================================
 
-  const handleLoadingComplete = useCallback(() => {
-    startTransition(() => {
-      setIsInitialLoading(false);
-    });
-  }, []);
-
   const handleRefresh = useCallback(() => {
     const stopMeasuring = measureInteractionLatency('refresh_capabilities');
     startTransition(() => {
@@ -288,32 +277,19 @@ export function PlaygroundContainer({
   }, [checkAllCapabilities, clearErrors, measureInteractionLatency]);
 
   // ============================================================================
-  // Performance Tracking
+  // Performance Tracking (using useEffect to avoid infinite loops)
   // ============================================================================
 
-  const stopRenderMeasuring = measureComponentRender('PlaygroundContainer');
-
-  // ============================================================================
-  // Loading State
-  // ============================================================================
-
-  if (isInitialLoading) {
-    return (
-      <LoadingScreen
-        onComplete={handleLoadingComplete}
-        duration={3000}
-        variant="showcase"
-        showProgress={true}
-      />
-    );
-  }
+  useEffect(() => {
+    const stopMeasure = measureComponentRender('PlaygroundContainer');
+    return () => {
+      stopMeasure();
+    };
+  }, []); // Only measure on mount/unmount
 
   // ============================================================================
   // Render
   // ============================================================================
-
-  // Complete render measurement
-  stopRenderMeasuring();
 
   return (
     <ErrorBoundary fallback={PlaygroundErrorFallback}>

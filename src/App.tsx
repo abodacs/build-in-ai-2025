@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense } from 'react';
 
 import { Layout } from '@/components/layout/Layout';
@@ -7,50 +7,78 @@ import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary'
 
 // Lazy load feature components for better performance
 import { HomePage } from '@/features/api-playground/components/HomePage';
-import { PlaygroundContainer } from '@/features/unified-playground';
+import { UnifiedPlayground, PlaygroundContainer } from '@/features/unified-playground';
 
 function App() {
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-background font-sans antialiased">
-        <Layout>
-          <Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/playground" element={<HomePage />} />
-              <Route path="/unified" element={<PlaygroundContainer />} />
-              <Route
-                path="/security"
-                element={
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            {/* Root - Unified Playground (default) */}
+            <Route
+              path="/"
+              element={
+                <PlaygroundContainer>
+                  <UnifiedPlayground />
+                </PlaygroundContainer>
+              }
+            />
+
+            {/* Redirect /playground to root */}
+            <Route path="/playground" element={<Navigate to="/" replace />} />
+
+            {/* Old playground - preserved for reference */}
+            <Route
+              path="/old-playground"
+              element={
+                <Layout>
+                  <HomePage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/security"
+              element={
+                <Layout>
                   <div className="p-8 text-center">
                     <h1 className="text-2xl font-bold">Security Demo</h1>
                     <p className="text-muted-foreground mt-2">Coming soon...</p>
                   </div>
-                }
-              />
-              <Route
-                path="/hybrid"
-                element={
+                </Layout>
+              }
+            />
+            <Route
+              path="/hybrid"
+              element={
+                <Layout>
                   <div className="p-8 text-center">
                     <h1 className="text-2xl font-bold">Hybrid AI</h1>
                     <p className="text-muted-foreground mt-2">Coming soon...</p>
                   </div>
-                }
-              />
-              <Route
-                path="*"
-                element={
+                </Layout>
+              }
+            />
+
+            {/* Redirect /unified to root */}
+            <Route path="/unified" element={<Navigate to="/" replace />} />
+
+            {/* 404 Route */}
+            <Route
+              path="*"
+              element={
+                <Layout>
                   <div className="p-8 text-center">
                     <h1 className="text-2xl font-bold">404 - Page Not Found</h1>
                     <p className="text-muted-foreground mt-2">
                       The page you&apos;re looking for doesn&apos;t exist.
                     </p>
                   </div>
-                }
-              />
-            </Routes>
-          </Suspense>
-        </Layout>
+                </Layout>
+              }
+            />
+          </Routes>
+        </Suspense>
       </div>
     </ErrorBoundary>
   );

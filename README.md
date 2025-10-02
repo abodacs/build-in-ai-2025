@@ -51,8 +51,15 @@ src/
 
 ### Prerequisites
 
+#### Development Requirements
 - Node.js 22+
 - pnpm 8+
+
+#### Chrome AI Requirements
+- **Browser**: Chrome 138+ (Canary/Dev) or Edge Canary
+- **Storage**: 22+ GB free disk space (for AI models)
+- **VRAM**: 4+ GB (for on-device AI processing)
+- **Network**: Required for initial model download (~1-2 GB per API)
 
 ### Installation
 
@@ -67,6 +74,57 @@ pnpm install
 # Start development server
 pnpm dev
 ```
+
+### 🔧 Chrome AI Setup
+
+To use Chrome's built-in AI APIs, you need to enable experimental features:
+
+#### 1. Enable Chrome AI Flags
+
+1. Open Chrome and navigate to `chrome://flags`
+2. Enable the following flags:
+   - **Summarization API for Gemini Nano** → `Enabled`
+   - **Prompt API for Gemini Nano** → `Enabled`
+   - **Translation API** → `Enabled`
+   - **Writer API** → `Enabled`
+   - **Rewriter API** → `Enabled`
+   - **Language Detection API** → `Enabled`
+3. Restart Chrome
+
+#### 2. Download AI Models
+
+When you first use an API, Chrome will prompt you to download the AI model:
+
+- Models are downloaded automatically on first use
+- Download progress is shown in the UI
+- Models are cached locally for future use
+- Requires stable internet connection
+
+#### 3. Verify Setup
+
+1. Open the app: `http://localhost:5173`
+2. Check the header for API status indicators
+3. Green badges = APIs ready to use
+4. Click on any API to test functionality
+
+#### Troubleshooting
+
+**APIs not available?**
+- Ensure you're using Chrome 138+ (check `chrome://version`)
+- Verify flags are enabled in `chrome://flags`
+- Try restarting Chrome completely
+- Check available disk space (need 22+ GB free)
+
+**Model download fails?**
+- Check internet connection
+- Ensure sufficient disk space
+- Try clearing Chrome cache: `chrome://settings/clearBrowserData`
+- Check `chrome://components` for model status
+
+**Performance issues?**
+- Ensure you have 4+ GB VRAM
+- Close other GPU-intensive applications
+- Check GPU acceleration: `chrome://gpu`
 
 ### Development Commands
 

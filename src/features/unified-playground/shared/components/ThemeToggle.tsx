@@ -1,10 +1,11 @@
 /**
  * Theme Toggle Component - Instant Wow Factor
  * Beautiful light/dark/system theme switching with pure CSS transitions
+ * Now uses centralized ThemeProvider for consistency across all APIs
  */
 /* eslint-disable react-refresh/only-export-components */
 
-import { useEffect, useState, startTransition } from 'react';
+import { startTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,8 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sun, Moon, Monitor, Palette } from 'lucide-react';
-
-type Theme = 'light' | 'dark' | 'system';
+import { useTheme, type Theme } from '@/providers/ThemeProvider';
 
 interface ThemeToggleProps {
   className?: string;
@@ -27,56 +27,15 @@ export function ThemeToggle({
   showLabel = false,
   variant = 'dropdown',
 }: ThemeToggleProps) {
-  const [theme, setTheme] = useState<Theme>('system');
-  const [mounted, setMounted] = useState(false);
-
-  // Ensure component is mounted before rendering (prevent hydration mismatch)
-  useEffect(() => {
-    setMounted(true);
-    const savedTheme = (localStorage.getItem('theme') as Theme) || 'system';
-    setTheme(savedTheme);
-    applyTheme(savedTheme);
-  }, []);
-
-  const applyTheme = (newTheme: Theme) => {
-    const root = document.documentElement;
-
-    // Remove existing theme classes
-    root.classList.remove('light', 'dark');
-
-    if (newTheme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-        .matches
-        ? 'dark'
-        : 'light';
-      root.classList.add(systemTheme);
-    } else {
-      root.classList.add(newTheme);
-    }
-
-    // Add smooth transition animation
-    root.classList.add('animate-themeSwitch');
-    setTimeout(() => {
-      root.classList.remove('animate-themeSwitch');
-    }, 200);
-  };
+  // Use centralized theme context
+  const { theme, setTheme: updateTheme } = useTheme();
 
   const handleThemeChange = (newTheme: Theme) => {
     startTransition(() => {
-      setTheme(newTheme);
-      localStorage.setItem('theme', newTheme);
-      applyTheme(newTheme);
+      updateTheme(newTheme);
     });
   };
 
-  // Don't render until mounted to prevent hydration issues
-  if (!mounted) {
-    return (
-      <div
-        className={`w-9 h-9 rounded-md animate-pulse bg-muted ${className}`}
-      />
-    );
-  }
 
   const getThemeIcon = (themeType: Theme) => {
     switch (themeType) {
@@ -224,35 +183,5 @@ export function ThemeToggle({
   );
 }
 
-// Hook for using theme in other components
-export function useTheme() {
-  const [theme, setTheme] = useState<Theme>('system');
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
-
-  useEffect(() => {
-    const savedTheme = (localStorage.getItem('theme') as Theme) || 'system';
-    setTheme(savedTheme);
-
-    const updateResolvedTheme = () => {
-      if (savedTheme === 'system') {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
-          .matches
-          ? 'dark'
-          : 'light';
-        setResolvedTheme(systemTheme);
-      } else {
-        setResolvedTheme(savedTheme as 'light' | 'dark');
-      }
-    };
-
-    updateResolvedTheme();
-
-    // Listen for system theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', updateResolvedTheme);
-
-    return () => mediaQuery.removeEventListener('change', updateResolvedTheme);
-  }, []);
-
-  return { theme, resolvedTheme };
-}
+// Re-export useTheme from ThemeProvider for backwards compatibility
+export { useTheme } from '@/providers/ThemeProvider';

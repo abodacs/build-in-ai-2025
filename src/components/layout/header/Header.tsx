@@ -76,7 +76,10 @@ export function Header() {
         </div>
 
         {/* Documentation Button */}
-        <button className="text-sm text-gray-700 hover:text-gray-900 transition-colors">
+        <button
+          type="button"
+          className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
+        >
           Documentation
         </button>
       </div>

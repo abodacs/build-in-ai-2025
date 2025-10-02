@@ -668,8 +668,8 @@ describe('WarningBanner Component', () => {
         ];
 
         scenarios.forEach(({ name: _name, render: renderScenario }) => {
-          const { unmount } = renderScenario();
-          expect(() => renderScenario()).not.toThrow();
+          const { unmount, container } = renderScenario();
+          expect(container).toBeInTheDocument();
 
           const message = screen.getByText(
             /Chrome AI APIs are currently in development/,

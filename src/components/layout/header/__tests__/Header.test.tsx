@@ -169,50 +169,64 @@ describe('Header Component', () => {
       expect(statusIndicator).toBeInTheDocument();
     });
 
-    it('shows unavailable state when all APIs are unavailable', () => {
+    it('shows unavailable state when all APIs are unavailable', async () => {
+      const unavailableCapabilities = {
+        summarizer: 'unavailable',
+        translator: 'unavailable',
+        writer: 'unavailable',
+        rewriter: 'unavailable',
+        proofreader: 'unavailable',
+        prompt: 'unavailable',
+        languageDetection: 'unavailable',
+      };
+
+      mockTestAiAvailability.mockResolvedValue(unavailableCapabilities);
+
+      // Update mock to return the capabilities after they're set
       mockUseAppStore.mockImplementation((selector: (state: any) => any) => {
         const state = {
-          aiCapabilities: {
-            summarizer: 'unavailable',
-            translator: 'unavailable',
-            writer: 'unavailable',
-            rewriter: 'unavailable',
-            proofreader: 'unavailable',
-            prompt: 'unavailable',
-            languageDetection: 'unavailable',
-          },
+          aiCapabilities: unavailableCapabilities,
           setAiCapabilities: mockSetAiCapabilities,
         };
-        return selector(state);
+        return selector ? selector(state) : state;
       });
 
-      render(<Header />);
+      const { container } = render(<Header />);
 
-      const statusIndicator = document.querySelector('.bg-red-500');
-      expect(statusIndicator).toBeInTheDocument();
+      await waitFor(() => {
+        const statusIndicator = container.querySelector('.bg-red-500');
+        expect(statusIndicator).toBeInTheDocument();
+      });
     });
 
-    it('shows available state when at least one API is available', () => {
+    it('shows available state when at least one API is available', async () => {
+      const availableCapabilities = {
+        summarizer: 'available',
+        translator: 'unavailable',
+        writer: 'unavailable',
+        rewriter: 'unavailable',
+        proofreader: 'unavailable',
+        prompt: 'unavailable',
+        languageDetection: 'unavailable',
+      };
+
+      mockTestAiAvailability.mockResolvedValue(availableCapabilities);
+
+      // Update mock to return the capabilities after they're set
       mockUseAppStore.mockImplementation((selector: (state: any) => any) => {
         const state = {
-          aiCapabilities: {
-            summarizer: 'available',
-            translator: 'unavailable',
-            writer: 'unavailable',
-            rewriter: 'unavailable',
-            proofreader: 'unavailable',
-            prompt: 'unavailable',
-            languageDetection: 'unavailable',
-          },
+          aiCapabilities: availableCapabilities,
           setAiCapabilities: mockSetAiCapabilities,
         };
-        return selector(state);
+        return selector ? selector(state) : state;
       });
 
-      render(<Header />);
+      const { container } = render(<Header />);
 
-      const statusIndicator = document.querySelector('.bg-green-500');
-      expect(statusIndicator).toBeInTheDocument();
+      await waitFor(() => {
+        const statusIndicator = container.querySelector('.bg-green-500');
+        expect(statusIndicator).toBeInTheDocument();
+      });
     });
   });
 
@@ -372,7 +386,16 @@ describe('Header Component', () => {
 
         mockTestAiAvailability.mockResolvedValue(partialCapabilities);
 
-        render(<Header />);
+        // Update mock to return the capabilities
+        mockUseAppStore.mockImplementation((selector: (state: any) => any) => {
+          const state = {
+            aiCapabilities: partialCapabilities,
+            setAiCapabilities: mockSetAiCapabilities,
+          };
+          return selector ? selector(state) : state;
+        });
+
+        const { container } = render(<Header />);
 
         await waitFor(() => {
           expect(mockSetAiCapabilities).toHaveBeenCalledWith(
@@ -381,8 +404,8 @@ describe('Header Component', () => {
         });
 
         // Should show available status since at least one API is available
-        const statusIndicator = document.querySelector('.bg-green-500');
-        expect(statusIndicator).toBeInTheDocument();
+        const statusIndicator = container.querySelector('.bg-green-500');
+        expect(statusIndicator).toBeTruthy();
       });
 
       it('ultrathink: should handle AI capability state transitions during component lifecycle', async () => {
@@ -392,26 +415,30 @@ describe('Header Component', () => {
         });
         mockTestAiAvailability.mockReturnValue(capabilitiesPromise);
 
-        render(<Header />);
+        const { container } = render(<Header />);
 
         // Initially should show loading state
-        expect(
-          document.querySelector('.bg-yellow-500.animate-pulse'),
-        ).toBeInTheDocument();
+        await waitFor(() => {
+          expect(
+            container.querySelector('.bg-yellow-500.animate-pulse'),
+          ).toBeInTheDocument();
+        });
 
         // Resolve with available capabilities
-        capabilitiesResolver!({
-          summarizer: 'available',
-          translator: 'available',
+        await act(async () => {
+          capabilitiesResolver!({
+            summarizer: 'available',
+            translator: 'available',
+          });
         });
 
         await waitFor(() => {
-          expect(document.querySelector('.bg-green-500')).toBeInTheDocument();
+          expect(container.querySelector('.bg-green-500')).toBeInTheDocument();
         });
 
         // Loading indicator should be gone
         expect(
-          document.querySelector('.bg-yellow-500.animate-pulse'),
+          container.querySelector('.bg-yellow-500.animate-pulse'),
         ).not.toBeInTheDocument();
       });
 
@@ -450,7 +477,7 @@ describe('Header Component', () => {
         timeoutError.name = 'TimeoutError';
         mockTestAiAvailability.mockRejectedValue(timeoutError);
 
-        render(<Header />);
+        const { container } = render(<Header />);
 
         await waitFor(() => {
           expect(consoleError).toHaveBeenCalledWith(
@@ -461,7 +488,7 @@ describe('Header Component', () => {
 
         // Should still show loading state when error occurs
         expect(
-          document.querySelector('.bg-yellow-500.animate-pulse'),
+          container.querySelector('.bg-yellow-500.animate-pulse'),
         ).toBeInTheDocument();
 
         consoleError.mockRestore();
@@ -536,7 +563,7 @@ describe('Header Component', () => {
                 aiCapabilities: stateSequence[i],
                 setAiCapabilities: mockSetAiCapabilities,
               };
-              return selector(state);
+              return selector ? selector(state) : state;
             },
           );
 
@@ -740,8 +767,8 @@ describe('Header Component', () => {
         expect(circles?.[2]).toHaveAttribute('fill', '#FBBC04'); // Google Yellow
         expect(circles?.[3]).toHaveAttribute('fill', '#34A853'); // Google Green
 
-        // Verify stroke width and fill properties
-        expect(circles?.[0]).toHaveAttribute('strokeWidth', '2');
+        // Verify stroke width and fill properties (SVG attributes are kebab-case in DOM)
+        expect(circles?.[0]).toHaveAttribute('stroke-width', '2');
         expect(circles?.[0]).toHaveAttribute('fill', 'none');
       });
     });
