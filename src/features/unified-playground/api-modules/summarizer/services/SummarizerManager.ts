@@ -300,7 +300,10 @@ export class SummarizerManager {
       const startTime = performance.now();
 
       // Perform summarization
-      const summary = await summarizer.summarize(text, normalizedSummarizeOptions);
+      const summary = await summarizer.summarize(
+        text,
+        normalizedSummarizeOptions,
+      );
 
       // Record metrics
       const summaryTime = performance.now() - startTime;
