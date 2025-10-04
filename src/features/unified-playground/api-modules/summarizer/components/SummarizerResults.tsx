@@ -207,21 +207,20 @@ export function SummarizerResults({
           className={cn(
             'p-4 rounded-lg bg-white border border-slate-200',
             'prose prose-sm max-w-none',
+            'whitespace-pre-wrap text-slate-800 leading-relaxed tracking-tight',
             isStreaming && 'animate-pulse',
           )}
         >
-          <div className="whitespace-pre-wrap text-slate-800 leading-relaxed">
-            {result}
-          </div>
+          {result}
         </div>
 
         {/* Performance metrics */}
         {showMetrics && formattedMetrics && !isStreaming && (
           <>
-            <Separator />
+            <Separator className="my-4" />
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            <div className="space-y-3.5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                 <Zap className="w-4 h-4 text-purple-600" />
                 Performance Insights
               </div>

@@ -4,12 +4,12 @@
 
 ## ✨ Features
 
-- 🔮 **Interactive AI Playground** - Test Chrome AI APIs in real-time
-- 🔒 **Security-First** - Built-in prompt injection mitigation examples
-- 🔄 **Hybrid AI Strategy** - On-device with cloud fallback patterns
-- 🎨 **Modern UI** - Built with shadcn/ui and Tailwind CSS
-- ⚡ **Performance Optimized** - Vite + React + TypeScript
-- 🌍 **Global CDN** - Deployed on Cloudflare Pages
+- 🔮 **Interactive AI Playground** — Test Chrome AI APIs in real-time
+- 🔒 **Security-First** — Built-in prompt injection mitigation examples
+- 🔄 **Hybrid AI Strategy** — On-device with cloud fallback patterns
+- 🎨 **Modern UI** — Built with shadcn/ui and Tailwind CSS
+- ⚡ **Performance Optimized** — Vite + React + TypeScript
+- 🌍 **Global CDN** — Deployed on Cloudflare Pages
 
 ## 🏗️ Architecture
 
@@ -17,49 +17,51 @@ This project follows a **feature-driven architecture** designed for scalability 
 
 ```
 src/
-├── features/              # Domain-driven feature modules
-│   ├── api-playground/    # Interactive AI API testing
-│   │   ├── components/    # Feature-specific components
-│   │   ├── hooks/         # Feature-specific hooks
-│   │   ├── services/      # Feature business logic
-│   │   ├── types/         # Feature type definitions
-│   │   └── utils/         # Feature utilities
-│   ├── security-demo/     # Security demonstrations
-│   ├── hybrid-ai/         # Hybrid AI strategies
-│   └── code-display/      # Code snippet generation
-├── components/            # Reusable UI components
-│   ├── ui/               # shadcn/ui components
-│   ├── layout/           # Layout components
-│   └── common/           # Common utility components
-├── hooks/                # Global hooks
-├── services/             # Global services (AI API wrappers)
-├── stores/               # Zustand global state
-├── types/                # Global TypeScript types
-├── utils/                # Global utilities
-└── lib/                  # Third-party integrations
+├── features/               # Domain-driven feature modules
+│   ├── api-playground/     # Interactive AI API testing
+│   │   ├── components/     # Feature-specific components
+│   │   ├── hooks/          # Feature-specific hooks
+│   │   ├── services/       # Feature business logic
+│   │   ├── types/          # Feature type definitions
+│   │   └── utils/          # Feature utilities
+│   ├── security-demo/      # Security demonstrations
+│   ├── hybrid-ai/          # Hybrid AI strategies
+│   └── code-display/       # Code snippet generation
+├── components/             # Reusable UI components
+│   ├── ui/                 # shadcn/ui components
+│   ├── layout/             # Layout components
+│   └── common/             # Common utility components
+├── hooks/                  # Global hooks
+├── services/               # Global services (AI API wrappers)
+├── stores/                 # Zustand global state
+├── types/                  # Global TypeScript types
+├── utils/                  # Global utilities
+└── lib/                    # Third-party integrations
 ```
 
 ### 🧠 Design Principles
 
-1. **Feature-First**: Each feature is self-contained with its own components, logic, and state
-2. **Separation of Concerns**: UI components are purely presentational
-3. **Type Safety**: Comprehensive TypeScript with Zod runtime validation
-4. **Developer Experience**: Hot reloading, comprehensive tooling, and clear documentation
-5. **Performance**: Code splitting, tree shaking, and optimized bundle size
+1. **Feature-First** — Each feature is self-contained with its own components, logic, and state
+2. **Separation of Concerns** — UI components are purely presentational
+3. **Type Safety** — Comprehensive TypeScript with Zod runtime validation
+4. **Developer Experience** — Hot reloading, comprehensive tooling, and clear documentation
+5. **Performance** — Code splitting, tree shaking, and optimized bundle size
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 #### Development Requirements
+
 - Node.js 22+
 - pnpm 8+
 
 #### Chrome AI Requirements
+
 - **Browser**: Chrome 138+ (Canary/Dev) or Edge Canary
 - **Storage**: 22+ GB free disk space (for AI models)
 - **VRAM**: 4+ GB (for on-device AI processing)
-- **Network**: Required for initial model download (~1-2 GB per API)
+- **Network**: Required for initial model download (~1–2 GB per API)
 
 ### Installation
 
@@ -110,18 +112,21 @@ When you first use an API, Chrome will prompt you to download the AI model:
 #### Troubleshooting
 
 **APIs not available?**
+
 - Ensure you're using Chrome 138+ (check `chrome://version`)
 - Verify flags are enabled in `chrome://flags`
 - Try restarting Chrome completely
 - Check available disk space (need 22+ GB free)
 
 **Model download fails?**
+
 - Check internet connection
 - Ensure sufficient disk space
 - Try clearing Chrome cache: `chrome://settings/clearBrowserData`
 - Check `chrome://components` for model status
 
 **Performance issues?**
+
 - Ensure you have 4+ GB VRAM
 - Close other GPU-intensive applications
 - Check GPU acceleration: `chrome://gpu`
@@ -155,30 +160,35 @@ pnpm deploy:production # Deploy to production
 ## 🛠️ Tech Stack
 
 ### Core
-- **React 19** - UI framework with concurrent features
-- **TypeScript 5** - Type safety and developer experience
-- **Vite 6** - Fast build tool and dev server
+
+- **React 19** — UI framework with concurrent features
+- **TypeScript 5** — Type safety and developer experience
+- **Vite 6** — Fast build tool and dev server
 
 ### UI & Styling
-- **shadcn/ui** - High-quality, accessible UI components
-- **Tailwind CSS 4** - Utility-first CSS framework
-- **Radix UI** - Unstyled, accessible UI primitives
-- **Lucide React** - Beautiful SVG icons
+
+- **shadcn/ui** — High-quality, accessible UI components
+- **Tailwind CSS 4** — Utility-first CSS framework
+- **Radix UI** — Unstyled, accessible UI primitives
+- **Lucide React** — Beautiful SVG icons
 
 ### State Management
-- **Zustand** - Lightweight state management
-- **Zod** - Runtime validation and type safety
+
+- **Zustand** — Lightweight state management
+- **Zod** — Runtime validation and type safety
 
 ### Development
-- **ESLint** - Code linting with TypeScript rules
-- **Prettier** - Code formatting
-- **Husky** - Git hooks for quality gates
-- **Vitest** - Fast unit testing
-- **Playwright** - End-to-end testing
+
+- **ESLint** — Code linting with TypeScript rules
+- **Prettier** — Code formatting
+- **Husky** — Git hooks for quality gates
+- **Vitest** — Fast unit testing
+- **Playwright** — End-to-end testing
 
 ### Deployment
-- **Cloudflare Pages** - Global CDN with edge computing
-- **GitHub Actions** - CI/CD pipeline
+
+- **Cloudflare Pages** — Global CDN with edge computing
+- **GitHub Actions** — CI/CD pipeline
 
 ## 🎯 Chrome AI APIs Supported
 

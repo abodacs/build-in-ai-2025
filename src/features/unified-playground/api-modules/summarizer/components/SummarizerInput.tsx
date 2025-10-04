@@ -185,11 +185,11 @@ export function SummarizerInput({
 
   return (
     <Card className={cn('border-slate-200 shadow-sm', className)}>
-      <CardHeader className="pb-2 pt-3">
+      <CardHeader className="pb-2.5 pt-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4 text-slate-600" />
-            <CardTitle className="text-sm font-medium">Input Text</CardTitle>
+            <CardTitle className="text-sm font-semibold">Input Text</CardTitle>
           </div>
 
           {/* Word count badge */}
@@ -207,7 +207,7 @@ export function SummarizerInput({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3.5">
         {/* Text area with empty state overlay */}
         <div className="relative">
           <Textarea
@@ -218,7 +218,7 @@ export function SummarizerInput({
             placeholder={placeholder}
             disabled={disabled}
             className={cn(
-              'min-h-[180px] sm:min-h-[240px] resize-y text-sm',
+              'min-h-[180px] sm:min-h-[240px] resize-y text-sm leading-relaxed',
               'transition-all duration-200',
               isFocused && 'ring-2 ring-purple-500 ring-offset-2',
               !isValid && value && showValidation && 'border-amber-400',
@@ -227,21 +227,19 @@ export function SummarizerInput({
 
           {/* Empty State Overlay */}
           {!value && !isFocused && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="text-center space-y-3 p-6">
-                <Sparkles className="w-10 h-10 mx-auto text-slate-300" />
-                <div className="space-y-1">
-                  <p className="text-sm text-slate-600 font-medium">
-                    Ready to summarize
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Paste or type text to get started
-                  </p>
-                </div>
-                <p className="text-xs text-slate-400 pt-1">
-                  💡 Try Quick Samples in Advanced tab
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center space-y-3 p-6">
+              <Sparkles className="w-10 h-10 text-slate-300" />
+              <div className="space-y-1">
+                <p className="text-sm text-slate-600 font-medium">
+                  Ready to summarize
+                </p>
+                <p className="text-xs text-slate-500">
+                  Paste or type text to get started
                 </p>
               </div>
+              <p className="text-xs text-slate-400 pt-1">
+                💡 Try Quick Samples
+              </p>
             </div>
           )}
         </div>

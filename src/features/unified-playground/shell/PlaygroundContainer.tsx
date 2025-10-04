@@ -3,7 +3,7 @@
  * Enterprise-grade component with proper architecture patterns, security, and performance
  */
 
-import { useCallback, useEffect, Suspense, startTransition } from 'react';
+import { useEffect, Suspense } from 'react';
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
 import { LoadingSpinner } from '../shared/components/LoadingScreen';
 import { ThemeToggle } from '../shared/components/ThemeToggle';
@@ -37,7 +37,6 @@ interface PlaygroundContainerProps {
 interface PlaygroundHeaderProps {
   capabilities: Record<string, TODO_TYPE>;
   performanceScore: number;
-  onRefresh: () => void;
 }
 
 interface APIStatusIndicatorProps {
@@ -168,7 +167,6 @@ function PerformanceIndicator({ score }: { score: number }) {
 function PlaygroundHeader({
   capabilities,
   performanceScore,
-  onRefresh,
 }: PlaygroundHeaderProps) {
   const availableApis = Object.values(capabilities).filter(
     (cap: TODO_TYPE) => cap.status === 'available',
@@ -222,15 +220,6 @@ function PlaygroundHeader({
         <div className="flex items-center gap-2">
           <PerformanceIndicator score={performanceScore} />
           <ThemeToggle variant="icon" className="hover-lift" />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onRefresh}
-            className="hidden sm:flex transition-all duration-200 hover:scale-105"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
         </div>
       </div>
     </header>
@@ -247,31 +236,11 @@ export function PlaygroundContainer({
   showPerformanceMetrics = true,
 }: PlaygroundContainerProps) {
   // State management with custom hooks
-  const {
-    capabilities,
-    checkAllCapabilities,
-    hasAvailableApis,
-    availableApiCount,
-  } = usePlaygroundState();
+  const { capabilities, hasAvailableApis, availableApiCount } =
+    usePlaygroundState();
 
-  const {
-    performanceScore,
-    measureComponentRender,
-    measureInteractionLatency,
-    optimizationSuggestions,
-  } = usePerformanceMetrics();
-
-  // ============================================================================
-  // Event Handlers
-  // ============================================================================
-
-  const handleRefresh = useCallback(() => {
-    const stopMeasuring = measureInteractionLatency('refresh_capabilities');
-    startTransition(() => {
-      checkAllCapabilities();
-      stopMeasuring();
-    });
-  }, [checkAllCapabilities, measureInteractionLatency]);
+  const { performanceScore, measureComponentRender, optimizationSuggestions } =
+    usePerformanceMetrics();
 
   // ============================================================================
   // Performance Tracking (using useEffect to avoid infinite loops)
@@ -299,7 +268,6 @@ export function PlaygroundContainer({
         <PlaygroundHeader
           capabilities={capabilities}
           performanceScore={performanceScore}
-          onRefresh={handleRefresh}
         />
 
         {/* Main Content */}
@@ -330,12 +298,10 @@ export function PlaygroundContainer({
           <Suspense fallback={<PlaygroundSuspenseFallback />}>
             <div className="animate-fadeInUp">
               {children || (
-                <div className="text-center py-20">
+                <div className="text-center py-16">
                   <div className="max-w-2xl mx-auto">
-                    <div className="mb-8">
-                      <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-blue-500 via-purple-600 to-green-500 flex items-center justify-center animate-aiPulse">
-                        <Zap className="w-10 h-10 text-white" />
-                      </div>
+                    <div className="w-20 h-20 mx-auto mb-10 rounded-full bg-gradient-to-r from-blue-500 via-purple-600 to-green-500 flex items-center justify-center animate-aiPulse">
+                      <Zap className="w-10 h-10 text-white" />
                     </div>
 
                     <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 bg-clip-text text-transparent">

@@ -7,8 +7,14 @@
  * @module QuickSamplesCard
  */
 
-import React from 'react';
-import { FileText, BookOpen, Microscope, Newspaper } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  FileText,
+  BookOpen,
+  Microscope,
+  Newspaper,
+  ChevronDown,
+} from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -16,6 +22,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -31,6 +42,9 @@ export interface QuickSamplesCardProps {
 
   /** Currently selected sample ID */
   selectedSampleId?: string;
+
+  /** Initial collapsed state */
+  defaultCollapsed?: boolean;
 
   /** Additional CSS classes */
   className?: string;
@@ -72,31 +86,51 @@ However, challenges remain. Privacy concerns, algorithmic bias, and the need for
     description: 'Long-form document (tests chunking)',
     text: `Understanding Quantum Computing: A Comprehensive Guide
 
-Introduction
 
-Quantum computing represents a paradigm shift in computational capability, leveraging the principles of quantum mechanics to solve problems that are intractable for classical computers. Unlike traditional computers that use bits (0s and 1s), quantum computers use quantum bits or qubits, which can exist in multiple states simultaneously through a phenomenon called superposition.
+INTRODUCTION
 
-Chapter 1: Quantum Mechanics Fundamentals
+Quantum computing represents a paradigm shift in computational capability, leveraging the principles of quantum mechanics to solve problems that are intractable for classical computers.
 
-The foundation of quantum computing lies in three key principles of quantum mechanics: superposition, entanglement, and interference. Superposition allows qubits to represent both 0 and 1 simultaneously until measured. This exponentially increases computational possibilities. Entanglement creates correlations between qubits, enabling them to influence each other instantaneously regardless of distance. Interference allows quantum algorithms to amplify correct answers while canceling incorrect ones.
+Unlike traditional computers that use bits (0s and 1s), quantum computers use quantum bits or qubits, which can exist in multiple states simultaneously through a phenomenon called superposition.
 
-Chapter 2: Qubit Technologies
+
+CHAPTER 1: Quantum Mechanics Fundamentals
+
+The foundation of quantum computing lies in three key principles of quantum mechanics: superposition, entanglement, and interference.
+
+Superposition allows qubits to represent both 0 and 1 simultaneously until measured. This exponentially increases computational possibilities.
+
+Entanglement creates correlations between qubits, enabling them to influence each other instantaneously regardless of distance.
+
+Interference allows quantum algorithms to amplify correct answers while canceling incorrect ones.
+
+
+CHAPTER 2: Qubit Technologies
 
 Several physical implementations of qubits exist today. Superconducting qubits, used by companies like IBM and Google, operate at temperatures near absolute zero. Trapped ion qubits use electromagnetic fields to hold individual ions in place. Topological qubits, still largely theoretical, promise greater stability through their unique mathematical properties.
 
 Each technology has trade-offs in terms of coherence time, gate fidelity, and scalability. Coherence time refers to how long a qubit maintains its quantum state before environmental interference causes decoherence.
 
-Chapter 3: Quantum Algorithms
 
-Quantum algorithms exploit quantum properties to achieve computational advantages. Shor's algorithm can factor large numbers exponentially faster than classical algorithms, threatening current encryption methods. Grover's algorithm provides quadratic speedup for searching unsorted databases. Quantum simulation algorithms model molecular and material properties with unprecedented accuracy.
+CHAPTER 3: Quantum Algorithms
 
-Chapter 4: Applications and Impact
+Quantum algorithms exploit quantum properties to achieve computational advantages.
+
+Shor's algorithm can factor large numbers exponentially faster than classical algorithms, threatening current encryption methods.
+
+Grover's algorithm provides quadratic speedup for searching unsorted databases.
+
+Quantum simulation algorithms model molecular and material properties with unprecedented accuracy.
+
+
+CHAPTER 4: Applications and Impact
 
 Quantum computing promises breakthroughs across multiple domains. In cryptography, it challenges existing security protocols while enabling quantum-secure communication. In drug discovery, it accelerates molecular simulation and protein folding calculations. Financial institutions explore quantum optimization for portfolio management and risk analysis.
 
 Climate modeling, artificial intelligence, and logistics optimization are other promising applications. However, practical quantum advantage—where quantum computers outperform classical supercomputers on real-world problems—remains limited to specific use cases.
 
-Chapter 5: Challenges and Future Outlook
+
+CHAPTER 5: Challenges and Future Outlook
 
 Significant obstacles remain before quantum computing becomes mainstream. Error rates in current quantum systems are high, requiring quantum error correction techniques that demand hundreds or thousands of physical qubits per logical qubit. Scaling to millions of qubits while maintaining low error rates is a formidable engineering challenge.
 
@@ -104,9 +138,12 @@ The quantum workforce shortage presents another hurdle. Developing quantum algor
 
 Despite these challenges, progress is accelerating. Governments and private companies invest billions in quantum research. Cloud-based quantum computing platforms democratize access, allowing researchers worldwide to experiment with quantum algorithms.
 
-Conclusion
 
-Quantum computing stands at an exciting inflection point. While fully fault-tolerant quantum computers may still be years away, near-term quantum devices are already delivering value in specific applications. As the technology matures, it will unlock new possibilities in science, medicine, and technology, fundamentally changing how we approach computational problems.`,
+CONCLUSION
+
+Quantum computing stands at an exciting inflection point. While fully fault-tolerant quantum computers may still be years away, near-term quantum devices are already delivering value in specific applications.
+
+As the technology matures, it will unlock new possibilities in science, medicine, and technology, fundamentally changing how we approach computational problems.`,
     recommendedConfig: {
       type: 'key-points',
       format: 'markdown',
@@ -208,96 +245,122 @@ const ICON_COMPONENTS: Record<
  *     setConfig(sample.recommendedConfig);
  *   }}
  *   selectedSampleId={currentSampleId}
+ *   defaultCollapsed={true}
  * />
  * ```
  */
 export function QuickSamplesCard({
   onSampleSelect,
   selectedSampleId,
+  defaultCollapsed = true,
   className,
 }: QuickSamplesCardProps) {
+  const [isOpen, setIsOpen] = useState(!defaultCollapsed);
+
   return (
-    <Card className={cn('border-purple-200 bg-purple-50/50', className)}>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <span className="text-purple-600">📝</span>
-          Quick Samples
-        </CardTitle>
-        <CardDescription>
-          Try pre-configured examples to explore different summarization styles
-        </CardDescription>
-      </CardHeader>
+    <Card className={cn('border-slate-200 bg-slate-50/50', className)}>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CardHeader className="pb-3">
+          <CollapsibleTrigger className="flex items-center justify-between w-full cursor-pointer hover:text-slate-700 transition-colors group">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-600 group-hover:text-slate-700">
+                📝
+              </span>
+              <CardTitle className="text-sm font-medium text-slate-600 underline underline-offset-2 group-hover:text-slate-700">
+                {isOpen ? 'Hide' : 'Show'} Quick Samples
+              </CardTitle>
+              <Badge variant="secondary" className="text-xs">
+                {QUICK_SAMPLES.length} examples
+              </Badge>
+            </div>
+            <ChevronDown
+              className={cn(
+                'h-4 w-4 text-slate-600 transition-transform',
+                isOpen && 'transform rotate-180',
+              )}
+            />
+          </CollapsibleTrigger>
+          {isOpen && (
+            <CardDescription className="text-xs mt-2">
+              Try pre-configured examples to explore different summarization
+              styles
+            </CardDescription>
+          )}
+        </CardHeader>
 
-      <CardContent>
-        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-3">
-          {QUICK_SAMPLES.map((sample) => {
-            const IconComponent = ICON_COMPONENTS[sample.id];
-            const isSelected = selectedSampleId === sample.id;
+        <CollapsibleContent>
+          <CardContent>
+            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-3">
+              {QUICK_SAMPLES.map((sample) => {
+                const IconComponent = ICON_COMPONENTS[sample.id];
+                const isSelected = selectedSampleId === sample.id;
 
-            return (
-              <Button
-                key={sample.id}
-                variant={isSelected ? 'default' : 'outline'}
-                onClick={() => onSampleSelect(sample)}
-                className={cn(
-                  'h-auto flex-col gap-2 p-4 relative',
-                  isSelected
-                    ? 'bg-purple-600 text-white border-purple-700 hover:bg-purple-700'
-                    : 'hover:border-purple-300 hover:bg-purple-50/50',
-                )}
-              >
-                {/* Selected badge */}
-                {isSelected && (
-                  <Badge
-                    variant="secondary"
-                    className="absolute -top-2 -right-2 bg-green-500 text-white text-xs"
-                  >
-                    Active
-                  </Badge>
-                )}
-
-                {/* Icon */}
-                <div className="w-full flex justify-center">
-                  {IconComponent ? (
-                    <IconComponent
-                      className={cn('w-8 h-8', isSelected && 'text-white')}
-                    />
-                  ) : (
-                    <span className="text-3xl">{sample.icon}</span>
-                  )}
-                </div>
-
-                {/* Label */}
-                <div className="text-center w-full">
-                  <div className="font-semibold text-sm">{sample.label}</div>
-                  <div
+                return (
+                  <Button
+                    key={sample.id}
+                    variant={isSelected ? 'default' : 'outline'}
+                    onClick={() => onSampleSelect(sample)}
                     className={cn(
-                      'text-xs mt-1',
-                      isSelected ? 'text-purple-100' : 'text-slate-500',
+                      'h-auto flex-col gap-2 p-4 relative',
+                      isSelected
+                        ? 'bg-purple-600 text-white border-purple-700 hover:bg-purple-700'
+                        : 'hover:border-purple-300 hover:bg-purple-50/50',
                     )}
                   >
-                    {sample.description}
-                  </div>
-                </div>
+                    {/* Selected badge */}
+                    {isSelected && (
+                      <Badge
+                        variant="secondary"
+                        className="absolute -top-2 -right-2 bg-green-500 text-white text-xs"
+                      >
+                        Active
+                      </Badge>
+                    )}
 
-                {/* Recommended config indicator */}
-                {sample.recommendedConfig && (
-                  <div className="text-[10px] text-center w-full opacity-75">
-                    {sample.recommendedConfig.type} •{' '}
-                    {sample.recommendedConfig.length}
-                  </div>
-                )}
-              </Button>
-            );
-          })}
-        </div>
+                    {/* Icon */}
+                    {IconComponent ? (
+                      <IconComponent
+                        className={cn('w-8 h-8', isSelected && 'text-white')}
+                      />
+                    ) : (
+                      <span className="text-3xl">{sample.icon}</span>
+                    )}
 
-        {/* Helper text */}
-        <div className="mt-4 text-xs text-slate-600 text-center">
-          Each sample includes recommended configuration settings for optimal
-          results
-        </div>
-      </CardContent>
+                    {/* Label */}
+                    <div className="text-center w-full space-y-1">
+                      <div className="font-semibold text-sm">
+                        {sample.label}
+                      </div>
+                      <div
+                        className={cn(
+                          'text-xs text-pretty',
+                          isSelected ? 'text-purple-100' : 'text-slate-500',
+                        )}
+                      >
+                        {sample.description}
+                      </div>
+                    </div>
+
+                    {/* Recommended config indicator */}
+                    {sample.recommendedConfig && (
+                      <div className="text-[10px] text-center w-full opacity-75">
+                        {sample.recommendedConfig.type} •{' '}
+                        {sample.recommendedConfig.length}
+                      </div>
+                    )}
+                  </Button>
+                );
+              })}
+            </div>
+
+            {/* Helper text */}
+            <div className="mt-4 text-xs text-slate-600 text-center">
+              Each sample includes recommended configuration settings for
+              optimal results
+            </div>
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
   );
 }

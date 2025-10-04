@@ -92,10 +92,10 @@ export function StreamingIndicator({
         {/* Character Count */}
         {charactersReceived > 0 && (
           <div className="text-right">
-            <div className="text-xs text-purple-600 font-medium">
+            <div className="text-xs text-slate-600 font-medium">
               {charactersReceived.toLocaleString()}
             </div>
-            <div className="text-[10px] text-purple-500">characters</div>
+            <div className="text-[10px] text-slate-500">characters</div>
           </div>
         )}
       </div>

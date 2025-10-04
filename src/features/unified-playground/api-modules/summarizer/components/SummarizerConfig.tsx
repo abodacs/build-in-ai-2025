@@ -109,43 +109,45 @@ export function SummarizerConfig({
   return (
     <Card className={cn('border-slate-200 shadow-sm', className)}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CardHeader className="pb-3 relative">
-          <CollapsibleTrigger className="flex items-center gap-2 cursor-pointer hover:text-purple-700 transition-colors group">
-            <Settings className="w-4 h-4 text-purple-600 group-hover:text-purple-700 transition-colors" />
-            <span className="text-sm font-medium text-purple-600 underline underline-offset-2 group-hover:text-purple-700">
-              {isOpen ? 'Collapse' : 'Uncollapse'} Configuration
-            </span>
-          </CollapsibleTrigger>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CollapsibleTrigger className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 transition-colors group px-2 py-1 -ml-2 rounded">
+              <Settings className="w-4 h-4 text-slate-600 group-hover:text-slate-700 transition-colors" />
+              <span className="text-sm font-medium text-slate-700">
+                {isOpen ? 'Hide' : 'Show'} Configuration
+              </span>
+            </CollapsibleTrigger>
 
-          {/* View Code Button */}
-          {onViewCode && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onViewCode();
-                    }}
-                    className="absolute right-3 top-3 h-8 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                  >
-                    <Code className="w-4 h-4 mr-1.5" />
-                    View Code
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" align="end">
-                  <p className="text-xs">View implementation code</p>
-                  <p className="text-[10px] text-slate-400">⌘K</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+            {/* View Code Button */}
+            {onViewCode && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewCode();
+                      }}
+                      className="h-8 text-xs text-slate-600 hover:text-slate-700 hover:bg-slate-50"
+                    >
+                      <Code className="w-4 h-4 mr-1.5" />
+                      View Code
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="end">
+                    <p className="text-xs">View implementation code</p>
+                    <p className="text-[10px] text-slate-400">⌘K</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
         </CardHeader>
 
         <CollapsibleContent>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-3">
             {/* Standard 3-column grid layout for config options */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Summary Type */}
@@ -297,11 +299,11 @@ export function SummarizerConfig({
 
             {/* Shared Context (Advanced) */}
             {showAdvanced && (
-              <div className="space-y-2 pt-4 border-t border-slate-200">
+              <div className="space-y-2.5 pt-4 border-t border-slate-200">
                 <div className="flex items-center gap-2">
                   <Label
                     htmlFor="shared-context"
-                    className="text-sm font-medium"
+                    className="text-sm font-semibold"
                   >
                     Shared Context (Optional)
                   </Label>
