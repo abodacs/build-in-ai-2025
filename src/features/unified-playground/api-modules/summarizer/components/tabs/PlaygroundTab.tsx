@@ -116,7 +116,9 @@ export interface PlaygroundTabProps {
   chunkingStrategy?: import('../../types/chunking.types').ChunkingStrategy;
 
   /** Chunking strategy change handler */
-  onChunkingStrategyChange?: (strategy: import('../../types/chunking.types').ChunkingStrategy) => void;
+  onChunkingStrategyChange?: (
+    strategy: import('../../types/chunking.types').ChunkingStrategy,
+  ) => void;
 
   /** Additional CSS classes */
   className?: string;
@@ -166,7 +168,8 @@ export function PlaygroundTab({
   const [advancedOptionsOpen, setAdvancedOptionsOpen] = useState(false);
 
   // Use external input text if provided, otherwise use local state
-  const inputText = externalInputText !== undefined ? externalInputText : localInputText;
+  const inputText =
+    externalInputText !== undefined ? externalInputText : localInputText;
   const setInputText = onInputTextChange || setLocalInputText;
 
   // Track previous availability for auto-run after download
@@ -174,9 +177,9 @@ export function PlaygroundTab({
 
   // Default shared context for better summaries
   const DEFAULT_SUMMARY_CONTEXT =
-    "Avoid jargon, use correct grammar, focus on clarity, " +
+    'Avoid jargon, use correct grammar, focus on clarity, ' +
     "and ensure the user can grasp the article's purpose " +
-    "without needing to open the original content.";
+    'without needing to open the original content.';
 
   /**
    * Handle summarization with lazy download support
@@ -185,7 +188,9 @@ export function PlaygroundTab({
     try {
       // Check if model needs to be downloaded first
       if (availability === 'after-download' && !isDownloading) {
-        console.log('[PlaygroundTab] Model download required, triggering download...');
+        console.log(
+          '[PlaygroundTab] Model download required, triggering download...',
+        );
         setPendingSummarization(true); // Mark that we want to summarize after download
         await startDownload();
         return; // Exit - the useEffect will handle running summarization after download
@@ -204,7 +209,10 @@ export function PlaygroundTab({
         outputLanguage: config.outputLanguage || 'en',
       };
 
-      console.log('[PlaygroundTab] Starting summarization with config:', finalConfig);
+      console.log(
+        '[PlaygroundTab] Starting summarization with config:',
+        finalConfig,
+      );
 
       // Use streaming or regular mode based on toggle
       if (streamingMode) {
@@ -232,7 +240,9 @@ export function PlaygroundTab({
       pendingSummarization &&
       inputText.length >= 100
     ) {
-      console.log('[PlaygroundTab] Download complete, auto-running summarization...');
+      console.log(
+        '[PlaygroundTab] Download complete, auto-running summarization...',
+      );
       handleSummarize();
     }
 
@@ -265,7 +275,18 @@ export function PlaygroundTab({
   /**
    * Can summarize check - allow if model ready OR needs download (lazy download)
    */
-  console.log({ isReady, availability, inputTextLength: inputText.length, isLoading, isDownloading, canSummarize: (isReady || availability === 'after-download') && inputText.length >= 100 && !isLoading && !isDownloading });
+  console.log({
+    isReady,
+    availability,
+    inputTextLength: inputText.length,
+    isLoading,
+    isDownloading,
+    canSummarize:
+      (isReady || availability === 'after-download') &&
+      inputText.length >= 100 &&
+      !isLoading &&
+      !isDownloading,
+  });
   const canSummarize =
     (isReady || availability === 'after-download') &&
     inputText.length >= 10 && // Lowered for testing (normally 100)
@@ -343,8 +364,8 @@ export function PlaygroundTab({
             </div>
 
             <p className="text-xs text-muted-foreground pt-2">
-              💡 Tip: All processing happens locally on your device - no data is sent
-              to servers.
+              💡 Tip: All processing happens locally on your device - no data is
+              sent to servers.
             </p>
           </AlertDescription>
         </Alert>
@@ -397,10 +418,12 @@ export function PlaygroundTab({
         >
           <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-slate-50">
             <div className="flex items-center gap-2">
-              <ChevronDown className={cn(
-                "h-4 w-4 transition-transform",
-                advancedOptionsOpen && "transform rotate-180"
-              )} />
+              <ChevronDown
+                className={cn(
+                  'h-4 w-4 transition-transform',
+                  advancedOptionsOpen && 'transform rotate-180',
+                )}
+              />
               <span className="font-medium">Advanced Options</span>
               <Badge variant="secondary" className="text-xs">
                 2 features
@@ -428,17 +451,17 @@ export function PlaygroundTab({
             )}
 
             {/* Streaming Mode - Second: Display option */}
-            <div className="space-y-2 pt-2 border-t" >
+            <div className="space-y-2 pt-2 border-t">
               <label className="text-sm font-medium">Streaming Mode</label>
               <div className="flex items-center gap-2">
                 <Button
-                  variant={streamingMode ? "default" : "outline"}
+                  variant={streamingMode ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setStreamingMode(!streamingMode)}
                   className="text-xs"
                 >
                   <Radio className="w-3 h-3 mr-1" />
-                  {streamingMode ? "Streaming Enabled" : "Standard Mode"}
+                  {streamingMode ? 'Streaming Enabled' : 'Standard Mode'}
                 </Button>
                 {streamingMode && (
                   <span className="text-xs text-muted-foreground">
@@ -457,8 +480,18 @@ export function PlaygroundTab({
           onClick={handleSummarize}
           disabled={!canSummarize}
           isProcessing={isLoading || isDownloading}
-          text={availability === 'after-download' && !isReady ? "Download & Summarize" : "Run Summarizer"}
-          processingText={isDownloading ? "Downloading Model..." : isStreaming ? "Streaming..." : "Summarizing..."}
+          text={
+            availability === 'after-download' && !isReady
+              ? 'Download & Summarize'
+              : 'Run Summarizer'
+          }
+          processingText={
+            isDownloading
+              ? 'Downloading Model...'
+              : isStreaming
+                ? 'Streaming...'
+                : 'Summarizing...'
+          }
           fullWidth={false}
         />
       </div>
@@ -507,7 +540,6 @@ export function PlaygroundTab({
           />
         ) : null}
       </ErrorBoundary>
-
 
       {/* Model Management (moved to bottom for better UX) */}
       <div className="space-y-3">

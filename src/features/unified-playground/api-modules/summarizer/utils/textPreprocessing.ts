@@ -290,13 +290,13 @@ export function hasMarkdownFormatting(text: string): boolean {
   }
 
   const markdownPatterns = [
-    /^#{1,6}\s+/m,           // Headers
-    /\*\*[^*]+\*\*/,          // Bold
-    /\[.+\]\(.+\)/,           // Links
-    /```[\s\S]*?```/,         // Code blocks
-    /^\s*[-*+]\s+/m,          // Unordered lists
-    /^\s*\d+\.\s+/m,          // Ordered lists
-    /^\s*>\s+/m,              // Blockquotes
+    /^#{1,6}\s+/m, // Headers
+    /\*\*[^*]+\*\*/, // Bold
+    /\[.+\]\(.+\)/, // Links
+    /```[\s\S]*?```/, // Code blocks
+    /^\s*[-*+]\s+/m, // Unordered lists
+    /^\s*\d+\.\s+/m, // Ordered lists
+    /^\s*>\s+/m, // Blockquotes
   ];
 
   const matchCount = markdownPatterns.filter((pattern) =>

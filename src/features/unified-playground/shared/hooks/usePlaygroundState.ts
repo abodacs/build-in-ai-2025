@@ -76,20 +76,21 @@ async function checkAICapability(apiName: string): Promise<AICapability> {
         const availability = await ChromeAICompatibility.checkAvailability();
 
         const statusMap = {
-          'readily': 'available' as const,
+          readily: 'available' as const,
           'after-download': 'unavailable' as const,
-          'no': 'unavailable' as const,
+          no: 'unavailable' as const,
         };
 
         return {
           name: apiName,
           status: statusMap[availability],
           lastChecked: Date.now(),
-          error: availability === 'readily'
-            ? undefined
-            : availability === 'after-download'
-              ? 'Model download required'
-              : 'Summarizer API not available',
+          error:
+            availability === 'readily'
+              ? undefined
+              : availability === 'after-download'
+                ? 'Model download required'
+                : 'Summarizer API not available',
         };
       }
 

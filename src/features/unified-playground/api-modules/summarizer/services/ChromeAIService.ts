@@ -173,7 +173,9 @@ export class ChromeAIService {
     console.log('[ChromeAIService] Current availability:', availability);
 
     if (availability === 'readily') {
-      console.log('[ChromeAIService] Model already available, no download needed');
+      console.log(
+        '[ChromeAIService] Model already available, no download needed',
+      );
       // Model is already ready, just complete immediately
       onProgress({
         loaded: 22 * 1024 * 1024,
@@ -194,7 +196,9 @@ export class ChromeAIService {
       'userActivation' in navigator &&
       !(navigator as any).userActivation?.isActive
     ) {
-      console.warn('[ChromeAIService] User activation required for model download');
+      console.warn(
+        '[ChromeAIService] User activation required for model download',
+      );
       throw new Error(
         'Model download requires user interaction (e.g., button click)',
       );
@@ -264,7 +268,11 @@ export class ChromeAIService {
       const DOWNLOAD_TIMEOUT = 5 * 60 * 1000; // 5 minutes
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
-          reject(new Error('Model download timed out after 5 minutes. Please check your internet connection and try again. If the download started, it may still be running in the background - try refreshing the page in a few minutes.'));
+          reject(
+            new Error(
+              'Model download timed out after 5 minutes. Please check your internet connection and try again. If the download started, it may still be running in the background - try refreshing the page in a few minutes.',
+            ),
+          );
         }, DOWNLOAD_TIMEOUT);
       });
 
@@ -272,7 +280,10 @@ export class ChromeAIService {
       Promise.race([SummarizerAPI.create(options), timeoutPromise])
         .then((summarizer: any) => {
           console.log('[ChromeAIService] Summarizer created successfully');
-          console.log('[ChromeAIService] Final downloaded bytes:', ChromeAIService.downloadedBytes);
+          console.log(
+            '[ChromeAIService] Final downloaded bytes:',
+            ChromeAIService.downloadedBytes,
+          );
 
           // Use setTimeout to ensure the final progress update is processed
           setTimeout(() => {

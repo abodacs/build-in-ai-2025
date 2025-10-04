@@ -77,6 +77,16 @@ export interface SummarizeOptions {
   context?: string;
 
   /**
+   * Output language code
+   * Supported languages: 'en' (English), 'es' (Spanish), 'ja' (Japanese)
+   * Default: 'en'
+   *
+   * Note: An output language should be specified to ensure optimal output quality
+   * and properly attest to output safety.
+   */
+  outputLanguage?: 'en' | 'es' | 'ja';
+
+  /**
    * Optional AbortSignal for cancellation support
    */
   signal?: AbortSignal;

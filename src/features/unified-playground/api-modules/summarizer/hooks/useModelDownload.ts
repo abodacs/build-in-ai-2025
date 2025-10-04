@@ -78,9 +78,9 @@ export function useModelDownload(): UseModelDownloadReturn {
 
       // Listen for download progress
       monitor.addEventListener('downloadprogress', ((
-        event: CustomEvent<{ loaded: number; total: number }>
+        event: CustomEvent<{ loaded: number; total: number }>,
       ) => {
-        const { loaded, total } = event.detail || event as any;
+        const { loaded, total } = event.detail || (event as any);
 
         if (loaded && total) {
           const progress = Math.round((loaded / total) * 100);
@@ -93,25 +93,23 @@ export function useModelDownload(): UseModelDownloadReturn {
           });
           setDownloadError(null);
         }
-      }) as EventListener);
+      }) as any);
 
       // Listen for download complete
       monitor.addEventListener('downloadcomplete', (() => {
         setIsDownloading(false);
         setDownloadProgress((prev) =>
-          prev ? { ...prev, progress: 100 } : null
+          prev ? { ...prev, progress: 100 } : null,
         );
-      }) as EventListener);
+      }) as any);
 
       // Listen for download error
       monitor.addEventListener('downloaderror', ((
-        event: CustomEvent<{ message: string }>
+        event: CustomEvent<{ message: string }>,
       ) => {
         setIsDownloading(false);
-        setDownloadError(
-          event.detail?.message || 'Model download failed'
-        );
-      }) as EventListener);
+        setDownloadError(event.detail?.message || 'Model download failed');
+      }) as any);
     };
   }, []);
 

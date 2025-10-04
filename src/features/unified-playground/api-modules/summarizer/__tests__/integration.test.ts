@@ -68,7 +68,7 @@ describe('Integration Tests', () => {
       const result = await chunkingEngine.recursiveSummarize(
         longText,
         { type: 'tldr' },
-        { type: 'recursive', maxChunkSize: 4000 }
+        { type: 'recursive', maxChunkSize: 4000 },
       );
 
       // Assert
@@ -83,7 +83,7 @@ describe('Integration Tests', () => {
       const manager = new SummarizerManager();
 
       (mockSummarizerClass.create as any).mockRejectedValue(
-        new DOMException('API not supported', 'NotSupportedError')
+        new DOMException('API not supported', 'NotSupportedError'),
       );
 
       // Act & Assert
@@ -104,7 +104,9 @@ describe('Integration Tests', () => {
       const chunkingEngine = new ChunkingEngine(manager);
       const progressUpdates: Array<{ current: number; total: number }> = [];
 
-      (mockSummarizer.summarize as any).mockResolvedValue('Progress test summary');
+      (mockSummarizer.summarize as any).mockResolvedValue(
+        'Progress test summary',
+      );
 
       // Act
       await chunkingEngine.recursiveSummarize(
@@ -113,14 +115,14 @@ describe('Integration Tests', () => {
         { type: 'recursive', maxChunkSize: 3000 },
         (current, total) => {
           progressUpdates.push({ current, total });
-        }
+        },
       );
 
       // Assert
       expect(progressUpdates.length).toBeGreaterThan(0);
-      expect(progressUpdates[progressUpdates.length - 1].current).toBeLessThanOrEqual(
-        progressUpdates[progressUpdates.length - 1].total
-      );
+      expect(
+        progressUpdates[progressUpdates.length - 1].current,
+      ).toBeLessThanOrEqual(progressUpdates[progressUpdates.length - 1].total);
     });
 
     it('should handle errors across service boundaries', async () => {
@@ -129,7 +131,7 @@ describe('Integration Tests', () => {
       const chunkingEngine = new ChunkingEngine(manager);
 
       (mockSummarizer.summarize as any).mockRejectedValue(
-        new DOMException('Network error', 'NotReadableError')
+        new DOMException('Network error', 'NotReadableError'),
       );
 
       // Act & Assert
@@ -137,7 +139,7 @@ describe('Integration Tests', () => {
         await chunkingEngine.recursiveSummarize(
           'Test content',
           { type: 'tldr' },
-          { type: 'recursive', maxChunkSize: 5000 }
+          { type: 'recursive', maxChunkSize: 5000 },
         );
         expect.fail('Should have thrown error');
       } catch (error) {
@@ -157,11 +159,10 @@ describe('Integration Tests', () => {
 
       // Act
       await manager.summarize('Text 1', {}, config);
-      await chunkingEngine.recursiveSummarize(
-        'Text 2',
-        config,
-        { type: 'recursive', maxChunkSize: 5000 }
-      );
+      await chunkingEngine.recursiveSummarize('Text 2', config, {
+        type: 'recursive',
+        maxChunkSize: 5000,
+      });
       await manager.summarize('Text 3', {}, config);
 
       // Assert
@@ -180,7 +181,7 @@ describe('Integration Tests', () => {
       await chunkingEngine.recursiveSummarize(
         'Chunked call',
         { type: 'tldr' },
-        { type: 'recursive', maxChunkSize: 5000 }
+        { type: 'recursive', maxChunkSize: 5000 },
       );
 
       const metrics = manager.getMetrics();
@@ -214,7 +215,7 @@ describe('Integration Tests', () => {
       // Assert
       expect(summaryResult).toBe('Integrated summary result');
       expect(mockSummarizerClass.create).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'tldr' })
+        expect.objectContaining({ type: 'tldr' }),
       );
     });
 
@@ -227,7 +228,7 @@ describe('Integration Tests', () => {
       });
 
       (mockSummarizer.summarize as any).mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
         return 'Delayed summary';
       });
 
@@ -260,7 +261,7 @@ describe('Integration Tests', () => {
       });
 
       (mockSummarizer.summarize as any).mockRejectedValue(
-        new Error('Summarization failed')
+        new Error('Summarization failed'),
       );
 
       // Act
@@ -308,7 +309,9 @@ describe('Integration Tests', () => {
 
     it('should cleanup resources on hook unmount', async () => {
       // Arrange
-      const { result, unmount } = renderHook(() => useSummarizer({ type: 'tldr' }));
+      const { result, unmount } = renderHook(() =>
+        useSummarizer({ type: 'tldr' }),
+      );
 
       await waitFor(() => {
         expect(result.current.isReady).toBe(true);
@@ -325,7 +328,7 @@ describe('Integration Tests', () => {
       // Arrange
       const { result, rerender } = renderHook(
         ({ config }) => useSummarizer(config),
-        { initialProps: { config: { type: 'tldr' as const } } }
+        { initialProps: { config: { type: 'tldr' as const } } },
       );
 
       await waitFor(() => {
@@ -390,7 +393,7 @@ describe('Integration Tests', () => {
       const result = await chunkingEngine.recursiveSummarize(
         document,
         { type: 'key-points' },
-        strategy
+        strategy,
       );
 
       // 4. Get performance metrics
@@ -423,14 +426,14 @@ describe('Integration Tests', () => {
 
       // Act
       const results = await Promise.all(
-        configs.map(config =>
-          manager.summarize('Multilingual content', {}, config)
-        )
+        configs.map((config) =>
+          manager.summarize('Multilingual content', {}, config),
+        ),
       );
 
       // Assert
       expect(results).toHaveLength(3);
-      results.forEach(result => expect(result).toBeTruthy());
+      results.forEach((result) => expect(result).toBeTruthy());
     });
 
     it('should handle batch processing workflow', async () => {
@@ -443,13 +446,19 @@ describe('Integration Tests', () => {
 
       const summaries: Record<number, string> = {};
 
-      (mockSummarizer.summarize as any).mockImplementation(async (text: string) => {
-        return `Summary: ${text.substring(0, 20)}...`;
-      });
+      (mockSummarizer.summarize as any).mockImplementation(
+        async (text: string) => {
+          return `Summary: ${text.substring(0, 20)}...`;
+        },
+      );
 
       // Act - Batch process all documents
-      const promises = documents.map(async doc => {
-        const summary = await manager.summarize(doc.content, {}, { type: 'tldr' });
+      const promises = documents.map(async (doc) => {
+        const summary = await manager.summarize(
+          doc.content,
+          {},
+          { type: 'tldr' },
+        );
         summaries[doc.id] = summary;
       });
 
@@ -489,8 +498,8 @@ describe('Integration Tests', () => {
           }
 
           // Wait before retry (exponential backoff)
-          await new Promise(resolve =>
-            setTimeout(resolve, Math.pow(2, attempt) * 100)
+          await new Promise((resolve) =>
+            setTimeout(resolve, Math.pow(2, attempt) * 100),
           );
         }
       }
@@ -538,7 +547,11 @@ describe('Integration Tests', () => {
       (mockSummarizer.summarizeStreaming as any).mockReturnValue(mockStream);
 
       // Act - Stream and collect chunks
-      const stream = await manager.summarizeStreaming('Test', {}, { type: 'tldr' });
+      const stream = await manager.summarizeStreaming(
+        'Test',
+        {},
+        { type: 'tldr' },
+      );
       const reader = stream.getReader();
 
       let done = false;
@@ -585,7 +598,9 @@ describe('Integration Tests', () => {
 
     it('should handle component lifecycle with hook', async () => {
       // Arrange
-      const { result, unmount } = renderHook(() => useSummarizer({ type: 'tldr' }));
+      const { result, unmount } = renderHook(() =>
+        useSummarizer({ type: 'tldr' }),
+      );
 
       // Wait for initialization
       await waitFor(() => {
@@ -606,8 +621,12 @@ describe('Integration Tests', () => {
 
     it('should support multiple component instances', async () => {
       // Arrange
-      const { result: result1 } = renderHook(() => useSummarizer({ type: 'tldr' }));
-      const { result: result2 } = renderHook(() => useSummarizer({ type: 'key-points' }));
+      const { result: result1 } = renderHook(() =>
+        useSummarizer({ type: 'tldr' }),
+      );
+      const { result: result2 } = renderHook(() =>
+        useSummarizer({ type: 'key-points' }),
+      );
 
       await waitFor(() => {
         expect(result1.current.isReady).toBe(true);
@@ -655,13 +674,16 @@ describe('Integration Tests', () => {
       const summary = await summarizerManager.summarize(
         generatedContent,
         {},
-        { type: 'tldr' }
+        { type: 'tldr' },
       );
 
       // Assert
       expect(summary).toBeTruthy();
       expect(mockWriterApi.write).toHaveBeenCalled();
-      expect(mockSummarizer.summarize).toHaveBeenCalledWith(generatedContent, {});
+      expect(mockSummarizer.summarize).toHaveBeenCalledWith(
+        generatedContent,
+        {},
+      );
     });
 
     it('should support plugin/extension integration', async () => {

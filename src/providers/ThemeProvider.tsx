@@ -105,10 +105,10 @@ export function ThemeProvider({
 
       // Emit custom event for other components
       window.dispatchEvent(
-        new CustomEvent('themechange', { detail: { theme: newTheme } })
+        new CustomEvent('themechange', { detail: { theme: newTheme } }),
       );
     },
-    [storageKey, applyTheme]
+    [storageKey, applyTheme],
   );
 
   // Toggle between light and dark (skip system)
@@ -160,9 +160,7 @@ export function ThemeProvider({
   };
 
   return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 }
 

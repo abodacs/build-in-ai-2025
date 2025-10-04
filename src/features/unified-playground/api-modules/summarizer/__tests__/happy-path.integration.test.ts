@@ -52,7 +52,8 @@ describe('Happy Path Integration Tests', () => {
     it('should summarize short text without chunking', async () => {
       // Arrange
       const manager = new SummarizerManager();
-      const text = 'This is a short text that does not need chunking. It is simple.';
+      const text =
+        'This is a short text that does not need chunking. It is simple.';
       const config: SummarizerCreateOptions = {
         type: 'tldr',
         format: 'plain-text',
@@ -69,7 +70,7 @@ describe('Happy Path Integration Tests', () => {
           type: 'tldr',
           format: 'plain-text',
           length: 'short',
-        })
+        }),
       );
       expect(mockSummarizer.summarize).toHaveBeenCalledWith(text, {});
     });
@@ -113,7 +114,9 @@ describe('Happy Path Integration Tests', () => {
     it('should generate tl;dr summary', async () => {
       // Arrange
       const manager = new SummarizerManager();
-      (mockSummarizer.summarize as any).mockResolvedValue('TL;DR: Brief summary');
+      (mockSummarizer.summarize as any).mockResolvedValue(
+        'TL;DR: Brief summary',
+      );
 
       // Act
       const result = await manager.summarize(text, {}, { type: 'tldr' });
@@ -121,14 +124,16 @@ describe('Happy Path Integration Tests', () => {
       // Assert
       expect(result).toContain('summary');
       expect(mockSummarizerClass.create).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'tldr' })
+        expect.objectContaining({ type: 'tldr' }),
       );
     });
 
     it('should generate key-points summary', async () => {
       // Arrange
       const manager = new SummarizerManager();
-      (mockSummarizer.summarize as any).mockResolvedValue('• Point 1\n• Point 2');
+      (mockSummarizer.summarize as any).mockResolvedValue(
+        '• Point 1\n• Point 2',
+      );
 
       // Act
       const result = await manager.summarize(text, {}, { type: 'key-points' });
@@ -136,14 +141,16 @@ describe('Happy Path Integration Tests', () => {
       // Assert
       expect(result).toBeTruthy();
       expect(mockSummarizerClass.create).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'key-points' })
+        expect.objectContaining({ type: 'key-points' }),
       );
     });
 
     it('should generate teaser summary', async () => {
       // Arrange
       const manager = new SummarizerManager();
-      (mockSummarizer.summarize as any).mockResolvedValue('Intriguing teaser...');
+      (mockSummarizer.summarize as any).mockResolvedValue(
+        'Intriguing teaser...',
+      );
 
       // Act
       const result = await manager.summarize(text, {}, { type: 'teaser' });
@@ -151,7 +158,7 @@ describe('Happy Path Integration Tests', () => {
       // Assert
       expect(result).toBeTruthy();
       expect(mockSummarizerClass.create).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'teaser' })
+        expect.objectContaining({ type: 'teaser' }),
       );
     });
 
@@ -166,7 +173,7 @@ describe('Happy Path Integration Tests', () => {
       // Assert
       expect(result).toBeTruthy();
       expect(mockSummarizerClass.create).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'headline' })
+        expect.objectContaining({ type: 'headline' }),
       );
     });
   });
@@ -183,15 +190,19 @@ describe('Happy Path Integration Tests', () => {
       const manager = new SummarizerManager();
 
       // Act
-      const result = await manager.summarize(text, {}, {
-        type: 'tldr',
-        length: 'short',
-      });
+      const result = await manager.summarize(
+        text,
+        {},
+        {
+          type: 'tldr',
+          length: 'short',
+        },
+      );
 
       // Assert
       expect(result).toBeTruthy();
       expect(mockSummarizerClass.create).toHaveBeenCalledWith(
-        expect.objectContaining({ length: 'short' })
+        expect.objectContaining({ length: 'short' }),
       );
     });
 
@@ -200,15 +211,19 @@ describe('Happy Path Integration Tests', () => {
       const manager = new SummarizerManager();
 
       // Act
-      const result = await manager.summarize(text, {}, {
-        type: 'tldr',
-        length: 'medium',
-      });
+      const result = await manager.summarize(
+        text,
+        {},
+        {
+          type: 'tldr',
+          length: 'medium',
+        },
+      );
 
       // Assert
       expect(result).toBeTruthy();
       expect(mockSummarizerClass.create).toHaveBeenCalledWith(
-        expect.objectContaining({ length: 'medium' })
+        expect.objectContaining({ length: 'medium' }),
       );
     });
 
@@ -217,15 +232,19 @@ describe('Happy Path Integration Tests', () => {
       const manager = new SummarizerManager();
 
       // Act
-      const result = await manager.summarize(text, {}, {
-        type: 'tldr',
-        length: 'long',
-      });
+      const result = await manager.summarize(
+        text,
+        {},
+        {
+          type: 'tldr',
+          length: 'long',
+        },
+      );
 
       // Assert
       expect(result).toBeTruthy();
       expect(mockSummarizerClass.create).toHaveBeenCalledWith(
-        expect.objectContaining({ length: 'long' })
+        expect.objectContaining({ length: 'long' }),
       );
     });
   });
@@ -242,33 +261,43 @@ describe('Happy Path Integration Tests', () => {
       const manager = new SummarizerManager();
 
       // Act
-      const result = await manager.summarize(text, {}, {
-        type: 'tldr',
-        format: 'plain-text',
-      });
+      const result = await manager.summarize(
+        text,
+        {},
+        {
+          type: 'tldr',
+          format: 'plain-text',
+        },
+      );
 
       // Assert
       expect(result).toBeTruthy();
       expect(mockSummarizerClass.create).toHaveBeenCalledWith(
-        expect.objectContaining({ format: 'plain-text' })
+        expect.objectContaining({ format: 'plain-text' }),
       );
     });
 
     it('should generate markdown summary', async () => {
       // Arrange
       const manager = new SummarizerManager();
-      (mockSummarizer.summarize as any).mockResolvedValue('# Summary\n\n**Bold** text');
+      (mockSummarizer.summarize as any).mockResolvedValue(
+        '# Summary\n\n**Bold** text',
+      );
 
       // Act
-      const result = await manager.summarize(text, {}, {
-        type: 'tldr',
-        format: 'markdown',
-      });
+      const result = await manager.summarize(
+        text,
+        {},
+        {
+          type: 'tldr',
+          format: 'markdown',
+        },
+      );
 
       // Assert
       expect(result).toBeTruthy();
       expect(mockSummarizerClass.create).toHaveBeenCalledWith(
-        expect.objectContaining({ format: 'markdown' })
+        expect.objectContaining({ format: 'markdown' }),
       );
     });
   });
@@ -285,15 +314,19 @@ describe('Happy Path Integration Tests', () => {
       const manager = new SummarizerManager();
 
       // Act
-      const result = await manager.summarize(text, {}, {
-        type: 'tldr',
-        outputLanguage: 'en',
-      });
+      const result = await manager.summarize(
+        text,
+        {},
+        {
+          type: 'tldr',
+          outputLanguage: 'en',
+        },
+      );
 
       // Assert
       expect(result).toBeTruthy();
       expect(mockSummarizerClass.create).toHaveBeenCalledWith(
-        expect.objectContaining({ outputLanguage: 'en' })
+        expect.objectContaining({ outputLanguage: 'en' }),
       );
     });
 
@@ -303,15 +336,19 @@ describe('Happy Path Integration Tests', () => {
       (mockSummarizer.summarize as any).mockResolvedValue('Resumen breve');
 
       // Act
-      const result = await manager.summarize(text, {}, {
-        type: 'tldr',
-        outputLanguage: 'es',
-      });
+      const result = await manager.summarize(
+        text,
+        {},
+        {
+          type: 'tldr',
+          outputLanguage: 'es',
+        },
+      );
 
       // Assert
       expect(result).toBeTruthy();
       expect(mockSummarizerClass.create).toHaveBeenCalledWith(
-        expect.objectContaining({ outputLanguage: 'es' })
+        expect.objectContaining({ outputLanguage: 'es' }),
       );
     });
 
@@ -321,15 +358,19 @@ describe('Happy Path Integration Tests', () => {
       (mockSummarizer.summarize as any).mockResolvedValue('要約テキスト');
 
       // Act
-      const result = await manager.summarize(text, {}, {
-        type: 'tldr',
-        outputLanguage: 'ja',
-      });
+      const result = await manager.summarize(
+        text,
+        {},
+        {
+          type: 'tldr',
+          outputLanguage: 'ja',
+        },
+      );
 
       // Assert
       expect(result).toBeTruthy();
       expect(mockSummarizerClass.create).toHaveBeenCalledWith(
-        expect.objectContaining({ outputLanguage: 'ja' })
+        expect.objectContaining({ outputLanguage: 'ja' }),
       );
     });
   });
@@ -353,7 +394,7 @@ describe('Happy Path Integration Tests', () => {
       const result = await chunkingEngine.recursiveSummarize(
         longText,
         { type: 'tldr' },
-        { type: 'recursive', maxChunkSize: 5000 }
+        { type: 'recursive', maxChunkSize: 5000 },
       );
 
       // Assert
@@ -378,12 +419,14 @@ describe('Happy Path Integration Tests', () => {
         { type: 'recursive', maxChunkSize: 5000 },
         (current, total) => {
           progressUpdates.push((current / total) * 100);
-        }
+        },
       );
 
       // Assert
       expect(progressUpdates.length).toBeGreaterThan(0);
-      expect(progressUpdates[progressUpdates.length - 1]).toBeLessThanOrEqual(100);
+      expect(progressUpdates[progressUpdates.length - 1]).toBeLessThanOrEqual(
+        100,
+      );
     });
   });
 
@@ -411,7 +454,7 @@ describe('Happy Path Integration Tests', () => {
       const stream = await manager.summarizeStreaming(
         'Text to summarize',
         {},
-        { type: 'tldr' }
+        { type: 'tldr' },
       );
 
       const reader = stream.getReader();
@@ -496,12 +539,14 @@ describe('Happy Path Integration Tests', () => {
       // Act
       const results = [];
       for (let i = 0; i < 5; i++) {
-        results.push(await manager.summarize(`Text ${i}`, {}, { type: 'tldr' }));
+        results.push(
+          await manager.summarize(`Text ${i}`, {}, { type: 'tldr' }),
+        );
       }
 
       // Assert
       expect(results).toHaveLength(5);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result).toBeTruthy();
       });
     });
@@ -533,7 +578,7 @@ describe('Happy Path Integration Tests', () => {
       const summary = await manager.summarize(
         userText,
         { context: 'Technical documentation' },
-        { type: 'key-points', format: 'markdown', length: 'medium' }
+        { type: 'key-points', format: 'markdown', length: 'medium' },
       );
 
       // 3. Get metrics
@@ -568,7 +613,7 @@ describe('Happy Path Integration Tests', () => {
       const result = await chunkingEngine.recursiveSummarize(
         document,
         { type: 'tldr' },
-        strategy
+        strategy,
       );
 
       // Assert

@@ -50,22 +50,31 @@ async function withRetry<T>(
       }
 
       // Don't retry on validation errors
-      if (error?.message?.includes('Invalid') || error?.message?.includes('validation')) {
+      if (
+        error?.message?.includes('Invalid') ||
+        error?.message?.includes('validation')
+      ) {
         throw error;
       }
 
       // Last attempt - throw error
       if (attempt === maxAttempts) {
-        console.error(`[useSummarizer] Retry failed after ${maxAttempts} attempts:`, error);
+        console.error(
+          `[useSummarizer] Retry failed after ${maxAttempts} attempts:`,
+          error,
+        );
         throw error;
       }
 
       // Calculate exponential backoff delay
       const backoffDelay = delayMs * Math.pow(2, attempt - 1);
-      console.warn(`[useSummarizer] Attempt ${attempt} failed, retrying in ${backoffDelay}ms...`, error);
+      console.warn(
+        `[useSummarizer] Attempt ${attempt} failed, retrying in ${backoffDelay}ms...`,
+        error,
+      );
 
       // Wait before retry
-      await new Promise(resolve => setTimeout(resolve, backoffDelay));
+      await new Promise((resolve) => setTimeout(resolve, backoffDelay));
     }
   }
 
@@ -195,16 +204,14 @@ export function useSummarizer(
   const [metrics, setMetrics] = useState<SummarizerMetrics | null>(null);
 
   // Model download tracking
-  const {
-    isDownloading,
-    downloadProgress,
-    downloadError,
-    abortDownload,
-  } = useModelDownload();
+  const { isDownloading, downloadProgress, downloadError, abortDownload } =
+    useModelDownload();
 
   // Refs
   const managerRef = useRef<SummarizerManager>(new SummarizerManager());
-  const chunkingEngineRef = useRef<import('../services/ChunkingEngine').ChunkingEngine | null>(null);
+  const chunkingEngineRef = useRef<
+    import('../services/ChunkingEngine').ChunkingEngine | null
+  >(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const performanceTracker = trackPerformance ? getPerformanceTracker() : null;
   const configRef = useRef<SummarizerCreateOptions>(config);
@@ -262,20 +269,26 @@ export function useSummarizer(
         const summary = await withRetry(async () => {
           // Check if text is long enough to require chunking
           const maxChunkSize = chunkingStrategy?.maxChunkSize || 10000;
-          const shouldChunk = text.length > maxChunkSize && chunkingEngineRef.current;
+          const shouldChunk =
+            text.length > maxChunkSize && chunkingEngineRef.current;
 
           if (shouldChunk) {
-            console.log(`[useSummarizer] Text exceeds ${maxChunkSize} characters, using chunking...`);
-
-            // Use ChunkingEngine for long content
-            const recursiveResult = await chunkingEngineRef.current!.recursiveSummarize(
-              text,
-              activeConfig,
-              chunkingStrategy!,
+            console.log(
+              `[useSummarizer] Text exceeds ${maxChunkSize} characters, using chunking...`,
             );
 
+            // Use ChunkingEngine for long content
+            const recursiveResult =
+              await chunkingEngineRef.current!.recursiveSummarize(
+                text,
+                activeConfig,
+                chunkingStrategy!,
+              );
+
             // Log chunking stats
-            console.log(`[useSummarizer] Processed ${recursiveResult.metadata.chunksProcessed} chunks`);
+            console.log(
+              `[useSummarizer] Processed ${recursiveResult.metadata.chunksProcessed} chunks`,
+            );
 
             return recursiveResult.summary;
           } else {

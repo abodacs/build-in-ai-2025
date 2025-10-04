@@ -206,10 +206,14 @@ export function URLExtractionCard({
           <AlertCircle className="w-4 h-4 text-amber-600" />
           <AlertDescription className="text-xs text-amber-800 space-y-2">
             <div>
-              <strong>Browser Limitation:</strong> Direct URL extraction is blocked by CORS (Cross-Origin Resource Sharing) security policies in most browsers.
+              <strong>Browser Limitation:</strong> Direct URL extraction is
+              blocked by CORS (Cross-Origin Resource Sharing) security policies
+              in most browsers.
             </div>
             <div className="pt-1">
-              <strong>Workaround:</strong> Copy the article text manually and paste it into the input area above, then click "Run Summarizer".
+              <strong>Workaround:</strong> Copy the article text manually and
+              paste it into the input area above, then click &quot;Run
+              Summarizer&quot;.
             </div>
           </AlertDescription>
         </Alert>

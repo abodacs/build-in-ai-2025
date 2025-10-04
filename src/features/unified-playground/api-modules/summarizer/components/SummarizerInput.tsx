@@ -14,12 +14,7 @@ import {
   FileText,
   Sparkles,
 } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -168,7 +163,15 @@ export function SummarizerInput({
   }, [value, minLength, showSmartDetection]);
 
   // Destructure analysis results
-  const { wordCount, charCount, isValid, validationMessage, detectedURL, detectedCode, suggestedFormat } = analysis;
+  const {
+    wordCount,
+    charCount,
+    isValid,
+    validationMessage,
+    detectedURL,
+    detectedCode,
+    suggestedFormat,
+  } = analysis;
 
   /**
    * Get validation color
@@ -193,7 +196,10 @@ export function SummarizerInput({
           {showWordCount && value && (
             <Badge
               variant="outline"
-              className={cn('font-mono text-[10px] h-5 px-1.5', getValidationColor())}
+              className={cn(
+                'font-mono text-[10px] h-5 px-1.5',
+                getValidationColor(),
+              )}
             >
               {wordCount.toLocaleString()}w · {charCount.toLocaleString()}c
             </Badge>
@@ -248,20 +254,25 @@ export function SummarizerInput({
               <Alert className="border-blue-200 bg-blue-50 py-2">
                 <LinkIcon className="w-3.5 h-3.5 text-blue-600" />
                 <AlertDescription className="text-xs text-blue-800">
-                  <strong>URL detected</strong> · Try Advanced tab for URL extraction
+                  <strong>URL detected</strong> · Try Advanced tab for URL
+                  extraction
                 </AlertDescription>
               </Alert>
             )}
 
             {/* Code/Markdown detected with format suggestion */}
-            {(detectedCode || suggestedFormat === 'markdown') && !detectedURL && (
-              <Alert className="border-purple-200 bg-purple-50 py-2">
-                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                <AlertDescription className="text-xs text-purple-800">
-                  <strong>{detectedCode ? 'Code' : 'Markdown'} detected</strong> · Suggested format: <strong>Markdown</strong>
-                </AlertDescription>
-              </Alert>
-            )}
+            {(detectedCode || suggestedFormat === 'markdown') &&
+              !detectedURL && (
+                <Alert className="border-purple-200 bg-purple-50 py-2">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                  <AlertDescription className="text-xs text-purple-800">
+                    <strong>
+                      {detectedCode ? 'Code' : 'Markdown'} detected
+                    </strong>{' '}
+                    · Suggested format: <strong>Markdown</strong>
+                  </AlertDescription>
+                </Alert>
+              )}
           </>
         )}
 
@@ -279,7 +290,9 @@ export function SummarizerInput({
         {value && !isValid && (
           <div className="flex items-center gap-1.5 text-[11px] text-amber-600">
             <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-            <span>Need {Math.max(0, minLength - charCount)} more characters</span>
+            <span>
+              Need {Math.max(0, minLength - charCount)} more characters
+            </span>
           </div>
         )}
       </CardContent>

@@ -8,7 +8,10 @@
 import { useState } from 'react';
 import { Copy, CheckCircle2, Download } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import {
+  vscDarkPlus,
+  vs,
+} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCodeTheme } from '@/providers/CodeThemeProvider';
@@ -128,12 +131,12 @@ export function ThemedCodeBlock({
     isDark
       ? 'bg-slate-900 border border-slate-700'
       : 'bg-slate-50 border border-slate-200',
-    className
+    className,
   );
 
   const headerClasses = cn(
     'flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b',
-    isDark ? 'border-slate-700' : 'border-slate-200'
+    isDark ? 'border-slate-700' : 'border-slate-200',
   );
 
   const badgeVariant = isDark ? 'secondary' : 'outline';
@@ -141,11 +144,18 @@ export function ThemedCodeBlock({
   return (
     <div className={containerClasses}>
       {/* Header */}
-      {(showLanguageBadge || showThemeToggle || showCopyButton || showDownloadButton || headerContent) && (
+      {(showLanguageBadge ||
+        showThemeToggle ||
+        showCopyButton ||
+        showDownloadButton ||
+        headerContent) && (
         <div className={headerClasses}>
           <div className="flex items-center gap-2 min-w-0">
             {showLanguageBadge && (
-              <Badge variant={badgeVariant} className="text-[10px] font-mono shrink-0">
+              <Badge
+                variant={badgeVariant}
+                className="text-[10px] font-mono shrink-0"
+              >
                 {language}
               </Badge>
             )}
@@ -206,8 +216,9 @@ export function ThemedCodeBlock({
           }}
           codeTagProps={{
             style: {
-              fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-            }
+              fontFamily:
+                'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+            },
           }}
           showLineNumbers={false}
           wrapLines={false}

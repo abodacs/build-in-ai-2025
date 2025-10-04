@@ -56,7 +56,8 @@ export const API_MODULES: Record<string, APIModule> = {
   summarizer: {
     id: 'summarizer',
     name: 'Summarizer API',
-    description: 'Content summarization and condensation with advanced chunking',
+    description:
+      'Content summarization and condensation with advanced chunking',
     category: 'text',
     PlaygroundComponent: SummarizerPlayground,
     available: true,
@@ -133,14 +134,18 @@ export function getAPIModule(id: string): APIModule | undefined {
  * Get all available API modules
  */
 export function getAvailableModules(): APIModule[] {
-  return Object.values(API_MODULES).filter(module => module.available);
+  return Object.values(API_MODULES).filter((module) => module.available);
 }
 
 /**
  * Get modules by category
  */
-export function getModulesByCategory(category: APIModule['category']): APIModule[] {
-  return Object.values(API_MODULES).filter(module => module.category === category);
+export function getModulesByCategory(
+  category: APIModule['category'],
+): APIModule[] {
+  return Object.values(API_MODULES).filter(
+    (module) => module.category === category,
+  );
 }
 
 /**

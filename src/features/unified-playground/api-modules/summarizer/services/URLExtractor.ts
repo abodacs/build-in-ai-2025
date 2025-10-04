@@ -14,16 +14,24 @@
 
 export class URLExtractor {
   constructor(_manager?: any) {
-    console.warn('[URLExtractor] Service disabled - CORS restrictions prevent URL extraction');
-    console.info('[URLExtractor] All AI processing uses local Chrome built-in models only');
+    console.warn(
+      '[URLExtractor] Service disabled - CORS restrictions prevent URL extraction',
+    );
+    console.info(
+      '[URLExtractor] All AI processing uses local Chrome built-in models only',
+    );
   }
 
   async extractFromURL(_url: string): Promise<never> {
-    throw new Error('URL extraction is disabled due to CORS restrictions. Use local text input only.');
+    throw new Error(
+      'URL extraction is disabled due to CORS restrictions. Use local text input only.',
+    );
   }
 
   async extractAndSummarize(_url: string, _config?: any): Promise<never> {
-    throw new Error('URL extraction is disabled due to CORS restrictions. Use local text input only.');
+    throw new Error(
+      'URL extraction is disabled due to CORS restrictions. Use local text input only.',
+    );
   }
 }
 

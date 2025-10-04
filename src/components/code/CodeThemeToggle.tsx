@@ -82,9 +82,11 @@ export function CodeThemeToggle({
   const getTooltipText = () => {
     const current = getThemeLabel(codeTheme);
     const next =
-      codeTheme === 'auto' ? 'Light Code'
-      : codeTheme === 'light' ? 'Dark Code'
-      : 'Auto Code';
+      codeTheme === 'auto'
+        ? 'Light Code'
+        : codeTheme === 'light'
+          ? 'Dark Code'
+          : 'Auto Code';
 
     return `${current} (click for ${next})`;
   };
@@ -100,7 +102,7 @@ export function CodeThemeToggle({
             className={cn(
               'h-7 px-2 transition-all duration-200 ease-out',
               'relative group shrink-0',
-              className
+              className,
             )}
             aria-label={getTooltipText()}
           >
@@ -119,9 +121,7 @@ export function CodeThemeToggle({
               className={cn(
                 'absolute -bottom-0.5 left-1/2 -translate-x-1/2',
                 'w-1 h-1 rounded-full transition-colors',
-                resolvedCodeTheme === 'dark'
-                  ? 'bg-slate-700'
-                  : 'bg-yellow-500'
+                resolvedCodeTheme === 'dark' ? 'bg-slate-700' : 'bg-yellow-500',
               )}
               aria-hidden="true"
             />

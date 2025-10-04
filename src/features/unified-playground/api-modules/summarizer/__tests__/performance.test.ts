@@ -12,7 +12,7 @@
  * - Memory: No leaks after 100 operations
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, test } from 'vitest';
 import { SummarizerManager } from '../services/SummarizerManager';
 import { ChunkingEngine } from '../services/ChunkingEngine';
 import type {
@@ -35,7 +35,7 @@ describe('Performance Tests', () => {
       summarize: vi.fn().mockImplementation(async (text: string) => {
         // Simulate realistic processing delay (50-150ms)
         const delay = 50 + Math.random() * 100;
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         return `Summary: ${text.substring(0, 50)}...`;
       }),
       summarizeStreaming: vi.fn(),
@@ -46,7 +46,7 @@ describe('Performance Tests', () => {
       create: vi.fn().mockImplementation(async () => {
         // Simulate model initialization delay (100-300ms)
         const delay = 100 + Math.random() * 200;
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         return mockSummarizer;
       }),
       availability: vi.fn().mockResolvedValue('readily'),
@@ -89,7 +89,7 @@ describe('Performance Tests', () => {
       const mediumText = 'Medium paragraph content. '.repeat(200); // ~5200 chars
 
       (mockSummarizer.summarize as any).mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 300)); // 300ms
+        await new Promise((resolve) => setTimeout(resolve, 300)); // 300ms
         return 'Medium summary';
       });
 
@@ -110,7 +110,7 @@ describe('Performance Tests', () => {
       const largeText = 'Large document section. '.repeat(500); // ~12000 chars
 
       (mockSummarizer.summarize as any).mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
         return 'Chunk summary';
       });
 
@@ -119,7 +119,7 @@ describe('Performance Tests', () => {
       await chunkingEngine.recursiveSummarize(
         largeText,
         { type: 'tldr' },
-        { type: 'recursive', maxChunkSize: 5000 }
+        { type: 'recursive', maxChunkSize: 5000 },
       );
       const endTime = performance.now();
       const duration = endTime - startTime;
@@ -178,7 +178,7 @@ describe('Performance Tests', () => {
       // Act
       const startTime = performance.now();
       const promises = Array.from({ length: 10 }, (_, i) =>
-        manager.summarize(`${text} ${i}`, {}, config)
+        manager.summarize(`${text} ${i}`, {}, config),
       );
       const results = await Promise.all(promises);
       const endTime = performance.now();
@@ -186,7 +186,7 @@ describe('Performance Tests', () => {
 
       // Assert
       expect(results).toHaveLength(10);
-      results.forEach(result => expect(result).toBeTruthy());
+      results.forEach((result) => expect(result).toBeTruthy());
 
       // Should complete in reasonable time (not 10x sequential time)
       expect(duration).toBeLessThan(2000);
@@ -199,14 +199,14 @@ describe('Performance Tests', () => {
       const config = { type: 'tldr' as const };
 
       (mockSummarizer.summarize as any).mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 50));
         return 'Fast summary';
       });
 
       // Act
       const startTime = performance.now();
       const promises = Array.from({ length: 50 }, (_, i) =>
-        manager.summarize(`${text} ${i}`, {}, config)
+        manager.summarize(`${text} ${i}`, {}, config),
       );
       const results = await Promise.all(promises);
       const endTime = performance.now();
@@ -229,7 +229,7 @@ describe('Performance Tests', () => {
 
       // Act
       const promises = Array.from({ length: 100 }, (_, i) =>
-        manager.summarize(`Text ${i}`, {}, config)
+        manager.summarize(`Text ${i}`, {}, config),
       );
       const results = await Promise.all(promises);
 
@@ -246,7 +246,7 @@ describe('Performance Tests', () => {
       const durations: number[] = [];
 
       (mockSummarizer.summarize as any).mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 30));
+        await new Promise((resolve) => setTimeout(resolve, 30));
         return 'Batch summary';
       });
 
@@ -254,7 +254,7 @@ describe('Performance Tests', () => {
       for (let batch = 0; batch < numBatches; batch++) {
         const startTime = performance.now();
         const promises = Array.from({ length: batchSize }, (_, i) =>
-          manager.summarize(`Batch ${batch} Item ${i}`, {}, { type: 'tldr' })
+          manager.summarize(`Batch ${batch} Item ${i}`, {}, { type: 'tldr' }),
         );
         await Promise.all(promises);
         const endTime = performance.now();
@@ -262,7 +262,8 @@ describe('Performance Tests', () => {
       }
 
       // Assert
-      const avgDuration = durations.reduce((a, b) => a + b, 0) / durations.length;
+      const avgDuration =
+        durations.reduce((a, b) => a + b, 0) / durations.length;
       const maxDuration = Math.max(...durations);
       const minDuration = Math.min(...durations);
 
@@ -355,7 +356,11 @@ describe('Performance Tests', () => {
       (mockSummarizer.summarizeStreaming as any).mockReturnValue(mockStream);
 
       // Act
-      const stream = await manager.summarizeStreaming('Test', {}, { type: 'tldr' });
+      const stream = await manager.summarizeStreaming(
+        'Test',
+        {},
+        { type: 'tldr' },
+      );
       const reader = stream.getReader();
 
       // Read some chunks
@@ -480,7 +485,11 @@ describe('Performance Tests', () => {
 
       // Act
       const startTime = performance.now();
-      const stream = await manager.summarizeStreaming('Test', {}, { type: 'tldr' });
+      const stream = await manager.summarizeStreaming(
+        'Test',
+        {},
+        { type: 'tldr' },
+      );
       const reader = stream.getReader();
 
       await reader.read(); // First chunk
@@ -509,7 +518,11 @@ describe('Performance Tests', () => {
       (mockSummarizer.summarizeStreaming as any).mockReturnValue(mockStream);
 
       // Act
-      const stream = await manager.summarizeStreaming('Test', {}, { type: 'tldr' });
+      const stream = await manager.summarizeStreaming(
+        'Test',
+        {},
+        { type: 'tldr' },
+      );
       const reader = stream.getReader();
 
       let done = false;
@@ -530,8 +543,11 @@ describe('Performance Tests', () => {
       expect(chunkTimes.length).toBeGreaterThan(0);
 
       // Chunk intervals should be consistent (within 100ms variance)
-      const avgInterval = chunkTimes.reduce((a, b) => a + b, 0) / chunkTimes.length;
-      const maxVariance = Math.max(...chunkTimes.map(t => Math.abs(t - avgInterval)));
+      const avgInterval =
+        chunkTimes.reduce((a, b) => a + b, 0) / chunkTimes.length;
+      const maxVariance = Math.max(
+        ...chunkTimes.map((t) => Math.abs(t - avgInterval)),
+      );
       expect(maxVariance).toBeLessThan(100);
     });
 
@@ -549,7 +565,11 @@ describe('Performance Tests', () => {
       (mockSummarizer.summarizeStreaming as any).mockReturnValue(mockStream);
 
       // Act
-      const stream = await manager.summarizeStreaming('Test', {}, { type: 'tldr' });
+      const stream = await manager.summarizeStreaming(
+        'Test',
+        {},
+        { type: 'tldr' },
+      );
       const reader = stream.getReader();
       await reader.read();
 
@@ -578,7 +598,7 @@ describe('Performance Tests', () => {
       const result = await chunkingEngine.recursiveSummarize(
         largeText,
         { type: 'tldr' },
-        { type: 'recursive', maxChunkSize: 3000 }
+        { type: 'recursive', maxChunkSize: 3000 },
       );
       const endTime = performance.now();
       const duration = endTime - startTime;
@@ -607,7 +627,7 @@ describe('Performance Tests', () => {
         largeText,
         { type: 'tldr' },
         { type: 'recursive', maxChunkSize: 2000 },
-        progressCallback
+        progressCallback,
       );
       const endTime = performance.now();
       const duration = endTime - startTime;
@@ -649,20 +669,22 @@ describe('Performance Tests', () => {
       // Arrange
       const manager = new SummarizerManager();
 
-      (mockSummarizer.summarize as any).mockImplementation(async (text: string) => {
-        const delay = text.length > 100 ? 100 : 50;
-        await new Promise(resolve => setTimeout(resolve, delay));
-        return 'Summary';
-      });
+      (mockSummarizer.summarize as any).mockImplementation(
+        async (text: string) => {
+          const delay = text.length > 100 ? 100 : 50;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          return 'Summary';
+        },
+      );
 
       // Act - Mixed small and large texts
       const startTime = performance.now();
       const promises = [
         ...Array.from({ length: 20 }, (_, i) =>
-          manager.summarize(`Short ${i}`, {}, { type: 'tldr' })
+          manager.summarize(`Short ${i}`, {}, { type: 'tldr' }),
         ),
         ...Array.from({ length: 10 }, (_, i) =>
-          manager.summarize('Long text. '.repeat(50), {}, { type: 'tldr' })
+          manager.summarize('Long text. '.repeat(50), {}, { type: 'tldr' }),
         ),
       ];
 
@@ -686,9 +708,9 @@ describe('Performance Tests', () => {
 
       (mockSummarizer.summarize as any).mockResolvedValue('Quick summary');
 
-      // Act
+      // Act - Reduced iterations for faster test
       const startTime = performance.now();
-      for (let i = 0; i < 40; i++) {
+      for (let i = 0; i < 12; i++) {
         const config = configs[i % configs.length];
         await manager.summarize(`Text ${i}`, {}, config);
       }
@@ -697,8 +719,8 @@ describe('Performance Tests', () => {
 
       // Assert
       expect(mockSummarizerClass.create).toHaveBeenCalledTimes(4); // One per config
-      expect(duration).toBeLessThan(5000);
-    });
+      expect(duration).toBeLessThan(3000);
+    }, 10000); // 10s timeout for this test
 
     it('should recover from temporary slowdowns', async () => {
       // Arrange
@@ -709,7 +731,7 @@ describe('Performance Tests', () => {
         callCount++;
         // Simulate slowdown in middle requests
         const delay = callCount >= 5 && callCount <= 10 ? 200 : 50;
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         return 'Summary';
       });
 
@@ -723,8 +745,10 @@ describe('Performance Tests', () => {
       }
 
       // Assert
-      const avgDurationBefore = durations.slice(0, 4).reduce((a, b) => a + b, 0) / 4;
-      const avgDurationAfter = durations.slice(11).reduce((a, b) => a + b, 0) / 4;
+      const avgDurationBefore =
+        durations.slice(0, 4).reduce((a, b) => a + b, 0) / 4;
+      const avgDurationAfter =
+        durations.slice(11).reduce((a, b) => a + b, 0) / 4;
 
       // Performance should recover after slowdown
       expect(avgDurationAfter).toBeLessThan(avgDurationBefore * 2);

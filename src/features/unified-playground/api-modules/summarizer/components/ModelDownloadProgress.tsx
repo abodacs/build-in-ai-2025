@@ -69,7 +69,7 @@ function formatBytes(bytes: number): string {
 function estimateTimeRemaining(
   loaded: number,
   total: number,
-  startTime: number
+  startTime: number,
 ): string {
   const elapsed = (Date.now() - startTime) / 1000; // seconds
   const rate = loaded / elapsed; // bytes per second
@@ -196,15 +196,9 @@ export function ModelDownloadProgress({
 
         {/* Info */}
         <div className="text-xs text-blue-600 space-y-1">
-          <p>
-            • Model size: ~1-2 GB (varies by device)
-          </p>
-          <p>
-            • Downloaded once and cached for future use
-          </p>
-          <p>
-            • All processing happens locally on your device
-          </p>
+          <p>• Model size: ~1-2 GB (varies by device)</p>
+          <p>• Downloaded once and cached for future use</p>
+          <p>• All processing happens locally on your device</p>
         </div>
       </div>
     </Card>

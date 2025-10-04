@@ -192,11 +192,13 @@ export function useSummarizerAvailability(): UseSummarizerAvailabilityReturn {
         setDownloadProgress(progress);
       });
 
-      console.log('[useSummarizerAvailability] Download complete, waiting for Chrome to register model...');
+      console.log(
+        '[useSummarizerAvailability] Download complete, waiting for Chrome to register model...',
+      );
 
       // Give Chrome a moment to register the downloaded model
       // Chrome needs time to process and mark the model as 'readily' available
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       console.log('[useSummarizerAvailability] Refreshing availability...');
 

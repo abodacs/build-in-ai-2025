@@ -136,7 +136,9 @@ describe('App Shell Integration Tests', () => {
       expect(summarizerButtons.length).toBeGreaterThan(0);
 
       // Click Writer API
-      const writerButtons = screen.getAllByRole('button', { name: /Writer API/ });
+      const writerButtons = screen.getAllByRole('button', {
+        name: /Writer API/,
+      });
       await act(async () => {
         await user.click(writerButtons[0]);
       });
@@ -157,7 +159,9 @@ describe('App Shell Integration Tests', () => {
       ).toBeInTheDocument();
 
       // Switch to different API and check it updates
-      const writerButtons = screen.getAllByRole('button', { name: /Writer API/ });
+      const writerButtons = screen.getAllByRole('button', {
+        name: /Writer API/,
+      });
       await act(async () => {
         await user.click(writerButtons[0]);
       });
@@ -243,7 +247,9 @@ describe('App Shell Integration Tests', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getAllByText('Proofreader API').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Proofreader API').length).toBeGreaterThan(
+          0,
+        );
         expect(
           screen.getAllByText('Grammar and writing improvement').length,
         ).toBeGreaterThan(0);
@@ -258,7 +264,9 @@ describe('App Shell Integration Tests', () => {
       expect(screen.getByText('Chrome AI DevBench')).toBeInTheDocument();
 
       // Change API
-      const writerButtons = screen.getAllByRole('button', { name: /Writer API/ });
+      const writerButtons = screen.getAllByRole('button', {
+        name: /Writer API/,
+      });
       await act(async () => {
         await user.click(writerButtons[0]);
       });
@@ -363,7 +371,9 @@ describe('App Shell Integration Tests', () => {
       // Check for proper landmarks
       expect(screen.getAllByRole('complementary').length).toBeGreaterThan(0); // sidebar
       expect(screen.getAllByRole('main').length).toBeGreaterThan(0); // main content
-      expect(screen.getAllByRole('heading', { level: 1 }).length).toBeGreaterThan(0); // main heading
+      expect(
+        screen.getAllByRole('heading', { level: 1 }).length,
+      ).toBeGreaterThan(0); // main heading
     });
   });
 
@@ -412,7 +422,9 @@ describe('App Shell Integration Tests', () => {
         expect(languageDetectionButtons.length).toBeGreaterThan(0);
 
         // Main content should update
-        expect(screen.getAllByText('Language Detection').length).toBeGreaterThan(0);
+        expect(
+          screen.getAllByText('Language Detection').length,
+        ).toBeGreaterThan(0);
         expect(
           screen.getAllByText('Automatic language identification').length,
         ).toBeGreaterThan(0);
@@ -431,7 +443,9 @@ describe('App Shell Integration Tests', () => {
         });
 
         // Switch API
-        const writerButtons = screen.getAllByRole('button', { name: /Writer API/ });
+        const writerButtons = screen.getAllByRole('button', {
+          name: /Writer API/,
+        });
         await act(async () => {
           await user.click(writerButtons[0]);
         });

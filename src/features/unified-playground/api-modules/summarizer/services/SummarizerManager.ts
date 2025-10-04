@@ -107,7 +107,9 @@ export class SummarizerManager {
         'userActivation' in navigator &&
         !(navigator as any).userActivation?.isActive
       ) {
-        console.warn('[SummarizerManager] User activation required for model creation');
+        console.warn(
+          '[SummarizerManager] User activation required for model creation',
+        );
         throw new Error(
           'Model creation requires user interaction (e.g., button click)',
         );
@@ -182,7 +184,9 @@ export class SummarizerManager {
         'userActivation' in navigator &&
         !(navigator as any).userActivation?.isActive
       ) {
-        console.warn('[SummarizerManager] User activation required for model download');
+        console.warn(
+          '[SummarizerManager] User activation required for model download',
+        );
         throw new Error(
           'Model download requires user interaction (e.g., button click)',
         );
@@ -288,11 +292,15 @@ export class SummarizerManager {
       // Get or create summarizer
       const summarizer = await this.getSummarizer(createOptions);
 
+      // Normalize summarize options (ensures outputLanguage is set)
+      const normalizedSummarizeOptions =
+        ChromeAICompatibility.normalizeSummarizeOptions(summarizeOptions);
+
       // Track summarization time
       const startTime = performance.now();
 
       // Perform summarization
-      const summary = await summarizer.summarize(text, summarizeOptions);
+      const summary = await summarizer.summarize(text, normalizedSummarizeOptions);
 
       // Record metrics
       const summaryTime = performance.now() - startTime;
@@ -332,6 +340,10 @@ export class SummarizerManager {
       // Get or create summarizer
       const summarizer = await this.getSummarizer(createOptions);
 
+      // Normalize summarize options (ensures outputLanguage is set)
+      const normalizedSummarizeOptions =
+        ChromeAICompatibility.normalizeSummarizeOptions(summarizeOptions);
+
       // Check if streaming is supported
       if (!('summarizeStreaming' in summarizer)) {
         throw new Error('Streaming not supported by this summarizer instance');
@@ -344,7 +356,7 @@ export class SummarizerManager {
       // Perform streaming summarization
       const stream = (summarizer as any).summarizeStreaming(
         text,
-        summarizeOptions,
+        normalizedSummarizeOptions,
       );
 
       // Wrap stream to track latency

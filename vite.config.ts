@@ -1,12 +1,31 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import viteCompression from 'vite-plugin-compression'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react({
       exclude: '**/src/components/ui/**',
+    }),
+    // Gzip compression
+    viteCompression({
+      verbose: true,
+      disable: false,
+      threshold: 1024,
+      algorithm: 'gzip',
+      ext: '.gz',
+      deleteOriginFile: false,
+    }),
+    // Brotli compression (best compression ratio)
+    viteCompression({
+      verbose: true,
+      disable: false,
+      threshold: 1024,
+      algorithm: 'brotliCompress',
+      ext: '.br',
+      deleteOriginFile: false,
     }),
   ],
   resolve: {
@@ -26,19 +45,60 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     minify: 'terser',
+    chunkSizeWarningLimit: 1000,
     terserOptions: {
       compress: {
         drop_console: true,
         drop_debugger: true,
+        pure_funcs: ['console.log', 'console.debug', 'console.trace'],
+      },
+      mangle: {
+        safari10: true,
       },
     },
     rollupOptions: {
+      treeshake: {
+        preset: 'recommended',
+        moduleSideEffects: false,
+      },
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          ui: ['@radix-ui/react-tabs', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
-          router: ['react-router-dom'],
-          utils: ['clsx', 'tailwind-merge', 'zod', 'zustand']
+        manualChunks: (id) => {
+          // Core React libraries - keep together for better caching
+          if (id.includes('node_modules/react') ||
+              id.includes('node_modules/react-dom') ||
+              id.includes('node_modules/scheduler')) {
+            return 'react-vendor';
+          }
+
+          // Router - separate as it's loaded on every route
+          if (id.includes('node_modules/react-router')) {
+            return 'router';
+          }
+
+          // Radix UI - large but necessary for UI components
+          if (id.includes('@radix-ui')) {
+            return 'ui-components';
+          }
+
+          // Syntax highlighting - heavy library, separate chunk for lazy loading
+          if (id.includes('react-syntax-highlighter') || id.includes('highlight.js')) {
+            return 'syntax-highlighter';
+          }
+
+          // Charts library - only loaded when needed
+          if (id.includes('recharts') || id.includes('d3-')) {
+            return 'charts';
+          }
+
+          // Other node_modules - catch-all for remaining dependencies
+          if (id.includes('node_modules')) {
+            return 'vendor-libs';
+          }
+
+          // Summarizer feature - lazy load this module
+          if (id.includes('features/unified-playground/api-modules/summarizer')) {
+            return 'summarizer';
+          }
         }
       }
     }

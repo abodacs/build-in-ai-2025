@@ -493,13 +493,14 @@ export function CodeModal({
     [config],
   );
 
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className={cn(
-        'w-[calc(100vw-2rem)] sm:w-[95vw] max-w-4xl xl:max-w-[1400px] h-[85vh] sm:h-[90vh] max-h-[90vh] p-0 gap-0 flex flex-col',
-        className
-      )}>
+      <DialogContent
+        className={cn(
+          'w-[calc(100vw-2rem)] sm:w-[95vw] max-w-4xl xl:max-w-[1400px] h-[85vh] sm:h-[90vh] max-h-[90vh] p-0 gap-0 flex flex-col',
+          className,
+        )}
+      >
         <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
           <div className="flex items-center gap-2">
             <Code className="w-5 h-5 text-green-600" />
@@ -514,7 +515,11 @@ export function CodeModal({
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto px-6 pb-6">
           {/* Requirements & Setup - Collapsible */}
-          <Collapsible open={requirementsOpen} onOpenChange={setRequirementsOpen} className="mb-4">
+          <Collapsible
+            open={requirementsOpen}
+            onOpenChange={setRequirementsOpen}
+            className="mb-4"
+          >
             <Alert className="bg-amber-50 border-amber-200">
               <AlertCircle className="h-4 w-4 text-amber-600" />
               <AlertDescription>
@@ -530,13 +535,39 @@ export function CodeModal({
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-3 space-y-2 text-xs text-amber-800">
                   <ul className="list-disc list-inside space-y-1">
-                    <li><strong>Chrome 138+</strong> with Chrome AI Summarizer API enabled</li>
-                    <li>Enable flag: <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">chrome://flags#summarization-api-for-gemini-nano</code></li>
+                    <li>
+                      <strong>Chrome 138+</strong> with Chrome AI Summarizer API
+                      enabled
+                    </li>
+                    <li>
+                      Enable flag:{' '}
+                      <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">
+                        chrome://flags#summarization-api-for-gemini-nano
+                      </code>
+                    </li>
                     <li>Check availability before using the API</li>
-                    <li><strong>User activation required:</strong> Call <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">Summarizer.create()</code> only from user interactions (button clicks)</li>
-                    <li>Always clean up summarizer instances with <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">destroy()</code></li>
-                    <li>Handle model download if availability is <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">'after-download'</code></li>
-                    <li>Consider using streaming for better UX with long content</li>
+                    <li>
+                      <strong>User activation required:</strong> Call{' '}
+                      <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">
+                        Summarizer.create()
+                      </code>{' '}
+                      only from user interactions (button clicks)
+                    </li>
+                    <li>
+                      Always clean up summarizer instances with{' '}
+                      <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">
+                        destroy()
+                      </code>
+                    </li>
+                    <li>
+                      Handle model download if availability is{' '}
+                      <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">
+                        &apos;after-download&apos;
+                      </code>
+                    </li>
+                    <li>
+                      Consider using streaming for better UX with long content
+                    </li>
                   </ul>
                 </CollapsibleContent>
               </AlertDescription>
@@ -565,12 +596,8 @@ export function CodeModal({
           {/* Code Tabs */}
           <Tabs defaultValue="typescript" className="w-full">
             <TabsList className="w-full grid grid-cols-2 mb-4">
-              <TabsTrigger value="typescript">
-                TypeScript
-              </TabsTrigger>
-              <TabsTrigger value="javascript">
-                JavaScript
-              </TabsTrigger>
+              <TabsTrigger value="typescript">TypeScript</TabsTrigger>
+              <TabsTrigger value="javascript">JavaScript</TabsTrigger>
             </TabsList>
 
             {/* TypeScript */}

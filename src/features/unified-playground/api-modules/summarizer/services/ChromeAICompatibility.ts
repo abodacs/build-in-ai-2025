@@ -14,6 +14,7 @@ import type {
   APIVersion,
   BrowserCapabilities,
   SummarizerCreateOptions,
+  SummarizeOptions,
 } from '../types/summarizer.types';
 
 // ============================================================================
@@ -333,6 +334,31 @@ export class ChromeAICompatibility {
       );
       normalized.length = 'medium';
     }
+
+    // Ensure outputLanguage is specified (required for optimal quality and safety)
+    if (!normalized.outputLanguage) {
+      normalized.outputLanguage = 'en'; // Default to English
+    } else if (!['en', 'es', 'ja'].includes(normalized.outputLanguage)) {
+      console.warn(
+        `Invalid outputLanguage: ${normalized.outputLanguage}, defaulting to 'en'`,
+      );
+      normalized.outputLanguage = 'en';
+    }
+
+    return normalized;
+  }
+
+  /**
+   * Normalize summarize options (options passed to summarize() call)
+   * Ensures outputLanguage is specified for optimal quality and safety
+   *
+   * @param {SummarizeOptions} options - Options to normalize
+   * @returns {SummarizeOptions} Normalized options
+   */
+  static normalizeSummarizeOptions(
+    options: SummarizeOptions,
+  ): SummarizeOptions {
+    const normalized: SummarizeOptions = { ...options };
 
     // Ensure outputLanguage is specified (required for optimal quality and safety)
     if (!normalized.outputLanguage) {

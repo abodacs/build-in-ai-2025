@@ -71,20 +71,22 @@ export function SummarizerPlayground({ className }: SummarizerPlaygroundProps) {
   };
 
   // Configuration state
-  const [config, setConfig] = useState<SummarizerCreateOptions>(loadSavedConfig);
+  const [config, setConfig] =
+    useState<SummarizerCreateOptions>(loadSavedConfig);
 
   // Input text state (shared with PlaygroundTab)
   const [inputText, setInputText] = useState('');
 
   // Selected sample ID for visual feedback
-  const [selectedSampleId, setSelectedSampleId] = useState<string | undefined>();
+  const [selectedSampleId, setSelectedSampleId] = useState<
+    string | undefined
+  >();
 
   // Chunking strategy for advanced features
   const [chunkingStrategy, setChunkingStrategy] = useState<ChunkingStrategy>({
     type: 'recursive',
     maxChunkSize: 10000,
   });
-
 
   // ============================================================================
   // Hooks - Shared State

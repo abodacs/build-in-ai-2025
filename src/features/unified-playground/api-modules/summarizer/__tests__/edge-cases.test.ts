@@ -69,7 +69,11 @@ describe('Edge Cases', () => {
       const veryLongText = 'A'.repeat(200000);
 
       // Act
-      const result = await manager.summarize(veryLongText, {}, { type: 'tldr' });
+      const result = await manager.summarize(
+        veryLongText,
+        {},
+        { type: 'tldr' },
+      );
 
       // Assert
       expect(result).toBeDefined();
@@ -233,7 +237,8 @@ describe('Edge Cases', () => {
     it('should handle text with URLs', async () => {
       // Arrange
       const manager = new SummarizerManager();
-      const text = 'Visit https://example.com and http://test.org for more info.';
+      const text =
+        'Visit https://example.com and http://test.org for more info.';
 
       // Act
       const result = await manager.summarize(text, {}, { type: 'tldr' });
@@ -426,7 +431,9 @@ describe('Edge Cases', () => {
       // Arrange
       const manager = new SummarizerManager();
       (mockSummarizer.summarize as any).mockImplementation(() => {
-        return new Promise((resolve) => setTimeout(() => resolve('Summary'), 100));
+        return new Promise((resolve) =>
+          setTimeout(() => resolve('Summary'), 100),
+        );
       });
 
       // Act
@@ -513,7 +520,7 @@ describe('Edge Cases', () => {
 
       // Assert
       const lines = cleaned.split('\n');
-      lines.forEach(line => {
+      lines.forEach((line) => {
         expect(line).toBe(line.trim());
       });
     });
@@ -593,7 +600,7 @@ describe('Edge Cases', () => {
 
       // Assert
       expect(result.chunks.length).toBeGreaterThan(1);
-      result.chunks.forEach(chunk => {
+      result.chunks.forEach((chunk) => {
         expect(chunk.length).toBeLessThanOrEqual(1000);
       });
     });
@@ -607,13 +614,22 @@ describe('Edge Cases', () => {
 
       // Act
       const results = [
-        chunkingEngine.chunkText(text1, { type: 'recursive', maxChunkSize: 1000 }),
-        chunkingEngine.chunkText(text2, { type: 'recursive', maxChunkSize: 1000 }),
-        chunkingEngine.chunkText(text3, { type: 'recursive', maxChunkSize: 1000 }),
+        chunkingEngine.chunkText(text1, {
+          type: 'recursive',
+          maxChunkSize: 1000,
+        }),
+        chunkingEngine.chunkText(text2, {
+          type: 'recursive',
+          maxChunkSize: 1000,
+        }),
+        chunkingEngine.chunkText(text3, {
+          type: 'recursive',
+          maxChunkSize: 1000,
+        }),
       ];
 
       // Assert
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.chunks.length).toBeGreaterThan(0);
       });
     });
@@ -642,7 +658,7 @@ describe('Edge Cases', () => {
 
       // Assert
       expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.includes('too long'))).toBe(true);
+      expect(result.errors.some((e) => e.includes('too long'))).toBe(true);
     });
 
     it('should validate text type', () => {

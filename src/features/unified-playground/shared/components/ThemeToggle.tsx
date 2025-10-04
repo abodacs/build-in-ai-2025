@@ -36,7 +36,6 @@ export function ThemeToggle({
     });
   };
 
-
   const getThemeIcon = (themeType: Theme) => {
     switch (themeType) {
       case 'light':

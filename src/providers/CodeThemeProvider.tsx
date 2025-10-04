@@ -41,7 +41,7 @@ interface CodeThemeContextValue {
 // ============================================================================
 
 const CodeThemeContext = createContext<CodeThemeContextValue | undefined>(
-  undefined
+  undefined,
 );
 
 // ============================================================================
@@ -76,7 +76,7 @@ export function CodeThemeProvider({
       }
       return theme;
     },
-    [appTheme]
+    [appTheme],
   );
 
   // Set code theme and persist
@@ -97,18 +97,16 @@ export function CodeThemeProvider({
       window.dispatchEvent(
         new CustomEvent('codethemechange', {
           detail: { codeTheme: newTheme, resolvedCodeTheme: resolved },
-        })
+        }),
       );
     },
-    [storageKey, resolveCodeTheme]
+    [storageKey, resolveCodeTheme],
   );
 
   // Cycle through themes: auto → light → dark → auto
   const cycleCodeTheme = useCallback(() => {
     const next: CodeTheme =
-      codeTheme === 'auto' ? 'light'
-      : codeTheme === 'light' ? 'dark'
-      : 'auto';
+      codeTheme === 'auto' ? 'light' : codeTheme === 'light' ? 'dark' : 'auto';
     setCodeTheme(next);
   }, [codeTheme, setCodeTheme]);
 

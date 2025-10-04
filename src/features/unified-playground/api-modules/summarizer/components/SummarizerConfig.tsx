@@ -22,11 +22,7 @@ import {
   Info,
   Code,
 } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -168,7 +164,11 @@ export function SummarizerConfig({
                   type="single"
                   value={config.type || 'tldr'}
                   onValueChange={(value) => {
-                    if (value) updateConfig('type', value as SummarizerCreateOptions['type']);
+                    if (value)
+                      updateConfig(
+                        'type',
+                        value as SummarizerCreateOptions['type'],
+                      );
                   }}
                   className="grid grid-cols-2 gap-1"
                 >
@@ -219,7 +219,11 @@ export function SummarizerConfig({
                   type="single"
                   value={config.format || 'plain-text'}
                   onValueChange={(value) => {
-                    if (value) updateConfig('format', value as SummarizerCreateOptions['format']);
+                    if (value)
+                      updateConfig(
+                        'format',
+                        value as SummarizerCreateOptions['format'],
+                      );
                   }}
                   className="grid grid-cols-1 gap-1"
                 >
@@ -251,12 +255,18 @@ export function SummarizerConfig({
                 >
                   Summary Length
                 </Label>
-                <p className="text-[10px] text-slate-400">Choose detail level</p>
+                <p className="text-[10px] text-slate-400">
+                  Choose detail level
+                </p>
                 <ToggleGroup
                   type="single"
                   value={config.length || 'medium'}
                   onValueChange={(value) => {
-                    if (value) updateConfig('length', value as SummarizerCreateOptions['length']);
+                    if (value)
+                      updateConfig(
+                        'length',
+                        value as SummarizerCreateOptions['length'],
+                      );
                   }}
                   className="grid grid-cols-1 gap-1"
                 >

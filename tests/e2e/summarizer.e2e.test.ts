@@ -70,7 +70,8 @@ test.describe('Summarizer E2E Tests', () => {
       test.skip(!isAvailable, 'Chrome AI not available');
 
       // Arrange - Enter text to summarize
-      const inputText = 'This is a sample document about artificial intelligence. AI is transforming how we interact with technology. Machine learning models are becoming more sophisticated every day.';
+      const inputText =
+        'This is a sample document about artificial intelligence. AI is transforming how we interact with technology. Machine learning models are becoming more sophisticated every day.';
 
       await page.fill('[data-testid="input-textarea"]', inputText);
 
@@ -80,7 +81,9 @@ test.describe('Summarizer E2E Tests', () => {
       // Assert - Wait for and verify summary output
       await waitForSummarization(page);
 
-      const summaryText = await page.textContent('[data-testid="summary-output"]');
+      const summaryText = await page.textContent(
+        '[data-testid="summary-output"]',
+      );
       expect(summaryText).toBeTruthy();
       expect(summaryText!.length).toBeGreaterThan(0);
       expect(summaryText!.length).toBeLessThan(inputText.length);
@@ -98,7 +101,9 @@ test.describe('Summarizer E2E Tests', () => {
       await page.click('[data-testid="summarize-button"]');
 
       // Assert - Check loading indicator appears
-      const loadingIndicator = page.locator('[data-testid="loading-indicator"]');
+      const loadingIndicator = page.locator(
+        '[data-testid="loading-indicator"]',
+      );
       await expect(loadingIndicator).toBeVisible({ timeout: 1000 });
 
       // Wait for completion
@@ -121,10 +126,14 @@ test.describe('Summarizer E2E Tests', () => {
       await page.click('[data-testid="clear-button"]');
 
       // Assert
-      const inputValue = await page.inputValue('[data-testid="input-textarea"]');
+      const inputValue = await page.inputValue(
+        '[data-testid="input-textarea"]',
+      );
       expect(inputValue).toBe('');
 
-      const summaryText = await page.textContent('[data-testid="summary-output"]');
+      const summaryText = await page.textContent(
+        '[data-testid="summary-output"]',
+      );
       expect(summaryText).toBeFalsy();
     });
 
@@ -140,13 +149,17 @@ test.describe('Summarizer E2E Tests', () => {
       await page.click('[data-testid="summarize-button"]');
       await waitForSummarization(page);
 
-      const summaryText = await page.textContent('[data-testid="summary-output"]');
+      const summaryText = await page.textContent(
+        '[data-testid="summary-output"]',
+      );
 
       // Act - Click copy button
       await page.click('[data-testid="copy-button"]');
 
       // Assert - Verify clipboard content
-      const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
+      const clipboardText = await page.evaluate(() =>
+        navigator.clipboard.readText(),
+      );
       expect(clipboardText).toBe(summaryText);
     });
   });
@@ -156,7 +169,9 @@ test.describe('Summarizer E2E Tests', () => {
   // ==========================================================================
 
   test.describe('Configuration Options', () => {
-    test('should change summary type (TL;DR, Key Points, etc.)', async ({ page }) => {
+    test('should change summary type (TL;DR, Key Points, etc.)', async ({
+      page,
+    }) => {
       const isAvailable = await isChromeAIAvailable(page);
       test.skip(!isAvailable, 'Chrome AI not available');
 
@@ -168,7 +183,7 @@ test.describe('Summarizer E2E Tests', () => {
       await page.click('[data-testid="summarize-button"]');
       await waitForSummarization(page);
 
-      let summary1 = await page.textContent('[data-testid="summary-output"]');
+      const summary1 = await page.textContent('[data-testid="summary-output"]');
       expect(summary1).toBeTruthy();
 
       // Test Key Points
@@ -176,12 +191,14 @@ test.describe('Summarizer E2E Tests', () => {
       await page.click('[data-testid="summarize-button"]');
       await waitForSummarization(page);
 
-      let summary2 = await page.textContent('[data-testid="summary-output"]');
+      const summary2 = await page.textContent('[data-testid="summary-output"]');
       expect(summary2).toBeTruthy();
       // Different types may produce different summaries
     });
 
-    test('should change summary length (Short, Medium, Long)', async ({ page }) => {
+    test('should change summary length (Short, Medium, Long)', async ({
+      page,
+    }) => {
       const isAvailable = await isChromeAIAvailable(page);
       test.skip(!isAvailable, 'Chrome AI not available');
 
@@ -193,7 +210,9 @@ test.describe('Summarizer E2E Tests', () => {
       await page.click('[data-testid="summarize-button"]');
       await waitForSummarization(page);
 
-      let shortSummary = await page.textContent('[data-testid="summary-output"]');
+      const shortSummary = await page.textContent(
+        '[data-testid="summary-output"]',
+      );
       const shortLength = shortSummary!.length;
 
       // Test Long length
@@ -201,14 +220,18 @@ test.describe('Summarizer E2E Tests', () => {
       await page.click('[data-testid="summarize-button"]');
       await waitForSummarization(page);
 
-      let longSummary = await page.textContent('[data-testid="summary-output"]');
+      const longSummary = await page.textContent(
+        '[data-testid="summary-output"]',
+      );
       const longLength = longSummary!.length;
 
       // Long summary should generally be longer than short
       expect(longLength).toBeGreaterThanOrEqual(shortLength * 0.8);
     });
 
-    test('should change output format (Plain Text, Markdown)', async ({ page }) => {
+    test('should change output format (Plain Text, Markdown)', async ({
+      page,
+    }) => {
       const isAvailable = await isChromeAIAvailable(page);
       test.skip(!isAvailable, 'Chrome AI not available');
 
@@ -220,7 +243,9 @@ test.describe('Summarizer E2E Tests', () => {
       await page.click('[data-testid="summarize-button"]');
       await waitForSummarization(page);
 
-      let markdownSummary = await page.textContent('[data-testid="summary-output"]');
+      const markdownSummary = await page.textContent(
+        '[data-testid="summary-output"]',
+      );
 
       // Markdown might contain formatting characters
       expect(markdownSummary).toBeTruthy();
@@ -238,7 +263,7 @@ test.describe('Summarizer E2E Tests', () => {
       await page.click('[data-testid="summarize-button"]');
       await waitForSummarization(page);
 
-      let summary = await page.textContent('[data-testid="summary-output"]');
+      const summary = await page.textContent('[data-testid="summary-output"]');
       expect(summary).toBeTruthy();
     });
   });
@@ -263,7 +288,10 @@ test.describe('Summarizer E2E Tests', () => {
     test('should show error when API unavailable', async ({ page }) => {
       // Check if API is unavailable
       const isAvailable = await isChromeAIAvailable(page);
-      test.skip(isAvailable, 'Chrome AI is available, cannot test unavailable state');
+      test.skip(
+        isAvailable,
+        'Chrome AI is available, cannot test unavailable state',
+      );
 
       // Act - Try to summarize
       await page.fill('[data-testid="input-textarea"]', 'Test content');
@@ -291,7 +319,9 @@ test.describe('Summarizer E2E Tests', () => {
       await waitForSummarization(page);
 
       // Assert - Error should be cleared, summary should appear
-      await expect(page.locator('[data-testid="error-message"]')).not.toBeVisible();
+      await expect(
+        page.locator('[data-testid="error-message"]'),
+      ).not.toBeVisible();
 
       const summary = await page.textContent('[data-testid="summary-output"]');
       expect(summary).toBeTruthy();
@@ -303,7 +333,9 @@ test.describe('Summarizer E2E Tests', () => {
   // ==========================================================================
 
   test.describe('Long Text Processing', () => {
-    test('should handle long text with progress indicator', async ({ page }) => {
+    test('should handle long text with progress indicator', async ({
+      page,
+    }) => {
       const isAvailable = await isChromeAIAvailable(page);
       test.skip(!isAvailable, 'Chrome AI not available');
 
@@ -330,12 +362,15 @@ test.describe('Summarizer E2E Tests', () => {
       expect(summary).toBeTruthy();
     });
 
-    test('should successfully summarize very long documents', async ({ page }) => {
+    test('should successfully summarize very long documents', async ({
+      page,
+    }) => {
       const isAvailable = await isChromeAIAvailable(page);
       test.skip(!isAvailable, 'Chrome AI not available');
 
       // Arrange - Extremely long text
-      const veryLongText = 'Document section with detailed information. '.repeat(1000); // ~45k chars
+      const veryLongText =
+        'Document section with detailed information. '.repeat(1000); // ~45k chars
 
       await page.fill('[data-testid="input-textarea"]', veryLongText);
 
@@ -367,7 +402,9 @@ test.describe('Summarizer E2E Tests', () => {
       const isAvailable = await isChromeAIAvailable(page);
       if (isAvailable) {
         await waitForSummarization(page);
-        const summary = await page.textContent('[data-testid="summary-output"]');
+        const summary = await page.textContent(
+          '[data-testid="summary-output"]',
+        );
         expect(summary).toBeTruthy();
       }
     });
@@ -388,7 +425,9 @@ test.describe('Summarizer E2E Tests', () => {
       expect(buttonText || buttonAriaLabel).toBeTruthy();
     });
 
-    test('should announce loading state to screen readers', async ({ page }) => {
+    test('should announce loading state to screen readers', async ({
+      page,
+    }) => {
       const isAvailable = await isChromeAIAvailable(page);
       test.skip(!isAvailable, 'Chrome AI not available');
 
@@ -396,7 +435,9 @@ test.describe('Summarizer E2E Tests', () => {
       await page.click('[data-testid="summarize-button"]');
 
       // Check for aria-live region
-      const liveRegion = page.locator('[aria-live="polite"], [aria-live="assertive"]');
+      const liveRegion = page.locator(
+        '[aria-live="polite"], [aria-live="assertive"]',
+      );
       await expect(liveRegion).toBeVisible({ timeout: 2000 });
     });
   });
@@ -430,7 +471,7 @@ test.describe('Summarizer E2E Tests', () => {
       const container = page.locator('[data-testid="summarizer-container"]');
       await expect(container).toBeVisible();
 
-      const width = await container.evaluate(el => el.clientWidth);
+      const width = await container.evaluate((el) => el.clientWidth);
       expect(width).toBeLessThanOrEqual(768);
     });
   });
@@ -451,7 +492,10 @@ test.describe('Summarizer E2E Tests', () => {
       const isAvailable = await isChromeAIAvailable(page);
       test.skip(!isAvailable, 'Chrome AI not available');
 
-      await page.fill('[data-testid="input-textarea"]', 'Test content for screenshot');
+      await page.fill(
+        '[data-testid="input-textarea"]',
+        'Test content for screenshot',
+      );
       await page.click('[data-testid="summarize-button"]');
       await waitForSummarization(page);
 
@@ -478,7 +522,9 @@ test.describe('Summarizer E2E Tests', () => {
       expect(loadTime).toBeLessThan(3000);
     });
 
-    test('should complete summarization within reasonable time', async ({ page }) => {
+    test('should complete summarization within reasonable time', async ({
+      page,
+    }) => {
       const isAvailable = await isChromeAIAvailable(page);
       test.skip(!isAvailable, 'Chrome AI not available');
 

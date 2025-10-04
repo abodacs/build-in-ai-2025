@@ -19,7 +19,9 @@ const checkAISupport = () => {
         '🚨 Chrome AI APIs not detected. Please use Chrome 138+ with AI features enabled.',
       );
     } else {
-      console.log('✅ Chrome AI APIs detected (Summarizer, LanguageModel, etc.)');
+      console.log(
+        '✅ Chrome AI APIs detected (Summarizer, LanguageModel, etc.)',
+      );
     }
   }
 };

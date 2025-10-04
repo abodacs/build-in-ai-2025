@@ -71,7 +71,10 @@ describe('Error Handling & Recovery', () => {
 
     it('should handle NotReadableError during model download', async () => {
       // Arrange
-      const error = new DOMException('Model download failed', 'NotReadableError');
+      const error = new DOMException(
+        'Model download failed',
+        'NotReadableError',
+      );
       mockSummarizerClass.create.mockRejectedValue(error);
       const manager = new SummarizerManager();
 
@@ -105,7 +108,9 @@ describe('Error Handling & Recovery', () => {
       const manager = new SummarizerManager();
 
       // Act & Assert
-      await expect(manager.getSummarizer({ type: 'tldr' })).rejects.toThrow(/timeout/i);
+      await expect(manager.getSummarizer({ type: 'tldr' })).rejects.toThrow(
+        /timeout/i,
+      );
     });
 
     it('should handle quota exceeded errors', async () => {
@@ -116,7 +121,9 @@ describe('Error Handling & Recovery', () => {
       await manager.getSummarizer({ type: 'tldr' });
 
       // Act & Assert
-      await expect(manager.summarize('Text', {}, { type: 'tldr' })).rejects.toThrow(/quota/i);
+      await expect(
+        manager.summarize('Text', {}, { type: 'tldr' }),
+      ).rejects.toThrow(/quota/i);
     });
   });
 
@@ -141,7 +148,11 @@ describe('Error Handling & Recovery', () => {
       const manager = new SummarizerManager();
 
       // Act
-      const result = await manager.summarize(undefined as any, {}, { type: 'tldr' });
+      const result = await manager.summarize(
+        undefined as any,
+        {},
+        { type: 'tldr' },
+      );
 
       // Assert - Should handle gracefully
       expect(result).toBeDefined();
@@ -152,7 +163,11 @@ describe('Error Handling & Recovery', () => {
       const manager = new SummarizerManager();
 
       // Act
-      const result = await manager.summarize(12345 as any, {}, { type: 'tldr' });
+      const result = await manager.summarize(
+        12345 as any,
+        {},
+        { type: 'tldr' },
+      );
 
       // Assert - Should handle gracefully
       expect(result).toBeDefined();
@@ -208,7 +223,9 @@ describe('Error Handling & Recovery', () => {
       await manager.getSummarizer({ type: 'tldr' });
 
       // Act
-      const result = await manager.summarize('Text', {}, { type: 'tldr' }).catch(() => 'failed');
+      const result = await manager
+        .summarize('Text', {}, { type: 'tldr' })
+        .catch(() => 'failed');
 
       // Assert - Should have attempted multiple times or handled gracefully
       expect(attemptCount).toBeGreaterThan(0);
@@ -254,7 +271,7 @@ describe('Error Handling & Recovery', () => {
             if (attempt < maxAttempts - 1) {
               const delay = Math.pow(2, attempt) * 100; // 100ms, 200ms, 400ms
               delays.push(delay);
-              await new Promise(resolve => setTimeout(resolve, delay));
+              await new Promise((resolve) => setTimeout(resolve, delay));
             }
           }
         }
@@ -277,7 +294,7 @@ describe('Error Handling & Recovery', () => {
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
           attemptCount++;
           if (attempt < maxAttempts - 1) {
-            await new Promise(resolve => setTimeout(resolve, 10));
+            await new Promise((resolve) => setTimeout(resolve, 10));
           }
         }
       };
@@ -331,14 +348,16 @@ describe('Error Handling & Recovery', () => {
       ]);
 
       // Assert - Some should succeed despite one failure
-      const succeeded = results.filter(r => r.status === 'fulfilled').length;
+      const succeeded = results.filter((r) => r.status === 'fulfilled').length;
       expect(succeeded).toBeGreaterThan(0);
     });
 
     it('should cleanup resources even on errors', async () => {
       // Arrange
       const manager = new SummarizerManager();
-      (mockSummarizer.summarize as any).mockRejectedValue(new Error('Summarization failed'));
+      (mockSummarizer.summarize as any).mockRejectedValue(
+        new Error('Summarization failed'),
+      );
 
       await manager.getSummarizer({ type: 'tldr' });
 
@@ -360,7 +379,7 @@ describe('Error Handling & Recovery', () => {
       ];
 
       // Act & Assert
-      errors.forEach(error => {
+      errors.forEach((error) => {
         const handled = ErrorHandler.handleError(error);
 
         expect(handled.message).toBeTruthy();
@@ -421,7 +440,7 @@ describe('Error Handling & Recovery', () => {
         downloadAttempts++;
         if (downloadAttempts === 1) {
           return Promise.reject(
-            new DOMException('Download failed', 'NotReadableError')
+            new DOMException('Download failed', 'NotReadableError'),
           );
         }
         return Promise.resolve(mockSummarizer);
@@ -444,14 +463,16 @@ describe('Error Handling & Recovery', () => {
       // Act - Send multiple requests rapidly
       for (let i = 0; i < 5; i++) {
         requests.push(
-          manager.summarize(`Text ${i}`, {}, { type: 'tldr' }).catch(() => null)
+          manager
+            .summarize(`Text ${i}`, {}, { type: 'tldr' })
+            .catch(() => null),
         );
       }
 
       const results = await Promise.all(requests);
 
       // Assert - All should complete
-      expect(results.filter(r => r !== null).length).toBeGreaterThan(0);
+      expect(results.filter((r) => r !== null).length).toBeGreaterThan(0);
     });
   });
 
@@ -484,8 +505,8 @@ describe('Error Handling & Recovery', () => {
       ]);
 
       // Assert
-      const fulfilled = results.filter(r => r.status === 'fulfilled');
-      const rejected = results.filter(r => r.status === 'rejected');
+      const fulfilled = results.filter((r) => r.status === 'fulfilled');
+      const rejected = results.filter((r) => r.status === 'rejected');
 
       expect(fulfilled.length).toBeGreaterThan(0);
       expect(rejected.length).toBeGreaterThan(0);
@@ -562,7 +583,7 @@ describe('Error Handling & Recovery', () => {
       // Arrange
       const manager = new SummarizerManager();
       (mockSummarizer.summarize as any).mockRejectedValue(
-        new Error('Internal error')
+        new Error('Internal error'),
       );
 
       await manager.getSummarizer({ type: 'tldr' });
@@ -570,7 +591,7 @@ describe('Error Handling & Recovery', () => {
       // Act
       const result = await manager
         .summarize('Text', {}, { type: 'tldr' })
-        .catch(error => {
+        .catch((error) => {
           // Caught and handled
           return `Fallback: ${error.message}`;
         });
@@ -594,7 +615,7 @@ describe('Error Handling & Recovery', () => {
       ];
 
       // Act & Assert
-      errors.forEach(error => {
+      errors.forEach((error) => {
         const handled = ErrorHandler.handleError(error);
 
         expect(handled.suggestion).toBeTruthy();
@@ -605,8 +626,14 @@ describe('Error Handling & Recovery', () => {
 
     it('should indicate when errors are recoverable', () => {
       // Arrange
-      const recoverableError = new DOMException('Temp error', 'InvalidStateError');
-      const nonRecoverableError = new DOMException('Not supported', 'NotSupportedError');
+      const recoverableError = new DOMException(
+        'Temp error',
+        'InvalidStateError',
+      );
+      const nonRecoverableError = new DOMException(
+        'Not supported',
+        'NotSupportedError',
+      );
 
       // Act
       const handled1 = ErrorHandler.handleError(recoverableError);
@@ -627,7 +654,7 @@ describe('Error Handling & Recovery', () => {
       ];
 
       // Act
-      const messages = errors.map(e => ErrorHandler.handleError(e).message);
+      const messages = errors.map((e) => ErrorHandler.handleError(e).message);
 
       // Assert - All messages should be unique
       const uniqueMessages = new Set(messages);

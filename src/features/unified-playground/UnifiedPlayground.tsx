@@ -12,12 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Settings,
-  AlertTriangle,
-  Sparkles,
-  ChevronRight,
-} from 'lucide-react';
+import { Settings, AlertTriangle, Sparkles, ChevronRight } from 'lucide-react';
 
 // Import API modules registry
 import { API_MODULES, getAPIModule } from './api-modules';
@@ -48,7 +43,6 @@ function APISelector({
   selectedAPI: string;
   onSelect: (apiId: string) => void;
 }) {
-
   return (
     <Card className="sticky top-20">
       <CardHeader>
@@ -104,8 +98,8 @@ function APIModuleContent({ apiId }: { apiId: string }) {
       <Alert className="border-destructive/20 bg-destructive/5">
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
-          API module &quot;{apiId}&quot; not found. Please select a valid API from the
-          sidebar.
+          API module &quot;{apiId}&quot; not found. Please select a valid API
+          from the sidebar.
         </AlertDescription>
       </Alert>
     );

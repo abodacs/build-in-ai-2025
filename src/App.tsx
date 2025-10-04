@@ -7,7 +7,10 @@ import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary'
 
 // Lazy load feature components for better performance
 import { HomePage } from '@/features/api-playground/components/HomePage';
-import { UnifiedPlayground, PlaygroundContainer } from '@/features/unified-playground';
+import {
+  UnifiedPlayground,
+  PlaygroundContainer,
+} from '@/features/unified-playground';
 
 function App() {
   return (

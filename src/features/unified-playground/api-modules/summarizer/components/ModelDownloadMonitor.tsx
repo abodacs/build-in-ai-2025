@@ -151,7 +151,12 @@ export function ModelDownloadMonitor({
    * Handle cache clear
    */
   const handleClearCache = async () => {
-    if (onClearCache && window.confirm('Are you sure you want to clear the model cache? This will require re-downloading the model.')) {
+    if (
+      onClearCache &&
+      window.confirm(
+        'Are you sure you want to clear the model cache? This will require re-downloading the model.',
+      )
+    ) {
       try {
         setIsClearing(true);
         await onClearCache();
@@ -214,9 +219,7 @@ export function ModelDownloadMonitor({
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="space-y-1">
               <p className="text-slate-500 text-xs">Model Type</p>
-              <p className="font-medium text-slate-900">
-                Chrome AI Summarizer
-              </p>
+              <p className="font-medium text-slate-900">Chrome AI Summarizer</p>
             </div>
             <div className="space-y-1">
               <p className="text-slate-500 text-xs">Estimated Size</p>

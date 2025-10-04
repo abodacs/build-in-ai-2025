@@ -23,10 +23,7 @@ describe('ErrorHandler', () => {
   describe('DOMException Handling', () => {
     it('should handle NotSupportedError correctly', () => {
       // Arrange
-      const error = new DOMException(
-        'API not supported',
-        'NotSupportedError'
-      );
+      const error = new DOMException('API not supported', 'NotSupportedError');
 
       // Act
       const result = ErrorHandler.handleError(error);
@@ -43,10 +40,7 @@ describe('ErrorHandler', () => {
 
     it('should handle InvalidStateError correctly', () => {
       // Arrange
-      const error = new DOMException(
-        'Invalid state',
-        'InvalidStateError'
-      );
+      const error = new DOMException('Invalid state', 'InvalidStateError');
 
       // Act
       const result = ErrorHandler.handleError(error);
@@ -64,7 +58,7 @@ describe('ErrorHandler', () => {
       // Arrange
       const error = new DOMException(
         'Failed to read model',
-        'NotReadableError'
+        'NotReadableError',
       );
 
       // Act
@@ -82,10 +76,7 @@ describe('ErrorHandler', () => {
 
     it('should handle AbortError correctly', () => {
       // Arrange
-      const error = new DOMException(
-        'Operation aborted',
-        'AbortError'
-      );
+      const error = new DOMException('Operation aborted', 'AbortError');
 
       // Act
       const result = ErrorHandler.handleError(error);
@@ -185,7 +176,10 @@ describe('ErrorHandler', () => {
 
     it('should provide actionable suggestions', () => {
       // Arrange
-      const error = new DOMException('Model download failed', 'NotReadableError');
+      const error = new DOMException(
+        'Model download failed',
+        'NotReadableError',
+      );
 
       // Act
       const result = ErrorHandler.handleError(error);
@@ -197,8 +191,14 @@ describe('ErrorHandler', () => {
 
     it('should indicate recoverability correctly', () => {
       // Arrange
-      const notSupportedError = new DOMException('Not supported', 'NotSupportedError');
-      const invalidStateError = new DOMException('Invalid state', 'InvalidStateError');
+      const notSupportedError = new DOMException(
+        'Not supported',
+        'NotSupportedError',
+      );
+      const invalidStateError = new DOMException(
+        'Invalid state',
+        'InvalidStateError',
+      );
 
       // Act
       const result1 = ErrorHandler.handleError(notSupportedError);
