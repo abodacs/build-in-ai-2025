@@ -149,6 +149,3 @@ playwright/.cache/
 
 # Wrangler
 .wrangler/
-
-# Cloudflare
-wrangler.toml
