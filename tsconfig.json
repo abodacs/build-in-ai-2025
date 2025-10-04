@@ -37,16 +37,12 @@
     /* Chrome AI Types */
     "types": ["vite/client"]
   },
-  "include": [
-    "src",
-    "tests",
-    "vite.config.ts"
-  ],
+  "include": ["src", "tests", "vite.config.ts"],
   "exclude": [
     "node_modules",
     "dist",
     "**/__tests__/**",
     "**/*.test.ts",
     "**/*.test.tsx"
-  ],
+  ]
 }

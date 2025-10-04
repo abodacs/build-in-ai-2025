@@ -13,4 +13,4 @@ export default {
   arrowParens: 'avoid',
   endOfLine: 'lf',
   plugins: ['prettier-plugin-tailwindcss'],
-}
+};
