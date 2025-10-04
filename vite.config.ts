@@ -1,14 +1,12 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
-import viteCompression from 'vite-plugin-compression'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import viteCompression from 'vite-plugin-compression';
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    react({
-      exclude: '**/src/components/ui/**',
-    }),
+    react(),
     // Gzip compression
     viteCompression({
       verbose: true,
@@ -64,9 +62,11 @@ export default defineConfig({
       output: {
         manualChunks: (id) => {
           // Core React libraries - keep together for better caching
-          if (id.includes('node_modules/react') ||
-              id.includes('node_modules/react-dom') ||
-              id.includes('node_modules/scheduler')) {
+          if (
+            id.includes('node_modules/react') ||
+            id.includes('node_modules/react-dom') ||
+            id.includes('node_modules/scheduler')
+          ) {
             return 'react-vendor';
           }
 
@@ -81,7 +81,10 @@ export default defineConfig({
           }
 
           // Syntax highlighting - heavy library, separate chunk for lazy loading
-          if (id.includes('react-syntax-highlighter') || id.includes('highlight.js')) {
+          if (
+            id.includes('react-syntax-highlighter') ||
+            id.includes('highlight.js')
+          ) {
             return 'syntax-highlighter';
           }
 
@@ -96,20 +99,22 @@ export default defineConfig({
           }
 
           // Summarizer feature - lazy load this module
-          if (id.includes('features/unified-playground/api-modules/summarizer')) {
+          if (
+            id.includes('features/unified-playground/api-modules/summarizer')
+          ) {
             return 'summarizer';
           }
-        }
-      }
-    }
+        },
+      },
+    },
   },
   server: {
     port: 3000,
     open: true,
-    host: true
+    host: true,
   },
   preview: {
     port: 4173,
-    open: true
-  }
-})
+    open: true,
+  },
+});
