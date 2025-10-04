@@ -22,6 +22,7 @@ A comprehensive, production-ready implementation of the Chrome AI Summarizer API
 ## ✨ Features
 
 ### Core Features
+
 - ✅ **Complete Chrome AI Integration** - Full support for Summarizer API
 - ✅ **Progressive Disclosure** - Simple playground → Advanced features
 - ✅ **Streaming Support** - Real-time summarization with streaming
@@ -30,6 +31,7 @@ A comprehensive, production-ready implementation of the Chrome AI Summarizer API
 - ✅ **Model Download Management** - Progress tracking and error handling
 
 ### Advanced Features
+
 - 🧩 **Chunking Strategies** - Handle long content (>10K chars)
   - Recursive chunking
   - Sliding-window with overlap
@@ -41,6 +43,7 @@ A comprehensive, production-ready implementation of the Chrome AI Summarizer API
 - 📊 **Performance Tracking** - Operation history and insights
 
 ### UI Components
+
 - 🎨 **SparkButton** - Animated gradient button with shimmer effect
 - ⚙️ **Configuration Panel** - Type, format, length, shared context
 - 📝 **Smart Input** - Validation, word count, content detection
@@ -69,7 +72,7 @@ import { useSummarizer } from './hooks/useSummarizer';
 
 function MyComponent() {
   const { summarize, result, isLoading } = useSummarizer({
-    config: { type: 'tldr', length: 'medium' }
+    config: { type: 'tldr', length: 'medium' },
   });
 
   const handleSummarize = async () => {
@@ -93,12 +96,8 @@ function MyComponent() {
 import { useSummarizerAvailability } from './hooks/useSummarizerAvailability';
 
 function MyApp() {
-  const {
-    isReady,
-    isDownloading,
-    downloadProgress,
-    startDownload
-  } = useSummarizerAvailability();
+  const { isReady, isDownloading, downloadProgress, startDownload } =
+    useSummarizerAvailability();
 
   if (!isReady) {
     return (
@@ -160,6 +159,7 @@ summarizer/
 ## 🧩 Components
 
 ### PlaygroundTab
+
 Main playground interface with configuration, input, and results.
 
 ```tsx
@@ -167,6 +167,7 @@ Main playground interface with configuration, input, and results.
 ```
 
 ### SparkButton
+
 Animated gradient button for actions.
 
 ```tsx
@@ -178,17 +179,15 @@ Animated gradient button for actions.
 ```
 
 ### SummarizerConfig
+
 Configuration panel for summarizer options.
 
 ```tsx
-<SummarizerConfig
-  config={config}
-  onChange={setConfig}
-  showAdvanced
-/>
+<SummarizerConfig config={config} onChange={setConfig} showAdvanced />
 ```
 
 ### SummarizerInput
+
 Smart input with validation and detection.
 
 ```tsx
@@ -202,6 +201,7 @@ Smart input with validation and detection.
 ```
 
 ### SummarizerResults
+
 Results display with metrics.
 
 ```tsx
@@ -221,21 +221,22 @@ Main hook for summarization operations.
 
 ```tsx
 const {
-  summarize,           // (text: string) => Promise<string>
-  summarizeStreaming,  // (text: string) => Promise<ReadableStream>
-  result,              // string | null
-  isLoading,           // boolean
-  isStreaming,         // boolean
-  error,               // SummarizerError | null
-  metrics,             // SummarizerMetrics | null
-  updateConfig,        // (config) => void
-  reset,               // () => void
-  abort,               // () => void
-  hasInstance,         // boolean
+  summarize, // (text: string) => Promise<string>
+  summarizeStreaming, // (text: string) => Promise<ReadableStream>
+  result, // string | null
+  isLoading, // boolean
+  isStreaming, // boolean
+  error, // SummarizerError | null
+  metrics, // SummarizerMetrics | null
+  updateConfig, // (config) => void
+  reset, // () => void
+  abort, // () => void
+  hasInstance, // boolean
 } = useSummarizer(options);
 ```
 
 **Options:**
+
 - `config`: Initial summarizer configuration
 - `trackPerformance`: Enable performance tracking (default: true)
 - `autoCleanup`: Auto-cleanup on unmount (default: true)
@@ -246,17 +247,17 @@ Check Chrome AI availability and manage model downloads.
 
 ```tsx
 const {
-  availability,        // 'no' | 'after-download' | 'readily'
-  requirements,        // SystemRequirements | null
-  capabilities,        // BrowserCapabilities | null
-  isChecking,          // boolean
-  isDownloading,       // boolean
-  downloadProgress,    // DownloadProgress | null
-  error,               // string | null
-  refresh,             // () => Promise<void>
-  startDownload,       // () => Promise<void>
-  isSupported,         // boolean
-  isReady,             // boolean
+  availability, // 'no' | 'after-download' | 'readily'
+  requirements, // SystemRequirements | null
+  capabilities, // BrowserCapabilities | null
+  isChecking, // boolean
+  isDownloading, // boolean
+  downloadProgress, // DownloadProgress | null
+  error, // string | null
+  refresh, // () => Promise<void>
+  startDownload, // () => Promise<void>
+  isSupported, // boolean
+  isReady, // boolean
 } = useSummarizerAvailability();
 ```
 
@@ -317,7 +318,7 @@ const { summary, metadata } = await engine.recursiveSummarize(
   text,
   config,
   strategy,
-  (current, total) => console.log(`${current}/${total}`)
+  (current, total) => console.log(`${current}/${total}`),
 );
 ```
 
@@ -343,10 +344,10 @@ Automatically applied to content >10,000 characters.
 
 ```typescript
 const strategy: ChunkingStrategy = {
-  type: 'recursive',        // or 'sliding-window', 'semantic'
+  type: 'recursive', // or 'sliding-window', 'semantic'
   maxChunkSize: 10000,
-  overlapSize: 500,         // for sliding-window
-  semanticSeparators: ['\n\n', '\n', '. '],  // for semantic
+  overlapSize: 500, // for sliding-window
+  semanticSeparators: ['\n\n', '\n', '. '], // for semantic
 };
 
 const result = await engine.recursiveSummarize(longText, config, strategy);
@@ -410,6 +411,7 @@ interface SummarizerCreateOptions {
 #### Download the Model
 
 On first use, Chrome will automatically prompt to download the AI model:
+
 - Download size: ~1-2 GB
 - Progress tracked in the UI
 - Models cached for future use
@@ -429,18 +431,21 @@ if (availability === 'readily') {
 #### Troubleshooting
 
 **"API not available" error?**
+
 - Check Chrome version: `chrome://version` (need 138+)
 - Verify flag is enabled: `chrome://flags/#summarization-api-for-gemini-nano`
 - Restart Chrome completely
 - Check disk space (22+ GB required)
 
 **Model download stuck?**
+
 - Check internet connection
 - Verify disk space
 - Clear cache: `chrome://settings/clearBrowserData`
 - Check model status: `chrome://components`
 
 **Performance slow?**
+
 - Ensure 4+ GB VRAM available
 - Close GPU-intensive apps
 - Check GPU status: `chrome://gpu`
@@ -482,7 +487,7 @@ async function withProgress() {
     { type: 'recursive', maxChunkSize: 10000 },
     (current, total) => {
       console.log(`Progress: ${current}/${total}`);
-    }
+    },
   );
 
   console.log(result.summary);
@@ -499,7 +504,7 @@ async function extractURL() {
 
   const result = await extractor.extractAndSummarize(
     'https://example.com/article',
-    { type: 'key-points', length: 'medium' }
+    { type: 'key-points', length: 'medium' },
   );
 
   console.log(result.summary);
@@ -522,21 +527,25 @@ import type {
 ## 🌐 Browser Compatibility
 
 ### Supported APIs
+
 - ✅ `self.Summarizer` (Official Chrome AI)
 - ✅ `window.Summarizer` (Playground/Polyfill)
 - ✅ Automatic detection and normalization
 
 ### Browser Support
+
 - Chrome 138+ (Canary with flags)
 - Edge (with Chrome AI support)
 
 Enable in `chrome://flags`:
+
 - Summarization API for Gemini Nano
 - Prompt API for Gemini Nano
 
 ## ⚡ Performance
 
 ### Metrics Tracked
+
 - Model initialization time
 - Per-summarization processing time
 - Cache hit rate
@@ -544,6 +553,7 @@ Enable in `chrome://flags`:
 - Compression ratio
 
 ### Optimization Features
+
 - Instance caching and reuse
 - Automatic chunking for long content
 - Progress callbacks for UX
@@ -553,6 +563,7 @@ Enable in `chrome://flags`:
 ## 📊 Bundle Size
 
 **Estimated**: ~450KB (uncompressed)
+
 - Components: ~180KB
 - Services: ~150KB
 - Types: ~50KB
