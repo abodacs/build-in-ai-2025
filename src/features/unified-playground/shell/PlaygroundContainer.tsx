@@ -249,9 +249,7 @@ export function PlaygroundContainer({
   // State management with custom hooks
   const {
     capabilities,
-    errors,
     checkAllCapabilities,
-    clearErrors,
     hasAvailableApis,
     availableApiCount,
   } = usePlaygroundState();
@@ -271,10 +269,9 @@ export function PlaygroundContainer({
     const stopMeasuring = measureInteractionLatency('refresh_capabilities');
     startTransition(() => {
       checkAllCapabilities();
-      clearErrors();
       stopMeasuring();
     });
-  }, [checkAllCapabilities, clearErrors, measureInteractionLatency]);
+  }, [checkAllCapabilities, measureInteractionLatency]);
 
   // ============================================================================
   // Performance Tracking (using useEffect to avoid infinite loops)
@@ -306,36 +303,7 @@ export function PlaygroundContainer({
         />
 
         {/* Main Content */}
-        <main className="container mx-auto px-4 py-6">
-          {/* Error Display */}
-          {errors.length > 0 && (
-            <div className="mb-6 animate-fadeInDown">
-              <Card className="border-destructive/20 bg-destructive/5 p-4">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-destructive mb-2">
-                      Issues Detected
-                    </h3>
-                    <ul className="space-y-1 text-sm text-destructive/80">
-                      {errors.map((error, index) => (
-                        <li key={index}>• {error}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearErrors}
-                    className="text-destructive hover:text-destructive/80"
-                  >
-                    Dismiss
-                  </Button>
-                </div>
-              </Card>
-            </div>
-          )}
-
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-7xl">
           {/* Performance Insights */}
           {showPerformanceMetrics && optimizationSuggestions.length > 0 && (
             <div className="mb-6 animate-fadeInDown">

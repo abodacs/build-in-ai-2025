@@ -63,6 +63,7 @@
     background-image:
       radial-gradient(circle at 1px 1px, rgba(0,0,0,0.08) 1px, transparent 0);
     background-size: 20px 20px;
+    overflow-x: hidden;
   }
 }
 
@@ -382,4 +383,13 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Utility to hide scrollbars when needed */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

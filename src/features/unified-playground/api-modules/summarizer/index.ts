@@ -34,12 +34,24 @@ export type { ChunkingStrategySelectorProps } from './components/ChunkingStrateg
 export { URLExtractionCard } from './components/URLExtractionCard';
 export type { URLExtractionCardProps } from './components/URLExtractionCard';
 
+export { ModelDownloadMonitor } from './components/ModelDownloadMonitor';
+export type { ModelDownloadMonitorProps } from './components/ModelDownloadMonitor';
+
+export { StreamingPerformanceMonitor } from './components/StreamingPerformanceMonitor';
+export type { StreamingPerformanceMonitorProps } from './components/StreamingPerformanceMonitor';
+
+export { ModelDownloadProgress } from './components/ModelDownloadProgress';
+export type { ModelDownloadProgressProps } from './components/ModelDownloadProgress';
+
+export { StreamingIndicator } from './components/StreamingIndicator';
+export type { StreamingIndicatorProps } from './components/StreamingIndicator';
+
 // Tab Components
+export { SummarizerPlayground } from './components/tabs/SummarizerPlayground';
+export type { SummarizerPlaygroundProps } from './components/tabs/SummarizerPlayground';
+
 export { PlaygroundTab } from './components/tabs/PlaygroundTab';
 export type { PlaygroundTabProps } from './components/tabs/PlaygroundTab';
-
-export { AdvancedTab } from './components/tabs/AdvancedTab';
-export type { AdvancedTabProps } from './components/tabs/AdvancedTab';
 
 export { CodeTab } from './components/tabs/CodeTab';
 export type { CodeTabProps } from './components/tabs/CodeTab';
@@ -56,6 +68,9 @@ export type {
 
 export { useSummarizerAvailability } from './hooks/useSummarizerAvailability';
 export type { UseSummarizerAvailabilityReturn } from './hooks/useSummarizerAvailability';
+
+export { useModelDownload } from './hooks/useModelDownload';
+export type { UseModelDownloadReturn } from './hooks/useModelDownload';
 
 // ============================================================================
 // Services
@@ -191,11 +206,16 @@ import { SummarizerResults } from './components/SummarizerResults';
 import { QuickSamplesCard } from './components/QuickSamplesCard';
 import { ChunkingStrategySelector } from './components/ChunkingStrategySelector';
 import { URLExtractionCard } from './components/URLExtractionCard';
+import { ModelDownloadMonitor } from './components/ModelDownloadMonitor';
+import { StreamingPerformanceMonitor } from './components/StreamingPerformanceMonitor';
+import { ModelDownloadProgress } from './components/ModelDownloadProgress';
+import { StreamingIndicator } from './components/StreamingIndicator';
+import { SummarizerPlayground } from './components/tabs/SummarizerPlayground';
 import { PlaygroundTab } from './components/tabs/PlaygroundTab';
-import { AdvancedTab } from './components/tabs/AdvancedTab';
 import { CodeTab } from './components/tabs/CodeTab';
 import { useSummarizer } from './hooks/useSummarizer';
 import { useSummarizerAvailability } from './hooks/useSummarizerAvailability';
+import { useModelDownload } from './hooks/useModelDownload';
 import { ChromeAIService } from './services/ChromeAIService';
 import { ChromeAICompatibility } from './services/ChromeAICompatibility';
 import { ErrorHandler } from './services/ErrorHandler';
@@ -213,13 +233,18 @@ export default {
   QuickSamplesCard,
   ChunkingStrategySelector,
   URLExtractionCard,
+  ModelDownloadMonitor,
+  StreamingPerformanceMonitor,
+  ModelDownloadProgress,
+  StreamingIndicator,
+  SummarizerPlayground,
   PlaygroundTab,
-  AdvancedTab,
   CodeTab,
 
   // Hooks
   useSummarizer,
   useSummarizerAvailability,
+  useModelDownload,
 
   // Services
   ChromeAIService,

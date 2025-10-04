@@ -9,15 +9,68 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { SummarizerManager } from '../services/SummarizerManager';
+import { ChunkingEngine } from '../services/ChunkingEngine';
 import { ErrorHandler } from '../services/ErrorHandler';
 import { getPerformanceTracker } from '../utils/performanceTracker';
 import { validateText, countWords } from '../utils/textPreprocessing';
+import { useModelDownload } from './useModelDownload';
 import type {
   SummarizerCreateOptions,
   SummarizeOptions,
   SummarizerMetrics,
   SummarizerError,
 } from '../types/summarizer.types';
+
+// ============================================================================
+// Utilities
+// ============================================================================
+
+/**
+ * Retry helper with exponential backoff
+ * @param fn Function to retry
+ * @param maxAttempts Maximum retry attempts (default 3)
+ * @param delayMs Initial delay in milliseconds (default 1000)
+ */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxAttempts: number = 3,
+  delayMs: number = 1000,
+): Promise<T> {
+  let lastError: any;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+
+      // Don't retry on user abort
+      if (error?.name === 'AbortError') {
+        throw error;
+      }
+
+      // Don't retry on validation errors
+      if (error?.message?.includes('Invalid') || error?.message?.includes('validation')) {
+        throw error;
+      }
+
+      // Last attempt - throw error
+      if (attempt === maxAttempts) {
+        console.error(`[useSummarizer] Retry failed after ${maxAttempts} attempts:`, error);
+        throw error;
+      }
+
+      // Calculate exponential backoff delay
+      const backoffDelay = delayMs * Math.pow(2, attempt - 1);
+      console.warn(`[useSummarizer] Attempt ${attempt} failed, retrying in ${backoffDelay}ms...`, error);
+
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, backoffDelay));
+    }
+  }
+
+  throw lastError;
+}
 
 // ============================================================================
 // Types
@@ -32,6 +85,9 @@ export interface UseSummarizerOptions {
 
   /** Auto-cleanup on unmount */
   autoCleanup?: boolean;
+
+  /** Chunking strategy for long content */
+  chunkingStrategy?: import('../types/chunking.types').ChunkingStrategy;
 }
 
 export interface UseSummarizerReturn {
@@ -75,6 +131,14 @@ export interface UseSummarizerReturn {
 
   /** Has active summarizer instance */
   hasInstance: boolean;
+
+  /** Model download state */
+  download: {
+    isDownloading: boolean;
+    progress: { loaded: number; total: number; progress: number } | null;
+    error: string | null;
+    abort: () => void;
+  };
 }
 
 // ============================================================================
@@ -119,6 +183,7 @@ export function useSummarizer(
     config: initialConfig = {},
     trackPerformance = true,
     autoCleanup = true,
+    chunkingStrategy,
   } = options;
 
   // State
@@ -129,16 +194,31 @@ export function useSummarizer(
   const [error, setError] = useState<SummarizerError | null>(null);
   const [metrics, setMetrics] = useState<SummarizerMetrics | null>(null);
 
-  // Keep configRef in sync with config state
-  useEffect(() => {
-    configRef.current = config;
-  }, [config]);
+  // Model download tracking
+  const {
+    isDownloading,
+    downloadProgress,
+    downloadError,
+    abortDownload,
+  } = useModelDownload();
 
   // Refs
   const managerRef = useRef<SummarizerManager>(new SummarizerManager());
+  const chunkingEngineRef = useRef<import('../services/ChunkingEngine').ChunkingEngine | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const performanceTracker = trackPerformance ? getPerformanceTracker() : null;
   const configRef = useRef<SummarizerCreateOptions>(config);
+
+  // Keep configRef in sync with config state (during render, not useEffect)
+  configRef.current = config;
+
+  // Initialize ChunkingEngine when chunkingStrategy is provided
+  useEffect(() => {
+    if (chunkingStrategy && !chunkingEngineRef.current) {
+      chunkingEngineRef.current = new ChunkingEngine(managerRef.current);
+      console.log('[useSummarizer] ChunkingEngine initialized');
+    }
+  }, [chunkingStrategy]);
 
   /**
    * Summarize text
@@ -178,12 +258,35 @@ export function useSummarizer(
       const startTime = performance.now();
 
       try {
-        // Summarize
-        const summary = await managerRef.current.summarize(
-          text,
-          { ...summarizeOptions, signal },
-          activeConfig,
-        );
+        // Wrap summarization with retry logic
+        const summary = await withRetry(async () => {
+          // Check if text is long enough to require chunking
+          const maxChunkSize = chunkingStrategy?.maxChunkSize || 10000;
+          const shouldChunk = text.length > maxChunkSize && chunkingEngineRef.current;
+
+          if (shouldChunk) {
+            console.log(`[useSummarizer] Text exceeds ${maxChunkSize} characters, using chunking...`);
+
+            // Use ChunkingEngine for long content
+            const recursiveResult = await chunkingEngineRef.current!.recursiveSummarize(
+              text,
+              activeConfig,
+              chunkingStrategy!,
+            );
+
+            // Log chunking stats
+            console.log(`[useSummarizer] Processed ${recursiveResult.metadata.chunksProcessed} chunks`);
+
+            return recursiveResult.summary;
+          } else {
+            // Normal summarization for shorter content
+            return await managerRef.current.summarize(
+              text,
+              { ...summarizeOptions, signal },
+              activeConfig,
+            );
+          }
+        });
 
         // Update state
         setResult(summary);
@@ -282,12 +385,14 @@ export function useSummarizer(
       let accumulatedResult = '';
 
       try {
-        // Get stream
-        const stream = await managerRef.current.summarizeStreaming(
-          text,
-          { ...summarizeOptions, signal },
-          activeConfig,
-        );
+        // Get stream with retry logic
+        const stream = await withRetry(async () => {
+          return await managerRef.current.summarizeStreaming(
+            text,
+            { ...summarizeOptions, signal },
+            activeConfig,
+          );
+        });
 
         // Wrap stream to track chunks
         const trackedStream = new ReadableStream<string>({
@@ -442,6 +547,12 @@ export function useSummarizer(
     reset,
     abort,
     hasInstance: managerRef.current.hasInstance(),
+    download: {
+      isDownloading,
+      progress: downloadProgress,
+      error: downloadError,
+      abort: abortDownload,
+    },
   };
 }
 

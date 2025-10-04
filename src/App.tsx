@@ -12,7 +12,7 @@ import { UnifiedPlayground, PlaygroundContainer } from '@/features/unified-playg
 function App() {
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-background font-sans antialiased">
+      <div className="min-h-screen bg-background font-sans antialiased overflow-x-hidden">
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             {/* Root - Unified Playground (default) */}

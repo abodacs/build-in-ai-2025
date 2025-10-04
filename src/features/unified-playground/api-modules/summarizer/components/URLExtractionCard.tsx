@@ -13,7 +13,6 @@ import {
   Sparkles,
   AlertCircle,
   CheckCircle2,
-  Loader,
 } from 'lucide-react';
 import {
   Card,
@@ -117,6 +116,7 @@ export function URLExtractionCard({
 
   /**
    * Handle extract button click
+   * Note: Disabled due to CORS restrictions
    */
   const handleExtract = async () => {
     const normalized = normalizeURL(url);
@@ -124,11 +124,6 @@ export function URLExtractionCard({
 
     await onExtract(normalized);
   };
-
-  /**
-   * Check if can extract
-   */
-  const canExtract = urlMetadata !== null && !isExtracting;
 
   return (
     <Card className={cn('border-blue-200 bg-blue-50/30', className)}>
@@ -143,7 +138,7 @@ export function URLExtractionCard({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* URL Input */}
+        {/* URL Input - Disabled due to CORS */}
         <div className="space-y-2">
           <div className="flex gap-2">
             <Input
@@ -151,29 +146,19 @@ export function URLExtractionCard({
               value={url}
               onChange={(e) => handleUrlChange(e.target.value)}
               placeholder="https://example.com/article"
-              disabled={isExtracting}
-              className="flex-1"
+              disabled={true}
+              className="flex-1 opacity-50"
+              title="Direct URL extraction disabled due to CORS restrictions"
             />
             <Button
               onClick={handleExtract}
-              disabled={!canExtract}
+              disabled={true}
               variant="default"
-              className={cn(
-                'bg-blue-600 hover:bg-blue-700',
-                isExtracting && 'bg-purple-600 hover:bg-purple-700',
-              )}
+              className="bg-slate-400 hover:bg-slate-400 cursor-not-allowed"
+              title="Direct URL extraction disabled due to CORS restrictions"
             >
-              {isExtracting ? (
-                <>
-                  <Loader className="w-4 h-4 mr-2 animate-spin" />
-                  Extracting...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Extract & Summarize
-                </>
-              )}
+              <Sparkles className="w-4 h-4 mr-2" />
+              Extract (Disabled)
             </Button>
           </div>
         </div>
@@ -216,49 +201,66 @@ export function URLExtractionCard({
           </Alert>
         )}
 
-        {/* CORS Warning */}
-        <Alert className="border-blue-200 bg-blue-50">
-          <AlertCircle className="w-4 h-4 text-blue-600" />
-          <AlertDescription className="text-xs text-blue-800">
-            <strong>Note:</strong> URL extraction works best with sites that
-            support CORS or when using a proxy service. Some sites may block
-            direct extraction for security reasons.
+        {/* CORS Info & Workaround */}
+        <Alert className="border-amber-200 bg-amber-50">
+          <AlertCircle className="w-4 h-4 text-amber-600" />
+          <AlertDescription className="text-xs text-amber-800 space-y-2">
+            <div>
+              <strong>Browser Limitation:</strong> Direct URL extraction is blocked by CORS (Cross-Origin Resource Sharing) security policies in most browsers.
+            </div>
+            <div className="pt-1">
+              <strong>Workaround:</strong> Copy the article text manually and paste it into the input area above, then click "Run Summarizer".
+            </div>
           </AlertDescription>
         </Alert>
 
-        {/* Supported Sites */}
+        {/* Supported Sites with Example URLs */}
         <div className="space-y-2">
           <div className="text-xs font-medium text-slate-700">
-            Supported Content Sites:
+            Example Articles to Test:
           </div>
           <div className="flex flex-wrap gap-2">
             {[
-              'Wikipedia',
-              'Medium',
-              'Dev.to',
-              'GitHub',
-              'Stack Overflow',
-              'Substack',
-              'ArXiv',
-              'News Sites',
-            ].map((site) => (
-              <Badge key={site} variant="outline" className="text-xs">
-                {site}
-              </Badge>
+              {
+                name: 'Wikipedia',
+                url: 'https://en.wikipedia.org/wiki/Artificial_intelligence',
+              },
+              {
+                name: 'Medium',
+                url: 'https://medium.com/tag/technology',
+              },
+              {
+                name: 'Dev.to',
+                url: 'https://dev.to/olaleyeblessing/create-dynamic-urls-with-url-constructor-in-javascript-2o9l',
+              },
+              {
+                name: 'GitHub',
+                url: 'https://github.com/facebook/react/blob/main/README.md',
+              },
+              {
+                name: 'Stack Overflow',
+                url: 'https://stackoverflow.com/questions/tagged/javascript?tab=Votes',
+              },
+              {
+                name: 'Substack',
+                url: 'https://platformer.news/',
+              },
+              { name: 'ArXiv', url: 'https://arxiv.org/abs/2509.02661' },
+              { name: 'BBC News', url: 'https://www.bbc.com/news/technology' },
+            ].map(({ name, url: exampleUrl }) => (
+              <Button
+                key={name}
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(exampleUrl, '_blank')}
+                className="text-xs h-7 px-2 hover:bg-blue-50 hover:border-blue-300"
+              >
+                {name}
+              </Button>
             ))}
           </div>
-        </div>
-
-        {/* Examples */}
-        <div className="pt-2 border-t border-blue-200">
-          <div className="text-xs text-slate-600">
-            <strong>Example URLs:</strong>
-            <ul className="list-disc list-inside mt-1 space-y-0.5 text-slate-500">
-              <li>Wikipedia articles</li>
-              <li>Medium blog posts</li>
-              <li>Technical documentation</li>
-              <li>News articles</li>
-            </ul>
+          <div className="text-xs text-slate-500 italic">
+            Click to open article → copy text → paste into input above
           </div>
         </div>
       </CardContent>

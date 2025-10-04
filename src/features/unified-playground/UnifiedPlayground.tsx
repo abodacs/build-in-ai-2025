@@ -7,14 +7,12 @@
  * @module UnifiedPlayground
  */
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Zap,
   Settings,
   AlertTriangle,
   Sparkles,
@@ -22,7 +20,7 @@ import {
 } from 'lucide-react';
 
 // Import API modules registry
-import { API_MODULES, getAPIModule, getAvailableModules } from './api-modules';
+import { API_MODULES, getAPIModule } from './api-modules';
 
 // ============================================================================
 // Types
@@ -99,7 +97,6 @@ function APISelector({
  * API Module Content
  */
 function APIModuleContent({ apiId }: { apiId: string }) {
-  const [activeTab, setActiveTab] = useState('playground');
   const module = getAPIModule(apiId);
 
   if (!module) {
@@ -137,10 +134,6 @@ function APIModuleContent({ apiId }: { apiId: string }) {
   }
 
   const PlaygroundComponent = module.PlaygroundComponent;
-  const AdvancedComponent = module.AdvancedComponent;
-
-  // Calculate grid columns based on available components
-  const gridCols = AdvancedComponent ? 'grid-cols-2' : 'grid-cols-1';
 
   return (
     <Card>
@@ -159,30 +152,7 @@ function APIModuleContent({ apiId }: { apiId: string }) {
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className={`grid w-full ${gridCols} mb-6`}>
-            <TabsTrigger value="playground" className="flex items-center gap-2">
-              <Zap className="h-4 w-4" />
-              Playground
-            </TabsTrigger>
-            {AdvancedComponent && (
-              <TabsTrigger value="advanced" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                Advanced
-              </TabsTrigger>
-            )}
-          </TabsList>
-
-          <TabsContent value="playground" className="mt-0">
-            <PlaygroundComponent />
-          </TabsContent>
-
-          {AdvancedComponent && (
-            <TabsContent value="advanced" className="mt-0">
-              <AdvancedComponent />
-            </TabsContent>
-          )}
-        </Tabs>
+        <PlaygroundComponent />
       </CardContent>
     </Card>
   );
@@ -207,26 +177,11 @@ export function UnifiedPlayground({
 }: UnifiedPlaygroundProps) {
   const [selectedAPI, setSelectedAPI] = useState(initialAPI);
 
-  // Get available modules count (memoized to avoid recalculations)
-  const availableCount = useMemo(() => {
-    return getAvailableModules().length;
-  }, []); // Empty deps - API_MODULES is static
-
   return (
-    <div className="grid lg:grid-cols-12 gap-6">
+    <div className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-6">
       {/* API Selector Sidebar */}
       <div className="lg:col-span-3">
         <APISelector selectedAPI={selectedAPI} onSelect={setSelectedAPI} />
-
-        {/* Quick Stats */}
-        <Card className="mt-4">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-primary">{availableCount}/7</p>
-              <p className="text-sm text-muted-foreground">APIs Available</p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Main Content Area */}

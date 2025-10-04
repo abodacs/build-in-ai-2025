@@ -7,7 +7,7 @@
  * @module SummarizerInput
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import {
   AlertCircle,
   Link as LinkIcon,
@@ -96,65 +96,79 @@ export function SummarizerInput({
 }: SummarizerInputProps) {
   // State
   const [isFocused, setIsFocused] = useState(false);
-  const [wordCount, setWordCount] = useState(0);
-  const [charCount, setCharCount] = useState(0);
-  const [isValid, setIsValid] = useState(false);
-  const [validationMessage, setValidationMessage] = useState<string | null>(
-    null,
-  );
-  const [detectedURL, setDetectedURL] = useState<string | null>(null);
-  const [detectedCode, setDetectedCode] = useState(false);
-  const [suggestedFormat, setSuggestedFormat] = useState<'markdown' | 'plain-text' | null>(null);
+
+  // Character limits (production-ready)
+  const CHAR_LIMIT_WARNING = 15000; // Warning threshold
+  const CHAR_LIMIT_MAX = 20000; // Hard limit
 
   /**
-   * Analyze input text
+   * Analyze input text (computed during render, not in useEffect)
    */
-  const analyzeText = useCallback(() => {
+  const analysis = useMemo(() => {
     if (!value) {
-      setWordCount(0);
-      setCharCount(0);
-      setIsValid(false);
-      setValidationMessage(null);
-      setDetectedURL(null);
-      setDetectedCode(false);
-      setSuggestedFormat(null);
-      return;
+      return {
+        wordCount: 0,
+        charCount: 0,
+        isValid: false,
+        validationMessage: null,
+        detectedURL: null,
+        detectedCode: false,
+        suggestedFormat: null,
+      };
     }
 
     // Count words and characters
     const words = countWords(value);
-    setWordCount(words);
-    setCharCount(value.length);
+    const chars = value.length;
 
-    // Validate text
-    const validation = validateText(value, minLength);
-    setIsValid(validation.valid);
-    setValidationMessage(validation.reason || null);
+    let isValid = false;
+    let validationMessage: string | null = null;
+
+    // Check character limit
+    if (chars > CHAR_LIMIT_MAX) {
+      isValid = false;
+      validationMessage = `Text exceeds maximum limit of ${CHAR_LIMIT_MAX.toLocaleString()} characters`;
+    } else if (chars > CHAR_LIMIT_WARNING) {
+      isValid = true; // Still valid but show warning
+      validationMessage = `Approaching character limit (${CHAR_LIMIT_MAX.toLocaleString()} max)`;
+    } else {
+      // Validate text normally
+      const validation = validateText(value, minLength);
+      isValid = validation.valid;
+      validationMessage = validation.reason || null;
+    }
 
     // Detect URL
+    let detectedURL: string | null = null;
+    let detectedCode = false;
+    let suggestedFormat: 'markdown' | 'plain-text' | null = null;
+
     if (showSmartDetection) {
       const trimmed = value.trim();
       if (isValidURL(trimmed)) {
-        setDetectedURL(trimmed);
-      } else {
-        setDetectedURL(null);
+        detectedURL = trimmed;
       }
 
       // Detect code
-      setDetectedCode(isLikelyCode(value));
+      detectedCode = isLikelyCode(value);
 
       // Suggest output format
-      const suggested = suggestOutputFormat(value);
-      setSuggestedFormat(suggested);
+      suggestedFormat = suggestOutputFormat(value);
     }
+
+    return {
+      wordCount: words,
+      charCount: chars,
+      isValid,
+      validationMessage,
+      detectedURL,
+      detectedCode,
+      suggestedFormat,
+    };
   }, [value, minLength, showSmartDetection]);
 
-  /**
-   * Analyze on text change
-   */
-  useEffect(() => {
-    analyzeText();
-  }, [analyzeText]);
+  // Destructure analysis results
+  const { wordCount, charCount, isValid, validationMessage, detectedURL, detectedCode, suggestedFormat } = analysis;
 
   /**
    * Get validation color
@@ -198,7 +212,7 @@ export function SummarizerInput({
             placeholder={placeholder}
             disabled={disabled}
             className={cn(
-              'min-h-[240px] resize-y text-sm',
+              'min-h-[180px] sm:min-h-[240px] resize-y text-sm',
               'transition-all duration-200',
               isFocused && 'ring-2 ring-purple-500 ring-offset-2',
               !isValid && value && showValidation && 'border-amber-400',

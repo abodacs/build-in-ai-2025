@@ -226,7 +226,7 @@ export function SummarizerResults({
                 Performance Insights
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 {/* Processing Time */}
                 <div className="flex flex-col gap-1 p-3 rounded-lg bg-blue-50 border border-blue-200">
                   <div className="flex items-center gap-1.5 text-xs text-blue-600 font-medium">

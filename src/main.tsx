@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import App from './App.tsx';
 import { ThemeProvider } from './providers/ThemeProvider.tsx';
+import { CodeThemeProvider } from './providers/CodeThemeProvider.tsx';
 import './styles/globals.css';
 
 // Check for Chrome AI API availability
@@ -28,9 +29,11 @@ checkAISupport();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider defaultTheme="system" storageKey="theme">
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <CodeThemeProvider defaultCodeTheme="auto" storageKey="code-theme">
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </CodeThemeProvider>
     </ThemeProvider>
   </StrictMode>,
 );

@@ -8,30 +8,116 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { AlertCircle, Loader } from 'lucide-react';
+import { AlertCircle, Loader, Radio, ChevronDown } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
 
 // Import components
 import { SparkButton } from '../SparkButton';
 import { SummarizerConfig } from '../SummarizerConfig';
 import { SummarizerInput } from '../SummarizerInput';
 import { SummarizerResults } from '../SummarizerResults';
+import { ResultsSkeleton } from '../ResultsSkeleton';
+import { StreamingIndicator } from '../StreamingIndicator';
+import { ModelDownloadMonitor } from '../ModelDownloadMonitor';
+import { QuickSamplesCard } from '../QuickSamplesCard';
+import { ChunkingStrategySelector } from '../ChunkingStrategySelector';
 import { CodeModal } from '../CodeModal';
 
-// Import hooks
-import { useSummarizer } from '../../hooks/useSummarizer';
-import { useSummarizerAvailability } from '../../hooks/useSummarizerAvailability';
-
 // Import types
-import type { SummarizerCreateOptions } from '../../types/summarizer.types';
+import type {
+  SummarizerCreateOptions,
+  SummarizerMetrics,
+  SummarizerError,
+} from '../../types/summarizer.types';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export interface PlaygroundTabProps {
+  /** Configuration */
+  config: SummarizerCreateOptions;
+
+  /** Config change handler */
+  onConfigChange: (config: SummarizerCreateOptions) => void;
+
+  /** Availability status */
+  availability: 'readily' | 'after-download' | 'no';
+
+  /** Is model ready */
+  isReady: boolean;
+
+  /** Is checking availability */
+  isChecking: boolean;
+
+  /** Is downloading model */
+  isDownloading: boolean;
+
+  /** Download progress */
+  downloadProgress: { percentage: number; timeRemaining?: number } | null;
+
+  /** Start download function */
+  startDownload: () => Promise<void>;
+
+  /** Summarize function */
+  summarize: (
+    text: string,
+    options?: any,
+    config?: SummarizerCreateOptions,
+  ) => Promise<string>;
+
+  /** Summarize streaming function */
+  summarizeStreaming: (
+    text: string,
+    options?: any,
+    config?: SummarizerCreateOptions,
+  ) => Promise<ReadableStream<string>>;
+
+  /** Current result */
+  result: string | null;
+
+  /** Is loading */
+  isLoading: boolean;
+
+  /** Is streaming */
+  isStreaming: boolean;
+
+  /** Error */
+  error: SummarizerError | null;
+
+  /** Metrics */
+  metrics: SummarizerMetrics | null;
+
+  /** Reset function */
+  reset: () => void;
+
+  /** Input text (shared from parent) */
+  inputText?: string;
+
+  /** Input text change handler */
+  onInputTextChange?: (text: string) => void;
+
+  /** Sample selection handler */
+  onSampleSelect?: (sample: import('../../types/api.types').SampleText) => void;
+
+  /** Selected sample ID */
+  selectedSampleId?: string;
+
+  /** Chunking strategy for long content */
+  chunkingStrategy?: import('../../types/chunking.types').ChunkingStrategy;
+
+  /** Chunking strategy change handler */
+  onChunkingStrategyChange?: (strategy: import('../../types/chunking.types').ChunkingStrategy) => void;
+
   /** Additional CSS classes */
   className?: string;
 }
@@ -48,59 +134,40 @@ export interface PlaygroundTabProps {
  * <PlaygroundTab />
  * ```
  */
-export function PlaygroundTab({ className }: PlaygroundTabProps) {
-  // Load config from localStorage on mount
-  const loadSavedConfig = (): SummarizerCreateOptions => {
-    try {
-      const saved = localStorage.getItem('summarizer-config');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // Ensure outputLanguage is set
-        return {
-          ...parsed,
-          outputLanguage: parsed.outputLanguage || 'en',
-        };
-      }
-    } catch (error) {
-      console.warn('Failed to load saved config:', error);
-    }
-    return {
-      type: 'tldr',
-      format: 'plain-text',
-      length: 'medium',
-      outputLanguage: 'en',
-    };
-  };
-
-  // State
-  const [config, setConfig] = useState<SummarizerCreateOptions>(loadSavedConfig);
-  const [inputText, setInputText] = useState('');
+export function PlaygroundTab({
+  config,
+  onConfigChange,
+  availability,
+  isReady,
+  isChecking,
+  isDownloading,
+  downloadProgress,
+  startDownload,
+  summarize,
+  summarizeStreaming,
+  result,
+  isLoading,
+  isStreaming,
+  error: summarizerError,
+  metrics,
+  inputText: externalInputText,
+  onInputTextChange,
+  onSampleSelect,
+  selectedSampleId,
+  chunkingStrategy,
+  onChunkingStrategyChange,
+  className,
+}: PlaygroundTabProps) {
+  // State (only UI-specific state, not shared state)
+  const [localInputText, setLocalInputText] = useState('');
   const [pendingSummarization, setPendingSummarization] = useState(false);
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+  const [streamingMode, setStreamingMode] = useState(false);
+  const [advancedOptionsOpen, setAdvancedOptionsOpen] = useState(false);
 
-  // Hooks
-  const {
-    availability,
-    isReady,
-    isChecking,
-    isDownloading,
-    downloadProgress,
-    startDownload,
-  } = useSummarizerAvailability();
-
-  const {
-    summarize,
-    result,
-    isLoading,
-    error: summarizerError,
-    metrics,
-    updateConfig,
-    reset,
-  } = useSummarizer({
-    config,
-    trackPerformance: true,
-    autoCleanup: true,
-  });
+  // Use external input text if provided, otherwise use local state
+  const inputText = externalInputText !== undefined ? externalInputText : localInputText;
+  const setInputText = onInputTextChange || setLocalInputText;
 
   // Track previous availability for auto-run after download
   const previousAvailability = useRef(availability);
@@ -138,7 +205,15 @@ export function PlaygroundTab({ className }: PlaygroundTabProps) {
       };
 
       console.log('[PlaygroundTab] Starting summarization with config:', finalConfig);
-      await summarize(inputText, {}, finalConfig);
+
+      // Use streaming or regular mode based on toggle
+      if (streamingMode) {
+        await summarizeStreaming(inputText, {}, finalConfig);
+        // Stream is automatically consumed by the hook
+        console.log('[PlaygroundTab] Streaming summarization started');
+      } else {
+        await summarize(inputText, {}, finalConfig);
+      }
     } catch (error) {
       console.error('Summarization failed:', error);
     } finally {
@@ -162,7 +237,8 @@ export function PlaygroundTab({ className }: PlaygroundTabProps) {
     }
 
     previousAvailability.current = availability;
-  }, [availability, pendingSummarization, inputText]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availability, pendingSummarization, inputText.length]); // handleSummarize excluded - stable function with internal deps
 
   /**
    * Keyboard shortcut handler (Cmd/Ctrl+K)
@@ -180,20 +256,10 @@ export function PlaygroundTab({ className }: PlaygroundTabProps) {
   }, []);
 
   /**
-   * Handle config change and persist to localStorage
+   * Handle config change (delegated to parent)
    */
   const handleConfigChange = (newConfig: SummarizerCreateOptions) => {
-    setConfig(newConfig);
-
-    // Save to localStorage
-    try {
-      localStorage.setItem('summarizer-config', JSON.stringify(newConfig));
-    } catch (error) {
-      console.warn('Failed to save config to localStorage:', error);
-    }
-
-    // Reset results when config changes
-    reset();
+    onConfigChange(newConfig);
   };
 
   /**
@@ -292,66 +358,118 @@ export function PlaygroundTab({ className }: PlaygroundTabProps) {
 
   return (
     <div className={cn('space-y-6', className)}>
-      {/* Download progress (inline) */}
-      {isDownloading && (
-        <Alert className="border-purple-200 bg-purple-50">
-          <Loader className="h-4 w-4 text-purple-600 animate-spin" />
-          <AlertTitle className="text-purple-900">Downloading AI Model...</AlertTitle>
-          <AlertDescription className="space-y-3">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm text-purple-800">
-                <span className="font-medium">
-                  Downloading model...
-                </span>
-                <span>
-                  {downloadProgress
-                    ? `${downloadProgress.percentage.toFixed(1)}%`
-                    : '0%'}
-                </span>
-              </div>
-              <Progress
-                value={downloadProgress?.percentage || 0}
-                className="h-2"
-              />
-            </div>
-            {downloadProgress && downloadProgress.timeRemaining ? (
-              <p className="text-xs text-purple-700">
-                Estimated time remaining: {downloadProgress.timeRemaining} seconds
-              </p>
-            ) : null}
-          </AlertDescription>
-        </Alert>
+      {/* Configuration */}
+      <ErrorBoundary>
+        <SummarizerConfig
+          config={config}
+          onChange={handleConfigChange}
+          defaultCollapsed={true}
+          showAdvanced
+          onViewCode={() => setIsCodeModalOpen(true)}
+        />
+      </ErrorBoundary>
+
+      {/* Quick Samples */}
+      {onSampleSelect && (
+        <QuickSamplesCard
+          onSampleSelect={onSampleSelect}
+          selectedSampleId={selectedSampleId}
+        />
       )}
 
-      {/* Configuration */}
-      <SummarizerConfig
-        config={config}
-        onChange={handleConfigChange}
-        defaultCollapsed={true}
-        showAdvanced
-        onViewCode={() => setIsCodeModalOpen(true)}
-      />
-
       {/* Input */}
-      <SummarizerInput
-        value={inputText}
-        onChange={setInputText}
-        showValidation
-        showWordCount
-        showSmartDetection
-      />
+      <ErrorBoundary>
+        <SummarizerInput
+          value={inputText}
+          onChange={setInputText}
+          showValidation
+          showWordCount
+          showSmartDetection
+        />
+      </ErrorBoundary>
 
-      {/* SparkButton */}
+      {/* Advanced Options - Collapsible */}
+      <ErrorBoundary>
+        <Collapsible
+          open={advancedOptionsOpen}
+          onOpenChange={setAdvancedOptionsOpen}
+          className="border border-slate-200 rounded-lg"
+        >
+          <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-slate-50">
+            <div className="flex items-center gap-2">
+              <ChevronDown className={cn(
+                "h-4 w-4 transition-transform",
+                advancedOptionsOpen && "transform rotate-180"
+              )} />
+              <span className="font-medium">Advanced Options</span>
+              <Badge variant="secondary" className="text-xs">
+                2 features
+              </Badge>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {advancedOptionsOpen ? 'Hide' : 'Show'}
+            </span>
+          </CollapsibleTrigger>
+
+          <CollapsibleContent className="px-4 pb-4 space-y-4">
+            {/* Chunking Strategy - First: Process long content */}
+            {onChunkingStrategyChange && chunkingStrategy && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Long Content Processing</h4>
+                <p className="text-xs text-muted-foreground">
+                  Automatically applied to content exceeding 10,000 characters
+                </p>
+                <ChunkingStrategySelector
+                  strategy={chunkingStrategy}
+                  onChange={onChunkingStrategyChange}
+                  showAdvanced={false}
+                />
+              </div>
+            )}
+
+            {/* Streaming Mode - Second: Display option */}
+            <div className="space-y-2 pt-2 border-t" >
+              <label className="text-sm font-medium">Streaming Mode</label>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={streamingMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStreamingMode(!streamingMode)}
+                  className="text-xs"
+                >
+                  <Radio className="w-3 h-3 mr-1" />
+                  {streamingMode ? "Streaming Enabled" : "Standard Mode"}
+                </Button>
+                {streamingMode && (
+                  <span className="text-xs text-muted-foreground">
+                    Real-time streaming enabled
+                  </span>
+                )}
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </ErrorBoundary>
+
+      {/* Run Button */}
       <div className="flex justify-end">
         <SparkButton
           onClick={handleSummarize}
           disabled={!canSummarize}
           isProcessing={isLoading || isDownloading}
           text={availability === 'after-download' && !isReady ? "Download & Summarize" : "Run Summarizer"}
-          processingText={isDownloading ? "Downloading Model..." : "Summarizing..."}
+          processingText={isDownloading ? "Downloading Model..." : isStreaming ? "Streaming..." : "Summarizing..."}
           fullWidth={false}
         />
       </div>
+
+      {/* Streaming Status Indicator */}
+      {isStreaming && (
+        <StreamingIndicator
+          isActive={isStreaming}
+          charactersReceived={result?.length || 0}
+        />
+      )}
 
       {/* Error Alert */}
       {summarizerError && (
@@ -373,14 +491,44 @@ export function PlaygroundTab({ className }: PlaygroundTabProps) {
       )}
 
       {/* Results */}
-      {result && (
-        <SummarizerResults
-          result={result}
-          isStreaming={isLoading}
-          metrics={metrics}
-          showMetrics
+      <ErrorBoundary>
+        {isLoading && !result ? (
+          <ResultsSkeleton
+            showMetrics={false}
+            inputLength={inputText.length}
+            isStreamingMode={streamingMode}
+          />
+        ) : result ? (
+          <SummarizerResults
+            result={result}
+            isStreaming={isStreaming}
+            metrics={metrics}
+            showMetrics={false}
+          />
+        ) : null}
+      </ErrorBoundary>
+
+
+      {/* Model Management (moved to bottom for better UX) */}
+      <div className="space-y-3">
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-slate-900">
+            Model Management
+          </h3>
+          <p className="text-sm text-slate-600">
+            Monitor and manage AI model downloads and cache
+          </p>
+        </div>
+
+        <ModelDownloadMonitor
+          isDownloading={isDownloading}
+          downloadProgress={downloadProgress}
+          downloadError={null}
+          availability={availability}
+          isReady={isReady}
+          onStartDownload={startDownload}
         />
-      )}
+      </div>
 
       {/* Code Modal */}
       <CodeModal

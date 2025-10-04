@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import { FileText, BookOpen, Microscope, Newspaper, Link } from 'lucide-react';
+import { FileText, BookOpen, Microscope, Newspaper } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -60,6 +60,8 @@ However, challenges remain. Privacy concerns, algorithmic bias, and the need for
       type: 'tldr',
       format: 'plain-text',
       length: 'medium',
+      sharedContext:
+        'Focus on medical and healthcare terminology. Explain AI applications clearly for a general audience. Highlight key benefits and challenges in accessible language.',
     },
   },
   {
@@ -109,6 +111,8 @@ Quantum computing stands at an exciting inflection point. While fully fault-tole
       type: 'key-points',
       format: 'markdown',
       length: 'long',
+      sharedContext:
+        'Extract chapter-level insights and key concepts. Maintain technical accuracy for quantum computing terminology. Structure as clear bullet points with brief explanations.',
     },
   },
   {
@@ -140,6 +144,8 @@ Implement pagination for collections using limit and offset or cursor-based pagi
       type: 'key-points',
       format: 'markdown',
       length: 'medium',
+      sharedContext:
+        'Preserve technical API terminology and HTTP methods. Focus on implementation details and best practices. Use developer-friendly language with code examples where relevant.',
     },
   },
   {
@@ -167,19 +173,8 @@ Industry analysts predict the announcement will intensify competition in the AI 
       type: 'headline',
       format: 'plain-text',
       length: 'short',
-    },
-  },
-  {
-    id: 'url',
-    label: 'URL',
-    icon: '🔗',
-    category: 'url',
-    description: 'Test URL extraction (placeholder)',
-    text: 'https://en.wikipedia.org/wiki/Artificial_intelligence',
-    recommendedConfig: {
-      type: 'tldr',
-      format: 'plain-text',
-      length: 'medium',
+      sharedContext:
+        'Emphasize newsworthy facts and announcements. Quote key sources and experts accurately. Maintain journalistic tone with focus on what, when, who, and why.',
     },
   },
 ];
@@ -196,7 +191,6 @@ const ICON_COMPONENTS: Record<
   'long-doc': BookOpen,
   technical: Microscope,
   news: Newspaper,
-  url: Link,
 };
 
 // ============================================================================
@@ -235,7 +229,7 @@ export function QuickSamplesCard({
       </CardHeader>
 
       <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-3">
           {QUICK_SAMPLES.map((sample) => {
             const IconComponent = ICON_COMPONENTS[sample.id];
             const isSelected = selectedSampleId === sample.id;

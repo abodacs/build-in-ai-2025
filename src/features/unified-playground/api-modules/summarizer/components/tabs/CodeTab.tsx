@@ -7,8 +7,8 @@
  * @module CodeTab
  */
 
-import { useState, useMemo } from 'react';
-import { Code, Copy, CheckCircle2, Download } from 'lucide-react';
+import { useMemo } from 'react';
+import { Code } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -16,10 +16,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ThemedCodeBlock } from '@/components/code/ThemedCodeBlock';
 import { cn } from '@/lib/utils';
 import type { SummarizerCreateOptions } from '../../types/summarizer.types';
 
@@ -54,82 +54,152 @@ function generateTypeScriptCode(config: SummarizerCreateOptions): string {
     2,
   );
 
-  return `import type { Summarizer, SummarizerCreateOptions } from './types';
+  return `/**
+ * Chrome AI Summarizer - Complete TypeScript Implementation
+ *
+ * Requirements:
+ * - Chrome 138+ with Summarizer API enabled
+ * - Enable chrome://flags#summarization-api-for-gemini-nano
+ *
+ * This is a complete, self-contained implementation.
+ * Copy this entire file to use in your project.
+ */
 
+// ============================================================================
+// Type Definitions
+// ============================================================================
+
+interface Summarizer {
+  summarize(text: string): Promise<string>;
+  summarizeStreaming?(text: string): ReadableStream<string>;
+  destroy(): void;
+}
+
+interface SummarizerCreateOptions {
+  type?: 'tldr' | 'key-points' | 'teaser' | 'headline';
+  format?: 'plain-text' | 'markdown';
+  length?: 'short' | 'medium' | 'long';
+  sharedContext?: string;
+}
+
+interface SummarizerAPI {
+  create(options?: SummarizerCreateOptions): Promise<Summarizer>;
+  availability(): Promise<'readily' | 'after-download' | 'no'>;
+}
+
+declare global {
+  interface Window {
+    Summarizer: SummarizerAPI;
+  }
+  const Summarizer: SummarizerAPI;
+}
+
+// ============================================================================
 // Configuration
+// ============================================================================
+
 const config: SummarizerCreateOptions = ${configStr};
 
-// Check availability
-async function checkAvailability() {
-  const SummarizerAPI = (self as any).Summarizer;
+// ============================================================================
+// Core Functions
+// ============================================================================
 
-  if (!SummarizerAPI) {
-    throw new Error('Chrome AI Summarizer not supported');
+/**
+ * Check if Chrome AI Summarizer is available
+ */
+async function checkAvailability(): Promise<boolean> {
+  if (!('Summarizer' in window)) {
+    throw new Error(
+      'Chrome AI Summarizer not supported. ' +
+      'Requires Chrome 138+ with chrome://flags#summarization-api-for-gemini-nano enabled.'
+    );
   }
 
-  const availability = await SummarizerAPI.availability();
+  const availability = await window.Summarizer.availability();
 
   if (availability === 'no') {
     throw new Error('Chrome AI not available on this device');
   }
 
   if (availability === 'after-download') {
-    console.log('Model download required');
-    // Handle model download with progress monitoring
+    console.log('Model download required - this may take a few minutes');
+    // Model will download automatically on first create() call
   }
 
   return availability === 'readily';
 }
 
-// Create summarizer instance
+/**
+ * Create a new summarizer instance
+ * Note: Requires user activation (must be called from user interaction like button click)
+ */
 async function createSummarizer(): Promise<Summarizer> {
-  const SummarizerAPI = (self as any).Summarizer;
-  const summarizer = await SummarizerAPI.create(config);
+  const summarizer = await window.Summarizer.create(config);
   return summarizer;
 }
 
-// Summarize text
+/**
+ * Summarize text (non-streaming)
+ */
 async function summarize(text: string): Promise<string> {
-  // Check availability
-  const isReady = await checkAvailability();
-
-  if (!isReady) {
-    throw new Error('Chrome AI not ready');
-  }
-
-  // Create summarizer
+  await checkAvailability();
   const summarizer = await createSummarizer();
 
   try {
-    // Perform summarization
     const summary = await summarizer.summarize(text);
     return summary;
   } finally {
-    // Clean up
     summarizer.destroy();
   }
 }
 
-// Streaming summarization
-async function summarizeStreaming(text: string): Promise<ReadableStream<string>> {
-  const isReady = await checkAvailability();
-
-  if (!isReady) {
-    throw new Error('Chrome AI not ready');
-  }
-
+/**
+ * Summarize text with streaming (for real-time results)
+ */
+async function summarizeStreaming(
+  text: string,
+  onChunk: (chunk: string) => void
+): Promise<string> {
+  await checkAvailability();
   const summarizer = await createSummarizer();
 
-  if (!('summarizeStreaming' in summarizer)) {
-    throw new Error('Streaming not supported');
-  }
+  try {
+    if (!summarizer.summarizeStreaming) {
+      throw new Error('Streaming not supported in this version');
+    }
 
-  return (summarizer as any).summarizeStreaming(text);
+    const stream = summarizer.summarizeStreaming(text);
+    const reader = stream.getReader();
+    let fullSummary = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      fullSummary = value;
+      onChunk(value);
+    }
+
+    return fullSummary;
+  } finally {
+    summarizer.destroy();
+  }
 }
 
-// Example usage
-async function example() {
-  const text = \`Your long text content here...\`;
+// ============================================================================
+// Example Usage
+// ============================================================================
+
+/**
+ * Example 1: Basic summarization
+ */
+async function exampleBasic() {
+  const text = \`
+    Artificial intelligence has made remarkable progress in recent years,
+    with breakthrough developments in natural language processing, computer vision,
+    and machine learning. These advances are transforming industries from healthcare
+    to transportation, enabling new possibilities that were once thought impossible.
+  \`;
 
   try {
     const summary = await summarize(text);
@@ -139,8 +209,53 @@ async function example() {
   }
 }
 
-// Run example
-example();`;
+/**
+ * Example 2: Streaming summarization with real-time updates
+ */
+async function exampleStreaming() {
+  const text = \`Your long text content here...\`;
+
+  try {
+    const summary = await summarizeStreaming(text, (chunk) => {
+      console.log('Streaming chunk:', chunk);
+      // Update UI with partial results in real-time
+    });
+    console.log('Final summary:', summary);
+  } catch (error) {
+    console.error('Streaming failed:', error);
+  }
+}
+
+/**
+ * Example 3: HTML Integration (Button click handler)
+ */
+function setupHTMLIntegration() {
+  const button = document.getElementById('summarize-btn');
+  const input = document.getElementById('text-input') as HTMLTextAreaElement;
+  const output = document.getElementById('summary-output');
+
+  button?.addEventListener('click', async () => {
+    if (!input || !output) return;
+
+    try {
+      output.textContent = 'Summarizing...';
+      const summary = await summarize(input.value);
+      output.textContent = summary;
+    } catch (error) {
+      output.textContent = \`Error: \${error instanceof Error ? error.message : 'Unknown error'}\`;
+    }
+  });
+}
+
+// ============================================================================
+// Run Examples (uncomment to test)
+// ============================================================================
+
+// exampleBasic();
+// exampleStreaming();
+// setupHTMLIntegration();
+
+export { summarize, summarizeStreaming, checkAvailability };`;
 }
 
 /**
@@ -158,80 +273,120 @@ function generateJavaScriptCode(config: SummarizerCreateOptions): string {
     2,
   );
 
-  return `// Configuration
+  return `/**
+ * Chrome AI Summarizer - Complete JavaScript Implementation
+ *
+ * Requirements:
+ * - Chrome 138+ with Summarizer API enabled
+ * - Enable chrome://flags#summarization-api-for-gemini-nano
+ *
+ * This is a complete, self-contained implementation.
+ * Copy this entire file to use in your project.
+ */
+
+// ============================================================================
+// Configuration
+// ============================================================================
+
 const config = ${configStr};
 
-// Check availability
-async function checkAvailability() {
-  const SummarizerAPI = self.Summarizer;
+// ============================================================================
+// Core Functions
+// ============================================================================
 
-  if (!SummarizerAPI) {
-    throw new Error('Chrome AI Summarizer not supported');
+/**
+ * Check if Chrome AI Summarizer is available
+ */
+async function checkAvailability() {
+  if (!('Summarizer' in window)) {
+    throw new Error(
+      'Chrome AI Summarizer not supported. ' +
+      'Requires Chrome 138+ with chrome://flags#summarization-api-for-gemini-nano enabled.'
+    );
   }
 
-  const availability = await SummarizerAPI.availability();
+  const availability = await window.Summarizer.availability();
 
   if (availability === 'no') {
     throw new Error('Chrome AI not available on this device');
   }
 
   if (availability === 'after-download') {
-    console.log('Model download required');
-    // Handle model download
+    console.log('Model download required - this may take a few minutes');
+    // Model will download automatically on first create() call
   }
 
   return availability === 'readily';
 }
 
-// Create summarizer instance
+/**
+ * Create a new summarizer instance
+ * Note: Requires user activation (must be called from user interaction like button click)
+ */
 async function createSummarizer() {
-  const SummarizerAPI = self.Summarizer;
-  const summarizer = await SummarizerAPI.create(config);
+  const summarizer = await window.Summarizer.create(config);
   return summarizer;
 }
 
-// Summarize text
+/**
+ * Summarize text (non-streaming)
+ */
 async function summarize(text) {
-  // Check availability
-  const isReady = await checkAvailability();
-
-  if (!isReady) {
-    throw new Error('Chrome AI not ready');
-  }
-
-  // Create summarizer
+  await checkAvailability();
   const summarizer = await createSummarizer();
 
   try {
-    // Perform summarization
     const summary = await summarizer.summarize(text);
     return summary;
   } finally {
-    // Clean up
     summarizer.destroy();
   }
 }
 
-// Streaming summarization
-async function summarizeStreaming(text) {
-  const isReady = await checkAvailability();
-
-  if (!isReady) {
-    throw new Error('Chrome AI not ready');
-  }
-
+/**
+ * Summarize text with streaming (for real-time results)
+ */
+async function summarizeStreaming(text, onChunk) {
+  await checkAvailability();
   const summarizer = await createSummarizer();
 
-  if (!summarizer.summarizeStreaming) {
-    throw new Error('Streaming not supported');
-  }
+  try {
+    if (!summarizer.summarizeStreaming) {
+      throw new Error('Streaming not supported in this version');
+    }
 
-  return summarizer.summarizeStreaming(text);
+    const stream = summarizer.summarizeStreaming(text);
+    const reader = stream.getReader();
+    let fullSummary = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      fullSummary = value;
+      onChunk(value);
+    }
+
+    return fullSummary;
+  } finally {
+    summarizer.destroy();
+  }
 }
 
-// Example usage
-async function example() {
-  const text = \`Your long text content here...\`;
+// ============================================================================
+// Example Usage
+// ============================================================================
+
+/**
+ * Example 1: Basic summarization
+ */
+async function exampleBasic() {
+  const text = \`
+    Artificial intelligence has made remarkable progress in recent years,
+    with breakthrough developments in natural language processing, computer vision,
+    and machine learning. These advances are transforming industries from healthcare
+    to transportation, enabling new possibilities that were once thought impossible.
+  \`;
 
   try {
     const summary = await summarize(text);
@@ -241,8 +396,53 @@ async function example() {
   }
 }
 
-// Run example
-example();`;
+/**
+ * Example 2: Streaming summarization with real-time updates
+ */
+async function exampleStreaming() {
+  const text = \`Your long text content here...\`;
+
+  try {
+    const summary = await summarizeStreaming(text, (chunk) => {
+      console.log('Streaming chunk:', chunk);
+      // Update UI with partial results in real-time
+    });
+    console.log('Final summary:', summary);
+  } catch (error) {
+    console.error('Streaming failed:', error);
+  }
+}
+
+/**
+ * Example 3: HTML Integration (Button click handler)
+ */
+function setupHTMLIntegration() {
+  const button = document.getElementById('summarize-btn');
+  const input = document.getElementById('text-input');
+  const output = document.getElementById('summary-output');
+
+  button?.addEventListener('click', async () => {
+    if (!input || !output) return;
+
+    try {
+      output.textContent = 'Summarizing...';
+      const summary = await summarize(input.value);
+      output.textContent = summary;
+    } catch (error) {
+      output.textContent = \`Error: \${error.message || 'Unknown error'}\`;
+    }
+  });
+}
+
+// ============================================================================
+// Run Examples (uncomment to test)
+// ============================================================================
+
+// exampleBasic();
+// exampleStreaming();
+// setupHTMLIntegration();
+
+export { summarize, summarizeStreaming, checkAvailability };`;
 }
 
 // ============================================================================
@@ -258,9 +458,6 @@ example();`;
  * ```
  */
 export function CodeTab({ config = {}, className }: CodeTabProps) {
-  // State
-  const [copiedLanguage, setCopiedLanguage] = useState<string | null>(null);
-
   // Generated code
   const typescriptCode = useMemo(
     () => generateTypeScriptCode(config),
@@ -270,36 +467,6 @@ export function CodeTab({ config = {}, className }: CodeTabProps) {
     () => generateJavaScriptCode(config),
     [config],
   );
-
-  /**
-   * Copy code to clipboard
-   */
-  const copyCode = async (code: string, language: string) => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopiedLanguage(language);
-
-      // Reset after 2 seconds
-      setTimeout(() => setCopiedLanguage(null), 2000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
-    }
-  };
-
-  /**
-   * Download code as file
-   */
-  const downloadCode = (code: string, filename: string) => {
-    const blob = new Blob([code], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <div className={cn('space-y-6', className)}>
@@ -353,86 +520,36 @@ export function CodeTab({ config = {}, className }: CodeTabProps) {
           <CardContent className="pt-0">
             {/* TypeScript */}
             <TabsContent value="typescript" className="mt-0 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-slate-600">
-                  Full TypeScript implementation with types
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyCode(typescriptCode, 'typescript')}
-                  >
-                    {copiedLanguage === 'typescript' ? (
-                      <>
-                        <CheckCircle2 className="w-3 h-3 mr-1" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3 h-3 mr-1" />
-                        Copy
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      downloadCode(typescriptCode, 'summarizer.ts')
-                    }
-                  >
-                    <Download className="w-3 h-3 mr-1" />
-                    Download
-                  </Button>
-                </div>
+              <div className="text-sm text-slate-600">
+                Full TypeScript implementation with types
               </div>
 
-              <pre className="p-4 rounded-lg bg-slate-900 text-slate-100 text-xs overflow-x-auto">
-                <code>{typescriptCode}</code>
-              </pre>
+              <ThemedCodeBlock
+                code={typescriptCode}
+                language="typescript"
+                filename="summarizer.ts"
+                showCopyButton
+                showDownloadButton
+                showThemeToggle
+                showLanguageBadge={false}
+              />
             </TabsContent>
 
             {/* JavaScript */}
             <TabsContent value="javascript" className="mt-0 space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-slate-600">
-                  Plain JavaScript implementation
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyCode(javascriptCode, 'javascript')}
-                  >
-                    {copiedLanguage === 'javascript' ? (
-                      <>
-                        <CheckCircle2 className="w-3 h-3 mr-1" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3 h-3 mr-1" />
-                        Copy
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      downloadCode(javascriptCode, 'summarizer.js')
-                    }
-                  >
-                    <Download className="w-3 h-3 mr-1" />
-                    Download
-                  </Button>
-                </div>
+              <div className="text-sm text-slate-600">
+                Plain JavaScript implementation
               </div>
 
-              <pre className="p-4 rounded-lg bg-slate-900 text-slate-100 text-xs overflow-x-auto">
-                <code>{javascriptCode}</code>
-              </pre>
+              <ThemedCodeBlock
+                code={javascriptCode}
+                language="javascript"
+                filename="summarizer.js"
+                showCopyButton
+                showDownloadButton
+                showThemeToggle
+                showLanguageBadge={false}
+              />
             </TabsContent>
           </CardContent>
         </Tabs>

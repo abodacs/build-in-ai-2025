@@ -47,11 +47,7 @@ export interface APIModule {
 // ============================================================================
 
 // Import Summarizer components lazily
-import {
-  PlaygroundTab as SummarizerPlayground,
-  AdvancedTab as SummarizerAdvanced,
-  CodeTab as SummarizerCode,
-} from './summarizer';
+import { SummarizerPlayground } from './summarizer';
 
 /**
  * Registry of all available API modules
@@ -63,8 +59,6 @@ export const API_MODULES: Record<string, APIModule> = {
     description: 'Content summarization and condensation with advanced chunking',
     category: 'text',
     PlaygroundComponent: SummarizerPlayground,
-    AdvancedComponent: SummarizerAdvanced,
-    CodeComponent: SummarizerCode,
     available: true,
   },
 
