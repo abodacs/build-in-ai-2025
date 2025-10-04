@@ -381,4 +381,3 @@ jobs:
           echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ Unit & Integration Tests: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "✅ E2E Tests: ${{ needs.e2e.result }}" >> $GITHUB_STEP_SUMMARY
