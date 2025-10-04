@@ -49,11 +49,8 @@ jobs:
       - name: Run linting
         run: pnpm lint
 
-      - name: Run unit tests
-        run: pnpm test:unit
-
-      - name: Run integration tests
-        run: pnpm test:integration
+      - name: Run tests
+        run: pnpm test:coverage
 
   build-and-deploy:
     runs-on: ubuntu-latest

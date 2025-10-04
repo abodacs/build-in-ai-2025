@@ -44,7 +44,7 @@ export default defineConfig({
   // Shared settings for all projects
   use: {
     // Base URL for navigation
-    baseURL: 'http://localhost:5173',
+    baseURL: process.env.CI ? 'http://localhost:4173' : 'http://localhost:5173',
 
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
@@ -125,8 +125,8 @@ export default defineConfig({
 
   // Web server configuration
   webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:5173',
+    command: process.env.CI ? 'pnpm preview' : 'pnpm dev',
+    url: process.env.CI ? 'http://localhost:4173' : 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // 2 minutes to start server
   },
