@@ -656,9 +656,9 @@ describe('Edge Cases', () => {
       // Act
       const result = validateText(veryLongText);
 
-      // Assert - validateText doesn't check max length, only min length
-      // Very long text is actually valid
-      expect(result.valid).toBe(true);
+      // Assert - Single word repeated fails word count validation
+      expect(result.valid).toBe(false);
+      expect(result.reason).toContain('too few words');
     });
 
     it('should validate text type', () => {
