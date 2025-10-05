@@ -3,7 +3,8 @@
  * Export all components and utilities for the Chrome AI DevBench unified playground
  */
 
-// Main container component
+// Main components
+export { UnifiedPlayground } from './UnifiedPlayground';
 export { PlaygroundContainer } from './shell/PlaygroundContainer';
 
 // Shared components

@@ -253,9 +253,9 @@ describe('WarningBanner Component', () => {
     });
   });
 
-  describe('Ultrathink Test Suite - Advanced Edge Cases', () => {
+  describe('Advanced Edge Cases', () => {
     describe('Component Isolation and Self-Sufficiency', () => {
-      it('ultrathink: should render correctly without any external dependencies', () => {
+      it('should render correctly without any external dependencies', () => {
         // Verify complete self-sufficiency
         expect(() => render(<WarningBanner />)).not.toThrow();
 
@@ -267,7 +267,7 @@ describe('WarningBanner Component', () => {
         ).toBeInTheDocument();
       });
 
-      it('ultrathink: should maintain consistency across multiple simultaneous instances', () => {
+      it('should maintain consistency across multiple simultaneous instances', () => {
         const { container } = render(
           <div>
             <WarningBanner />
@@ -313,7 +313,7 @@ describe('WarningBanner Component', () => {
         });
       });
 
-      it('ultrathink: should handle rapid mounting and unmounting cycles', () => {
+      it('should handle rapid mounting and unmounting cycles', () => {
         for (let i = 0; i < 10; i++) {
           const { unmount } = render(<WarningBanner />);
 
@@ -329,7 +329,7 @@ describe('WarningBanner Component', () => {
     });
 
     describe('Advanced Visual Consistency and Layout Integrity', () => {
-      it('ultrathink: should maintain visual consistency under different container contexts', () => {
+      it('should maintain visual consistency under different container contexts', () => {
         const containers = [
           ({ children }: { children: React.ReactNode }) => (
             <div>{children}</div>
@@ -377,7 +377,7 @@ describe('WarningBanner Component', () => {
         });
       });
 
-      it('ultrathink: should handle CSS class conflicts gracefully', () => {
+      it('should handle CSS class conflicts gracefully', () => {
         const { container } = render(
           <div className="bg-red-50 border border-red-200 text-red-800">
             <WarningBanner />
@@ -395,7 +395,7 @@ describe('WarningBanner Component', () => {
         expect(redBackgrounds.length).toBeGreaterThanOrEqual(2);
       });
 
-      it('ultrathink: should maintain layout integrity with varying content lengths', () => {
+      it('should maintain layout integrity with varying content lengths', () => {
         render(<WarningBanner />);
 
         const banner = document.querySelector('.bg-red-50');
@@ -412,7 +412,7 @@ describe('WarningBanner Component', () => {
     });
 
     describe('Accessibility and Screen Reader Optimization', () => {
-      it('ultrathink: should provide optimal screen reader experience', () => {
+      it('should provide optimal screen reader experience', () => {
         render(<WarningBanner />);
 
         const banner = document.querySelector('.bg-red-50');
@@ -432,7 +432,7 @@ describe('WarningBanner Component', () => {
         );
       });
 
-      it('ultrathink: should handle high contrast mode compatibility', () => {
+      it('should handle high contrast mode compatibility', () => {
         render(<WarningBanner />);
 
         const banner = document.querySelector('.bg-red-50');
@@ -445,7 +445,7 @@ describe('WarningBanner Component', () => {
         expect(text).toHaveClass('text-red-800'); // Dark red for text
       });
 
-      it('ultrathink: should support keyboard navigation patterns', () => {
+      it('should support keyboard navigation patterns', () => {
         render(<WarningBanner />);
 
         const banner = document.querySelector('.bg-red-50');
@@ -460,7 +460,7 @@ describe('WarningBanner Component', () => {
     });
 
     describe('Performance Optimization and Resource Management', () => {
-      it('ultrathink: should render with minimal computational overhead', () => {
+      it('should render with minimal computational overhead', () => {
         const startTime = performance.now();
 
         // Render multiple instances to test performance
@@ -478,7 +478,7 @@ describe('WarningBanner Component', () => {
         expect(banners).toHaveLength(50);
       });
 
-      it('ultrathink: should optimize re-renders efficiently', () => {
+      it('should optimize re-renders efficiently', () => {
         const { rerender } = render(<WarningBanner />);
 
         const startTime = performance.now();
@@ -497,7 +497,7 @@ describe('WarningBanner Component', () => {
         ).toBeInTheDocument();
       });
 
-      it('ultrathink: should handle memory management efficiently', () => {
+      it('should handle memory management efficiently', () => {
         const components = [];
 
         // Mount multiple components
@@ -519,7 +519,7 @@ describe('WarningBanner Component', () => {
     });
 
     describe('Content Validation and Message Integrity', () => {
-      it('ultrathink: should maintain message accuracy and completeness', () => {
+      it('should maintain message accuracy and completeness', () => {
         render(<WarningBanner />);
 
         const text = screen.getByText(
@@ -547,7 +547,7 @@ describe('WarningBanner Component', () => {
         expect(fullMessage?.length).toBeLessThan(300); // Not too long
       });
 
-      it('ultrathink: should provide contextually appropriate warning level', () => {
+      it('should provide contextually appropriate warning level', () => {
         render(<WarningBanner />);
 
         // Should use warning (red) color scheme, not error or info
@@ -568,7 +568,7 @@ describe('WarningBanner Component', () => {
         );
       });
 
-      it('ultrathink: should handle text rendering edge cases', () => {
+      it('should handle text rendering edge cases', () => {
         render(<WarningBanner />);
 
         const text = screen.getByText(
@@ -587,7 +587,7 @@ describe('WarningBanner Component', () => {
     });
 
     describe('Icon Integration and Visual Hierarchy', () => {
-      it('ultrathink: should maintain icon-text relationship integrity', () => {
+      it('should maintain icon-text relationship integrity', () => {
         render(<WarningBanner />);
 
         const banner = document.querySelector('.bg-red-50');
@@ -604,7 +604,7 @@ describe('WarningBanner Component', () => {
         expect(icon).toHaveClass('flex-shrink-0');
       });
 
-      it('ultrathink: should handle icon rendering across different environments', () => {
+      it('should handle icon rendering across different environments', () => {
         render(<WarningBanner />);
 
         const icon = document.querySelector('svg');
@@ -619,7 +619,7 @@ describe('WarningBanner Component', () => {
         expect(icon?.tagName.toLowerCase()).toBe('svg');
       });
 
-      it('ultrathink: should maintain visual balance with varying text lengths', () => {
+      it('should maintain visual balance with varying text lengths', () => {
         render(<WarningBanner />);
 
         const banner = document.querySelector('.bg-red-50');
@@ -634,7 +634,7 @@ describe('WarningBanner Component', () => {
     });
 
     describe('Integration and Deployment Scenarios', () => {
-      it('ultrathink: should work correctly in different React environments', () => {
+      it('should work correctly in different React environments', () => {
         // Test in different wrapper scenarios
         const scenarios = [
           { name: 'basic', render: () => render(<WarningBanner />) },
@@ -668,8 +668,8 @@ describe('WarningBanner Component', () => {
         ];
 
         scenarios.forEach(({ name: _name, render: renderScenario }) => {
-          const { unmount } = renderScenario();
-          expect(() => renderScenario()).not.toThrow();
+          const { unmount, container } = renderScenario();
+          expect(container).toBeInTheDocument();
 
           const message = screen.getByText(
             /Chrome AI APIs are currently in development/,
@@ -680,7 +680,7 @@ describe('WarningBanner Component', () => {
         });
       });
 
-      it('ultrathink: should handle component composition gracefully', () => {
+      it('should handle component composition gracefully', () => {
         const CompositeComponent = () => (
           <div>
             <header>Page Header</header>
@@ -709,7 +709,7 @@ describe('WarningBanner Component', () => {
         });
       });
 
-      it('ultrathink: should maintain consistency across browser environments', () => {
+      it('should maintain consistency across browser environments', () => {
         render(<WarningBanner />);
 
         const banner = document.querySelector('.bg-red-50');

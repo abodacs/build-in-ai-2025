@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAppStore } from '@/stores/appStore';
 import { isAiAvailable } from '@/lib/utils';
+import { ChromeAICompatibility } from '../../api-modules/summarizer/services/ChromeAICompatibility';
 import { TODO_TYPE } from '../../../../types/global';
 
 // ============================================================================
@@ -59,28 +60,43 @@ async function checkAICapability(apiName: string): Promise<AICapability> {
     // API-specific capability checks
     switch (apiName) {
       case 'summarizer': {
-        const summarizerAvailable =
-          typeof (globalThis as TODO_TYPE).ai?.summarizer !== 'undefined';
-        if (summarizerAvailable) {
-          // Try to create a session to verify it works
-          const summarizer = await (
-            globalThis as TODO_TYPE
-          ).ai.summarizer.create();
-          await summarizer.destroy();
+        // Use ChromeAICompatibility service for proper detection
+        const isSupported = ChromeAICompatibility.isSupported();
+
+        if (!isSupported) {
+          return {
+            name: apiName,
+            status: 'unavailable',
+            lastChecked: Date.now(),
+            error: 'Summarizer API not available. Enable in chrome://flags',
+          };
         }
+
+        // Check actual availability status
+        const availability = await ChromeAICompatibility.checkAvailability();
+
+        const statusMap = {
+          readily: 'available' as const,
+          'after-download': 'unavailable' as const,
+          no: 'unavailable' as const,
+        };
+
         return {
           name: apiName,
-          status: summarizerAvailable ? 'available' : 'unavailable',
+          status: statusMap[availability],
           lastChecked: Date.now(),
-          error: summarizerAvailable
-            ? undefined
-            : 'Summarizer API not available',
+          error:
+            availability === 'readily'
+              ? undefined
+              : availability === 'after-download'
+                ? 'Model download required'
+                : 'Summarizer API not available',
         };
       }
 
       case 'translator': {
         const translatorAvailable =
-          typeof (globalThis as TODO_TYPE).ai?.translator !== 'undefined';
+          typeof (globalThis as TODO_TYPE).translator !== 'undefined';
         return {
           name: apiName,
           status: translatorAvailable ? 'available' : 'unavailable',
@@ -93,7 +109,7 @@ async function checkAICapability(apiName: string): Promise<AICapability> {
 
       case 'writer': {
         const writerAvailable =
-          typeof (globalThis as TODO_TYPE).ai?.writer !== 'undefined';
+          typeof (globalThis as TODO_TYPE).writer !== 'undefined';
         return {
           name: apiName,
           status: writerAvailable ? 'available' : 'unavailable',
@@ -104,7 +120,7 @@ async function checkAICapability(apiName: string): Promise<AICapability> {
 
       case 'rewriter': {
         const rewriterAvailable =
-          typeof (globalThis as TODO_TYPE).ai?.rewriter !== 'undefined';
+          typeof (globalThis as TODO_TYPE).rewriter !== 'undefined';
         return {
           name: apiName,
           status: rewriterAvailable ? 'available' : 'unavailable',
@@ -115,7 +131,7 @@ async function checkAICapability(apiName: string): Promise<AICapability> {
 
       case 'proofreader': {
         const proofreaderAvailable =
-          typeof (globalThis as TODO_TYPE).ai?.proofreader !== 'undefined';
+          typeof (globalThis as TODO_TYPE).proofreader !== 'undefined';
         return {
           name: apiName,
           status: proofreaderAvailable ? 'available' : 'unavailable',
@@ -128,7 +144,7 @@ async function checkAICapability(apiName: string): Promise<AICapability> {
 
       case 'prompt': {
         const promptAvailable =
-          typeof (globalThis as TODO_TYPE).ai?.languageModel !== 'undefined';
+          typeof (globalThis as TODO_TYPE).languageModel !== 'undefined';
         return {
           name: apiName,
           status: promptAvailable ? 'available' : 'unavailable',
@@ -141,7 +157,7 @@ async function checkAICapability(apiName: string): Promise<AICapability> {
 
       case 'languageDetection': {
         const languageDetectionAvailable =
-          typeof (globalThis as TODO_TYPE).ai?.languageDetector !== 'undefined';
+          typeof (globalThis as TODO_TYPE).languageDetector !== 'undefined';
         return {
           name: apiName,
           status: languageDetectionAvailable ? 'available' : 'unavailable',

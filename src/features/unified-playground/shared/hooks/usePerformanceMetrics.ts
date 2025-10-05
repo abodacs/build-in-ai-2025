@@ -326,12 +326,6 @@ export function usePerformanceMetrics() {
   const getOptimizationSuggestions = useCallback((): string[] => {
     const suggestions: string[] = [];
 
-    if (metrics.lcp && metrics.lcp > 2500) {
-      suggestions.push(
-        'Optimize Largest Contentful Paint: Consider lazy loading or image optimization',
-      );
-    }
-
     if (metrics.fid && metrics.fid > 100) {
       suggestions.push(
         'Reduce First Input Delay: Minimize JavaScript execution time',

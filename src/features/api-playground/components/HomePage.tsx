@@ -132,7 +132,7 @@ summarizerExample()
         <div className="flex items-center gap-3">
           <Icon className="w-6 h-6 text-gray-700" />
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">
+            <h1 className="text-xl font-semibold text-gray-900">
               {currentApi.name}
             </h1>
             <p className="text-sm text-gray-500">{currentApi.description}</p>
@@ -183,6 +183,7 @@ summarizerExample()
           {/* API Configuration */}
           <div>
             <button
+              type="button"
               onClick={() => setIsConfigOpen(!isConfigOpen)}
               className="flex items-center gap-2 w-full p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >

@@ -1,0 +1,123 @@
+name: Coverage Report
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run weekly coverage report
+    - cron: '0 0 * * 0'
+
+jobs:
+  coverage:
+    name: Generate Coverage Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for better analysis
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '10'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests with coverage
+        run: pnpm test:coverage
+
+      - name: Generate coverage badge
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/coverage-final.json
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Archive detailed coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-detailed
+          path: |
+            coverage/
+            !coverage/tmp
+          retention-days: 90
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-summary.json', 'utf8'));
+
+            const total = coverage.total;
+            const lines = total.lines.pct;
+            const statements = total.statements.pct;
+            const functions = total.functions.pct;
+            const branches = total.branches.pct;
+
+            const body = `## 📊 Coverage Report
+
+            | Metric | Coverage |
+            |--------|----------|
+            | Lines | ${lines.toFixed(2)}% |
+            | Statements | ${statements.toFixed(2)}% |
+            | Functions | ${functions.toFixed(2)}% |
+            | Branches | ${branches.toFixed(2)}% |
+
+            ${lines >= 95 ? '✅ Excellent coverage!' : lines >= 80 ? '⚠️ Good coverage, but could be improved' : '❌ Coverage below target (80%)'}
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Check coverage thresholds
+        run: |
+          node -e "
+            const coverage = require('./coverage/coverage-summary.json');
+            const total = coverage.total;
+
+            const thresholds = {
+              lines: 80,
+              statements: 80,
+              functions: 80,
+              branches: 70
+            };
+
+            let failed = false;
+
+            for (const [metric, threshold] of Object.entries(thresholds)) {
+              const actual = total[metric].pct;
+              console.log(\`\${metric}: \${actual.toFixed(2)}% (threshold: \${threshold}%)\`);
+
+              if (actual < threshold) {
+                console.error(\`❌ \${metric} coverage \${actual.toFixed(2)}% is below threshold \${threshold}%\`);
+                failed = true;
+              }
+            }
+
+            if (failed) {
+              process.exit(1);
+            } else {
+              console.log('✅ All coverage thresholds met!');
+            }
+          "

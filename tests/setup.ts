@@ -65,3 +65,8 @@ Object.defineProperty(window, 'performance', {
     now: vi.fn(() => Date.now()),
   },
 });
+
+// Set lang attribute for accessibility tests
+if (document.documentElement) {
+  document.documentElement.setAttribute('lang', 'en');
+}
