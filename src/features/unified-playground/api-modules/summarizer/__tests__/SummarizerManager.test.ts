@@ -173,7 +173,10 @@ describe('SummarizerManager', () => {
 
       // Assert
       expect(result).toBe('Test summary');
-      expect(mockSummarizer.summarize).toHaveBeenCalledWith(text, options);
+      expect(mockSummarizer.summarize).toHaveBeenCalledWith(text, {
+        ...options,
+        outputLanguage: 'en',
+      });
     });
 
     it('should handle streaming summarization', async () => {
@@ -210,7 +213,9 @@ describe('SummarizerManager', () => {
 
       // Assert
       expect(chunks).toEqual(['Chunk 1', 'Chunk 2', 'Chunk 3']);
-      expect(mockSummarizer.summarizeStreaming).toHaveBeenCalledWith(text, {});
+      expect(mockSummarizer.summarizeStreaming).toHaveBeenCalledWith(text, {
+        outputLanguage: 'en',
+      });
     });
 
     it('should track metrics for summarization operations', async () => {
@@ -423,7 +428,9 @@ describe('SummarizerManager', () => {
 
       // Assert
       expect(result).toBeDefined();
-      expect(mockSummarizer.summarize).toHaveBeenCalledWith(longText, {});
+      expect(mockSummarizer.summarize).toHaveBeenCalledWith(longText, {
+        outputLanguage: 'en',
+      });
     });
   });
 

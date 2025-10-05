@@ -371,9 +371,9 @@ describe('Header Component', () => {
     });
   });
 
-  describe('Ultrathink Test Suite - Advanced Edge Cases', () => {
+  describe('Advanced Edge Cases', () => {
     describe('Complex AI Capability State Management', () => {
-      it('ultrathink: should handle partial API availability states correctly', async () => {
+      it('should handle partial API availability states correctly', async () => {
         const partialCapabilities = {
           summarizer: 'available',
           translator: 'downloading',
@@ -408,7 +408,7 @@ describe('Header Component', () => {
         expect(statusIndicator).toBeTruthy();
       });
 
-      it('ultrathink: should handle AI capability state transitions during component lifecycle', async () => {
+      it('should handle AI capability state transitions during component lifecycle', async () => {
         let capabilitiesResolver: (value: any) => void;
         const capabilitiesPromise = new Promise((resolve) => {
           capabilitiesResolver = resolve;
@@ -442,7 +442,7 @@ describe('Header Component', () => {
         ).not.toBeInTheDocument();
       });
 
-      it('ultrathink: should handle concurrent AI availability checks without race conditions', async () => {
+      it('should handle concurrent AI availability checks without race conditions', async () => {
         let resolveCount = 0;
         mockTestAiAvailability.mockImplementation(() => {
           resolveCount++;
@@ -469,7 +469,7 @@ describe('Header Component', () => {
     });
 
     describe('Advanced Error Handling and Recovery', () => {
-      it('ultrathink: should handle network timeout errors gracefully', async () => {
+      it('should handle network timeout errors gracefully', async () => {
         const consoleError = vi
           .spyOn(console, 'error')
           .mockImplementation(() => {});
@@ -494,7 +494,7 @@ describe('Header Component', () => {
         consoleError.mockRestore();
       });
 
-      it('ultrathink: should handle malformed AI capability responses', async () => {
+      it('should handle malformed AI capability responses', async () => {
         const consoleError = vi
           .spyOn(console, 'error')
           .mockImplementation(() => {});
@@ -526,7 +526,7 @@ describe('Header Component', () => {
         consoleError.mockRestore();
       });
 
-      it('ultrathink: should handle store connection failures gracefully', () => {
+      it('should handle store connection failures gracefully', () => {
         const consoleError = vi
           .spyOn(console, 'error')
           .mockImplementation(() => {});
@@ -547,7 +547,7 @@ describe('Header Component', () => {
     });
 
     describe('Dynamic State Transitions and UI Consistency', () => {
-      it('ultrathink: should maintain UI consistency during rapid state changes', async () => {
+      it('should maintain UI consistency during rapid state changes', async () => {
         const stateSequence = [
           null, // loading
           { summarizer: 'available' }, // available
@@ -593,7 +593,7 @@ describe('Header Component', () => {
         }
       });
 
-      it('ultrathink: should handle isCheckingAi state correctly during async operations', async () => {
+      it('should handle isCheckingAi state correctly during async operations', async () => {
         let aiCheckResolver: (value: any) => void;
         const aiCheckPromise = new Promise((resolve) => {
           aiCheckResolver = resolve;
@@ -622,7 +622,7 @@ describe('Header Component', () => {
     });
 
     describe('Accessibility and Semantic Structure', () => {
-      it('ultrathink: should provide comprehensive ARIA support for status indicators', () => {
+      it('should provide comprehensive ARIA support for status indicators', () => {
         render(<Header />);
 
         // Status chip should be accessible
@@ -639,7 +639,7 @@ describe('Header Component', () => {
         expect(screen.getByText('Chrome AI APIs Required')).toBeInTheDocument();
       });
 
-      it('ultrathink: should maintain keyboard navigation support', async () => {
+      it('should maintain keyboard navigation support', async () => {
         const user = userEvent.setup();
         render(<Header />);
 
@@ -655,7 +655,7 @@ describe('Header Component', () => {
         expect(docButton).toBeInTheDocument();
       });
 
-      it('ultrathink: should provide proper semantic structure for assistive technologies', () => {
+      it('should provide proper semantic structure for assistive technologies', () => {
         render(<Header />);
 
         // Main heading should be properly marked
@@ -675,7 +675,7 @@ describe('Header Component', () => {
     });
 
     describe('Performance Optimization and Memory Management', () => {
-      it('ultrathink: should prevent memory leaks from async operations', async () => {
+      it('should prevent memory leaks from async operations', async () => {
         let promiseResolver: (value: any) => void;
         const longRunningPromise = new Promise((resolve) => {
           promiseResolver = resolve;
@@ -694,7 +694,7 @@ describe('Header Component', () => {
         await new Promise((resolve) => setTimeout(resolve, 100));
       });
 
-      it('ultrathink: should handle high-frequency re-renders efficiently', () => {
+      it('should handle high-frequency re-renders efficiently', () => {
         const { rerender } = render(<Header />);
 
         // Perform many rapid re-renders
@@ -734,7 +734,7 @@ describe('Header Component', () => {
     });
 
     describe('Chrome Logo Advanced Rendering', () => {
-      it('ultrathink: should handle SVG rendering across different environments', () => {
+      it('should handle SVG rendering across different environments', () => {
         render(<Header />);
 
         const svg = document.querySelector('svg');
@@ -755,7 +755,7 @@ describe('Header Component', () => {
         expect(circleRadii).toEqual([10, 6, 3, 1.5]);
       });
 
-      it('ultrathink: should maintain Chrome logo visual consistency', () => {
+      it('should maintain Chrome logo visual consistency', () => {
         render(<Header />);
 
         const svg = document.querySelector('svg');
@@ -774,7 +774,7 @@ describe('Header Component', () => {
     });
 
     describe('Integration and Component Boundaries', () => {
-      it('ultrathink: should handle store updates from external sources', async () => {
+      it('should handle store updates from external sources', async () => {
         let storeState: any = {
           aiCapabilities: null,
           setAiCapabilities: mockSetAiCapabilities,
@@ -806,7 +806,7 @@ describe('Header Component', () => {
         expect(document.querySelector('.bg-green-500')).toBeInTheDocument();
       });
 
-      it('ultrathink: should maintain consistent behavior across different render contexts', () => {
+      it('should maintain consistent behavior across different render contexts', () => {
         // Test in different wrapper scenarios
         const wrappers = [
           ({ children }: { children: React.ReactNode }) => (

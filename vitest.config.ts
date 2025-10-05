@@ -8,6 +8,25 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
+
+    // Performance optimizations
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: false,
+        useAtomics: true,
+      },
+    },
+    maxConcurrency: 10,
+
+    // Timeouts for faster test execution
+    testTimeout: 10000, // 10 seconds max per test
+    hookTimeout: 5000, // 5 seconds for hooks
+    teardownTimeout: 3000, // 3 seconds for cleanup
+
+    // Reduce output noise for faster runs
+    reporters: process.env.CI ? ['default', 'json'] : ['default'],
+
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -29,12 +48,22 @@ export default defineConfig({
         },
       },
     },
+
     // Test file patterns
     include: [
       '**/__tests__/**/*.{test,spec}.{js,ts,jsx,tsx}',
       '**/*.{test,spec}.{js,ts,jsx,tsx}',
     ],
-    exclude: ['node_modules/**', 'dist/**', '.next/**', 'coverage/**'],
+    exclude: [
+      'node_modules/**',
+      'dist/**',
+      '.next/**',
+      'coverage/**',
+      '**/e2e/**', // Exclude E2E tests from unit test runs
+    ],
+
+    // Increase performance by reusing test context
+    isolate: false,
   },
   resolve: {
     alias: {

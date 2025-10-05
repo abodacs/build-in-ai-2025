@@ -72,7 +72,9 @@ describe('Happy Path Integration Tests', () => {
           length: 'short',
         }),
       );
-      expect(mockSummarizer.summarize).toHaveBeenCalledWith(text, {});
+      expect(mockSummarizer.summarize).toHaveBeenCalledWith(text, {
+        outputLanguage: 'en',
+      });
     });
 
     it('should summarize medium text successfully', async () => {
@@ -100,7 +102,10 @@ describe('Happy Path Integration Tests', () => {
       await manager.summarize(text, options, { type: 'tldr' });
 
       // Assert
-      expect(mockSummarizer.summarize).toHaveBeenCalledWith(text, options);
+      expect(mockSummarizer.summarize).toHaveBeenCalledWith(text, {
+        ...options,
+        outputLanguage: 'en',
+      });
     });
   });
 

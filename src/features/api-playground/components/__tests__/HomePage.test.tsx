@@ -566,9 +566,9 @@ describe('HomePage Component', () => {
     });
   });
 
-  describe('Ultrathink Test Suite - Advanced Edge Cases', () => {
+  describe('Advanced Edge Cases', () => {
     describe('Complex State Management and API Switching', () => {
-      it('ultrathink: should handle rapid API switching without state corruption', async () => {
+      it('should handle rapid API switching without state corruption', async () => {
         const apiSequence = [
           'summarizer',
           'translator',
@@ -611,7 +611,7 @@ describe('HomePage Component', () => {
         }
       });
 
-      it('ultrathink: should maintain tab state consistency across API changes', async () => {
+      it('should maintain tab state consistency across API changes', async () => {
         userEvent.setup();
 
         // Start with summarizer
@@ -638,7 +638,7 @@ describe('HomePage Component', () => {
         expect(screen.getByText('Translator API')).toBeInTheDocument();
       });
 
-      it('ultrathink: should handle complex form state during API transitions', async () => {
+      it('should handle complex form state during API transitions', async () => {
         const user = userEvent.setup();
         render(<HomePage />);
 
@@ -668,7 +668,7 @@ describe('HomePage Component', () => {
     describe('Advanced User Interaction Patterns', () => {
       // REMOVED: Overly contrived test typing 10,000 characters one by one is not a realistic user scenario
 
-      it('ultrathink: should handle configuration panel interactions comprehensively', async () => {
+      it('should handle configuration panel interactions comprehensively', async () => {
         const user = userEvent.setup();
         render(<HomePage />);
 
@@ -693,7 +693,7 @@ describe('HomePage Component', () => {
     });
 
     describe('Code Generation and Dynamic Content', () => {
-      it('ultrathink: should generate contextually accurate code for different APIs', () => {
+      it('should generate contextually accurate code for different APIs', () => {
         const apiCodeTests = [
           {
             api: 'summarizer',
@@ -728,7 +728,7 @@ describe('HomePage Component', () => {
         });
       });
 
-      it('ultrathink: should handle code generation with complex configuration states', () => {
+      it('should handle code generation with complex configuration states', () => {
         render(<HomePage />);
 
         // Verify code includes proper configuration
@@ -743,7 +743,7 @@ describe('HomePage Component', () => {
         expect(codeText).toContain('summarizer.destroy()');
       });
 
-      it('ultrathink: should provide comprehensive error handling in generated code', () => {
+      it('should provide comprehensive error handling in generated code', () => {
         render(<HomePage />);
 
         const codeText = document.querySelector('pre code')?.textContent;
@@ -759,7 +759,7 @@ describe('HomePage Component', () => {
     });
 
     describe('Advanced Accessibility and Form Validation', () => {
-      it('ultrathink: should provide comprehensive ARIA support for complex forms', () => {
+      it('should provide comprehensive ARIA support for complex forms', () => {
         render(<HomePage />);
 
         // Check form labels are properly associated
@@ -774,7 +774,7 @@ describe('HomePage Component', () => {
         expect(screen.getByText(/\d+ chars/)).toBeInTheDocument();
       });
 
-      it('ultrathink: should handle form validation and error states gracefully', async () => {
+      it('should handle form validation and error states gracefully', async () => {
         const user = userEvent.setup();
         render(<HomePage />);
 
@@ -794,7 +794,7 @@ describe('HomePage Component', () => {
         expect(runButton).toBeInTheDocument();
       });
 
-      it('ultrathink: should maintain accessibility during dynamic content updates', async () => {
+      it('should maintain accessibility during dynamic content updates', async () => {
         userEvent.setup();
         render(<HomePage />);
 
@@ -823,7 +823,7 @@ describe('HomePage Component', () => {
     describe('Performance and Memory Management', () => {
       // REMOVED: Typing 100 characters one by one in a loop is not a realistic test, has race condition issues
 
-      it('ultrathink: should optimize re-renders during API switching', () => {
+      it('should optimize re-renders during API switching', () => {
         const startTime = performance.now();
 
         // Rapid API switching
@@ -849,7 +849,7 @@ describe('HomePage Component', () => {
         expect(endTime - startTime).toBeLessThan(1000); // Should handle rapid switching efficiently
       });
 
-      it('ultrathink: should prevent memory leaks in complex component lifecycle', () => {
+      it('should prevent memory leaks in complex component lifecycle', () => {
         const { unmount } = render(<HomePage />);
 
         // Component should unmount cleanly
@@ -862,7 +862,7 @@ describe('HomePage Component', () => {
     });
 
     describe('Error Recovery and Edge Cases', () => {
-      it('ultrathink: should handle corrupted or malformed store state gracefully', () => {
+      it('should handle corrupted or malformed store state gracefully', () => {
         const malformedStates = [
           { activeApi: undefined },
           { activeApi: null },
@@ -886,7 +886,7 @@ describe('HomePage Component', () => {
         });
       });
 
-      it('ultrathink: should handle component remounting with complex state', async () => {
+      it('should handle component remounting with complex state', async () => {
         const user = userEvent.setup();
         const { unmount } = render(<HomePage />);
 
@@ -902,7 +902,7 @@ describe('HomePage Component', () => {
         expect(screen.getByTestId('textarea')).toBeInTheDocument();
       });
 
-      it('ultrathink: should handle missing UI component dependencies gracefully', () => {
+      it('should handle missing UI component dependencies gracefully', () => {
         // Test with mocked UI components that might fail
         const originalError = console.error;
         console.error = vi.fn();
@@ -917,7 +917,7 @@ describe('HomePage Component', () => {
     });
 
     describe('Advanced Integration Scenarios', () => {
-      it('ultrathink: should handle concurrent user interactions across multiple UI elements', async () => {
+      it('should handle concurrent user interactions across multiple UI elements', async () => {
         const user = userEvent.setup();
         render(<HomePage />);
 
@@ -940,7 +940,7 @@ describe('HomePage Component', () => {
         expect(textarea).toBeInTheDocument();
       });
 
-      it('ultrathink: should maintain data integrity during complex form interactions', async () => {
+      it('should maintain data integrity during complex form interactions', async () => {
         const user = userEvent.setup();
         render(<HomePage />);
 
@@ -959,7 +959,7 @@ describe('HomePage Component', () => {
         expect(textarea).toHaveValue('New text content');
       });
 
-      it('ultrathink: should handle tab switching with preserved form state', async () => {
+      it('should handle tab switching with preserved form state', async () => {
         const user = userEvent.setup();
         render(<HomePage />);
 

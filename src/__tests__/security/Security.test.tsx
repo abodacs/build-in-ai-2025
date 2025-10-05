@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import App from '@/App';
+import { ThemeProvider } from '@/providers/ThemeProvider';
+import { CodeThemeProvider } from '@/providers/CodeThemeProvider';
 import DOMPurify from 'dompurify';
 
 // Mock AI service
@@ -10,12 +12,17 @@ vi.mock('@/services/aiService', () => ({
   testAiAvailability: vi.fn(),
 }));
 
+// Wrapper component with all required providers
+const AllProviders = ({ children }: { children: React.ReactNode }) => (
+  <ThemeProvider defaultTheme="light" storageKey="test-theme">
+    <CodeThemeProvider defaultCodeTheme="dark" storageKey="test-code-theme">
+      <BrowserRouter>{children}</BrowserRouter>
+    </CodeThemeProvider>
+  </ThemeProvider>
+);
+
 const renderApp = () => {
-  return render(
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>,
-  );
+  return render(<App />, { wrapper: AllProviders });
 };
 
 describe('Security Tests', () => {
