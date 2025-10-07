@@ -46,8 +46,9 @@ export interface APIModule {
 // API Modules
 // ============================================================================
 
-// Import Summarizer components lazily
+// Import API playground components
 import { SummarizerPlayground } from './summarizer';
+import { TranslatorPlayground } from './translator';
 
 /**
  * Registry of all available API modules
@@ -63,14 +64,14 @@ export const API_MODULES: Record<string, APIModule> = {
     available: true,
   },
 
-  // Placeholders for future API modules
   translator: {
     id: 'translator',
     name: 'Translator API',
-    description: 'Real-time language translation',
+    description:
+      'Real-time on-device language translation with streaming support',
     category: 'language',
-    PlaygroundComponent: () => null, // TODO: Implement
-    available: false,
+    PlaygroundComponent: TranslatorPlayground,
+    available: true,
   },
 
   writer: {

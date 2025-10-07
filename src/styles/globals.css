@@ -76,6 +76,11 @@
     line-height: 1.6;
     letter-spacing: -0.011em;
   }
+
+  /* Auto-resizing textareas */
+  textarea {
+    field-sizing: content;
+  }
 }
 
 @layer components {

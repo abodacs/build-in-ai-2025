@@ -21,6 +21,21 @@ vi.mock('lucide-react', () => ({
       Globe
     </svg>
   ),
+  Languages: ({ className, ...props }: any) => (
+    <svg data-testid="languages-icon" className={className} {...props}>
+      Languages
+    </svg>
+  ),
+  PenTool: ({ className, ...props }: any) => (
+    <svg data-testid="pen-tool-icon" className={className} {...props}>
+      PenTool
+    </svg>
+  ),
+  Sparkles: ({ className, ...props }: any) => (
+    <svg data-testid="sparkles-icon" className={className} {...props}>
+      Sparkles
+    </svg>
+  ),
   ChevronRight: ({ className, ...props }: any) => (
     <svg data-testid="chevron-right-icon" className={className} {...props}>
       ChevronRight
@@ -123,11 +138,12 @@ describe('Sidebar Component', () => {
       render(<Sidebar />);
 
       expect(screen.getByTestId('zap-icon')).toBeInTheDocument(); // Summarizer
-      expect(screen.getAllByTestId('globe-icon')).toHaveLength(2); // Translator + Language Detection
-      expect(screen.getByTestId('chevron-right-icon')).toBeInTheDocument(); // Writer
+      expect(screen.getByTestId('languages-icon')).toBeInTheDocument(); // Translator
+      expect(screen.getByTestId('pen-tool-icon')).toBeInTheDocument(); // Writer
       expect(screen.getByTestId('rotate-ccw-icon')).toBeInTheDocument(); // Rewriter
       expect(screen.getByTestId('check-circle-icon')).toBeInTheDocument(); // Proofreader
-      expect(screen.getByTestId('circle-icon')).toBeInTheDocument(); // Prompt
+      expect(screen.getByTestId('sparkles-icon')).toBeInTheDocument(); // Prompt
+      expect(screen.getByTestId('globe-icon')).toBeInTheDocument(); // Language Detection
     });
 
     it('applies correct icon styling', () => {
@@ -204,11 +220,11 @@ describe('Sidebar Component', () => {
       const user = userEvent.setup();
       render(<Sidebar />);
 
-      await user.click(screen.getByRole('button', { name: /Writer API/ }));
-      expect(mockSetActiveApi).toHaveBeenCalledWith('writer');
+      await user.click(screen.getByRole('button', { name: /Summarizer API/ }));
+      expect(mockSetActiveApi).toHaveBeenCalledWith('summarizer');
 
-      await user.click(screen.getByRole('button', { name: /Rewriter API/ }));
-      expect(mockSetActiveApi).toHaveBeenCalledWith('rewriter');
+      await user.click(screen.getByRole('button', { name: /Translator API/ }));
+      expect(mockSetActiveApi).toHaveBeenCalledWith('translator');
 
       expect(mockSetActiveApi).toHaveBeenCalledTimes(2);
     });
@@ -339,7 +355,7 @@ describe('Sidebar Component', () => {
           'py-3',
           'rounded-lg',
           'text-left',
-          'transition-colors',
+          'transition-all',
         );
       });
     });
@@ -413,8 +429,8 @@ describe('Sidebar Component', () => {
 
       // Check that specific icons appear for specific APIs
       expect(screen.getByTestId('zap-icon')).toBeInTheDocument(); // Summarizer
-      expect(screen.getByTestId('check-circle-icon')).toBeInTheDocument(); // Proofreader
-      expect(screen.getByTestId('circle-icon')).toBeInTheDocument(); // Prompt
+      expect(screen.getByTestId('languages-icon')).toBeInTheDocument(); // Translator
+      expect(screen.getByTestId('sparkles-icon')).toBeInTheDocument(); // Prompt
     });
   });
 
@@ -446,28 +462,16 @@ describe('Sidebar Component', () => {
         const user = userEvent.setup();
         render(<Sidebar />);
 
-        const apiButtons = [
-          'summarizer',
-          'translator',
-          'writer',
-          'rewriter',
-          'proofreader',
-          'prompt',
-          'language-detection',
-        ];
+        // Only test available (non-disabled) APIs
+        const availableApiButtons = ['summarizer', 'translator'];
 
-        // Rapidly click through all APIs
+        // Rapidly click through available APIs
         const buttonTextMap = {
           summarizer: 'Summarizer API',
           translator: 'Translator API',
-          writer: 'Writer API',
-          rewriter: 'Rewriter API',
-          proofreader: 'Proofreader API',
-          prompt: 'Prompt API (Multimodal)',
-          'language-detection': 'Language Detection',
         };
 
-        for (const apiId of apiButtons) {
+        for (const apiId of availableApiButtons) {
           // Get all buttons and find the exact one by text content
           const buttons = screen.getAllByRole('button');
           const button = buttons.find(
@@ -480,7 +484,7 @@ describe('Sidebar Component', () => {
           expect(mockSetActiveApi).toHaveBeenCalledWith(apiId);
         }
 
-        expect(mockSetActiveApi).toHaveBeenCalledTimes(7);
+        expect(mockSetActiveApi).toHaveBeenCalledTimes(2);
       });
 
       it('should handle invalid activeApi states gracefully', () => {

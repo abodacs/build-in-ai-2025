@@ -20,7 +20,6 @@ import {
   Scale,
   BookOpen,
   Info,
-  Code,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -39,6 +38,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { ViewCodeButton } from '@/components/shared/ViewCodeButton';
 import type { SummarizerCreateOptions } from '../types/summarizer.types';
 
 // ============================================================================
@@ -119,30 +119,7 @@ export function SummarizerConfig({
             </CollapsibleTrigger>
 
             {/* View Code Button */}
-            {onViewCode && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onViewCode();
-                      }}
-                      className="h-8 text-xs text-slate-600 hover:text-slate-700 hover:bg-slate-50"
-                    >
-                      <Code className="w-4 h-4 mr-1.5" />
-                      View Code
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" align="end">
-                    <p className="text-xs">View implementation code</p>
-                    <p className="text-[10px] text-slate-400">⌘K</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
+            {onViewCode && <ViewCodeButton onClick={onViewCode} />}
           </div>
         </CardHeader>
 
