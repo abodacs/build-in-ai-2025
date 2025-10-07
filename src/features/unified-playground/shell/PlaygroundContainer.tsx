@@ -251,6 +251,7 @@ export function PlaygroundContainer({
     return () => {
       stopMeasure();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only measure on mount/unmount
 
   // ============================================================================

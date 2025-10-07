@@ -77,10 +77,13 @@ export function useModelDownload(): UseModelDownloadReturn {
       abortControllerRef.current = new AbortController();
 
       // Listen for download progress
-      monitor.addEventListener('downloadprogress', ((
-        event: CustomEvent<{ loaded: number; total: number }>,
-      ) => {
-        const { loaded, total } = event.detail || (event as any);
+      monitor.addEventListener('downloadprogress', ((event: Event) => {
+        const customEvent = event as
+          | CustomEvent<{ loaded: number; total: number }>
+          | { loaded?: number; total?: number };
+        const detail =
+          'detail' in customEvent ? customEvent.detail : customEvent;
+        const { loaded, total } = detail || {};
 
         if (loaded && total) {
           const progress = Math.round((loaded / total) * 100);
@@ -93,7 +96,7 @@ export function useModelDownload(): UseModelDownloadReturn {
           });
           setDownloadError(null);
         }
-      }) as any);
+      }) as EventListener);
 
       // Listen for download complete
       monitor.addEventListener('downloadcomplete', (() => {
@@ -101,15 +104,16 @@ export function useModelDownload(): UseModelDownloadReturn {
         setDownloadProgress((prev) =>
           prev ? { ...prev, progress: 100 } : null,
         );
-      }) as any);
+      }) as EventListener);
 
       // Listen for download error
-      monitor.addEventListener('downloaderror', ((
-        event: CustomEvent<{ message: string }>,
-      ) => {
+      monitor.addEventListener('downloaderror', ((event: Event) => {
+        const customEvent = event as CustomEvent<{ message: string }>;
         setIsDownloading(false);
-        setDownloadError(event.detail?.message || 'Model download failed');
-      }) as any);
+        setDownloadError(
+          customEvent.detail?.message || 'Model download failed',
+        );
+      }) as EventListener);
     };
   }, []);
 

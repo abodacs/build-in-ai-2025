@@ -95,16 +95,52 @@ async function checkAICapability(apiName: string): Promise<AICapability> {
       }
 
       case 'translator': {
-        const translatorAvailable =
-          typeof (globalThis as TODO_TYPE).translator !== 'undefined';
-        return {
-          name: apiName,
-          status: translatorAvailable ? 'available' : 'unavailable',
-          lastChecked: Date.now(),
-          error: translatorAvailable
-            ? undefined
-            : 'Translator API not available',
-        };
+        // Check using Chrome AI Translator API (capital T, as per spec)
+        const translatorAvailable = 'Translator' in window;
+
+        if (!translatorAvailable) {
+          return {
+            name: apiName,
+            status: 'unavailable',
+            lastChecked: Date.now(),
+            error: 'Translator API not available in this browser',
+          };
+        }
+
+        // Check availability status (matching Summarizer pattern)
+        try {
+          // Quick check with common language pair (en-es)
+          const status = (await (window as TODO_TYPE).Translator.availability({
+            sourceLanguage: 'en',
+            targetLanguage: 'es',
+          })) as 'readily' | 'after-download' | 'no';
+
+          const statusMap: Record<typeof status, 'available' | 'unavailable'> =
+            {
+              readily: 'available',
+              'after-download': 'unavailable',
+              no: 'unavailable',
+            };
+
+          return {
+            name: apiName,
+            status: statusMap[status],
+            lastChecked: Date.now(),
+            error:
+              status === 'readily'
+                ? undefined
+                : status === 'after-download'
+                  ? 'Model download required'
+                  : 'Translator API not available',
+          };
+        } catch {
+          return {
+            name: apiName,
+            status: 'unavailable',
+            lastChecked: Date.now(),
+            error: 'Failed to check Translator availability',
+          };
+        }
       }
 
       case 'writer': {

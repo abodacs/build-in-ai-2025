@@ -65,10 +65,12 @@ export class ChromeAICompatibility {
 
     switch (version) {
       case 'self':
-        return (self as any).Summarizer;
+        return 'Summarizer' in self ? (self.Summarizer as SummarizerAPI) : null;
 
       case 'window':
-        return (window as any).Summarizer;
+        return typeof window !== 'undefined' && 'Summarizer' in window
+          ? (window.Summarizer as SummarizerAPI)
+          : null;
 
       case 'none':
       default:
@@ -114,11 +116,11 @@ export class ChromeAICompatibility {
   /**
    * Normalize availability responses from different API versions
    *
-   * @param {any} rawAvailability - Raw availability response
+   * @param {unknown} rawAvailability - Raw availability response
    * @returns {SummarizerAvailability} Normalized availability
    */
   private static normalizeAvailability(
-    rawAvailability: any,
+    rawAvailability: unknown,
   ): SummarizerAvailability {
     // Official API returns: 'no', 'after-download', 'readily'
     if (

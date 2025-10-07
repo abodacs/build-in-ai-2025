@@ -105,7 +105,8 @@ export class SummarizerManager {
       if (
         typeof navigator !== 'undefined' &&
         'userActivation' in navigator &&
-        !(navigator as any).userActivation?.isActive
+        !(navigator as Navigator & { userActivation?: { isActive: boolean } })
+          .userActivation?.isActive
       ) {
         console.warn(
           '[SummarizerManager] User activation required for model creation',
@@ -182,7 +183,8 @@ export class SummarizerManager {
       if (
         typeof navigator !== 'undefined' &&
         'userActivation' in navigator &&
-        !(navigator as any).userActivation?.isActive
+        !(navigator as Navigator & { userActivation?: { isActive: boolean } })
+          .userActivation?.isActive
       ) {
         console.warn(
           '[SummarizerManager] User activation required for model download',
@@ -201,12 +203,15 @@ export class SummarizerManager {
           ...normalizedOptions,
           monitor: (m: EventTarget) => {
             // Forward download progress
-            m.addEventListener('downloadprogress', (e: any) => {
+            m.addEventListener('downloadprogress', (e: Event) => {
+              const customEvent = e as { loaded?: number; total?: number };
               const progress: DownloadProgress = {
-                loaded: e.loaded || 0,
-                total: e.total || 22 * 1024 * 1024,
+                loaded: customEvent.loaded || 0,
+                total: customEvent.total || 22 * 1024 * 1024,
                 percentage:
-                  ((e.loaded || 0) / (e.total || 22 * 1024 * 1024)) * 100,
+                  ((customEvent.loaded || 0) /
+                    (customEvent.total || 22 * 1024 * 1024)) *
+                  100,
               };
               onProgress(progress);
             });
@@ -238,7 +243,7 @@ export class SummarizerManager {
             });
 
             // Handle download error
-            m.addEventListener('downloaderror', (e: any) => {
+            m.addEventListener('downloaderror', (e: Event) => {
               reject(ErrorHandler.handleDownloadError(e));
             });
           },
@@ -357,10 +362,14 @@ export class SummarizerManager {
       let lastChunkTime = startTime;
 
       // Perform streaming summarization
-      const stream = (summarizer as any).summarizeStreaming(
-        text,
-        normalizedSummarizeOptions,
-      );
+      const stream = (
+        summarizer as {
+          summarizeStreaming: (
+            text: string,
+            options: SummarizeOptions,
+          ) => ReadableStream<string>;
+        }
+      ).summarizeStreaming(text, normalizedSummarizeOptions);
 
       // Wrap stream to track latency
       const metricsRef = this.metrics; // Capture metrics ref for closure

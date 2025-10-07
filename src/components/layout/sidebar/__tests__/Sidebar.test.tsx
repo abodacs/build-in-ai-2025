@@ -1,4 +1,10 @@
-import { render, screen, within, cleanup } from '@testing-library/react';
+import {
+  render,
+  screen,
+  within,
+  cleanup,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Sidebar } from '../Sidebar';
@@ -19,6 +25,21 @@ vi.mock('lucide-react', () => ({
   Globe: ({ className, ...props }: any) => (
     <svg data-testid="globe-icon" className={className} {...props}>
       Globe
+    </svg>
+  ),
+  Languages: ({ className, ...props }: any) => (
+    <svg data-testid="languages-icon" className={className} {...props}>
+      Languages
+    </svg>
+  ),
+  PenTool: ({ className, ...props }: any) => (
+    <svg data-testid="pen-tool-icon" className={className} {...props}>
+      PenTool
+    </svg>
+  ),
+  Sparkles: ({ className, ...props }: any) => (
+    <svg data-testid="sparkles-icon" className={className} {...props}>
+      Sparkles
     </svg>
   ),
   ChevronRight: ({ className, ...props }: any) => (
@@ -123,11 +144,12 @@ describe('Sidebar Component', () => {
       render(<Sidebar />);
 
       expect(screen.getByTestId('zap-icon')).toBeInTheDocument(); // Summarizer
-      expect(screen.getAllByTestId('globe-icon')).toHaveLength(2); // Translator + Language Detection
-      expect(screen.getByTestId('chevron-right-icon')).toBeInTheDocument(); // Writer
+      expect(screen.getByTestId('languages-icon')).toBeInTheDocument(); // Translator
+      expect(screen.getByTestId('pen-tool-icon')).toBeInTheDocument(); // Writer
       expect(screen.getByTestId('rotate-ccw-icon')).toBeInTheDocument(); // Rewriter
       expect(screen.getByTestId('check-circle-icon')).toBeInTheDocument(); // Proofreader
-      expect(screen.getByTestId('circle-icon')).toBeInTheDocument(); // Prompt
+      expect(screen.getByTestId('sparkles-icon')).toBeInTheDocument(); // Prompt
+      expect(screen.getByTestId('globe-icon')).toBeInTheDocument(); // Language Detection
     });
 
     it('applies correct icon styling', () => {
@@ -204,11 +226,11 @@ describe('Sidebar Component', () => {
       const user = userEvent.setup();
       render(<Sidebar />);
 
-      await user.click(screen.getByRole('button', { name: /Writer API/ }));
-      expect(mockSetActiveApi).toHaveBeenCalledWith('writer');
+      await user.click(screen.getByRole('button', { name: /Summarizer API/ }));
+      expect(mockSetActiveApi).toHaveBeenCalledWith('summarizer');
 
-      await user.click(screen.getByRole('button', { name: /Rewriter API/ }));
-      expect(mockSetActiveApi).toHaveBeenCalledWith('rewriter');
+      await user.click(screen.getByRole('button', { name: /Translator API/ }));
+      expect(mockSetActiveApi).toHaveBeenCalledWith('translator');
 
       expect(mockSetActiveApi).toHaveBeenCalledTimes(2);
     });
@@ -339,7 +361,7 @@ describe('Sidebar Component', () => {
           'py-3',
           'rounded-lg',
           'text-left',
-          'transition-colors',
+          'transition-all',
         );
       });
     });
@@ -413,8 +435,8 @@ describe('Sidebar Component', () => {
 
       // Check that specific icons appear for specific APIs
       expect(screen.getByTestId('zap-icon')).toBeInTheDocument(); // Summarizer
-      expect(screen.getByTestId('check-circle-icon')).toBeInTheDocument(); // Proofreader
-      expect(screen.getByTestId('circle-icon')).toBeInTheDocument(); // Prompt
+      expect(screen.getByTestId('languages-icon')).toBeInTheDocument(); // Translator
+      expect(screen.getByTestId('sparkles-icon')).toBeInTheDocument(); // Prompt
     });
   });
 
@@ -446,28 +468,16 @@ describe('Sidebar Component', () => {
         const user = userEvent.setup();
         render(<Sidebar />);
 
-        const apiButtons = [
-          'summarizer',
-          'translator',
-          'writer',
-          'rewriter',
-          'proofreader',
-          'prompt',
-          'language-detection',
-        ];
+        // Only test available (non-disabled) APIs
+        const availableApiButtons = ['summarizer', 'translator'];
 
-        // Rapidly click through all APIs
+        // Rapidly click through available APIs
         const buttonTextMap = {
           summarizer: 'Summarizer API',
           translator: 'Translator API',
-          writer: 'Writer API',
-          rewriter: 'Rewriter API',
-          proofreader: 'Proofreader API',
-          prompt: 'Prompt API (Multimodal)',
-          'language-detection': 'Language Detection',
         };
 
-        for (const apiId of apiButtons) {
+        for (const apiId of availableApiButtons) {
           // Get all buttons and find the exact one by text content
           const buttons = screen.getAllByRole('button');
           const button = buttons.find(
@@ -480,7 +490,7 @@ describe('Sidebar Component', () => {
           expect(mockSetActiveApi).toHaveBeenCalledWith(apiId);
         }
 
-        expect(mockSetActiveApi).toHaveBeenCalledTimes(7);
+        expect(mockSetActiveApi).toHaveBeenCalledTimes(2);
       });
 
       it('should handle invalid activeApi states gracefully', () => {
@@ -575,19 +585,24 @@ describe('Sidebar Component', () => {
         render(<Sidebar />);
 
         const buttons = screen.getAllByRole('button');
+        // Only test enabled buttons (disabled buttons are not focusable)
+        const enabledButtons = buttons.filter((btn) => !btn.disabled);
 
-        // Test Tab navigation through all buttons
-        for (let i = 0; i < buttons.length; i++) {
+        // Test Tab navigation through enabled buttons
+        for (let i = 0; i < enabledButtons.length; i++) {
           await user.tab();
-          expect(buttons[i]).toHaveFocus();
+          // Wait for focus to settle
+          await waitFor(() => {
+            expect(enabledButtons[i]).toHaveFocus();
+          });
         }
 
-        // Test Enter and Space activation
+        // Test Enter activation on last enabled button
         await user.keyboard('{Enter}');
-        expect(mockSetActiveApi).toHaveBeenCalledWith('language-detection');
+        expect(mockSetActiveApi).toHaveBeenCalled();
 
-        // Focus first button and test Space
-        buttons[0].focus();
+        // Focus first enabled button and test Space
+        enabledButtons[0].focus();
         await user.keyboard(' ');
         expect(mockSetActiveApi).toHaveBeenCalledWith('summarizer');
       });
@@ -596,22 +611,32 @@ describe('Sidebar Component', () => {
         const user = userEvent.setup();
         render(<Sidebar />);
 
-        screen.getByRole('button', {
+        const summarizerButton = screen.getByRole('button', {
+          name: /Summarizer API/,
+        });
+        const translatorButton = screen.getByRole('button', {
           name: /Translator API/,
         });
-        const writerButton = screen.getByRole('button', { name: /Writer API/ });
 
         // Start keyboard navigation
         await user.tab();
-        await user.tab(); // Focus translator
+        // Verify first button (Summarizer) gets focus
+        await waitFor(() => expect(summarizerButton).toHaveFocus());
 
         // Interrupt with mouse click on different button
-        await user.click(writerButton);
-        expect(mockSetActiveApi).toHaveBeenCalledWith('writer');
+        mockSetActiveApi.mockClear();
+        await user.click(translatorButton);
+        expect(mockSetActiveApi).toHaveBeenCalledWith('translator');
+
+        // After click, translator button should be focused
+        await waitFor(() => {
+          expect(translatorButton).toHaveFocus();
+        });
 
         // Continue keyboard navigation
+        mockSetActiveApi.mockClear(); // Clear previous calls
         await user.keyboard('{Enter}');
-        expect(mockSetActiveApi).toHaveBeenCalledWith('writer'); // Should activate focused element
+        expect(mockSetActiveApi).toHaveBeenCalledWith('translator'); // Should activate focused element
       });
 
       it('should handle double-click and rapid click events', async () => {
@@ -667,11 +692,11 @@ describe('Sidebar Component', () => {
 
         const expectedIconMapping = [
           { api: 'Summarizer API', icon: 'zap-icon' },
-          { api: 'Translator API', icon: 'globe-icon' },
-          { api: 'Writer API', icon: 'chevron-right-icon' },
+          { api: 'Translator API', icon: 'languages-icon' }, // Fixed: uses Languages icon
+          { api: 'Writer API', icon: 'pen-tool-icon' }, // Fixed: uses PenTool icon
           { api: 'Rewriter API', icon: 'rotate-ccw-icon' },
           { api: 'Proofreader API', icon: 'check-circle-icon' },
-          { api: 'Prompt API (Multimodal)', icon: 'circle-icon' },
+          { api: 'Prompt API (Multimodal)', icon: 'sparkles-icon' }, // Fixed: uses Sparkles icon
           { api: 'Language Detection', icon: 'globe-icon' },
         ];
 
@@ -830,11 +855,13 @@ describe('Sidebar Component', () => {
         render(<Sidebar />);
 
         const buttons = screen.getAllByRole('button');
+        // Filter to only enabled buttons (not disabled)
+        const enabledButtons = buttons.filter((btn) => !btn.disabled);
         const startTime = performance.now();
 
         // Perform rapid interactions (reduced from 50 to 20 for faster tests)
         for (let i = 0; i < 20; i++) {
-          const randomButton = buttons[i % buttons.length];
+          const randomButton = enabledButtons[i % enabledButtons.length];
           await user.click(randomButton);
         }
 
@@ -912,15 +939,20 @@ describe('Sidebar Component', () => {
         // Simulate concurrent updates
         const promises = [];
         const buttons = screen.getAllByRole('button');
+        // Filter to only enabled buttons to ensure all clicks trigger setActiveApi
+        const enabledButtons = buttons.filter((btn) => !btn.disabled);
 
-        for (let i = 0; i < 3; i++) {
-          promises.push(user.click(buttons[i]));
+        // Click multiple enabled buttons concurrently
+        for (let i = 0; i < Math.min(3, enabledButtons.length); i++) {
+          promises.push(user.click(enabledButtons[i]));
         }
 
         await Promise.all(promises);
 
         // Should handle all clicks without errors
-        expect(mockSetActiveApi).toHaveBeenCalledTimes(3);
+        expect(mockSetActiveApi).toHaveBeenCalledTimes(
+          Math.min(3, enabledButtons.length),
+        );
       });
     });
   });

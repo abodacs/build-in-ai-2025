@@ -13,7 +13,7 @@
 // The application uses ONLY local Chrome AI models - no remote APIs
 
 export class URLExtractor {
-  constructor(_manager?: any) {
+  constructor(_manager?: unknown) {
     console.warn(
       '[URLExtractor] Service disabled - CORS restrictions prevent URL extraction',
     );
@@ -28,7 +28,7 @@ export class URLExtractor {
     );
   }
 
-  async extractAndSummarize(_url: string, _config?: any): Promise<never> {
+  async extractAndSummarize(_url: string, _config?: unknown): Promise<never> {
     throw new Error(
       'URL extraction is disabled due to CORS restrictions. Use local text input only.',
     );

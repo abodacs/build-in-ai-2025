@@ -50,15 +50,15 @@ export class ChromeAIService {
    * Get the Summarizer API instance
    * Returns the appropriate API based on what's available
    *
-   * @returns {any | null} Summarizer API or null if not available
+   * @returns {typeof Summarizer | null} Summarizer API or null if not available
    */
-  static getSummarizerAPI(): any | null {
+  static getSummarizerAPI(): typeof Summarizer | undefined | null {
     if ('Summarizer' in self) {
-      return (self as any).Summarizer;
+      return self.Summarizer;
     }
 
     if (typeof window !== 'undefined' && 'Summarizer' in window) {
-      return (window as any).Summarizer;
+      return window.Summarizer;
     }
 
     return null;
@@ -110,19 +110,22 @@ export class ChromeAIService {
       // Normalize different API responses
       let availability: SummarizerAvailability;
 
+      // Convert to string for comparison (handles both API variations)
+      const availabilityStr = String(rawAvailability);
+
       // Playground API might return 'available' or 'downloadable'
-      if (rawAvailability === 'available') {
+      if (availabilityStr === 'available') {
         availability = 'readily';
-      } else if (rawAvailability === 'downloadable') {
+      } else if (availabilityStr === 'downloadable') {
         availability = 'after-download';
-      } else if (rawAvailability === 'downloading') {
+      } else if (availabilityStr === 'downloading') {
         // Model is currently downloading
         availability = 'after-download';
-      } else if (rawAvailability === 'not-available') {
+      } else if (availabilityStr === 'not-available') {
         availability = 'no';
       } else {
         // Official API: 'no', 'after-download', 'readily'
-        availability = rawAvailability as SummarizerAvailability;
+        availability = rawAvailability;
       }
 
       return {
@@ -194,7 +197,8 @@ export class ChromeAIService {
     if (
       typeof navigator !== 'undefined' &&
       'userActivation' in navigator &&
-      !(navigator as any).userActivation?.isActive
+      !(navigator as Navigator & { userActivation?: { isActive: boolean } })
+        .userActivation?.isActive
     ) {
       console.warn(
         '[ChromeAIService] User activation required for model download',
@@ -213,22 +217,23 @@ export class ChromeAIService {
       // Create summarizer which triggers download if needed
       // Include default options to ensure create() works properly
       const options = {
-        type: 'tldr',
-        format: 'plain-text',
-        length: 'medium',
+        type: 'tldr' as const,
+        format: 'plain-text' as const,
+        length: 'medium' as const,
         sharedContext: '',
-        outputLanguage: 'en',
+        outputLanguage: 'en' as const,
         monitor(m: EventTarget) {
           console.log('[ChromeAIService] Monitor callback invoked');
           // Download progress event
-          m.addEventListener('downloadprogress', (e: any) => {
+          m.addEventListener('downloadprogress', (e: Event) => {
+            const customEvent = e as { loaded?: number; total?: number };
             console.log('[ChromeAIService] Download progress:', {
-              loaded: e.loaded,
-              total: e.total,
+              loaded: customEvent.loaded,
+              total: customEvent.total,
             });
 
-            const loaded = e.loaded || 0;
-            const total = e.total || 22 * 1024 * 1024; // Default 22MB
+            const loaded = customEvent.loaded || 0;
+            const total = customEvent.total || 22 * 1024 * 1024; // Default 22MB
 
             // Calculate download speed
             const elapsed =
@@ -278,7 +283,7 @@ export class ChromeAIService {
 
       // Race between create and timeout
       Promise.race([SummarizerAPI.create(options), timeoutPromise])
-        .then((summarizer: any) => {
+        .then((summarizer: unknown) => {
           console.log('[ChromeAIService] Summarizer created successfully');
           console.log(
             '[ChromeAIService] Final downloaded bytes:',
@@ -296,27 +301,35 @@ export class ChromeAIService {
             });
 
             // Clean up the summarizer instance
-            if (summarizer && 'destroy' in summarizer) {
+            if (
+              summarizer &&
+              typeof summarizer === 'object' &&
+              'destroy' in summarizer
+            ) {
               console.log('[ChromeAIService] Destroying summarizer instance');
-              summarizer.destroy();
+              (summarizer as { destroy: () => void }).destroy();
             }
 
             console.log('[ChromeAIService] Resolving promise');
             resolve();
           }, 100);
         })
-        .catch((error: any) => {
+        .catch((error: unknown) => {
           console.error('[ChromeAIService] Download failed:', error);
-          console.error('[ChromeAIService] Error details:', {
-            name: error.name,
-            message: error.message,
-            stack: error.stack,
-          });
-          reject(
-            new Error(
-              `Model download failed: ${error.message || 'Unknown error'}`,
-            ),
-          );
+          if (error instanceof Error) {
+            console.error('[ChromeAIService] Error details:', {
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+            });
+            reject(
+              new Error(
+                `Model download failed: ${error.message || 'Unknown error'}`,
+              ),
+            );
+          } else {
+            reject(new Error('Model download failed: Unknown error'));
+          }
         });
     });
   }
