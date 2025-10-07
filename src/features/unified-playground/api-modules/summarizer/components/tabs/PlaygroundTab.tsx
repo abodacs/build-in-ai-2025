@@ -71,14 +71,14 @@ export interface PlaygroundTabProps {
   /** Summarize function */
   summarize: (
     text: string,
-    options?: any,
+    options?: Record<string, unknown>,
     config?: SummarizerCreateOptions,
   ) => Promise<string>;
 
   /** Summarize streaming function */
   summarizeStreaming: (
     text: string,
-    options?: any,
+    options?: Record<string, unknown>,
     config?: SummarizerCreateOptions,
   ) => Promise<ReadableStream<string>>;
 
@@ -188,9 +188,7 @@ export function PlaygroundTab({
     try {
       // Check if model needs to be downloaded first
       if (availability === 'after-download' && !isDownloading) {
-        console.log(
-          '[PlaygroundTab] Model download required, triggering download...',
-        );
+        // Model download required, triggering download
         setPendingSummarization(true); // Mark that we want to summarize after download
         await startDownload();
         return; // Exit - the useEffect will handle running summarization after download
@@ -209,16 +207,9 @@ export function PlaygroundTab({
         outputLanguage: config.outputLanguage || 'en',
       };
 
-      console.log(
-        '[PlaygroundTab] Starting summarization with config:',
-        finalConfig,
-      );
-
       // Use streaming or regular mode based on toggle
       if (streamingMode) {
         await summarizeStreaming(inputText, {}, finalConfig);
-        // Stream is automatically consumed by the hook
-        console.log('[PlaygroundTab] Streaming summarization started');
       } else {
         await summarize(inputText, {}, finalConfig);
       }
@@ -240,9 +231,7 @@ export function PlaygroundTab({
       pendingSummarization &&
       inputText.length >= 100
     ) {
-      console.log(
-        '[PlaygroundTab] Download complete, auto-running summarization...',
-      );
+      // Download complete, auto-running summarization
       handleSummarize();
     }
 
@@ -275,21 +264,9 @@ export function PlaygroundTab({
   /**
    * Can summarize check - allow if model ready OR needs download (lazy download)
    */
-  console.log({
-    isReady,
-    availability,
-    inputTextLength: inputText.length,
-    isLoading,
-    isDownloading,
-    canSummarize:
-      (isReady || availability === 'after-download') &&
-      inputText.length >= 100 &&
-      !isLoading &&
-      !isDownloading,
-  });
   const canSummarize =
     (isReady || availability === 'after-download') &&
-    inputText.length >= 10 && // Lowered for testing (normally 100)
+    inputText.length >= 100 &&
     !isLoading &&
     !isDownloading;
 

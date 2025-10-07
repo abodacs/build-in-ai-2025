@@ -60,7 +60,7 @@ export class TranslatorManager {
       }
 
       // Create translator with download monitoring
-      const translator = await window.Translator.create({
+      const translator = await window.Translator!.create({
         sourceLanguage: options.sourceLanguage,
         targetLanguage: options.targetLanguage,
         signal: options.signal,
@@ -80,7 +80,7 @@ export class TranslatorManager {
             if (callback) {
               callback(progress, e.loaded, e.total);
             }
-          }) as EventListener);
+          }) as unknown as EventListener);
         },
       });
 
@@ -131,7 +131,7 @@ export class TranslatorManager {
       }
 
       // Check language pair availability
-      const availability = await window.Translator.availability({
+      const availability = await window.Translator!.availability({
         sourceLanguage,
         targetLanguage,
       });

@@ -141,13 +141,17 @@ export function useTranslatorAvailability(
         }
 
         // Check language pair availability
-        const status = await window.Translator.availability({
+        const status = await window.Translator?.availability({
           sourceLanguage,
           targetLanguage,
         });
 
-        setAvailability(status);
-        setCachedAvailability(sourceLanguage, targetLanguage, status); // Cache the result
+        if (status) {
+          setAvailability(status);
+          setCachedAvailability(sourceLanguage, targetLanguage, status); // Cache the result
+        } else {
+          setAvailability('no');
+        }
         setIsChecking(false);
         setRetryCount(0); // Reset retry count on success
         clearTimeout(timeoutId);

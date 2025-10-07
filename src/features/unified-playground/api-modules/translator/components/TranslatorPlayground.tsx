@@ -150,7 +150,7 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
         setTranslatedText(translation);
       }
     }
-  }, [inputText, context, advancedSettings, translate, translateStreaming]);
+  }, [inputText, advancedSettings, translate, translateStreaming]);
 
   /**
    * Handle reset

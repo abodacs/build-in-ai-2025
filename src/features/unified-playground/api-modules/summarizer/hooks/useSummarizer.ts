@@ -36,23 +36,24 @@ async function withRetry<T>(
   maxAttempts: number = 3,
   delayMs: number = 1000,
 ): Promise<T> {
-  let lastError: any;
+  let lastError: unknown;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       return await fn();
-    } catch (error: any) {
+    } catch (error: unknown) {
       lastError = error;
 
       // Don't retry on user abort
-      if (error?.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         throw error;
       }
 
       // Don't retry on validation errors
       if (
-        error?.message?.includes('Invalid') ||
-        error?.message?.includes('validation')
+        error instanceof Error &&
+        (error.message.includes('Invalid') ||
+          error.message.includes('validation'))
       ) {
         throw error;
       }
@@ -355,7 +356,7 @@ export function useSummarizer(
         abortControllerRef.current = null;
       }
     },
-    [performanceTracker],
+    [performanceTracker, chunkingStrategy],
   );
 
   /**
@@ -535,6 +536,9 @@ export function useSummarizer(
    * Cleanup on unmount
    */
   useEffect(() => {
+    // Capture ref value to avoid stale closure
+    const manager = managerRef.current;
+
     return () => {
       if (autoCleanup) {
         // Abort any ongoing operation
@@ -543,7 +547,9 @@ export function useSummarizer(
         }
 
         // Cleanup manager
-        managerRef.current.cleanup();
+        if (manager) {
+          manager.cleanup();
+        }
       }
     };
   }, [autoCleanup]);

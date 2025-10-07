@@ -67,9 +67,12 @@ export function useTranslator(
       signal: abortController.signal,
       monitor: onDownloadProgress
         ? (m) => {
-            m.addEventListener('downloadprogress', ((e: any) => {
-              const progress = (e.loaded / e.total) * 100;
-              onDownloadProgress(progress, e.loaded, e.total);
+            m.addEventListener('downloadprogress', ((e: Event) => {
+              const customEvent = e as { loaded?: number; total?: number };
+              const loaded = customEvent.loaded || 0;
+              const total = customEvent.total || 1;
+              const progress = (loaded / total) * 100;
+              onDownloadProgress(progress, loaded, total);
             }) as EventListener);
           }
         : undefined,
@@ -259,12 +262,15 @@ export function useTranslator(
    * Cleanup on unmount or language change
    */
   useEffect(() => {
+    // Capture ref value to avoid stale closure
+    const manager = managerRef.current;
+
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-      if (translatorRef.current) {
-        managerRef.current.destroy(sourceLanguage, targetLanguage);
+      if (translatorRef.current && manager) {
+        manager.destroy(sourceLanguage, targetLanguage);
         translatorRef.current = null;
       }
     };

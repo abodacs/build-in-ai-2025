@@ -19,6 +19,7 @@ export default [
         ...globals.browser,
         ...globals.node,
         React: 'readonly',
+        EventListener: 'readonly',
       },
       parser: tsparser,
       parserOptions: {
@@ -61,7 +62,7 @@ export default [
       '@typescript-eslint/no-explicit-any': 'warn',
       'prefer-const': 'error',
       'no-var': 'error',
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': 'off', // Disabled for development - Chrome AI debugging
       'prettier/prettier': [
         'error',
         {
@@ -82,10 +83,21 @@ export default [
     },
   },
   {
-    files: ['**/*.test.{ts,tsx}'],
+    files: ['**/*.test.{ts,tsx}', '**/__tests__/**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        vi: 'readonly',
+      },
+    },
     rules: {
       '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
+      'no-undef': 'off',
     },
   },
   {
@@ -108,6 +120,10 @@ export default [
       '**/services/**/*.{ts,tsx}',
       '**/hooks/**/*.{ts,tsx}',
       '**/components/ui/**/*.{ts,tsx}',
+      '**/components/shared/ViewCodeButton.tsx',
+      '**/summarizer/components/QuickSamplesCard.tsx',
+      '**/providers/CodeThemeProvider.tsx',
+      '**/providers/ThemeProvider.tsx',
     ],
     rules: {
       'react-refresh/only-export-components': 'off',

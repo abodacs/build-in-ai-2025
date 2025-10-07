@@ -615,7 +615,7 @@ export const DEFAULT_ADVANCED_SETTINGS: AdvancedSettings = {
 
 declare global {
   interface Window {
-    Translator: {
+    Translator?: {
       create(options: TranslatorCreateOptions): Promise<Translator>;
       availability(
         options: TranslatorAvailability,

@@ -14,6 +14,14 @@ import type { ComponentType } from 'react';
 // ============================================================================
 
 /**
+ * Props for API playground components
+ */
+export interface PlaygroundComponentProps {
+  /** Optional className for styling */
+  className?: string;
+}
+
+/**
  * API Module Configuration
  */
 export interface APIModule {
@@ -30,13 +38,13 @@ export interface APIModule {
   category: 'text' | 'language' | 'multimodal';
 
   /** Main playground component */
-  PlaygroundComponent: ComponentType<any>;
+  PlaygroundComponent: ComponentType<PlaygroundComponentProps>;
 
   /** Advanced features component */
-  AdvancedComponent?: ComponentType<any>;
+  AdvancedComponent?: ComponentType<PlaygroundComponentProps>;
 
   /** Code examples component */
-  CodeComponent?: ComponentType<any>;
+  CodeComponent?: ComponentType<PlaygroundComponentProps>;
 
   /** Is currently available/implemented */
   available: boolean;
