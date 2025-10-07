@@ -44,13 +44,22 @@ describe('LanguagePairCache', () => {
     });
 
     it('evicts LRU when cache is full (>10 items)', () => {
-      // Arrange: Fill cache with 10 items
+      // Mock Date.now to control timing
+      let currentTime = 1000;
+      vi.spyOn(Date, 'now').mockImplementation(() => currentTime);
+
+      // Arrange: Fill cache with 10 items with distinct timestamps
       for (let i = 0; i < 10; i++) {
+        currentTime += 10; // Increment time for each entry
         cache.set('en', `lang${i}`, createMockTranslator());
       }
-      const firstTranslator = cache.get('en', 'lang0'); // Access first to update LRU
 
-      // Act: Add 11th item, should evict least recently used
+      // Access lang0 to make it most recently used
+      currentTime += 100;
+      const firstTranslator = cache.get('en', 'lang0');
+
+      // Act: Add 11th item, should evict least recently used (lang1)
+      currentTime += 10;
       const newTranslator = createMockTranslator();
       cache.set('en', 'new', newTranslator);
 
@@ -58,6 +67,9 @@ describe('LanguagePairCache', () => {
       expect(cache.get('en', 'new')).toBe(newTranslator);
       expect(cache.get('en', 'lang0')).toBe(firstTranslator); // Still there because we accessed it
       expect(cache.get('en', 'lang1')).toBeNull(); // Should be evicted (oldest unused)
+
+      // Restore Date.now
+      vi.restoreAllMocks();
     });
 
     it('clears all cached translators', () => {

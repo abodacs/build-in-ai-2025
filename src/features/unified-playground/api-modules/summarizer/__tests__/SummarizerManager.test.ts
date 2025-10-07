@@ -452,7 +452,8 @@ describe('SummarizerManager', () => {
 
       // Assert
       const metrics = manager.getMetrics();
-      expect(metrics.modelInitTime).toBeGreaterThanOrEqual(50);
+      // Allow for timing variance (45-55ms range for 50ms setTimeout)
+      expect(metrics.modelInitTime).toBeGreaterThan(45);
     });
 
     it('should calculate average summary time', async () => {

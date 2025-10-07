@@ -63,7 +63,8 @@ export default defineConfig({
     ],
 
     // Increase performance by reusing test context
-    isolate: false,
+    // NOTE: Set to true to prevent test interference with coverage
+    isolate: true,
   },
   resolve: {
     alias: {
