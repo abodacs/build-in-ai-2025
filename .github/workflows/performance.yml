@@ -87,15 +87,21 @@ jobs:
       - name: Check bundle size limits
         run: |
           MAX_SIZE_KB=500
+
+          # Calculate Brotli compressed size (what actually gets served)
+          BROTLI_SIZE_KB=$(find dist -name "*.br" -exec du -k {} \; | awk '{sum+=$1} END {print sum}')
+
+          # Also show uncompressed size for reference
           DIST_SIZE_KB=$(du -sk dist | cut -f1)
 
-          echo "Bundle size: ${DIST_SIZE_KB}KB (limit: ${MAX_SIZE_KB}KB)"
+          echo "Bundle size (uncompressed): ${DIST_SIZE_KB}KB"
+          echo "Bundle size (Brotli): ${BROTLI_SIZE_KB}KB (limit: ${MAX_SIZE_KB}KB)"
 
-          if [ $DIST_SIZE_KB -gt $MAX_SIZE_KB ]; then
-            echo "❌ Bundle size exceeds limit!"
+          if [ $BROTLI_SIZE_KB -gt $MAX_SIZE_KB ]; then
+            echo "❌ Brotli compressed bundle size exceeds limit!"
             exit 1
           else
-            echo "✅ Bundle size within limit"
+            echo "✅ Brotli compressed bundle size within limit"
           fi
 
       - name: Upload bundle analysis

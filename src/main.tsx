@@ -6,6 +6,7 @@ import App from './App.tsx';
 import { ThemeProvider } from './providers/ThemeProvider.tsx';
 import { CodeThemeProvider } from './providers/CodeThemeProvider.tsx';
 import './styles/globals.css';
+import './styles/sugar-high-theme.css';
 
 // Check for Chrome AI API availability
 // Note: Chrome AI APIs are now available directly on self.* (not self.ai.*)
