@@ -7,11 +7,7 @@
 
 import { useState } from 'react';
 import { Copy, CheckCircle2, Download } from 'lucide-react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import {
-  vscDarkPlus,
-  vs,
-} from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { highlight } from 'sugar-high';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCodeTheme } from '@/providers/CodeThemeProvider';
@@ -203,29 +199,21 @@ export function ThemedCodeBlock({
 
       {/* Code Content with Syntax Highlighting */}
       <div className="overflow-x-auto">
-        <SyntaxHighlighter
-          language={language}
-          style={isDark ? vscDarkPlus : vs}
-          customStyle={{
-            margin: 0,
-            padding: '1rem',
-            fontSize: '11px',
-            lineHeight: '1.625',
-            background: isDark ? 'rgb(15 23 42)' : 'rgb(248 250 252)',
-            border: 'none',
+        <pre
+          className={cn(
+            'p-4 text-[11px] leading-relaxed overflow-x-auto',
+            isDark ? 'bg-slate-900' : 'bg-slate-50',
+          )}
+          style={{
+            fontFamily:
+              'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
           }}
-          codeTagProps={{
-            style: {
-              fontFamily:
-                'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-            },
-          }}
-          showLineNumbers={false}
-          wrapLines={false}
-          wrapLongLines={true}
         >
-          {code}
-        </SyntaxHighlighter>
+          <code
+            dangerouslySetInnerHTML={{ __html: highlight(code) }}
+            className="syntax-highlighter"
+          />
+        </pre>
       </div>
     </div>
   );

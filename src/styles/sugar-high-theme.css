@@ -1,0 +1,93 @@
+/**
+ * Sugar High Syntax Highlighting Theme
+ * Lightweight CSS-based syntax highlighting
+ */
+
+/* Light Theme (default) */
+.syntax-highlighter .sh__line {
+  display: block;
+}
+
+.syntax-highlighter .sh__sign {
+  color: #8250df; /* Purple for operators */
+}
+
+.syntax-highlighter .sh__string {
+  color: #0a3069; /* Dark blue for strings */
+}
+
+.syntax-highlighter .sh__keyword {
+  color: #cf222e; /* Red for keywords */
+}
+
+.syntax-highlighter .sh__comment {
+  color: #6e7781; /* Gray for comments */
+  font-style: italic;
+}
+
+.syntax-highlighter .sh__class {
+  color: #953800; /* Orange for classes */
+}
+
+.syntax-highlighter .sh__identifier {
+  color: #24292f; /* Dark gray for identifiers */
+}
+
+.syntax-highlighter .sh__property {
+  color: #116329; /* Green for properties */
+}
+
+.syntax-highlighter .sh__entity {
+  color: #8250df; /* Purple for entities */
+}
+
+.syntax-highlighter .sh__jsxliterals {
+  color: #0550ae; /* Blue for JSX literals */
+}
+
+/* Dark Theme */
+[data-code-theme='dark'] .syntax-highlighter .sh__sign,
+.dark .syntax-highlighter .sh__sign {
+  color: #d2a8ff; /* Light purple */
+}
+
+[data-code-theme='dark'] .syntax-highlighter .sh__string,
+.dark .syntax-highlighter .sh__string {
+  color: #a5d6ff; /* Light blue */
+}
+
+[data-code-theme='dark'] .syntax-highlighter .sh__keyword,
+.dark .syntax-highlighter .sh__keyword {
+  color: #ff7b72; /* Light red */
+}
+
+[data-code-theme='dark'] .syntax-highlighter .sh__comment,
+.dark .syntax-highlighter .sh__comment {
+  color: #8b949e; /* Light gray */
+  font-style: italic;
+}
+
+[data-code-theme='dark'] .syntax-highlighter .sh__class,
+.dark .syntax-highlighter .sh__class {
+  color: #ffa657; /* Light orange */
+}
+
+[data-code-theme='dark'] .syntax-highlighter .sh__identifier,
+.dark .syntax-highlighter .sh__identifier {
+  color: #e6edf3; /* Very light gray */
+}
+
+[data-code-theme='dark'] .syntax-highlighter .sh__property,
+.dark .syntax-highlighter .sh__property {
+  color: #7ee787; /* Light green */
+}
+
+[data-code-theme='dark'] .syntax-highlighter .sh__entity,
+.dark .syntax-highlighter .sh__entity {
+  color: #d2a8ff; /* Light purple */
+}
+
+[data-code-theme='dark'] .syntax-highlighter .sh__jsxliterals,
+.dark .syntax-highlighter .sh__jsxliterals {
+  color: #79c0ff; /* Light blue */
+}

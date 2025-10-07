@@ -43,21 +43,30 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     minify: 'terser',
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 500,
+    target: 'esnext',
     terserOptions: {
       compress: {
         drop_console: true,
         drop_debugger: true,
         pure_funcs: ['console.log', 'console.debug', 'console.trace'],
+        passes: 2,
+        unsafe_arrows: true,
+        unsafe_methods: true,
       },
       mangle: {
         safari10: true,
+        toplevel: true,
+      },
+      format: {
+        comments: false,
       },
     },
     rollupOptions: {
       treeshake: {
         preset: 'recommended',
         moduleSideEffects: false,
+        propertyReadSideEffects: false,
       },
       output: {
         manualChunks: (id) => {
