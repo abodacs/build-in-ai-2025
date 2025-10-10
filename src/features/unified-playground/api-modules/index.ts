@@ -57,6 +57,8 @@ export interface APIModule {
 // Import API playground components
 import { SummarizerPlayground } from './summarizer';
 import { TranslatorPlayground } from './translator';
+import { PlaygroundTab as WriterPlayground } from './writer/components/tabs';
+import { PlaygroundTab as RewriterPlayground } from './rewriter/components/tabs';
 
 /**
  * Registry of all available API modules
@@ -87,8 +89,8 @@ export const API_MODULES: Record<string, APIModule> = {
     name: 'Writer API',
     description: 'Content generation and creative writing',
     category: 'text',
-    PlaygroundComponent: () => null, // TODO: Implement
-    available: false,
+    PlaygroundComponent: WriterPlayground,
+    available: true,
   },
 
   rewriter: {
@@ -96,8 +98,8 @@ export const API_MODULES: Record<string, APIModule> = {
     name: 'Rewriter API',
     description: 'Content restructuring and style adaptation',
     category: 'text',
-    PlaygroundComponent: () => null, // TODO: Implement
-    available: false,
+    PlaygroundComponent: RewriterPlayground,
+    available: true,
   },
 
   proofreader: {

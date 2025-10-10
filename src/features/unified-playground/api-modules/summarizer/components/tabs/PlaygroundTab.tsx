@@ -21,7 +21,8 @@ import { cn } from '@/lib/utils';
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
 
 // Import components
-import { SparkButton } from '../SparkButton';
+import { APIActionButton } from '../../../shared/components';
+import { Sparkles } from 'lucide-react';
 import { SummarizerConfig } from '../SummarizerConfig';
 import { SummarizerInput } from '../SummarizerInput';
 import { SummarizerResults } from '../SummarizerResults';
@@ -182,6 +183,16 @@ export function PlaygroundTab({
     'without needing to open the original content.';
 
   /**
+   * Can summarize check - allow if model ready OR needs download (lazy download)
+   * IMPORTANT: This must be declared BEFORE useEffect to avoid TDZ errors
+   */
+  const canSummarize =
+    (isReady || availability === 'after-download') &&
+    inputText.length >= 100 &&
+    !isLoading &&
+    !isDownloading;
+
+  /**
    * Handle summarization with lazy download support
    */
   const handleSummarize = async () => {
@@ -240,19 +251,46 @@ export function PlaygroundTab({
   }, [availability, pendingSummarization, inputText.length]); // handleSummarize excluded - stable function with internal deps
 
   /**
-   * Keyboard shortcut handler (Cmd/Ctrl+K)
+   * Keyboard shortcuts (Cmd/Ctrl+K, Cmd/Ctrl+Enter, Escape)
    */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd+K / Ctrl+K: Open code modal
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setIsCodeModalOpen((prev) => !prev);
       }
+
+      // Escape: Cancel summarization (if streaming/loading)
+      if (e.key === 'Escape' && (isLoading || isStreaming)) {
+        e.preventDefault();
+        // Note: Summarizer doesn't have explicit cancel yet
+        console.log('Escape pressed - cancel not implemented');
+      }
+    };
+
+    // Listen for Cmd+Enter from SummarizerInput
+    const handleSummarizerSummarize = () => {
+      if (canSummarize) {
+        handleSummarize();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    document.addEventListener(
+      'summarizer-summarize',
+      handleSummarizerSummarize,
+    );
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener(
+        'summarizer-summarize',
+        handleSummarizerSummarize,
+      );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, isStreaming, canSummarize]);
 
   /**
    * Handle config change (delegated to parent)
@@ -260,15 +298,6 @@ export function PlaygroundTab({
   const handleConfigChange = (newConfig: SummarizerCreateOptions) => {
     onConfigChange(newConfig);
   };
-
-  /**
-   * Can summarize check - allow if model ready OR needs download (lazy download)
-   */
-  const canSummarize =
-    (isReady || availability === 'after-download') &&
-    inputText.length >= 100 &&
-    !isLoading &&
-    !isDownloading;
 
   // ============================================================================
   // Render: Checking Availability
@@ -453,10 +482,9 @@ export function PlaygroundTab({
 
       {/* Run Button */}
       <div className="flex justify-end">
-        <SparkButton
-          onClick={handleSummarize}
-          disabled={!canSummarize}
-          isProcessing={isLoading || isDownloading}
+        <APIActionButton
+          variant="summarize"
+          icon={Sparkles}
           text={
             availability === 'after-download' && !isReady
               ? 'Download & Summarize'
@@ -469,7 +497,11 @@ export function PlaygroundTab({
                 ? 'Streaming...'
                 : 'Summarizing...'
           }
-          fullWidth={false}
+          onClick={handleSummarize}
+          disabled={!canSummarize}
+          isProcessing={isLoading || isDownloading}
+          showCancel={false}
+          showShortcutHint
         />
       </div>
 

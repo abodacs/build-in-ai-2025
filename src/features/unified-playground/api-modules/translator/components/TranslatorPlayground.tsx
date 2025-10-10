@@ -7,7 +7,7 @@
  * @module TranslatorPlayground
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Zap, RotateCcw, Package } from 'lucide-react';
 import { TranslatorConfig } from './TranslatorConfig';
@@ -16,6 +16,7 @@ import { TranslatorResults } from './TranslatorResults';
 import { LanguagePairSelector } from './LanguagePairSelector';
 import { CodeModal } from './CodeModal';
 import { BatchTranslationCard } from './BatchTranslationCard';
+import { APIActionButton, Toast, useToast } from '../../shared/components';
 import { useTranslator, useTranslatorAvailability } from '../hooks';
 import {
   type LanguageCode,
@@ -84,6 +85,9 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
     targetLanguage,
     context,
   });
+
+  // Toast hook
+  const { toast, open, showToast, hideToast } = useToast();
 
   // ============================================================================
   // Handlers
@@ -165,10 +169,26 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
   /**
    * Handle copy
    */
-  const handleCopy = useCallback((text: string) => {
-    // Copy is handled by the TranslatorResults component
-    console.log('Copied:', text.substring(0, 50) + '...');
-  }, []);
+  const handleCopy = useCallback(
+    async (text: string) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast({
+          variant: 'success',
+          message: 'Translation copied to clipboard',
+          description: `${text.length} characters copied`,
+        });
+      } catch (err) {
+        console.error('Failed to copy:', err);
+        showToast({
+          variant: 'error',
+          message: 'Failed to copy translation',
+          description: 'Please try again or copy manually',
+        });
+      }
+    },
+    [showToast],
+  );
 
   /**
    * Handle download
@@ -176,17 +196,32 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
   const handleDownload = useCallback(() => {
     if (!result) return;
 
-    const data = JSON.stringify(result, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `translation-${sourceLanguage}-${targetLanguage}-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, [result, sourceLanguage, targetLanguage]);
+    try {
+      const data = JSON.stringify(result, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `translation-${sourceLanguage}-${targetLanguage}-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showToast({
+        variant: 'success',
+        message: 'Translation downloaded successfully',
+        description: 'JSON file saved to your downloads folder',
+      });
+    } catch (err) {
+      console.error('Failed to download:', err);
+      showToast({
+        variant: 'error',
+        message: 'Failed to download translation',
+        description: 'Please try again',
+      });
+    }
+  }, [result, sourceLanguage, targetLanguage, showToast]);
 
   /**
    * Handle retry
@@ -234,6 +269,47 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
   const canTranslate =
     !isLoading && !isStreaming && inputText.trim().length > 0;
 
+  /**
+   * Keyboard shortcuts
+   */
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd+K / Ctrl+K: Open code modal
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCodeModalOpen((prev) => !prev);
+      }
+
+      // Escape: Cancel translation
+      if (e.key === 'Escape' && isStreaming) {
+        e.preventDefault();
+        cancel();
+      }
+    };
+
+    // Listen for Cmd+Enter from TranslatorInput
+    const handleTranslatorTranslate = () => {
+      if (canTranslate) {
+        handleTranslate();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener(
+      'translator-translate',
+      handleTranslatorTranslate,
+    );
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener(
+        'translator-translate',
+        handleTranslatorTranslate,
+      );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStreaming, canTranslate]);
+
   // ============================================================================
   // Render
   // ============================================================================
@@ -275,17 +351,20 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
       />
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-center gap-3">
-        <Button
+      <div className="flex items-center justify-end gap-3">
+        <APIActionButton
+          variant="translate"
+          icon={Zap}
+          text="Translate"
+          processingText="Translating..."
           onClick={handleTranslate}
           disabled={!canTranslate}
-          size="lg"
-          className="gap-2 px-8"
+          isProcessing={isLoading || isStreaming}
+          showCancel={isStreaming}
+          onCancel={cancel}
+          showShortcutHint
           data-testid="translate-btn"
-        >
-          <Zap className="h-5 w-5" />
-          {isLoading || isStreaming ? 'Translating...' : 'Translate'}
-        </Button>
+        />
 
         {(inputText || translatedText) && (
           <Button
@@ -297,17 +376,6 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
           >
             <RotateCcw className="h-4 w-4" />
             Reset
-          </Button>
-        )}
-
-        {isStreaming && (
-          <Button
-            onClick={cancel}
-            variant="destructive"
-            size="lg"
-            data-testid="cancel-btn"
-          >
-            Cancel
           </Button>
         )}
 
@@ -367,6 +435,18 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
         context={context}
         advancedSettings={advancedSettings}
       />
+
+      {/* Toast Notifications */}
+      {toast && (
+        <Toast
+          variant={toast.variant}
+          message={toast.message}
+          description={toast.description}
+          action={toast.action}
+          open={open}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 }
