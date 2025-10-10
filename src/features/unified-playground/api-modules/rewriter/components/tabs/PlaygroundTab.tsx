@@ -359,7 +359,8 @@ export function PlaygroundTab() {
                 <div className="space-y-2">
                   <p className="text-xs">
                     💡 <strong>Solution:</strong> The API requires a user
-                    interaction. Click the "Rewrite Text" button to try again.
+                    interaction. Click the &quot;Rewrite Text&quot; button to
+                    try again.
                   </p>
                   <Button
                     variant="outline"
@@ -430,7 +431,7 @@ export function PlaygroundTab() {
                 <div className="space-y-2">
                   <p className="text-xs">
                     💡 <strong>Solution:</strong> Try shortening your input text
-                    or using the "Make Concise" preset first.
+                    or using the &quot;Make Concise&quot; preset first.
                   </p>
                   <div className="flex gap-2">
                     <Button

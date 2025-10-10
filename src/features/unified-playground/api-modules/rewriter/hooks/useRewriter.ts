@@ -136,9 +136,10 @@ export function useRewriter(initialConfig: RewriterConfig): UseRewriterReturn {
 
   // Cleanup on unmount
   useEffect(() => {
+    const manager = managerRef.current;
     return () => {
       isMountedRef.current = false;
-      managerRef.current.cleanup();
+      manager.cleanup();
       abortControllerRef.current?.abort();
     };
   }, []);
@@ -185,18 +186,19 @@ export function useRewriter(initialConfig: RewriterConfig): UseRewriterReturn {
         setIsRewriting(false);
 
         return result;
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!isMountedRef.current) {
           throw err;
         }
 
-        setError(err);
+        setError(err instanceof Error ? err : new Error(String(err)));
         setIsRewriting(false);
         setIsLoading(false);
         throw err;
       }
     },
-    [config],
+
+    [],
   );
 
   /**
@@ -264,19 +266,20 @@ export function useRewriter(initialConfig: RewriterConfig): UseRewriterReturn {
         setIsStreaming(false);
 
         return result;
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!isMountedRef.current) {
           throw err;
         }
 
-        setError(err);
+        setError(err instanceof Error ? err : new Error(String(err)));
         setIsRewriting(false);
         setIsStreaming(false);
         setIsLoading(false);
         throw err;
       }
     },
-    [config],
+
+    [],
   );
 
   /**

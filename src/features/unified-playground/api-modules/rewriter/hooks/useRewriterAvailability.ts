@@ -98,9 +98,9 @@ export function useRewriterAvailability(): UseRewriterAvailabilityReturn {
         setAvailability(status);
         setIsChecking(false);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (isMountedRef.current) {
-        setError(err);
+        setError(err instanceof Error ? err : new Error(String(err)));
         setAvailability('no');
         setIsChecking(false);
       }

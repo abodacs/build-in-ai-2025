@@ -242,11 +242,12 @@ export function useWriter(initialConfig: WriterConfig): UseWriterReturn {
 
   // Cleanup on unmount
   useEffect(() => {
+    const manager = managerRef.current;
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-      managerRef.current.destroy();
+      manager.destroy();
     };
   }, []);
 
@@ -336,6 +337,7 @@ export function useWriter(initialConfig: WriterConfig): UseWriterReturn {
         abortControllerRef.current = null;
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [], // Empty deps - using configRef.current for latest config
   );
 
@@ -550,6 +552,7 @@ export function useWriter(initialConfig: WriterConfig): UseWriterReturn {
         abortControllerRef.current = null;
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [], // Empty deps - using configRef.current for latest config
   );
 

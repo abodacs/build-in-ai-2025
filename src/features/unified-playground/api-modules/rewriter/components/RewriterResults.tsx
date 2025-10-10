@@ -267,7 +267,12 @@ export function RewriterResults({
 
         {/* Tabs for different views */}
         {hasContent && originalText && (
-          <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)}>
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) =>
+              setActiveTab(v as 'original' | 'rewritten' | 'diff')
+            }
+          >
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="rewritten" className="text-xs sm:text-sm">
                 Rewritten

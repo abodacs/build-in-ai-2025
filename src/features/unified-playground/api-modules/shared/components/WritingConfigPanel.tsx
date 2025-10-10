@@ -52,20 +52,27 @@ import type { ConfigOption } from '../types';
 // ============================================================================
 
 /**
+ * Base config type for writing configuration
+ */
+export interface BaseWritingConfig {
+  tone: string;
+  format: string;
+  length: string;
+  outputLanguage?: string;
+  sharedContext?: string;
+}
+
+/**
  * WritingConfigPanel component props
  */
-export interface WritingConfigPanelProps {
+export interface WritingConfigPanelProps<
+  T extends BaseWritingConfig = BaseWritingConfig,
+> {
   /** Current configuration */
-  config: {
-    tone: string;
-    format: string;
-    length: string;
-    outputLanguage?: string;
-    sharedContext?: string;
-  };
+  config: T;
 
   /** Configuration change handler */
-  onChange: (config: any) => void;
+  onChange: (config: T) => void;
 
   /** Available tone options */
   toneOptions: readonly ConfigOption[];
@@ -135,7 +142,9 @@ export interface WritingConfigPanelProps {
  * />
  * ```
  */
-export function WritingConfigPanel({
+export function WritingConfigPanel<
+  T extends BaseWritingConfig = BaseWritingConfig,
+>({
   config,
   onChange,
   toneOptions,
@@ -149,7 +158,7 @@ export function WritingConfigPanel({
   className,
   disabled = false,
   onViewCode,
-}: WritingConfigPanelProps) {
+}: WritingConfigPanelProps<T>) {
   const [isOpen, setIsOpen] = useState(!defaultCollapsed);
 
   return (

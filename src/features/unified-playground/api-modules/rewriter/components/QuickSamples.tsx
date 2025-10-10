@@ -25,12 +25,8 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import {
-  TEMPLATE_CATEGORIES,
-  QUICK_PRESETS,
-  type RewriterTemplate,
-} from '../data/samples';
-import type { RewriterConfig } from '../types';
+import { TEMPLATE_CATEGORIES, QUICK_PRESETS } from '../data/samples';
+import type { RewriterConfig, RewriterTemplate } from '../types';
 
 // ============================================================================
 // Types
@@ -128,12 +124,7 @@ export function QuickSamples({
             </div>
 
             <CollapsibleTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                disabled={disabled}
-              >
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                 {isOpen ? (
                   <ChevronUp className="h-4 w-4" />
                 ) : (
