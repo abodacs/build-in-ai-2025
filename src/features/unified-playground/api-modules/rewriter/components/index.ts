@@ -27,3 +27,15 @@ export type { StreamingMetricsProps } from './StreamingMetrics';
 
 export { ComparisonStats } from './ComparisonStats';
 export type { ComparisonStatsProps } from './ComparisonStats';
+
+export { BatchRewriteInput } from './BatchRewriteInput';
+export type { BatchRewriteInputProps } from './BatchRewriteInput';
+
+export { BatchProgressBar } from './BatchProgressBar';
+export type { BatchProgressBarProps } from './BatchProgressBar';
+
+export { BatchRewriteResults } from './BatchRewriteResults';
+export type { BatchRewriteResultsProps } from './BatchRewriteResults';
+
+export { RewriterMain } from './RewriterMain';
+export { default as RewriterMainDefault } from './RewriterMain';

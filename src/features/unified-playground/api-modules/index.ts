@@ -58,7 +58,7 @@ export interface APIModule {
 import { SummarizerPlayground } from './summarizer';
 import { TranslatorPlayground } from './translator';
 import { PlaygroundTab as WriterPlayground } from './writer/components/tabs';
-import { PlaygroundTab as RewriterPlayground } from './rewriter/components/tabs';
+import { RewriterMain as RewriterPlayground } from './rewriter/components';
 
 /**
  * Registry of all available API modules

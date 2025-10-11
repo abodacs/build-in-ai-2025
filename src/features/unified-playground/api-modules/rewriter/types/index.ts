@@ -5,3 +5,4 @@
  */
 
 export * from './rewriter.types';
+export * from './batch.types';
