@@ -13,6 +13,7 @@ import {
   Link as LinkIcon,
   FileText,
   Sparkles,
+  Command,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -183,6 +184,22 @@ export function SummarizerInput({
     return 'text-slate-500';
   };
 
+  /**
+   * Handle keyboard shortcuts
+   */
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Ctrl+Enter or Cmd+Enter triggers summarization
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      // Trigger custom event that parent can listen for
+      const summarizeEvent = new CustomEvent('summarizer-summarize', {
+        bubbles: true,
+        detail: { text: value },
+      });
+      e.currentTarget.dispatchEvent(summarizeEvent);
+    }
+  };
+
   return (
     <Card className={cn('border-slate-200 shadow-sm', className)}>
       <CardHeader className="pb-2.5 pt-3.5">
@@ -213,6 +230,7 @@ export function SummarizerInput({
           <Textarea
             value={value}
             onChange={(e) => onChange(e.target.value)}
+            onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder={placeholder}
@@ -224,6 +242,14 @@ export function SummarizerInput({
               !isValid && value && showValidation && 'border-amber-400',
             )}
           />
+
+          {/* Keyboard Shortcut Hint */}
+          {!disabled && value && isValid && (
+            <div className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] text-muted-foreground/60 pointer-events-none">
+              <Command className="w-3 h-3" />
+              <span>+Enter to summarize</span>
+            </div>
+          )}
 
           {/* Empty State Overlay */}
           {!value && !isFocused && (

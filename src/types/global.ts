@@ -187,4 +187,4 @@ export function isAIServiceError(error: unknown): error is AIServiceError {
  * This type is a temporary placeholder for values that will have a defined type later.
  * Search for 'TODO_TYPE' to find places where types need to be refined.
  */
-export type TODO_TYPE = any; // eslint-disable-line @typescript-eslint/no-explicit-any
+export type TODO_TYPE = any;

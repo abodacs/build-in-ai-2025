@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Search, AlertCircle } from 'lucide-react';
+import { Search, AlertCircle, Command } from 'lucide-react';
 import { type TranslatorInputProps, SUPPORTED_LANGUAGES } from '../types';
 
 /**
@@ -77,6 +77,22 @@ export function TranslatorInput({
     // Don't allow input beyond maxLength
     if (sanitized.length <= maxLength) {
       onChange(sanitized);
+    }
+  };
+
+  /**
+   * Handle keyboard shortcuts
+   */
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Ctrl+Enter or Cmd+Enter triggers translation
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      // Trigger custom event that parent can listen for
+      const translateEvent = new CustomEvent('translator-translate', {
+        bubbles: true,
+        detail: { text: value },
+      });
+      e.currentTarget.dispatchEvent(translateEvent);
     }
   };
 
@@ -160,18 +176,28 @@ export function TranslatorInput({
       )}
 
       {/* Textarea */}
-      <Textarea
-        ref={textareaRef}
-        value={value}
-        onChange={handleChange}
-        placeholder={placeholder}
-        disabled={disabled}
-        className="min-h-[120px] resize-none font-mono text-sm"
-        data-testid="translator-input"
-        maxLength={maxLength}
-        aria-label="Text to translate"
-        aria-describedby="input-stats"
-      />
+      <div className="relative">
+        <Textarea
+          ref={textareaRef}
+          value={value}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          disabled={disabled}
+          className="min-h-[120px] resize-none font-mono text-sm"
+          data-testid="translator-input"
+          maxLength={maxLength}
+          aria-label="Text to translate"
+          aria-describedby="input-stats"
+        />
+        {/* Keyboard Shortcut Hint */}
+        {!disabled && value.length > 0 && (
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] text-muted-foreground/60 pointer-events-none">
+            <Command className="w-3 h-3" />
+            <span>+Enter to translate</span>
+          </div>
+        )}
+      </div>
 
       {/* Footer Info */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

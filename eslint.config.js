@@ -101,7 +101,13 @@ export default [
     },
   },
   {
-    files: ['**/components/ui/**/*.{ts,tsx}'],
+    files: [
+      '**/components/ui/**/*.{ts,tsx}',
+      '**/services/**/*.{ts,tsx}',
+      '**/utils/**/*.{ts,tsx}',
+      '**/types/**/*.{ts,tsx}',
+      '**/testing/**/*.{ts,tsx}',
+    ],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
     },
@@ -124,6 +130,8 @@ export default [
       '**/summarizer/components/QuickSamplesCard.tsx',
       '**/providers/CodeThemeProvider.tsx',
       '**/providers/ThemeProvider.tsx',
+      '**/shared/components/Toast.tsx',
+      '**/testing/**/*.{ts,tsx}',
     ],
     rules: {
       'react-refresh/only-export-components': 'off',
