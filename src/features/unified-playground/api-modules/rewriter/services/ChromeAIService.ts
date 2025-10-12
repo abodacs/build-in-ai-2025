@@ -12,7 +12,10 @@ import type {
   RewriterAPI,
   RewriterCreateOptions,
 } from '../types/rewriter.types';
-import type { AvailabilityStatus } from '../../shared/types';
+import type {
+  AvailabilityStatus,
+  AvailabilityCheckResult,
+} from '../../shared/types';
 
 // ============================================================================
 // Service
@@ -61,8 +64,8 @@ export class ChromeAIRewriterService {
       const status = await api.availability();
 
       return status;
-    } catch (error) {
-      console.error('Failed to check Rewriter availability:', error);
+    } catch {
+      // Silently return 'no' on error - UI will handle messaging
       return 'no';
     }
   }
@@ -79,7 +82,9 @@ export class ChromeAIRewriterService {
   ): Promise<Rewriter> {
     try {
       if (!this.isSupported()) {
-        throw new Error('Rewriter API is not supported in this browser');
+        throw new Error(
+          'Rewriter API is not supported in this browser. Please use Chrome 137+ and enable the API in chrome://flags#rewriter-api-for-gemini-nano',
+        );
       }
 
       const api = this.getAPI();
@@ -87,28 +92,33 @@ export class ChromeAIRewriterService {
 
       return instance;
     } catch (error: any) {
-      // Enhance error messages
-      if (error?.message?.includes('user activation')) {
+      const errorMessage = error?.message?.toLowerCase() || '';
+
+      // Enhance error messages with user-friendly guidance
+      if (errorMessage.includes('user activation')) {
         throw new Error(
-          'Rewriter API requires user activation. Please click a button to create the instance.',
+          'The Rewriter API requires a user interaction (like clicking a button). Please click the "Rewrite Text" button to continue.',
         );
       }
 
-      if (error?.message?.includes('download')) {
+      if (errorMessage.includes('download') || errorMessage.includes('model')) {
         throw new Error(
-          'Model download required. This may take a few moments on first use.',
+          'AI model download required. This is a one-time process that may take a few moments. Please try again.',
         );
       }
 
-      if (error?.message?.includes('not available')) {
+      if (
+        errorMessage.includes('not available') ||
+        errorMessage.includes('not supported')
+      ) {
         throw new Error(
-          'Rewriter API is not available. Please enable it in chrome://flags#rewriter-api',
+          'Rewriter API is not available. Please enable it in Chrome Settings: chrome://flags#rewriter-api-for-gemini-nano',
         );
       }
 
-      // Re-throw with original message if no specific handling
+      // Re-throw with enhanced message
       throw new Error(
-        `Failed to create Rewriter instance: ${error?.message || 'Unknown error'}`,
+        `Failed to create Rewriter: ${error?.message || 'Unknown error occurred'}`,
       );
     }
   }
@@ -179,9 +189,188 @@ export class ChromeAIRewriterService {
   static destroy(instance: Rewriter): void {
     try {
       instance.destroy();
-    } catch (error) {
-      console.warn('Failed to destroy Rewriter instance:', error);
+    } catch {
+      // Silently fail - instance cleanup is not critical
+      // Error bubbled if needed via error boundaries
     }
+  }
+
+  /**
+   * Check detailed availability information
+   *
+   * @returns Promise resolving to detailed availability info
+   */
+  static async checkDetailedAvailability(): Promise<AvailabilityCheckResult> {
+    try {
+      const availability = await this.checkAvailability();
+
+      return {
+        availability,
+        isSupported: true,
+        requiresDownload: availability === 'after-download',
+        requirements: {
+          minChromeVersion: 137,
+          requiredFlags: ['rewriter-api'],
+          other: [
+            'User activation required for instance creation',
+            'Model download may be required on first use',
+          ],
+        },
+      };
+    } catch (error) {
+      return {
+        availability: 'no',
+        isSupported: false,
+        requiresDownload: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Create Rewriter with download monitoring
+   *
+   * @param options - Creation options with monitor
+   * @param onProgress - Progress callback
+   * @returns Promise resolving to Rewriter instance
+   */
+  static async createInstanceWithMonitoring(
+    options: RewriterCreateOptions,
+    onProgress: (loaded: number, total: number) => void,
+  ): Promise<Rewriter> {
+    const optionsWithMonitor: RewriterCreateOptions = {
+      ...options,
+      monitor: (m: EventTarget) => {
+        m.addEventListener('downloadprogress', (e: Event) => {
+          const event = e as unknown as { loaded: number; total: number };
+          onProgress(event.loaded, event.total);
+        });
+      },
+    };
+
+    return this.createInstance(optionsWithMonitor);
+  }
+
+  /**
+   * Validate Rewriter configuration
+   *
+   * Checks if the provided configuration is valid.
+   *
+   * @param options - Options to validate
+   * @returns true if valid
+   * @throws Error if invalid
+   */
+  static validateOptions(options: RewriterCreateOptions): boolean {
+    // Validate tone
+    if (
+      options.tone &&
+      !['more-formal', 'more-casual', 'as-is'].includes(options.tone)
+    ) {
+      throw new Error(
+        `Invalid tone: ${options.tone}. Must be one of: 'more-formal', 'more-casual', 'as-is'.`,
+      );
+    }
+
+    // Validate format
+    if (
+      options.format &&
+      !['markdown', 'plain-text', 'as-is'].includes(options.format)
+    ) {
+      throw new Error(
+        `Invalid format: ${options.format}. Must be 'markdown', 'plain-text', or 'as-is'.`,
+      );
+    }
+
+    // Validate length
+    if (
+      options.length &&
+      !['shorter', 'longer', 'as-is'].includes(options.length)
+    ) {
+      throw new Error(
+        `Invalid length: ${options.length}. Must be 'shorter', 'longer', or 'as-is'.`,
+      );
+    }
+
+    // outputLanguage validation would depend on supported languages
+    // For now, just check it's a string if provided
+    if (options.outputLanguage && typeof options.outputLanguage !== 'string') {
+      throw new Error(
+        `Invalid outputLanguage: must be a valid BCP-47 language tag (e.g., 'en', 'es', 'fr').`,
+      );
+    }
+
+    return true;
+  }
+
+  /**
+   * Get recommended configuration for use case
+   *
+   * @param useCase - Type of content being rewritten
+   * @returns Recommended configuration
+   */
+  static getRecommendedConfig(
+    useCase:
+      | 'email-professional'
+      | 'email-casual'
+      | 'blog'
+      | 'social'
+      | 'documentation'
+      | 'simplify'
+      | 'formal',
+  ): RewriterCreateOptions {
+    const configs: Record<string, RewriterCreateOptions> = {
+      'email-professional': {
+        tone: 'more-formal',
+        format: 'plain-text',
+        length: 'as-is',
+        outputLanguage: 'en',
+      },
+      'email-casual': {
+        tone: 'more-casual',
+        format: 'plain-text',
+        length: 'as-is',
+        outputLanguage: 'en',
+      },
+      blog: {
+        tone: 'more-casual',
+        format: 'markdown',
+        length: 'as-is',
+        outputLanguage: 'en',
+      },
+      social: {
+        tone: 'more-casual',
+        format: 'plain-text',
+        length: 'shorter',
+        outputLanguage: 'en',
+      },
+      documentation: {
+        tone: 'more-formal',
+        format: 'markdown',
+        length: 'as-is',
+        outputLanguage: 'en',
+      },
+      simplify: {
+        tone: 'more-casual',
+        format: 'plain-text',
+        length: 'shorter',
+        outputLanguage: 'en',
+      },
+      formal: {
+        tone: 'more-formal',
+        format: 'plain-text',
+        length: 'as-is',
+        outputLanguage: 'en',
+      },
+    };
+
+    return (
+      configs[useCase] || {
+        tone: 'as-is',
+        format: 'as-is',
+        length: 'as-is',
+        outputLanguage: 'en',
+      }
+    );
   }
 }
 

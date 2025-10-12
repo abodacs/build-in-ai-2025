@@ -259,12 +259,7 @@ export function useWriter(initialConfig: WriterConfig): UseWriterReturn {
       console.group('🔧 useWriter: write');
       console.log('Prompt:', prompt);
       console.log('Context:', context || '(none)');
-      console.log('📋 Config (from state):', config);
-      console.log('📋 Config (from ref - ACTIVE):', configRef.current);
-      console.log(
-        '🔍 Configs match:',
-        JSON.stringify(config) === JSON.stringify(configRef.current),
-      );
+      console.log('📋 Active Config (from ref):', configRef.current);
 
       // Reset state
       setIsWriting(true);
@@ -337,7 +332,7 @@ export function useWriter(initialConfig: WriterConfig): UseWriterReturn {
         abortControllerRef.current = null;
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [], // Empty deps - using configRef.current for latest config
   );
 
@@ -353,12 +348,7 @@ export function useWriter(initialConfig: WriterConfig): UseWriterReturn {
       console.group('🔧 useWriter: writeStreaming');
       console.log('Prompt:', prompt);
       console.log('Context:', context || '(none)');
-      console.log('📋 Config (from state):', config);
-      console.log('📋 Config (from ref - ACTIVE):', configRef.current);
-      console.log(
-        '🔍 Configs match:',
-        JSON.stringify(config) === JSON.stringify(configRef.current),
-      );
+      console.log('📋 Active Config (from ref):', configRef.current);
 
       // IMPORTANT: Check user activation IMMEDIATELY while we're still in the event handler context
       // User activation is transient and expires after async operations
@@ -552,7 +542,7 @@ export function useWriter(initialConfig: WriterConfig): UseWriterReturn {
         abortControllerRef.current = null;
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [], // Empty deps - using configRef.current for latest config
   );
 

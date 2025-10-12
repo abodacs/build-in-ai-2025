@@ -32,7 +32,7 @@ function renderWithProviders(ui: React.ReactElement) {
  */
 async function expandPanel(user: ReturnType<typeof userEvent.setup>) {
   const trigger = screen.getByRole('button', {
-    name: /Expand samples/i,
+    name: /Show quick start samples/i,
   });
   await user.click(trigger);
 
@@ -89,7 +89,7 @@ describe('QuickSamples', () => {
 
       // Should show the collapsible trigger button
       expect(
-        screen.getByRole('button', { name: /Expand samples/i }),
+        screen.getByRole('button', { name: /Show quick start samples/i }),
       ).toBeInTheDocument();
 
       // Content should not be visible initially (collapsed)
@@ -106,7 +106,7 @@ describe('QuickSamples', () => {
 
       // Click the collapsible trigger
       const trigger = screen.getByRole('button', {
-        name: /Expand samples/i,
+        name: /Show quick start samples/i,
       });
       await user.click(trigger);
 
@@ -127,7 +127,7 @@ describe('QuickSamples', () => {
 
       // Expand the panel
       const trigger = screen.getByRole('button', {
-        name: /Expand samples/i,
+        name: /Show quick start samples/i,
       });
       await user.click(trigger);
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -147,7 +147,7 @@ describe('QuickSamples', () => {
 
       // Expand the panel
       const trigger = screen.getByRole('button', {
-        name: /Expand samples/i,
+        name: /Show quick start samples/i,
       });
       await user.click(trigger);
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -163,7 +163,7 @@ describe('QuickSamples', () => {
 
       // Expand the panel
       const trigger = screen.getByRole('button', {
-        name: /Expand samples/i,
+        name: /Show quick start samples/i,
       });
       await user.click(trigger);
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -194,7 +194,7 @@ describe('QuickSamples', () => {
 
       // Expand the panel
       const trigger = screen.getByRole('button', {
-        name: /Expand samples/i,
+        name: /Show quick start samples/i,
       });
       await user.click(trigger);
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -221,7 +221,7 @@ describe('QuickSamples', () => {
 
       // Expand the panel
       const trigger = screen.getByRole('button', {
-        name: /Expand samples/i,
+        name: /Show quick start samples/i,
       });
       await user.click(trigger);
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -253,7 +253,7 @@ describe('QuickSamples', () => {
 
       // Expand the panel
       const trigger = screen.getByRole('button', {
-        name: /Expand samples/i,
+        name: /Show quick start samples/i,
       });
       await user.click(trigger);
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -278,7 +278,7 @@ describe('QuickSamples', () => {
 
       // Expand the panel
       const trigger = screen.getByRole('button', {
-        name: /Expand samples/i,
+        name: /Show quick start samples/i,
       });
       await user.click(trigger);
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -310,7 +310,7 @@ describe('QuickSamples', () => {
 
       // Expand the panel
       const trigger = screen.getByRole('button', {
-        name: /Expand samples/i,
+        name: /Show quick start samples/i,
       });
       await user.click(trigger);
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -335,7 +335,7 @@ describe('QuickSamples', () => {
 
       // Expand the panel
       const trigger = screen.getByRole('button', {
-        name: /Expand samples/i,
+        name: /Show quick start samples/i,
       });
       await user.click(trigger);
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -368,7 +368,7 @@ describe('QuickSamples', () => {
 
       // Expand the panel
       const trigger = screen.getByRole('button', {
-        name: /Expand samples/i,
+        name: /Show quick start samples/i,
       });
       await user.click(trigger);
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -492,7 +492,7 @@ describe('QuickSamples', () => {
 
       // Expand the panel
       const trigger = screen.getByRole('button', {
-        name: /Expand samples/i,
+        name: /Show quick start samples/i,
       });
       await user.click(trigger);
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -518,7 +518,7 @@ describe('QuickSamples', () => {
 
       // Expand the panel
       const trigger = screen.getByRole('button', {
-        name: /Expand samples/i,
+        name: /Show quick start samples/i,
       });
       await user.click(trigger);
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -540,7 +540,7 @@ describe('QuickSamples', () => {
       renderWithProviders(<QuickSamples {...defaultProps} />);
 
       const trigger = screen.getByRole('button', {
-        name: /Expand samples/i,
+        name: /Show quick start samples/i,
       });
 
       // Open
@@ -567,7 +567,7 @@ describe('QuickSamples', () => {
       renderWithProviders(<QuickSamples {...defaultProps} />);
 
       const trigger = screen.getByRole('button', {
-        name: /Expand samples/i,
+        name: /Show quick start samples/i,
       });
 
       // Open

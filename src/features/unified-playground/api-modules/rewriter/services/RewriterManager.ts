@@ -59,6 +59,10 @@ export class RewriterManager extends BaseWritingManager<
    * Create Rewriter instance
    */
   async createInstance(options: RewriterCreateOptions): Promise<Rewriter> {
+    // Validate options
+    ChromeAIRewriterService.validateOptions(options);
+
+    // Create instance
     return await ChromeAIRewriterService.createInstance(options);
   }
 
@@ -147,36 +151,103 @@ export class RewriterManager extends BaseWritingManager<
     context?: string,
     signal?: AbortSignal,
   ): Promise<string> {
-    const instance = await this.getInstance(this.config!);
-    const stream = ChromeAIRewriterService.rewriteStreaming(
-      instance,
-      input,
-      context,
-      signal,
-    );
+    console.log('📝 RewriterManager.rewriteStreaming called');
+    console.log('  → Input length:', input.length, 'chars');
+    console.log('  → Context:', context ? `${context.length} chars` : 'none');
+    console.log('  → Signal provided:', !!signal);
+    console.log('  → Signal aborted:', signal?.aborted);
 
-    let result = '';
+    // NOTE: User activation check is done earlier in useRewriter.ts before any async operations.
+    // We don't check it here because the transient activation expires after async boundaries.
+    // If the activation check failed early, we wouldn't have reached this point.
+
+    if (!this.config) {
+      console.error('❌ No configuration set');
+      throw new Error('Configuration not set. Call getInstance() first.');
+    }
+
+    console.log('🔧 Getting instance with config:', this.config);
+    const instanceStart = Date.now();
+    const instance = await this.getInstance(this.config);
+    const instanceDuration = Date.now() - instanceStart;
+    console.log(`✅ Instance obtained in ${instanceDuration}ms`);
+
+    // Check signal again after getInstance (may take time)
+    if (signal?.aborted) {
+      console.error('❌ Signal already aborted after getInstance');
+      throw new Error('Operation cancelled before streaming started');
+    }
+
+    console.log('🎯 Setting state to processing...');
+    this.setState('processing');
 
     try {
-      const reader = stream.getReader();
+      console.log('📡 Creating stream from instance.rewriteStreaming()...');
+      const stream = ChromeAIRewriterService.rewriteStreaming(
+        instance,
+        input,
+        context,
+        signal,
+      );
+      console.log('✅ Stream created');
 
-      while (true) {
-        const { done, value } = await reader.read();
+      let result = '';
+      let chunkCount = 0;
 
-        if (done) {
-          break;
+      console.log('🔄 Starting to iterate over stream...');
+      try {
+        const reader = stream.getReader();
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            break;
+          }
+
+          chunkCount++;
+          console.log(
+            `📦 RewriterManager: Chunk ${chunkCount} (${value.length} chars)`,
+          );
+
+          if (signal?.aborted) {
+            console.warn('⚠️ Signal aborted during streaming');
+            throw new Error('Streaming cancelled by user');
+          }
+
+          result += value;
+          onChunk(value);
         }
-
-        result += value;
-        onChunk(value);
+        console.log('✅ Stream iteration completed');
+      } catch (streamError) {
+        console.error('❌ Error during stream iteration:', streamError);
+        throw streamError;
       }
+
+      console.log(
+        `✅ RewriterManager: Streaming complete (${chunkCount} chunks, ${result.length} total chars)`,
+      );
+      this.setState('ready');
+      this.updateMetadata({ lastUsedAt: Date.now(), usageCount: 1 });
 
       return result;
     } catch (error: any) {
-      if (error?.name === 'AbortError') {
-        throw new Error('Rewrite operation was cancelled');
+      console.error('❌ RewriterManager: Streaming error:', error);
+      console.error('Signal aborted at error time:', signal?.aborted);
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+      });
+
+      this.setState('error');
+
+      if (signal?.aborted || error?.name === 'AbortError') {
+        throw new Error('Rewrite operation cancelled by user');
       }
-      throw error;
+
+      throw new Error(
+        `Streaming rewrite failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   }
 
@@ -229,6 +300,39 @@ export class RewriterManager extends BaseWritingManager<
     }
 
     return results;
+  }
+
+  /**
+   * Check if Rewriter API is supported
+   */
+  static isSupported(): boolean {
+    return ChromeAIRewriterService.isSupported();
+  }
+
+  /**
+   * Get recommended configuration for use case
+   */
+  static getRecommendedConfig(
+    useCase:
+      | 'email-professional'
+      | 'email-casual'
+      | 'blog'
+      | 'social'
+      | 'documentation'
+      | 'simplify'
+      | 'formal',
+  ): RewriterConfig {
+    const options = ChromeAIRewriterService.getRecommendedConfig(useCase);
+
+    const config: RewriterConfig = {
+      tone: options.tone || 'as-is',
+      format: options.format || 'as-is',
+      length: options.length || 'as-is',
+      outputLanguage: options.outputLanguage || 'en',
+      sharedContext: '',
+    };
+
+    return config;
   }
 }
 

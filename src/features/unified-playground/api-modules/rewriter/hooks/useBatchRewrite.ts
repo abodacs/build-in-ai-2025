@@ -304,7 +304,7 @@ export function useBatchRewrite(
         };
       }
     },
-    [config],
+    [],
   );
 
   /**

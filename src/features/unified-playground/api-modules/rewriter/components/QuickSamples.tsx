@@ -8,7 +8,7 @@
  */
 
 import { useState } from 'react';
-import { Sparkles, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { Sparkles, ChevronDown, FileText } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -112,10 +112,15 @@ export function QuickSamples({
     <Card className={cn('w-full', className)}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
+          <CollapsibleTrigger
+            className="flex items-start justify-between gap-4 w-full cursor-pointer hover:bg-accent/50 rounded-md px-2 py-1 -mx-2 -my-1 transition-all duration-200 group"
+            aria-label={
+              isOpen ? 'Hide quick start samples' : 'Show quick start samples'
+            }
+          >
+            <div className="flex-1 text-left">
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 group-hover:text-amber-600 transition-colors" />
                 Quick Start Samples
               </CardTitle>
               <CardDescription className="text-xs sm:text-sm mt-1">
@@ -123,19 +128,14 @@ export function QuickSamples({
               </CardDescription>
             </div>
 
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                {isOpen ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-                <span className="sr-only">
-                  {isOpen ? 'Collapse' : 'Expand'} samples
-                </span>
-              </Button>
-            </CollapsibleTrigger>
-          </div>
+            <ChevronDown
+              className={cn(
+                'h-5 w-5 text-muted-foreground transition-transform duration-200 shrink-0 mt-1',
+                'group-hover:text-foreground',
+                isOpen && 'rotate-180',
+              )}
+            />
+          </CollapsibleTrigger>
         </CardHeader>
 
         <CollapsibleContent>
