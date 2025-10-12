@@ -261,12 +261,15 @@ export function QuickSamplesCard({
     <Card className={cn('border-slate-200 bg-slate-50/50', className)}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CardHeader className="pb-3">
-          <CollapsibleTrigger className="flex items-center justify-between w-full cursor-pointer hover:text-slate-700 transition-colors group">
+          <CollapsibleTrigger
+            className="flex items-center justify-between w-full cursor-pointer hover:bg-accent/50 rounded-md px-2 py-1 -mx-2 -my-1 transition-all duration-200 group"
+            aria-label={isOpen ? 'Hide quick samples' : 'Show quick samples'}
+          >
             <div className="flex items-center gap-2">
-              <span className="text-slate-600 group-hover:text-slate-700">
+              <span className="text-slate-600 group-hover:text-slate-700 transition-colors">
                 📝
               </span>
-              <CardTitle className="text-sm font-medium text-slate-600 underline underline-offset-2 group-hover:text-slate-700">
+              <CardTitle className="text-sm font-medium text-slate-600 group-hover:text-slate-700 transition-colors">
                 {isOpen ? 'Hide' : 'Show'} Quick Samples
               </CardTitle>
               <Badge variant="secondary" className="text-xs">
@@ -275,8 +278,8 @@ export function QuickSamplesCard({
             </div>
             <ChevronDown
               className={cn(
-                'h-4 w-4 text-slate-600 transition-transform',
-                isOpen && 'transform rotate-180',
+                'h-4 w-4 text-slate-600 group-hover:text-slate-700 transition-transform duration-200',
+                isOpen && 'rotate-180',
               )}
             />
           </CollapsibleTrigger>

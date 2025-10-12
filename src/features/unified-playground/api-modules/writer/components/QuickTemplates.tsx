@@ -109,11 +109,16 @@ export function QuickTemplates({
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <Card className={cn('w-full', className)}>
         <CardHeader>
-          <CollapsibleTrigger asChild>
-            <div className="flex items-center justify-between cursor-pointer group">
+          <CollapsibleTrigger
+            asChild
+            aria-label={
+              isOpen ? 'Hide quick templates' : 'Show quick templates'
+            }
+          >
+            <div className="flex items-center justify-between cursor-pointer group w-full hover:bg-accent/50 rounded-md px-2 py-1 -mx-2 -my-1 transition-all duration-200">
               <div className="flex-1">
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" />
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 group-hover:text-yellow-600 transition-colors" />
                   Quick Templates
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm mt-1">
@@ -122,7 +127,7 @@ export function QuickTemplates({
               </div>
               <ChevronDown
                 className={cn(
-                  'w-5 h-5 text-muted-foreground transition-transform duration-200 ml-2',
+                  'w-5 h-5 text-muted-foreground transition-transform duration-200 ml-2 shrink-0',
                   'group-hover:text-foreground',
                   isOpen && 'rotate-180',
                 )}

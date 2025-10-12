@@ -110,8 +110,15 @@ export function SummarizerConfig({
     <Card className={cn('border-slate-200 shadow-sm', className)}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CollapsibleTrigger className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 transition-colors group px-2 py-1 -ml-2 rounded">
+          <div className="flex items-center justify-between gap-2">
+            <CollapsibleTrigger
+              className="flex items-center gap-2 cursor-pointer hover:bg-slate-50 transition-all duration-200 group px-2 py-1 -ml-2 rounded flex-1"
+              aria-label={
+                isOpen
+                  ? 'Hide configuration options'
+                  : 'Show configuration options'
+              }
+            >
               <Settings className="w-4 h-4 text-slate-600 group-hover:text-slate-700 transition-colors" />
               <span className="text-sm font-medium text-slate-700">
                 {isOpen ? 'Hide' : 'Show'} Configuration

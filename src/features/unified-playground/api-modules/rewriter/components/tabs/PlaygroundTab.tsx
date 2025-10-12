@@ -79,6 +79,11 @@ export function PlaygroundTab() {
    */
   const handleRewrite = async () => {
     if (!inputText.trim()) {
+      showToast({
+        variant: 'error',
+        message: 'Input required',
+        description: 'Please enter some text to rewrite',
+      });
       return;
     }
 
@@ -86,8 +91,10 @@ export function PlaygroundTab() {
     // Pass context (optional) for task-specific guidance
     await actions.rewriteStreaming(
       inputText,
-      () => {
+      (chunk) => {
         // Chunk received - UI updates automatically via hook
+        // The chunk parameter is available here if needed for custom handling
+        console.log('Streaming chunk received:', chunk.length, 'chars');
       },
       context || undefined, // Pass context if provided
     );

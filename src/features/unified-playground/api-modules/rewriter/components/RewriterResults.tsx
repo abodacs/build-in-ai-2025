@@ -131,6 +131,9 @@ export function RewriterResults({
     return calculateDiffResult(originalText, content);
   }, [originalText, content]);
 
+  console.log('Diff Result::::content', content); // Debug log
+  console.log('Diff Result::::originalText', originalText); // Debug log
+
   // Don't show anything if no content yet
   if (!content && !isRewriting) {
     return null;

@@ -385,6 +385,14 @@ export function PlaygroundTab({
 
   return (
     <div className={cn('space-y-6', className)}>
+      {/* Quick Samples */}
+      {onSampleSelect && (
+        <QuickSamplesCard
+          onSampleSelect={onSampleSelect}
+          selectedSampleId={selectedSampleId}
+        />
+      )}
+
       {/* Configuration */}
       <ErrorBoundary>
         <SummarizerConfig
@@ -395,14 +403,6 @@ export function PlaygroundTab({
           onViewCode={() => setIsCodeModalOpen(true)}
         />
       </ErrorBoundary>
-
-      {/* Quick Samples */}
-      {onSampleSelect && (
-        <QuickSamplesCard
-          onSampleSelect={onSampleSelect}
-          selectedSampleId={selectedSampleId}
-        />
-      )}
 
       {/* Input */}
       <ErrorBoundary>

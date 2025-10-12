@@ -276,6 +276,14 @@ export function PlaygroundTab() {
         </Alert>
       )}
 
+      {/* Quick Templates */}
+      <QuickTemplates
+        onSelectTemplate={handleSelectTemplate}
+        onConfigUpdate={actions.updateConfig}
+        disabled={isWriting}
+        defaultCollapsed={true}
+      />
+
       {/* Configuration */}
       <WriterConfigComponent
         config={config}
@@ -283,14 +291,6 @@ export function PlaygroundTab() {
         disabled={isWriting}
         defaultCollapsed={true}
         onViewCode={() => setIsCodeModalOpen(true)}
-      />
-
-      {/* Quick Templates */}
-      <QuickTemplates
-        onSelectTemplate={handleSelectTemplate}
-        onConfigUpdate={actions.updateConfig}
-        disabled={isWriting}
-        defaultCollapsed={true}
       />
 
       {/* Prompt Input */}
