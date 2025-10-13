@@ -34,6 +34,7 @@ const mockRewriterManager = {
   getInstance: vi.fn(),
   updateConfig: vi.fn(),
   cleanup: vi.fn(),
+  destroy: vi.fn(), // ✅ CRITICAL FIX: Add destroy() method to mock
   rewrite: vi.fn(),
   rewriteStreaming: vi.fn(),
 };

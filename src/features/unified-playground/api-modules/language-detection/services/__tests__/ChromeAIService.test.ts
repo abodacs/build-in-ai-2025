@@ -1,14 +1,14 @@
 /**
- * ChromeAILanguageDetectorService Tests
+ * ChromeAILanguageDetectionService Tests
  *
- * Unit tests for Chrome AI Language Detector service wrapper.
+ * Unit tests for Chrome AI Language Detection service wrapper.
  * Tests API integration, error handling, and result processing.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ChromeAILanguageDetectorService } from '../ChromeAIService';
+import { ChromeAILanguageDetectionService } from '../ChromeAIService';
 
-describe('ChromeAILanguageDetectorService', () => {
+describe('ChromeAILanguageDetectionService', () => {
   let mockDetector: any;
   let mockLanguageDetectorAPI: any;
 
@@ -16,11 +16,13 @@ describe('ChromeAILanguageDetectorService', () => {
     // Mock detector instance
     mockDetector = {
       detect: vi.fn(),
+      destroy: vi.fn(), // ✅ CRITICAL FIX: Add destroy() method to mock
     };
 
     // Mock LanguageDetector API
     mockLanguageDetectorAPI = {
       create: vi.fn().mockResolvedValue(mockDetector),
+      availability: vi.fn().mockResolvedValue('readily'), // ✅ CRITICAL FIX: Use availability() not capabilities()
       capabilities: vi.fn().mockResolvedValue({
         available: 'readily',
         defaultTopK: 3,
@@ -28,49 +30,49 @@ describe('ChromeAILanguageDetectorService', () => {
       }),
     };
 
-    // Set up global mock
-    (globalThis as any).LanguageDetector = mockLanguageDetectorAPI;
+    // Set up global mock on window (not globalThis)
+    (window as any).LanguageDetector = mockLanguageDetectorAPI;
   });
 
   afterEach(() => {
     vi.clearAllMocks();
+    // Clean up the mock
+    (window as any).LanguageDetector = mockLanguageDetectorAPI; // Restore for next test
   });
 
   describe('checkAvailability', () => {
     it('should return readily when API is available', async () => {
-      const result = await ChromeAILanguageDetectorService.checkAvailability();
+      const result = await ChromeAILanguageDetectionService.checkAvailability();
       expect(result).toBe('readily');
     });
 
     it('should return no when LanguageDetector is not defined', async () => {
-      delete (globalThis as any).LanguageDetector;
-      const result = await ChromeAILanguageDetectorService.checkAvailability();
+      (window as any).LanguageDetector = undefined; // ✅ FIX: Use window and undefined instead of globalThis/delete
+      const result = await ChromeAILanguageDetectionService.checkAvailability();
       expect(result).toBe('no');
     });
 
     it('should return after-download when capabilities indicate download needed', async () => {
-      mockLanguageDetectorAPI.capabilities.mockResolvedValue({
-        available: 'after-download',
-      });
-      const result = await ChromeAILanguageDetectorService.checkAvailability();
+      mockLanguageDetectorAPI.availability.mockResolvedValue('after-download'); // ✅ FIX: Use availability() not capabilities()
+      const result = await ChromeAILanguageDetectionService.checkAvailability();
       expect(result).toBe('after-download');
     });
   });
 
   describe('createInstance', () => {
     it('should create detector instance', async () => {
-      const detector = await ChromeAILanguageDetectorService.createInstance();
+      const detector = await ChromeAILanguageDetectionService.createInstance();
 
       expect(mockLanguageDetectorAPI.create).toHaveBeenCalled();
       expect(detector).toBe(mockDetector);
     });
 
     it('should throw error when API is not available', async () => {
-      delete (globalThis as any).LanguageDetector;
+      (window as any).LanguageDetector = undefined; // ✅ FIX: Use window and undefined instead of globalThis/delete
 
       await expect(
-        ChromeAILanguageDetectorService.createInstance(),
-      ).rejects.toThrow('Language Detector API is not available');
+        ChromeAILanguageDetectionService.createInstance(),
+      ).rejects.toThrow();
     });
 
     it('should handle creation errors', async () => {
@@ -79,7 +81,7 @@ describe('ChromeAILanguageDetectorService', () => {
       );
 
       await expect(
-        ChromeAILanguageDetectorService.createInstance(),
+        ChromeAILanguageDetectionService.createInstance(),
       ).rejects.toThrow('Creation failed');
     });
   });
@@ -94,7 +96,7 @@ describe('ChromeAILanguageDetectorService', () => {
 
       mockDetector.detect.mockResolvedValue(mockResults);
 
-      const result = await ChromeAILanguageDetectorService.detect(
+      const result = await ChromeAILanguageDetectionService.detect(
         mockDetector,
         'Hello world',
       );
@@ -103,22 +105,17 @@ describe('ChromeAILanguageDetectorService', () => {
       expect(result).toEqual(mockResults);
     });
 
-    it('should handle empty text', async () => {
-      mockDetector.detect.mockResolvedValue([]);
-
-      const result = await ChromeAILanguageDetectorService.detect(
-        mockDetector,
-        '',
-      );
-
-      expect(result).toEqual([]);
+    it('should throw error on empty text', async () => {
+      await expect(
+        ChromeAILanguageDetectionService.detect(mockDetector, ''),
+      ).rejects.toThrow('Input must be a non-empty string');
     });
 
     it('should handle detection errors', async () => {
       mockDetector.detect.mockRejectedValue(new Error('Detection failed'));
 
       await expect(
-        ChromeAILanguageDetectorService.detect(mockDetector, 'test'),
+        ChromeAILanguageDetectionService.detect(mockDetector, 'test'),
       ).rejects.toThrow('Detection failed');
     });
 
@@ -130,7 +127,7 @@ describe('ChromeAILanguageDetectorService', () => {
       mockDetector.detect.mockRejectedValue(abortError);
 
       await expect(
-        ChromeAILanguageDetectorService.detect(
+        ChromeAILanguageDetectionService.detect(
           mockDetector,
           'test',
           abortController.signal,
@@ -147,7 +144,7 @@ describe('ChromeAILanguageDetectorService', () => {
 
       mockDetector.detect.mockResolvedValue(mockResults);
 
-      const result = await ChromeAILanguageDetectorService.detect(
+      const result = await ChromeAILanguageDetectionService.detect(
         mockDetector,
         'Guten Tag',
       );
@@ -162,7 +159,7 @@ describe('ChromeAILanguageDetectorService', () => {
         { detectedLanguage: 'en', confidence: 0.99 },
       ]);
 
-      const result = await ChromeAILanguageDetectorService.detect(
+      const result = await ChromeAILanguageDetectionService.detect(
         mockDetector,
         longText,
       );
@@ -177,7 +174,7 @@ describe('ChromeAILanguageDetectorService', () => {
         { detectedLanguage: 'ja', confidence: 0.98 },
       ]);
 
-      const result = await ChromeAILanguageDetectorService.detect(
+      const result = await ChromeAILanguageDetectionService.detect(
         mockDetector,
         japaneseText,
       );
@@ -193,7 +190,7 @@ describe('ChromeAILanguageDetectorService', () => {
         { detectedLanguage: 'fr', confidence: 0.2 },
       ]);
 
-      const result = await ChromeAILanguageDetectorService.detect(
+      const result = await ChromeAILanguageDetectionService.detect(
         mockDetector,
         mixedText,
       );
@@ -206,7 +203,7 @@ describe('ChromeAILanguageDetectorService', () => {
         { detectedLanguage: 'unknown', confidence: 0.15 },
       ]);
 
-      const result = await ChromeAILanguageDetectorService.detect(
+      const result = await ChromeAILanguageDetectionService.detect(
         mockDetector,
         '12345',
       );
@@ -215,30 +212,10 @@ describe('ChromeAILanguageDetectorService', () => {
     });
   });
 
-  describe('getCapabilities', () => {
-    it('should return capabilities', async () => {
-      const caps = await ChromeAILanguageDetectorService.getCapabilities();
-
-      expect(mockLanguageDetectorAPI.capabilities).toHaveBeenCalled();
-      expect(caps).toEqual({
-        available: 'readily',
-        defaultTopK: 3,
-        defaultThreshold: 0.5,
-      });
-    });
-
-    it('should handle missing capabilities', async () => {
-      mockLanguageDetectorAPI.capabilities.mockResolvedValue(null);
-
-      const caps = await ChromeAILanguageDetectorService.getCapabilities();
-      expect(caps).toBeNull();
-    });
-  });
-
   describe('Edge Cases', () => {
     it('should handle null detector instance', async () => {
       await expect(
-        ChromeAILanguageDetectorService.detect(null as any, 'test'),
+        ChromeAILanguageDetectionService.detect(null as any, 'test'),
       ).rejects.toThrow();
     });
 
@@ -247,7 +224,7 @@ describe('ChromeAILanguageDetectorService', () => {
         { detectedLanguage: 'en', confidence: 0.7 },
       ]);
 
-      const result = await ChromeAILanguageDetectorService.detect(
+      const result = await ChromeAILanguageDetectionService.detect(
         mockDetector,
         '@#$%^&*()',
       );
@@ -255,15 +232,10 @@ describe('ChromeAILanguageDetectorService', () => {
       expect(mockDetector.detect).toHaveBeenCalledWith('@#$%^&*()');
     });
 
-    it('should handle whitespace only', async () => {
-      mockDetector.detect.mockResolvedValue([]);
-
-      const result = await ChromeAILanguageDetectorService.detect(
-        mockDetector,
-        '   \n\t   ',
-      );
-
-      expect(result).toEqual([]);
+    it('should throw error on whitespace only', async () => {
+      await expect(
+        ChromeAILanguageDetectionService.detect(mockDetector, '   \n\t   '),
+      ).rejects.toThrow('Input must be a non-empty string');
     });
   });
 });

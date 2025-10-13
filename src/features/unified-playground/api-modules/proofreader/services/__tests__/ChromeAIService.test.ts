@@ -24,9 +24,12 @@ describe('ChromeAIProofreaderService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Setup Proofreader API mock
-    (globalThis as any).window = globalThis;
-    (globalThis as any).Proofreader = mockAPI;
+    // Setup Proofreader API mock on window with configurable property
+    Object.defineProperty(window, 'Proofreader', {
+      writable: true,
+      configurable: true,
+      value: mockAPI,
+    });
 
     // Default mock responses
     mockAPI.availability.mockResolvedValue('readily');
@@ -34,7 +37,13 @@ describe('ChromeAIProofreaderService', () => {
   });
 
   afterEach(() => {
-    delete (globalThis as any).Proofreader;
+    // Clean up by deleting the property
+    try {
+      delete (window as any).Proofreader;
+    } catch (e) {
+      // Fallback if delete doesn't work
+      (window as any).Proofreader = undefined;
+    }
   });
 
   // ==========================================================================
@@ -47,7 +56,7 @@ describe('ChromeAIProofreaderService', () => {
     });
 
     it('should return false when Proofreader API does not exist', () => {
-      delete (globalThis as any).Proofreader;
+      delete (window as any).Proofreader;
 
       expect(ChromeAIProofreaderService.isSupported()).toBe(false);
     });
@@ -76,7 +85,7 @@ describe('ChromeAIProofreaderService', () => {
     });
 
     it('should return no when API is not supported', async () => {
-      delete (globalThis as any).Proofreader;
+      delete (window as any).Proofreader;
 
       const result = await ChromeAIProofreaderService.checkAvailability();
 
@@ -202,7 +211,7 @@ describe('ChromeAIProofreaderService', () => {
     });
 
     it('should throw when API is not supported', async () => {
-      delete (globalThis as any).Proofreader;
+      delete (window as any).Proofreader;
 
       await expect(ChromeAIProofreaderService.createInstance()).rejects.toThrow(
         /not supported/,

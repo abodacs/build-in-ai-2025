@@ -10,14 +10,19 @@ import { LanguageDetectionMain } from '../components/tabs/PlaygroundTab';
 
 // Mock Chrome AI API
 const mockDetect = vi.fn();
-const mockDetector = { detect: mockDetect };
+const mockDetector = {
+  detect: mockDetect,
+  destroy: vi.fn(), // ✅ CRITICAL FIX: Add destroy() method
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
 
   // Setup Chrome AI mock
-  (globalThis as any).LanguageDetector = {
+  (window as any).LanguageDetector = {
+    // ✅ FIX: Use window not globalThis
     create: vi.fn().mockResolvedValue(mockDetector),
+    availability: vi.fn().mockResolvedValue('readily'), // ✅ FIX: Add availability()
     capabilities: vi.fn().mockResolvedValue({
       available: 'readily',
       defaultTopK: 3,
@@ -226,7 +231,7 @@ describe('Language Detection Integration', () => {
     });
 
     it('should handle API unavailable', async () => {
-      delete (globalThis as any).LanguageDetector;
+      (window as any).LanguageDetector = undefined; // ✅ FIX: Use window and undefined instead of globalThis/delete
 
       render(<LanguageDetectionMain />);
 

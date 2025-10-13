@@ -110,6 +110,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
     "@eslint/eslintrc": "^3",
@@ -129,6 +130,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "@vitest/coverage-v8": "^2.1.8",
     "@vitest/ui": "^2.1.8",
+    "axe-core": "^4.11.0",
     "eslint": "^9",
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-react": "^7.37.5",
@@ -151,6 +153,7 @@
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-compression2": "^2.2.1",
     "vitest": "^2.1.8",
+    "vitest-axe": "^0.1.0",
     "wrangler": "^4.40.2"
   }
 }

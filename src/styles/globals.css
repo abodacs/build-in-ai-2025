@@ -52,6 +52,13 @@
 }
 
 @layer base {
+  :root {
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   * {
     border-color: hsl(var(--color-border));
   }
@@ -63,9 +70,6 @@
       'rlig' 1,
       'calt' 1;
     font-variant-ligatures: common-ligatures;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
     background-image: radial-gradient(
       circle at 1px 1px,
       rgba(0, 0, 0, 0.08) 1px,
