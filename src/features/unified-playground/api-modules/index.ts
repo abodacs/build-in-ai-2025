@@ -59,6 +59,8 @@ import { SummarizerPlayground } from './summarizer';
 import { TranslatorPlayground } from './translator';
 import { PlaygroundTab as WriterPlayground } from './writer/components/tabs';
 import { RewriterMain as RewriterPlayground } from './rewriter/components';
+import { ProofreaderMain } from './proofreader/components/tabs/PlaygroundTab';
+import { LanguageDetectionMain } from './language-detection/components/tabs/PlaygroundTab';
 
 /**
  * Registry of all available API modules
@@ -105,10 +107,19 @@ export const API_MODULES: Record<string, APIModule> = {
   proofreader: {
     id: 'proofreader',
     name: 'Proofreader API',
-    description: 'Grammar and writing improvement',
+    description: 'Grammar and writing improvement with correction suggestions',
     category: 'text',
-    PlaygroundComponent: () => null, // TODO: Implement
-    available: false,
+    PlaygroundComponent: ProofreaderMain,
+    available: true,
+  },
+
+  'language-detection': {
+    id: 'language-detection',
+    name: 'Language Detection',
+    description: 'Automatic language identification with confidence scores',
+    category: 'language',
+    PlaygroundComponent: LanguageDetectionMain,
+    available: true,
   },
 
   prompt: {
@@ -116,16 +127,7 @@ export const API_MODULES: Record<string, APIModule> = {
     name: 'Prompt API',
     description: 'Flexible AI prompting with multimodal support',
     category: 'multimodal',
-    PlaygroundComponent: () => null, // TODO: Implement
-    available: false,
-  },
-
-  'language-detection': {
-    id: 'language-detection',
-    name: 'Language Detection',
-    description: 'Automatic language identification',
-    category: 'language',
-    PlaygroundComponent: () => null, // TODO: Implement
+    PlaygroundComponent: () => null, // TODO: Implement Week 6
     available: false,
   },
 };

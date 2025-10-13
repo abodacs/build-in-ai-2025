@@ -1,0 +1,372 @@
+/**
+ * Proofreader Inline Highlights Styles
+ *
+ * CSS Custom Highlights API styling for error visualization.
+ * Based on Google Chrome Labs web-ai-demos implementation.
+ *
+ * Browser Support: Chrome 105+
+ * @see https://developer.mozilla.org/en-US/docs/Web/CSS/::highlight
+ */
+
+/* ============================================================================
+ * Correction Type Highlights
+ * ============================================================================ */
+
+/**
+ * Grammar errors - Critical (red underline)
+ */
+::highlight(proofreader-grammar) {
+  text-decoration: wavy underline;
+  text-decoration-color: rgb(239, 68, 68); /* red-500 */
+  text-decoration-thickness: 2px;
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/**
+ * Spelling errors - Critical (purple/yellow underline)
+ */
+::highlight(proofreader-spelling) {
+  text-decoration: wavy underline;
+  text-decoration-color: light-dark(
+    rgb(168, 85, 247),
+    rgb(250, 204, 21)
+  ); /* purple-500 / yellow-400 */
+  text-decoration-thickness: 2px;
+  background-color: light-dark(
+    rgba(168, 85, 247, 0.1),
+    rgba(250, 204, 21, 0.15)
+  );
+}
+
+/**
+ * Punctuation errors - Important (orange underline)
+ */
+::highlight(proofreader-punctuation) {
+  text-decoration: wavy underline;
+  text-decoration-color: rgb(249, 115, 22); /* orange-500 */
+  text-decoration-thickness: 2px;
+  background-color: rgba(249, 115, 22, 0.1);
+}
+
+/**
+ * Style suggestions - Moderate (blue underline)
+ */
+::highlight(proofreader-style) {
+  text-decoration: wavy underline;
+  text-decoration-color: rgb(59, 130, 246); /* blue-500 */
+  text-decoration-thickness: 1.5px;
+  background-color: rgba(59, 130, 246, 0.08);
+}
+
+/**
+ * Clarity improvements - Moderate (green/teal underline)
+ */
+::highlight(proofreader-clarity) {
+  text-decoration: wavy underline;
+  text-decoration-color: rgb(16, 185, 129); /* green-500 */
+  text-decoration-thickness: 1.5px;
+  background-color: rgba(16, 185, 129, 0.08);
+}
+
+/**
+ * Fallback for other/unknown correction types
+ */
+::highlight(proofreader-other) {
+  text-decoration: wavy underline;
+  text-decoration-color: rgb(107, 114, 128); /* gray-500 */
+  text-decoration-thickness: 1.5px;
+  background-color: rgba(107, 114, 128, 0.08);
+}
+
+/* ============================================================================
+ * Highlighted Text Editor Styles
+ * ============================================================================ */
+
+/**
+ * Content-editable container
+ */
+.proofreader-editor {
+  display: block;
+  width: 100%;
+  min-height: 200px;
+  padding: 0.75rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family:
+    ui-monospace, SFMono-Regular, 'SF Mono', Monaco, 'Cascadia Code',
+    'Roboto Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.proofreader-editor:focus {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+}
+
+.proofreader-editor:disabled,
+.proofreader-editor[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: hsl(var(--muted));
+}
+
+.proofreader-editor::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+/**
+ * Empty state placeholder
+ */
+.proofreader-editor:empty:before {
+  content: attr(data-placeholder);
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+}
+
+/**
+ * Highlight cursor interaction
+ */
+.proofreader-editor [data-correction-id] {
+  cursor: pointer;
+  position: relative;
+}
+
+.proofreader-editor [data-correction-id]:hover {
+  opacity: 0.8;
+}
+
+/* ============================================================================
+ * Inline Correction Popover
+ * ============================================================================ */
+
+/**
+ * Popover container
+ */
+.proofreader-popover {
+  position: absolute;
+  z-index: 50;
+  min-width: 300px;
+  max-width: 400px;
+  padding: 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  animation: proofreader-popover-in 0.15s ease-out;
+}
+
+@keyframes proofreader-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/**
+ * Popover header
+ */
+.proofreader-popover-header {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.proofreader-popover-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.proofreader-popover-close {
+  padding: 0.25rem;
+  border: none;
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s;
+}
+
+.proofreader-popover-close:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+/**
+ * Popover content
+ */
+.proofreader-popover-content {
+  padding: 1rem;
+}
+
+.proofreader-popover-section {
+  margin-bottom: 0.75rem;
+}
+
+.proofreader-popover-section:last-child {
+  margin-bottom: 0;
+}
+
+.proofreader-popover-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.proofreader-popover-text {
+  font-size: 0.875rem;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  background-color: hsl(var(--muted));
+}
+
+.proofreader-popover-text-original {
+  text-decoration: line-through;
+  color: hsl(var(--destructive));
+}
+
+.proofreader-popover-text-suggestion {
+  font-weight: 500;
+  color: hsl(var(--primary));
+}
+
+.proofreader-popover-explanation {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.5;
+}
+
+/**
+ * Popover actions
+ */
+.proofreader-popover-actions {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid hsl(var(--border));
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ============================================================================
+ * Legend / Key
+ * ============================================================================ */
+
+/**
+ * Correction type legend
+ */
+.proofreader-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.proofreader-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.proofreader-legend-color {
+  width: 20px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.proofreader-legend-color-grammar {
+  background-color: rgb(239, 68, 68);
+}
+
+.proofreader-legend-color-spelling {
+  background-color: light-dark(rgb(168, 85, 247), rgb(250, 204, 21));
+}
+
+.proofreader-legend-color-punctuation {
+  background-color: rgb(249, 115, 22);
+}
+
+.proofreader-legend-color-style {
+  background-color: rgb(59, 130, 246);
+}
+
+.proofreader-legend-color-clarity {
+  background-color: rgb(16, 185, 129);
+}
+
+/* ============================================================================
+ * Dark Mode Adjustments
+ * ============================================================================ */
+
+@media (prefers-color-scheme: dark) {
+  ::highlight(proofreader-grammar) {
+    text-decoration-color: rgb(248, 113, 113); /* red-400 */
+    background-color: rgba(248, 113, 113, 0.12);
+  }
+
+  ::highlight(proofreader-punctuation) {
+    text-decoration-color: rgb(251, 146, 60); /* orange-400 */
+    background-color: rgba(251, 146, 60, 0.12);
+  }
+
+  ::highlight(proofreader-style) {
+    text-decoration-color: rgb(96, 165, 250); /* blue-400 */
+    background-color: rgba(96, 165, 250, 0.1);
+  }
+
+  ::highlight(proofreader-clarity) {
+    text-decoration-color: rgb(52, 211, 153); /* green-400 */
+    background-color: rgba(52, 211, 153, 0.1);
+  }
+}
+
+/* ============================================================================
+ * Accessibility
+ * ============================================================================ */
+
+/**
+ * High contrast mode support
+ */
+@media (prefers-contrast: high) {
+  ::highlight(proofreader-grammar),
+  ::highlight(proofreader-spelling),
+  ::highlight(proofreader-punctuation),
+  ::highlight(proofreader-style),
+  ::highlight(proofreader-clarity),
+  ::highlight(proofreader-other) {
+    text-decoration-thickness: 3px;
+    background-color: transparent;
+  }
+}
+
+/**
+ * Reduced motion
+ */
+@media (prefers-reduced-motion: reduce) {
+  .proofreader-popover {
+    animation: none;
+  }
+
+  .proofreader-editor,
+  .proofreader-popover-close {
+    transition: none;
+  }
+}
