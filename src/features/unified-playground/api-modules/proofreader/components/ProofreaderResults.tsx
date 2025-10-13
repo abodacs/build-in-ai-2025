@@ -1,0 +1,216 @@
+/**
+ * ProofreaderResults Component
+ *
+ * Displays proofreading results with corrections and statistics.
+ *
+ * @module proofreader/components/ProofreaderResults
+ */
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { CheckCircle2, Download, Copy, RefreshCw } from 'lucide-react';
+import { CorrectionCard } from './CorrectionCard';
+import type { ProofreadCorrection, CorrectionState } from '../types';
+import { calculateCorrectionStats } from '../types';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface ProofreaderResultsProps {
+  /** Original text */
+  originalText: string;
+
+  /** Corrected text */
+  correctedText: string;
+
+  /** All corrections */
+  corrections: ProofreadCorrection[];
+
+  /** Correction states */
+  correctionStates: CorrectionState[];
+
+  /** Apply correction handler */
+  onApplyCorrection: (index: number) => void;
+
+  /** Ignore correction handler */
+  onIgnoreCorrection: (index: number) => void;
+
+  /** Apply all corrections handler */
+  onApplyAll: () => void;
+
+  /** Reset handler */
+  onReset: () => void;
+
+  /** Is disabled */
+  disabled?: boolean;
+
+  /** Additional CSS classes */
+  className?: string;
+}
+
+// ============================================================================
+// Component
+// ============================================================================
+
+/**
+ * ProofreaderResults component
+ */
+export function ProofreaderResults({
+  correctedText,
+  corrections,
+  correctionStates,
+  onApplyCorrection,
+  onIgnoreCorrection,
+  onApplyAll,
+  onReset,
+  disabled = false,
+  className = '',
+}: ProofreaderResultsProps) {
+  const stats = calculateCorrectionStats(corrections, correctionStates);
+  const hasPending = correctionStates.some((s) => s.state === 'pending');
+
+  // Download corrected text
+  const handleDownload = () => {
+    const blob = new Blob([correctedText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'corrected-text.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Copy corrected text
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(correctedText);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+
+  if (corrections.length === 0) {
+    return (
+      <Card className={className}>
+        <CardContent className="py-12 text-center">
+          <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-primary" />
+          <h3 className="text-lg font-semibold mb-2">No Corrections Needed!</h3>
+          <p className="text-muted-foreground">
+            Your text looks great. No errors or improvements found.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className={`space-y-4 ${className}`}>
+      {/* Statistics */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Corrections Found</CardTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={onApplyAll}
+                disabled={!hasPending || disabled}
+                size="sm"
+              >
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Apply All
+              </Button>
+              <Button
+                onClick={onReset}
+                disabled={disabled}
+                size="sm"
+                variant="outline"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Reset
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline">Total: {stats.total}</Badge>
+            <Badge variant="outline">Applied: {stats.applied}</Badge>
+            <Badge variant="outline">Ignored: {stats.ignored}</Badge>
+            {stats.byType.grammar > 0 && (
+              <Badge variant="destructive">
+                Grammar: {stats.byType.grammar}
+              </Badge>
+            )}
+            {stats.byType.spelling > 0 && (
+              <Badge variant="destructive">
+                Spelling: {stats.byType.spelling}
+              </Badge>
+            )}
+            {stats.byType.punctuation > 0 && (
+              <Badge variant="default">
+                Punctuation: {stats.byType.punctuation}
+              </Badge>
+            )}
+            {stats.byType.style > 0 && (
+              <Badge variant="secondary">Style: {stats.byType.style}</Badge>
+            )}
+            {stats.byType.clarity > 0 && (
+              <Badge variant="secondary">Clarity: {stats.byType.clarity}</Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Corrected Text */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Corrected Text</CardTitle>
+            <div className="flex items-center gap-2">
+              <Button onClick={handleCopy} size="sm" variant="outline">
+                <Copy className="mr-2 h-4 w-4" />
+                Copy
+              </Button>
+              <Button onClick={handleDownload} size="sm" variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Download
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            value={correctedText}
+            readOnly
+            className="min-h-[200px] font-mono text-sm"
+          />
+        </CardContent>
+      </Card>
+
+      {/* Correction Cards */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium">Individual Corrections</h3>
+        {correctionStates.map((state) => (
+          <CorrectionCard
+            key={state.index}
+            correction={state.correction}
+            index={state.index}
+            state={state.state}
+            onApply={() => onApplyCorrection(state.index)}
+            onIgnore={() => onIgnoreCorrection(state.index)}
+            disabled={disabled}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Export
+// ============================================================================
+
+export default ProofreaderResults;
