@@ -61,6 +61,7 @@ import { PlaygroundTab as WriterPlayground } from './writer/components/tabs';
 import { RewriterMain as RewriterPlayground } from './rewriter/components';
 import { ProofreaderMain } from './proofreader/components/tabs/PlaygroundTab';
 import { LanguageDetectionMain } from './language-detection/components/tabs/PlaygroundTab';
+import { PlaygroundTab as PromptPlayground } from './prompt/components/tabs/PlaygroundTab';
 
 /**
  * Registry of all available API modules
@@ -127,8 +128,8 @@ export const API_MODULES: Record<string, APIModule> = {
     name: 'Prompt API',
     description: 'Flexible AI prompting with multimodal support',
     category: 'multimodal',
-    PlaygroundComponent: () => null, // TODO: Implement Week 6
-    available: false,
+    PlaygroundComponent: PromptPlayground,
+    available: true,
   },
 };
 

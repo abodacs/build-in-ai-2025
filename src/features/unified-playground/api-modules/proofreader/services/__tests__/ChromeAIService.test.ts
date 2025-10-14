@@ -24,12 +24,8 @@ describe('ChromeAIProofreaderService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Setup Proofreader API mock on window with configurable property
-    Object.defineProperty(window, 'Proofreader', {
-      writable: true,
-      configurable: true,
-      value: mockAPI,
-    });
+    // ✅ CRITICAL FIX: Use direct assignment like Language Detection tests
+    (window as any).Proofreader = mockAPI;
 
     // Default mock responses
     mockAPI.availability.mockResolvedValue('readily');
@@ -37,13 +33,9 @@ describe('ChromeAIProofreaderService', () => {
   });
 
   afterEach(() => {
-    // Clean up by deleting the property
-    try {
-      delete (window as any).Proofreader;
-    } catch (e) {
-      // Fallback if delete doesn't work
-      (window as any).Proofreader = undefined;
-    }
+    vi.clearAllMocks();
+    // Clean up the mock
+    (window as any).Proofreader = mockAPI; // Restore for next test
   });
 
   // ==========================================================================
@@ -56,7 +48,7 @@ describe('ChromeAIProofreaderService', () => {
     });
 
     it('should return false when Proofreader API does not exist', () => {
-      delete (window as any).Proofreader;
+      (window as any).Proofreader = undefined; // ✅ FIX: Use undefined instead of delete
 
       expect(ChromeAIProofreaderService.isSupported()).toBe(false);
     });
@@ -85,7 +77,7 @@ describe('ChromeAIProofreaderService', () => {
     });
 
     it('should return no when API is not supported', async () => {
-      delete (window as any).Proofreader;
+      (window as any).Proofreader = undefined; // ✅ FIX: Use undefined instead of delete
 
       const result = await ChromeAIProofreaderService.checkAvailability();
 
@@ -211,7 +203,7 @@ describe('ChromeAIProofreaderService', () => {
     });
 
     it('should throw when API is not supported', async () => {
-      delete (window as any).Proofreader;
+      (window as any).Proofreader = undefined; // ✅ FIX: Use undefined instead of delete
 
       await expect(ChromeAIProofreaderService.createInstance()).rejects.toThrow(
         /not supported/,
@@ -303,7 +295,7 @@ describe('ChromeAIProofreaderService', () => {
     it('should throw on empty input', async () => {
       await expect(
         ChromeAIProofreaderService.proofread(mockProofreader, ''),
-      ).rejects.toThrow(/cannot be empty/);
+      ).rejects.toThrow(/must be a non-empty string/);
     });
 
     it('should throw on whitespace-only input', async () => {
@@ -442,6 +434,22 @@ describe('ChromeAIProofreaderService', () => {
   // ==========================================================================
 
   describe('Edge Cases', () => {
+    // ✅ FIX: Add beforeEach to set up mock response for edge case tests
+    beforeEach(() => {
+      const mockResult: ProofreadResult = {
+        corrections: [
+          {
+            original: 'test',
+            suggestion: 'test',
+            type: 'spelling',
+            startIndex: 0,
+            endIndex: 4,
+          },
+        ],
+      };
+      mockProofreader.proofread.mockResolvedValue(mockResult);
+    });
+
     it('should handle very long text', async () => {
       const longText = 'word '.repeat(10000);
 

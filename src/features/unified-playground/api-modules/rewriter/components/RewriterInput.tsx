@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { CharacterCount } from '../../shared/components';
+import { CharacterCount, FieldError } from '../../shared/components';
 import { cn } from '@/lib/utils';
 import { getRandomContextExample } from '../data/samples';
 
@@ -54,6 +54,12 @@ export interface RewriterInputProps {
 
   /** Additional CSS classes */
   className?: string;
+
+  /** Inline error message to display */
+  error?: string;
+
+  /** Error help text for recovery guidance */
+  errorHelpText?: string;
 }
 
 // ============================================================================
@@ -86,6 +92,8 @@ export function RewriterInput({
   maxChars = 10000,
   placeholder = 'Enter or paste the text you want to rewrite...',
   className,
+  error,
+  errorHelpText,
 }: RewriterInputProps) {
   const charCount = value.length;
   const isValid = charCount >= minChars && charCount <= maxChars;
@@ -130,10 +138,12 @@ export function RewriterInput({
             className={cn(
               'min-h-[200px] resize-y font-mono text-sm',
               !isValid && value.length > 0 && 'border-destructive',
+              error && 'border-red-400 dark:border-red-500',
               disabled && 'opacity-60 cursor-not-allowed',
             )}
             aria-label="Input text for rewriting"
-            aria-invalid={!isValid && value.length > 0}
+            aria-invalid={!!error || (!isValid && value.length > 0)}
+            aria-describedby={error ? 'rewriter-input-error' : undefined}
           />
           {/* Keyboard Shortcut Hint */}
           {!disabled && (
@@ -143,6 +153,16 @@ export function RewriterInput({
             </div>
           )}
         </div>
+
+        {/* Inline error message */}
+        {error && (
+          <FieldError
+            id="rewriter-input-error"
+            message={error}
+            helpText={errorHelpText}
+            severity="error"
+          />
+        )}
 
         {/* Task-Specific Context (Optional) */}
         {onContextChange && (

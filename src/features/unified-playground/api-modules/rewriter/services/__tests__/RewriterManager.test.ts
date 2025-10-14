@@ -61,7 +61,10 @@ beforeEach(() => {
   vi.mocked(ChromeAIRewriterService.rewrite).mockResolvedValue(
     'Rewritten text',
   );
-  vi.mocked(ChromeAIRewriterService.destroy).mockImplementation(() => {});
+  // Mock destroy to actually call instance.destroy() like the real implementation
+  vi.mocked(ChromeAIRewriterService.destroy).mockImplementation((instance) => {
+    instance.destroy();
+  });
   vi.mocked(ChromeAIRewriterService.rewriteStreaming).mockImplementation(
     (instance) => instance.rewriteStreaming('', undefined, undefined),
   );

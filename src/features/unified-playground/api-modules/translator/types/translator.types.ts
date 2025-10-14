@@ -501,6 +501,10 @@ export interface TranslatorInputProps {
   placeholder?: string;
   onDetectLanguage?: () => void;
   disabled?: boolean;
+  /** Inline error message to display */
+  error?: string;
+  /** Error help text for recovery guidance */
+  errorHelpText?: string;
 }
 
 /**

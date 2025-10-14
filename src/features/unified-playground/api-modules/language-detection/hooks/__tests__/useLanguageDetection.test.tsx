@@ -16,15 +16,15 @@ vi.mock('../../services', () => ({
     createInstance: vi.fn().mockResolvedValue({
       detect: vi.fn().mockResolvedValue([
         { detectedLanguage: 'en', confidence: 0.95 },
-        { detectedLanguage: 'es', confidence: 0.03 },
-        { detectedLanguage: 'fr', confidence: 0.02 },
+        { detectedLanguage: 'es', confidence: 0.85 },
+        { detectedLanguage: 'fr', confidence: 0.75 },
       ]),
       destroy: vi.fn(), // ✅ CRITICAL FIX: Add destroy() method to mock instance
     }),
     detect: vi.fn().mockResolvedValue([
       { detectedLanguage: 'en', confidence: 0.95 },
-      { detectedLanguage: 'es', confidence: 0.03 },
-      { detectedLanguage: 'fr', confidence: 0.02 },
+      { detectedLanguage: 'es', confidence: 0.85 },
+      { detectedLanguage: 'fr', confidence: 0.75 },
     ]),
     destroy: vi.fn(), // ✅ Add destroy() static method
   },

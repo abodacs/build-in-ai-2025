@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle2, XCircle, Loader2, Undo2, Redo2 } from 'lucide-react';
 import { HighlightedTextEditor } from './HighlightedTextEditor';
 import type { ProofreadCorrection } from '../types';
+import { FieldError } from '../../shared/components';
 
 // ============================================================================
 // Types
@@ -62,6 +63,12 @@ export interface ProofreaderInputProps {
 
   /** Additional CSS classes */
   className?: string;
+
+  /** Inline error message to display */
+  error?: string;
+
+  /** Error help text for recovery guidance */
+  errorHelpText?: string;
 }
 
 // ============================================================================
@@ -87,6 +94,8 @@ export function ProofreaderInput({
   maxLength = 5000,
   correctionCount = 0,
   className = '',
+  error,
+  errorHelpText,
 }: ProofreaderInputProps) {
   const characterCount = value.length;
   const isOverLimit = characterCount > maxLength;
@@ -150,6 +159,16 @@ export function ProofreaderInput({
               Text exceeds maximum length of {maxLength.toLocaleString()}{' '}
               characters. Please shorten the text.
             </p>
+          )}
+
+          {/* Inline error message */}
+          {error && (
+            <FieldError
+              id="proofreader-input-error"
+              message={error}
+              helpText={errorHelpText}
+              severity="error"
+            />
           )}
         </div>
 

@@ -86,12 +86,19 @@ describe('Language Detection + Translator Integration', () => {
         }),
       );
 
+      // Wait for translator hook to initialize
+      await waitFor(() => {
+        expect(translatorResult.current.translate).toBeDefined();
+      });
+
       await act(async () => {
-        await translatorResult.current.actions.translate('Hello world');
+        await translatorResult.current.translate('Hello world');
       });
 
       await waitFor(() => {
-        expect(translatorResult.current.translatedText).toBe('Translated text');
+        expect(translatorResult.current.result?.translated).toBe(
+          'Translated text',
+        );
       });
     });
 
@@ -132,14 +139,19 @@ describe('Language Detection + Translator Integration', () => {
         }),
       );
 
+      // Wait for translator hook to initialize
+      await waitFor(() => {
+        expect(translatorResult.current.translate).toBeDefined();
+      });
+
       mockTranslator.translate.mockResolvedValue('Hello world');
 
       await act(async () => {
-        await translatorResult.current.actions.translate(inputText);
+        await translatorResult.current.translate(inputText);
       });
 
       await waitFor(() => {
-        expect(translatorResult.current.translatedText).toBe('Hello world');
+        expect(translatorResult.current.result?.translated).toBe('Hello world');
       });
     });
 
@@ -288,12 +300,17 @@ describe('Language Detection + Translator Integration', () => {
         }),
       );
 
+      // Wait for translator hook to initialize
+      await waitFor(() => {
+        expect(translatorResult.current.translate).toBeDefined();
+      });
+
       mockTranslator.translate.mockRejectedValue(
         new Error('Translation failed'),
       );
 
       await act(async () => {
-        await translatorResult.current.actions.translate('Hello');
+        await translatorResult.current.translate('Hello');
       });
 
       await waitFor(() => {

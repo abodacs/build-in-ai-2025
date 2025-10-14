@@ -36,7 +36,11 @@ export class ChromeAIProofreaderService {
    * Check if Proofreader API is supported in current browser
    */
   static isSupported(): boolean {
-    return typeof window !== 'undefined' && 'Proofreader' in window;
+    return (
+      typeof window !== 'undefined' &&
+      'Proofreader' in window &&
+      (window as any).Proofreader !== undefined
+    );
   }
 
   /**
