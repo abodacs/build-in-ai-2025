@@ -40,28 +40,6 @@ function App() {
                 </Layout>
               }
             />
-            <Route
-              path="/security"
-              element={
-                <Layout>
-                  <div className="p-8 text-center">
-                    <h1 className="text-2xl font-bold">Security Demo</h1>
-                    <p className="text-muted-foreground mt-2">Coming soon...</p>
-                  </div>
-                </Layout>
-              }
-            />
-            <Route
-              path="/hybrid"
-              element={
-                <Layout>
-                  <div className="p-8 text-center">
-                    <h1 className="text-2xl font-bold">Hybrid AI</h1>
-                    <p className="text-muted-foreground mt-2">Coming soon...</p>
-                  </div>
-                </Layout>
-              }
-            />
 
             {/* Redirect /unified to root */}
             <Route path="/unified" element={<Navigate to="/" replace />} />
