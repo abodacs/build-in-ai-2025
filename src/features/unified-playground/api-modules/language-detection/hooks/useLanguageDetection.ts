@@ -6,7 +6,11 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { ChromeAILanguageDetectionService } from '../services';
-import type { DetectionResult, DetectionConfig } from '../types';
+import type {
+  DetectionResult,
+  DetectionConfig,
+  LanguageDetector,
+} from '../types';
 
 export interface UseLanguageDetectionReturn {
   isDetecting: boolean;
@@ -35,7 +39,7 @@ export function useLanguageDetection(
     undefined,
   );
 
-  const instanceRef = useRef<any>(null);
+  const instanceRef = useRef<LanguageDetector | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {

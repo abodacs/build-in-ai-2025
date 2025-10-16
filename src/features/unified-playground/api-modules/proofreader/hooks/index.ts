@@ -6,6 +6,11 @@
 
 export { useProofreader } from './useProofreader';
 export { useProofreaderAvailability } from './useProofreaderAvailability';
+export { useProgressiveLoadingMessage } from './useProgressiveLoadingMessage';
 
-export type { UseProofreaderReturn } from './useProofreader';
+export type { UseProofreaderReturn, LoadingPhase } from './useProofreader';
 export type { UseProofreaderAvailabilityReturn } from './useProofreaderAvailability';
+export type {
+  UseProgressiveLoadingMessageReturn,
+  LoadingMessage,
+} from './useProgressiveLoadingMessage';

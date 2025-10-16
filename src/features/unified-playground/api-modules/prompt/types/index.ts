@@ -14,6 +14,10 @@ export type {
   // Configuration
   LanguageModelCreateOptions,
   PromptOptions,
+  // Multimodal
+  MultimodalContentItem,
+  MultimodalContent,
+  ExpectedInput,
   // Availability
   LanguageModelAvailability,
   // Errors
@@ -38,6 +42,8 @@ export {
   hasStreamingSupport,
   hasTokenCountingSupport,
   hasCloningSupport,
+  hasMultimodalSupport,
+  hasMultimodalStreamingSupport,
 } from './api.types';
 
 // ============================================================================
@@ -101,6 +107,14 @@ export type {
   ImageMetadata,
   ImageProcessingOptions,
   ImageProcessingResult,
+  // Audio Processing
+  AudioFormat,
+  AudioData,
+  AudioMetadata,
+  AudioProcessingOptions,
+  // Media Types
+  MediaData,
+  MediaType,
   // Upload State
   UploadStatus,
   FileUploadState,
@@ -113,7 +127,7 @@ export type {
   ImagePreviewState,
   PreviewControls,
   // Multimodal Content
-  MultimodalContent,
+  MultimodalMessageContent,
   MultimodalPromptInput,
   // Errors
   FileUploadErrorType,
@@ -128,4 +142,5 @@ export {
   // Constants
   DEFAULT_FILE_CONSTRAINTS,
   DEFAULT_IMAGE_PROCESSING,
+  DEFAULT_AUDIO_PROCESSING,
 } from './multimodal.types';

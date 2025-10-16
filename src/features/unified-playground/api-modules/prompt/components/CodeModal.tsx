@@ -71,7 +71,7 @@ function generateTypeScriptCode(config: PromptConfig): string {
  *
  * Requirements:
  * - Chrome 138+ with Prompt API enabled
- * - Enable chrome://flags#prompt-api-for-gemini-nano
+ * - Enable chrome://flags#prompt-api-for-gemini-nano-multimodal-input
  *
  * This is a complete, self-contained implementation.
  * Copy this entire file to use in your project.
@@ -123,7 +123,7 @@ async function checkAvailability(): Promise<boolean> {
   if (!('LanguageModel' in window)) {
     throw new Error(
       'Chrome AI Prompt API not supported. ' +
-      'Requires Chrome 138+ with chrome://flags#prompt-api-for-gemini-nano enabled.'
+      'Requires Chrome 138+ with chrome://flags#prompt-api-for-gemini-nano-multimodal-input enabled.'
     );
   }
 
@@ -308,7 +308,7 @@ function generateJavaScriptCode(config: PromptConfig): string {
  *
  * Requirements:
  * - Chrome 138+ with Prompt API enabled
- * - Enable chrome://flags#prompt-api-for-gemini-nano
+ * - Enable chrome://flags#prompt-api-for-gemini-nano-multimodal-input
  *
  * This is a complete, self-contained implementation.
  * Copy this entire file to use in your project.
@@ -331,7 +331,7 @@ async function checkAvailability() {
   if (!('LanguageModel' in window)) {
     throw new Error(
       'Chrome AI Prompt API not supported. ' +
-      'Requires Chrome 138+ with chrome://flags#prompt-api-for-gemini-nano enabled.'
+      'Requires Chrome 138+ with chrome://flags#prompt-api-for-gemini-nano-multimodal-input enabled.'
     );
   }
 
@@ -577,7 +577,7 @@ export function CodeModal({
                     <li>
                       Enable flag:{' '}
                       <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">
-                        chrome://flags#prompt-api-for-gemini-nano
+                        chrome://flags#prompt-api-for-gemini-nano-multimodal-input
                       </code>
                     </li>
                     <li>Check availability before using the API</li>

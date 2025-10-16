@@ -1,9 +1,13 @@
 /**
  * StreamingIndicator Component
- * Animated indicator for streaming responses with typing animation
+ * Visual indicator for real-time streaming responses
+ * Shows animated status and character count
  */
 
 import React, { useEffect, useState } from 'react';
+import { Radio, Sparkles } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface StreamingIndicatorProps {
   /**
@@ -29,7 +33,7 @@ interface StreamingIndicatorProps {
   /**
    * Indicator variant
    */
-  variant?: 'dots' | 'pulse' | 'typing' | 'spinner';
+  variant?: 'dots' | 'pulse' | 'typing' | 'spinner' | 'card';
 
   /**
    * Size variant
@@ -40,6 +44,11 @@ interface StreamingIndicatorProps {
    * Show elapsed time?
    */
   showElapsedTime?: boolean;
+
+  /**
+   * Additional CSS classes
+   */
+  className?: string;
 }
 
 export const StreamingIndicator: React.FC<StreamingIndicatorProps> = ({
@@ -47,12 +56,15 @@ export const StreamingIndicator: React.FC<StreamingIndicatorProps> = ({
   content,
   showContent = true,
   label = 'AI is thinking',
-  variant = 'dots',
+  variant = 'card',
   size = 'md',
   showElapsedTime = false,
+  className,
 }) => {
   const [dots, setDots] = useState(1);
   const [elapsedTime, setElapsedTime] = useState(0);
+
+  const charactersReceived = content?.length || 0;
 
   // Animate dots
   useEffect(() => {
@@ -90,6 +102,75 @@ export const StreamingIndicator: React.FC<StreamingIndicatorProps> = ({
     md: 'text-base',
     lg: 'text-lg',
   };
+
+  // Render Card variant (Summary API style)
+  if (variant === 'card') {
+    return (
+      <Card
+        className={cn(
+          'p-4 border-purple-200 bg-purple-50/50 animate-fadeIn',
+          className,
+        )}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Animated Icon */}
+            <div className="relative">
+              <Radio className="w-5 h-5 text-purple-600 animate-pulse" />
+              <div className="absolute -top-0.5 -right-0.5">
+                <Sparkles className="w-3 h-3 text-purple-500 animate-spin" />
+              </div>
+            </div>
+
+            {/* Status Text */}
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-purple-900">
+                  {label || 'Streaming Response'}
+                </span>
+                <div className="flex gap-1">
+                  <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce" />
+                  <div
+                    className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce"
+                    style={{ animationDelay: '0.1s' }}
+                  />
+                  <div
+                    className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-bounce"
+                    style={{ animationDelay: '0.2s' }}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-purple-700 mt-0.5">
+                {showElapsedTime && elapsedTime > 0
+                  ? `Generating... (${elapsedTime}s)`
+                  : 'Generating in real-time...'}
+              </p>
+            </div>
+          </div>
+
+          {/* Character Count */}
+          {charactersReceived > 0 && (
+            <div className="text-right">
+              <div className="text-xs text-slate-600 font-medium">
+                {charactersReceived.toLocaleString()}
+              </div>
+              <div className="text-[10px] text-slate-500">characters</div>
+            </div>
+          )}
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mt-3 h-1 bg-purple-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-purple-500 via-purple-600 to-purple-500 animate-shimmer"
+            style={{
+              backgroundSize: '200% 100%',
+            }}
+          />
+        </div>
+      </Card>
+    );
+  }
 
   // Render different variants
   const renderIndicator = () => {

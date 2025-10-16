@@ -8,7 +8,7 @@
  */
 
 import { useState } from 'react';
-import { Settings, Thermometer, Hash, FileText, Zap, Info } from 'lucide-react';
+import { Settings, Thermometer, Hash, FileText, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -51,6 +51,9 @@ export interface PromptConfigProps {
 
   /** Disabled state */
   disabled?: boolean;
+
+  /** Reset handler (called when Reset to Defaults is clicked) */
+  onReset?: () => void;
 }
 
 // ============================================================================
@@ -80,6 +83,7 @@ export function PromptConfig({
   className,
   onViewCode,
   disabled = false,
+  onReset,
 }: PromptConfigProps) {
   const [isOpen, setIsOpen] = useState(!defaultCollapsed);
 
@@ -256,63 +260,21 @@ export function PromptConfig({
               </div>
             </div>
 
-            {/* Streaming Toggle */}
-            <div className="space-y-2 pt-4 border-t border-slate-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-purple-500" />
-                  <Label htmlFor="streaming" className="text-sm font-semibold">
-                    Streaming Mode
-                  </Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="w-4 h-4 text-slate-400 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <p className="text-sm">
-                          Stream responses in real-time for better UX.
-                          Recommended for conversational interfaces.
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="streaming"
-                    checked={config.enableStreaming ?? true}
-                    onChange={(e) =>
-                      updateConfig('enableStreaming', e.target.checked)
-                    }
-                    disabled={disabled}
-                    className="rounded"
-                  />
-                  <span className="text-xs text-slate-600">
-                    {(config.enableStreaming ?? true) ? 'Enabled' : 'Disabled'}
-                  </span>
-                </div>
-              </div>
-              <p className="text-xs text-slate-500">
-                Shows response as it generates, token by token
-              </p>
-            </div>
-
             {/* Quick Reset */}
             <div className="pt-2 flex justify-end">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
+                onClick={() => {
                   onChange({
                     systemPrompt: 'You are a helpful AI assistant.',
                     temperature: 0.8,
                     topK: 8,
                     maxTokens: 2048,
                     enableStreaming: true,
-                  })
-                }
+                  });
+                  onReset?.(); // Call reset handler if provided
+                }}
                 disabled={disabled}
                 className="text-xs"
               >

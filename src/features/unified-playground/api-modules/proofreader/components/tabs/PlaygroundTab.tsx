@@ -15,6 +15,7 @@ import { ProofreaderConfig } from '../ProofreaderConfig';
 import { ProofreaderInput } from '../ProofreaderInput';
 import { ProofreaderResults } from '../ProofreaderResults';
 import { InlineCorrectionPopover } from '../InlineCorrectionPopover';
+import { ProofreaderLoadingCard } from '../ProofreaderLoadingCard';
 import { DEFAULT_PROOFREADER_CONFIG } from '../../types';
 import type { ProofreadCorrection } from '../../types';
 import { validateTextInput } from '../../../shared/utils/validation';
@@ -44,6 +45,7 @@ export function ProofreaderMain() {
     correctedText,
     error,
     isLoading,
+    loadingPhase,
     config,
     canUndo,
     canRedo,
@@ -121,6 +123,14 @@ export function ProofreaderMain() {
         disabled={isProofreading || isLoading}
       />
 
+      {/* Loading State Card - Show during initialization or proofreading */}
+      {loadingPhase && (
+        <ProofreaderLoadingCard
+          isLoading={isLoading || isProofreading}
+          phase={loadingPhase}
+        />
+      )}
+
       {/* Input */}
       <ProofreaderInput
         value={inputText}
@@ -134,6 +144,7 @@ export function ProofreaderMain() {
         onUndo={actions.undo}
         onRedo={actions.redo}
         isProofreading={isProofreading || isLoading}
+        loadingPhase={loadingPhase}
         disabled={false}
         maxLength={5000}
         correctionCount={corrections.length}

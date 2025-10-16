@@ -66,6 +66,9 @@ export class PromptManager {
   private state: ManagerState = 'idle';
   private currentConfig: LanguageModelCreateOptions | null = null;
 
+  // Multimodal support flag
+  private multimodalEnabled = false;
+
   // Download tracking
   private downloadInProgress = false;
   private downloadProgress: DownloadProgress | null = null;
@@ -103,6 +106,13 @@ export class PromptManager {
    */
   getState(): ManagerState {
     return this.state;
+  }
+
+  /**
+   * Check if manager is initialized (has an instance)
+   */
+  isInitialized(): boolean {
+    return this.instance !== null;
   }
 
   /**
@@ -157,6 +167,7 @@ export class PromptManager {
     config: LanguageModelCreateOptions,
     onProgress?: DownloadProgressCallback,
   ): Promise<void> {
+    console.log('PromptManager initialize.');
     try {
       this.state = 'initializing';
 
@@ -188,10 +199,24 @@ export class PromptManager {
       }
 
       this.currentConfig = config;
+      this.multimodalEnabled = false;
       this.state = 'ready';
+      console.log('PromptManager initialized successfully.');
+      console.log('PromptManager: instance is null?', this.instance === null);
+      console.log('PromptManager: state =', this.state);
+      console.log(
+        'PromptManager: multimodal enabled =',
+        this.multimodalEnabled,
+      );
     } catch (error) {
+      console.error('PromptManager: Initialization FAILED:', error);
+      console.error(
+        'PromptManager: Error type:',
+        error instanceof Error ? error.constructor.name : typeof error,
+      );
       this.state = 'error';
       this.downloadInProgress = false;
+      this.multimodalEnabled = false;
       throw error;
     }
   }
@@ -334,6 +359,110 @@ export class PromptManager {
           prompt,
           onChunk,
           mergedOptions,
+        ),
+      );
+
+      // Track metrics
+      this.trackMetrics(startTime, true);
+
+      this.state = 'ready';
+      return result;
+    } catch (error) {
+      this.trackMetrics(startTime, false, error);
+      this.state = 'ready';
+      throw error;
+    } finally {
+      this.abortController = null;
+    }
+  }
+
+  /**
+   * Execute a multimodal prompt with images and/or audio (non-streaming)
+   * @param text - User prompt text
+   * @param images - Array of ImageData
+   * @param audios - Optional array of AudioData
+   * @returns Promise resolving to response string
+   */
+  async promptMultimodal(
+    text: string,
+    images: any[] = [], // ImageData[]
+    audios: any[] = [], // AudioData[]
+  ): Promise<string> {
+    this.ensureReady();
+    this.validatePrompt(text);
+
+    const startTime = Date.now();
+    this.lastOperationStartTime = new Date();
+    this.state = 'prompting';
+
+    try {
+      // Create abort controller
+      this.abortController = new AbortController();
+
+      // Build multimodal message
+      const message = ChromeAIPromptService.buildMultimodalMessage(
+        text,
+        images,
+        audios,
+      );
+
+      // Execute with retry logic
+      const result = await this.withRetry(() =>
+        ChromeAIPromptService.appendMessage(this.instance!, [message]),
+      );
+
+      // Track metrics
+      this.trackMetrics(startTime, true);
+
+      this.state = 'ready';
+      return result;
+    } catch (error) {
+      this.trackMetrics(startTime, false, error);
+      this.state = 'ready';
+      throw error;
+    } finally {
+      this.abortController = null;
+    }
+  }
+
+  /**
+   * Execute a multimodal prompt with streaming (images and/or audio)
+   * @param text - User prompt text
+   * @param onChunk - Callback for each chunk
+   * @param images - Array of ImageData
+   * @param audios - Optional array of AudioData
+   * @returns Promise resolving to complete response
+   */
+  async promptMultimodalStreaming(
+    text: string,
+    onChunk: StreamingChunkCallback,
+    images: any[] = [], // ImageData[]
+    audios: any[] = [], // AudioData[]
+  ): Promise<string> {
+    this.ensureReady();
+    this.validatePrompt(text);
+
+    const startTime = Date.now();
+    this.lastOperationStartTime = new Date();
+    this.state = 'prompting';
+
+    try {
+      // Create abort controller
+      this.abortController = new AbortController();
+
+      // Build multimodal message
+      const message = ChromeAIPromptService.buildMultimodalMessage(
+        text,
+        images,
+        audios,
+      );
+
+      // Execute with retry logic
+      const result = await this.withRetry(() =>
+        ChromeAIPromptService.appendMessageStreaming(
+          this.instance!,
+          [message],
+          onChunk,
         ),
       );
 

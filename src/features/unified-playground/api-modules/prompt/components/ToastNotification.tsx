@@ -106,6 +106,14 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
+  const handleDismiss = useCallback(() => {
+    setIsExiting(true);
+    // Wait for exit animation to complete
+    setTimeout(() => {
+      onDismiss(toast.id);
+    }, 300); // Match animation duration
+  }, [toast.id, onDismiss]);
+
   // Slide in animation on mount
   useEffect(() => {
     // Trigger animation after mount
@@ -122,15 +130,7 @@ export const ToastNotification: React.FC<ToastNotificationProps> = ({
 
       return () => clearTimeout(timer);
     }
-  }, [toast.duration]);
-
-  const handleDismiss = useCallback(() => {
-    setIsExiting(true);
-    // Wait for exit animation to complete
-    setTimeout(() => {
-      onDismiss(toast.id);
-    }, 300); // Match animation duration
-  }, [toast.id, onDismiss]);
+  }, [toast.duration, handleDismiss]);
 
   // Animation classes based on position
   const getAnimationClasses = () => {
@@ -260,6 +260,7 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
 
 let toastIdCounter = 0;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useToast = () => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 

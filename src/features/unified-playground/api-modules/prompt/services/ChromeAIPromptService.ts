@@ -18,6 +18,76 @@ import type {
 } from '../types';
 
 // ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Extract root error message from potentially nested errors
+ */
+function extractErrorMessage(error: any): string {
+  if (!error) return 'Unknown error';
+
+  const message = error.message || String(error);
+
+  // Extract the deepest error message from nested "Failed to execute" messages
+  const match = message.match(/Failed to execute[^:]*:\s*(.+)/);
+  if (match) {
+    return extractErrorMessage({ message: match[1] });
+  }
+
+  return message;
+}
+
+/**
+ * Create user-friendly error message
+ */
+function getUserFriendlyError(error: any): string {
+  const errorName = error?.name || '';
+  const errorMessage = extractErrorMessage(error).toLowerCase();
+
+  // Handle specific error types
+  if (errorName === 'AbortError' || errorMessage.includes('abort')) {
+    if (errorMessage.includes('without reason')) {
+      return 'Operation was stopped. This can happen if the browser is busy or if you navigated away. Please try again.';
+    }
+    return 'Operation was cancelled.';
+  }
+
+  if (
+    errorName === 'QuotaExceededError' ||
+    errorMessage.includes('quota') ||
+    errorMessage.includes('limit')
+  ) {
+    return 'Token limit exceeded. Please start a new conversation or shorten your prompt.';
+  }
+
+  if (errorMessage.includes('user activation')) {
+    return 'Please click a button to start. The Prompt API requires user interaction.';
+  }
+
+  if (errorMessage.includes('download') || errorMessage.includes('model')) {
+    return 'AI model download required (~22GB). This is a one-time process. Please ensure stable internet connection.';
+  }
+
+  if (
+    errorMessage.includes('not available') ||
+    errorMessage.includes('not supported')
+  ) {
+    return 'Prompt API is not available. Please enable it in chrome://flags#prompt-api-for-gemini-nano-multimodal-input';
+  }
+
+  if (
+    errorMessage.includes('streaming') &&
+    errorMessage.includes('not supported')
+  ) {
+    return 'Streaming is not supported by this model instance.';
+  }
+
+  // Return cleaned error message
+  return extractErrorMessage(error);
+}
+
+// ============================================================================
 // Service
 // ============================================================================
 
@@ -49,7 +119,7 @@ export class ChromeAIPromptService {
     if (!this.isSupported()) {
       throw new Error(
         'LanguageModel API is not supported in this browser. ' +
-          'Requires Chrome 138+ (Dev/Canary) with Prompt API enabled via chrome://flags#prompt-api-for-gemini-nano',
+          'Requires Chrome 138+ (Dev/Canary) with Prompt API enabled via chrome://flags#prompt-api-for-gemini-nano-multimodal-input',
       );
     }
 
@@ -90,7 +160,7 @@ export class ChromeAIPromptService {
         requiresDownload: availability === 'after-download',
         requirements: {
           minChromeVersion: 138,
-          requiredFlags: ['prompt-api-for-gemini-nano'],
+          requiredFlags: ['prompt-api-for-gemini-nano-multimodal-input'],
           storageRequired: '~22GB (Gemini Nano model)',
           ramRequired: '4GB minimum (8GB+ recommended)',
           networkRequired: true,
@@ -108,7 +178,7 @@ export class ChromeAIPromptService {
         requiresDownload: false,
         requirements: {
           minChromeVersion: 138,
-          requiredFlags: ['prompt-api-for-gemini-nano'],
+          requiredFlags: ['prompt-api-for-gemini-nano-multimodal-input'],
           storageRequired: '~22GB',
           ramRequired: '4GB+',
           networkRequired: true,
@@ -162,10 +232,11 @@ export class ChromeAIPromptService {
     options?: LanguageModelCreateOptions,
   ): Promise<LanguageModel> {
     try {
+      console.log('Creating LanguageModel instance with options:', options);
       if (!this.isSupported()) {
         throw new Error(
           'LanguageModel API is not supported in this browser. ' +
-            'Please use Chrome 138+ (Dev/Canary) and enable the API in chrome://flags#prompt-api-for-gemini-nano',
+            'Please use Chrome 138+ (Dev/Canary) and enable the API in chrome://flags#prompt-api-for-gemini-nano-multimodal-input',
         );
       }
 
@@ -173,6 +244,7 @@ export class ChromeAIPromptService {
       if (options) {
         this.validateOptions(options);
       }
+      console.log('Options validated successfully.');
 
       const api = this.getAPI();
       const instance = await api.create(options);
@@ -202,7 +274,7 @@ export class ChromeAIPromptService {
       ) {
         throw new Error(
           'Prompt API is not available. Please enable it in Chrome Settings: ' +
-            'chrome://flags#prompt-api-for-gemini-nano',
+            'chrome://flags#prompt-api-for-gemini-nano-multimodal-input',
         );
       }
 
@@ -262,17 +334,8 @@ export class ChromeAIPromptService {
       const result = await instance.prompt(prompt, options);
       return result;
     } catch (error: any) {
-      if (error?.name === 'AbortError') {
-        throw new Error('Prompt execution was cancelled');
-      }
-
-      if (error?.name === 'QuotaExceededError') {
-        throw new Error(
-          'Token limit exceeded. Please start a new conversation or shorten your prompt.',
-        );
-      }
-
-      throw new Error(`Prompt failed: ${error?.message || 'Unknown error'}`);
+      // Throw user-friendly error without wrapping
+      throw new Error(getUserFriendlyError(error));
     }
   }
 
@@ -288,19 +351,11 @@ export class ChromeAIPromptService {
     prompt: string,
     options?: PromptOptions,
   ): ReadableStream<string> {
-    try {
-      if (!instance.promptStreaming) {
-        throw new Error(
-          'Streaming is not supported by this LanguageModel instance',
-        );
-      }
-
-      return instance.promptStreaming(prompt, options);
-    } catch (error: any) {
-      throw new Error(
-        `Streaming prompt failed: ${error?.message || 'Unknown error'}`,
-      );
+    if (!instance.promptStreaming) {
+      throw new Error('Streaming is not supported by this model instance.');
     }
+
+    return instance.promptStreaming(prompt, options);
   }
 
   /**
@@ -339,13 +394,8 @@ export class ChromeAIPromptService {
         reader.releaseLock();
       }
     } catch (error: any) {
-      if (error?.name === 'AbortError') {
-        throw new Error('Streaming was cancelled');
-      }
-
-      throw new Error(
-        `Streaming prompt failed: ${error?.message || 'Unknown error'}`,
-      );
+      // Throw user-friendly error without wrapping
+      throw new Error(getUserFriendlyError(error));
     }
   }
 
@@ -432,6 +482,121 @@ export class ChromeAIPromptService {
     } catch {
       // Silently fail - instance cleanup is not critical
       // Error bubbled if needed via error boundaries
+    }
+  }
+
+  // ============================================================================
+  // Multimodal Support (Images + Audio)
+  // ============================================================================
+
+  /**
+   * Build multimodal message from text, images, and audio
+   * @param text - User prompt text
+   * @param images - Array of ImageData
+   * @param audios - Optional array of AudioData
+   * @returns Multimodal message in Chrome API format
+   */
+  static buildMultimodalMessage(
+    text: string,
+    images: any[], // ImageData[]
+    audios?: any[], // AudioData[]
+  ): any {
+    // MultimodalContent
+    const content: Array<{ type: string; value: string | Blob }> = [
+      { type: 'text', value: text },
+    ];
+
+    // Add images
+    for (const img of images) {
+      content.push({
+        type: 'image',
+        value: img.file, // Use original File object
+      });
+    }
+
+    // Add audio files
+    if (audios) {
+      for (const audio of audios) {
+        content.push({
+          type: 'audio',
+          value: audio.file, // Use original File object
+        });
+      }
+    }
+
+    return {
+      role: 'user',
+      content,
+    };
+  }
+
+  /**
+   * Append multimodal message(s) to the conversation (non-streaming)
+   * @param instance - LanguageModel instance
+   * @param messages - Array of multimodal messages
+   * @returns Promise resolving to response string
+   */
+  static async appendMessage(
+    instance: LanguageModel,
+    messages: any[], // MultimodalContent[]
+  ): Promise<string> {
+    try {
+      if (!instance.append) {
+        throw new Error(
+          'Multimodal append not supported. Session must be created with expectedInputs: [{type: "image"}, {type: "audio"}]',
+        );
+      }
+
+      const result = await instance.append(messages);
+      return result;
+    } catch (error: any) {
+      // Throw user-friendly error
+      throw new Error(getUserFriendlyError(error));
+    }
+  }
+
+  /**
+   * Append multimodal message(s) with streaming
+   * @param instance - LanguageModel instance
+   * @param messages - Array of multimodal messages
+   * @param onChunk - Callback for each chunk
+   * @returns Promise resolving to complete response
+   */
+  static async appendMessageStreaming(
+    instance: LanguageModel,
+    messages: any[], // MultimodalContent[]
+    onChunk: (chunk: string) => void,
+  ): Promise<string> {
+    try {
+      if (!instance.appendStreaming) {
+        throw new Error(
+          'Multimodal streaming not supported. Session must be created with expectedInputs and support appendStreaming.',
+        );
+      }
+
+      const stream = instance.appendStreaming(messages);
+      const reader = stream.getReader();
+      let fullResponse = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            break;
+          }
+
+          fullResponse += value;
+          onChunk(value);
+        }
+
+        return fullResponse;
+      } finally {
+        reader.releaseLock();
+      }
+    } catch (error: any) {
+      // Throw user-friendly error
+      throw new Error(getUserFriendlyError(error));
     }
   }
 

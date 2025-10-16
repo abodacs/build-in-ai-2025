@@ -153,10 +153,16 @@ export function useConversationHistory(
         const conversation = sessionManagerRef.current.createConversation(
           {
             systemPrompt,
+            temperature: 0.8,
+            topK: 40,
             maxTokens: maxContextTokens,
-            enableHistory: true,
+            enableStreaming: true,
             enableAutoSave: autoSave,
-          } as any,
+            enableHistory: true,
+            maxHistoryLength: 100,
+            enableMarkdown: true,
+            enableCodeHighlight: true,
+          },
           title,
         );
 
@@ -171,7 +177,7 @@ export function useConversationHistory(
         setIsLoading(false);
       }
     },
-    [autoSave, maxContextTokens, systemPrompt],
+    [maxContextTokens, systemPrompt],
   );
 
   /**

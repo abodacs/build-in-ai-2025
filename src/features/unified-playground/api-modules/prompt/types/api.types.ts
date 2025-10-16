@@ -57,6 +57,19 @@ export interface LanguageModelCreateOptions {
    * Receives an EventTarget that emits 'downloadprogress' events
    */
   monitor?: (monitor: EventTarget) => void;
+
+  /**
+   * Expected input types for multimodal support
+   * Enables image and/or audio input when specified
+   * Example: [{type: 'image'}, {type: 'audio'}]
+   */
+  expectedInputs?: ExpectedInput[];
+
+  /**
+   * Initial conversation prompts for multimodal sessions
+   * Allows setting up conversation context with multimodal content
+   */
+  initialPrompts?: MultimodalContent[];
 }
 
 /**
@@ -71,6 +84,41 @@ export interface PromptOptions {
 }
 
 // ============================================================================
+// Multimodal Types (Images + Audio Support)
+// ============================================================================
+
+/**
+ * Content item in a multimodal message
+ */
+export interface MultimodalContentItem {
+  /** Content type */
+  type: 'text' | 'image' | 'audio';
+
+  /** Content value - string for text, Blob/File for media */
+  value: string | Blob;
+}
+
+/**
+ * Multimodal message content
+ * User-specified format for sending images and audio alongside text
+ */
+export interface MultimodalContent {
+  /** Message role */
+  role: 'user' | 'assistant';
+
+  /** Array of content items (text, images, audio) */
+  content: MultimodalContentItem[];
+}
+
+/**
+ * Expected input type for multimodal sessions
+ */
+export interface ExpectedInput {
+  /** Input type to enable */
+  type: 'image' | 'audio';
+}
+
+// ============================================================================
 // Chrome AI Availability Types
 // ============================================================================
 
@@ -80,7 +128,11 @@ export interface PromptOptions {
  * - 'after-download': API available but requires model download
  * - 'readily': API immediately available (model already downloaded)
  */
-export type LanguageModelAvailability = 'no' | 'after-download' | 'readily';
+export type LanguageModelAvailability =
+  | 'no'
+  | 'after-download'
+  | 'readily'
+  | 'available';
 
 // ============================================================================
 // Error Types
@@ -168,6 +220,24 @@ export interface LanguageModel {
     prompt: string,
     options?: PromptOptions,
   ): ReadableStream<string>;
+
+  /**
+   * Append multimodal message(s) to the conversation
+   * Used for sending images and audio alongside text
+   * Requires session created with expectedInputs
+   * @param messages - Array of multimodal messages to append
+   * @returns Promise resolving to the model's response
+   */
+  append?(messages: MultimodalContent[]): Promise<string>;
+
+  /**
+   * Append multimodal message(s) with streaming support
+   * Used for sending images and audio alongside text with streaming response
+   * Requires session created with expectedInputs
+   * @param messages - Array of multimodal messages to append
+   * @returns ReadableStream of response chunks
+   */
+  appendStreaming?(messages: MultimodalContent[]): ReadableStream<string>;
 
   /**
    * Count tokens in a given text
@@ -308,6 +378,35 @@ export function hasCloningSupport(
   clone: () => Promise<LanguageModel>;
 } {
   return 'clone' in model && typeof model.clone === 'function';
+}
+
+/**
+ * Type guard to check if multimodal append is supported
+ */
+export function hasMultimodalSupport(
+  model: LanguageModel,
+): model is LanguageModel & {
+  append: (messages: MultimodalContent[]) => Promise<string>;
+  appendStreaming?: (messages: MultimodalContent[]) => ReadableStream<string>;
+} {
+  return 'append' in model && typeof model.append === 'function';
+}
+
+/**
+ * Type guard to check if multimodal streaming is supported
+ */
+export function hasMultimodalStreamingSupport(
+  model: LanguageModel,
+): model is LanguageModel & {
+  append: (messages: MultimodalContent[]) => Promise<string>;
+  appendStreaming: (messages: MultimodalContent[]) => ReadableStream<string>;
+} {
+  return (
+    'append' in model &&
+    typeof model.append === 'function' &&
+    'appendStreaming' in model &&
+    typeof model.appendStreaming === 'function'
+  );
 }
 
 // ============================================================================

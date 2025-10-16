@@ -72,8 +72,18 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
     useState<LanguageModelCapabilities | null>(null);
 
   // Derived state
-  const isReady = availability === 'readily';
+  // Chrome may return either 'available' or 'readily' depending on version
+  const isReady = availability === 'available' || availability === 'readily';
   const requiresDownload = availability === 'after-download';
+
+  console.log(
+    'usePromptAvailability: Derived state - availability:',
+    availability,
+    '| isReady:',
+    isReady,
+    '| requiresDownload:',
+    requiresDownload,
+  );
 
   // ============================================================================
   // Check Availability
@@ -83,15 +93,21 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
    * Check API availability
    */
   const checkAvailability = useCallback(async () => {
+    console.log('usePromptAvailability: checkAvailability() called');
     try {
       setIsChecking(true);
       setError(null);
 
       // Check if API is supported
+      console.log('usePromptAvailability: Checking if API is supported...');
       const supported = ChromeAIPromptService.isSupported();
+      console.log('usePromptAvailability: API supported =', supported);
       setIsSupported(supported);
 
       if (!supported) {
+        console.log(
+          'usePromptAvailability: API not supported, setting availability to "no"',
+        );
         setAvailability('no');
         setDetails({
           availability: 'no',
@@ -99,7 +115,7 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
           requiresDownload: false,
           requirements: {
             minChromeVersion: 138,
-            requiredFlags: ['prompt-api-for-gemini-nano'],
+            requiredFlags: ['prompt-api-for-gemini-nano-multimodal-input'],
             storageRequired: '~22GB',
             ramRequired: '4GB+',
             networkRequired: true,
@@ -110,8 +126,17 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
       }
 
       // Check availability status
+      console.log('usePromptAvailability: Checking availability status...');
       const availabilityStatus =
         await ChromeAIPromptService.checkAvailability();
+      console.log(
+        'usePromptAvailability: Availability status =',
+        availabilityStatus,
+      );
+      console.log(
+        'usePromptAvailability: Is ready? (status === "available" or "readily") =',
+        availabilityStatus === 'available' || availabilityStatus === 'readily',
+      );
       setAvailability(availabilityStatus);
 
       // Get detailed information
@@ -124,7 +149,13 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
         const caps = await ChromeAIPromptService.getCapabilities();
         setCapabilities(caps);
       }
+
+      console.log('usePromptAvailability: Check complete');
     } catch (err) {
+      console.error(
+        'usePromptAvailability: Error during availability check:',
+        err,
+      );
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to check availability';
       setError(errorMessage);
@@ -146,6 +177,9 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
   // ============================================================================
 
   useEffect(() => {
+    console.log(
+      'usePromptAvailability: Auto-check useEffect triggered on mount',
+    );
     checkAvailability();
   }, [checkAvailability]);
 
@@ -153,6 +187,14 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
   // Return
   // ============================================================================
 
+  console.log(
+    'usePromptAvailability: availability=',
+    availability,
+    'isSupported=',
+    isSupported,
+    'isReady=',
+    isReady,
+  );
   return {
     isSupported,
     availability,

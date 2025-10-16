@@ -4,14 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import {
-  AlertCircle,
-  Paperclip,
-  Download,
-  Trash2,
-  Menu,
-  X,
-} from 'lucide-react';
+import { AlertCircle, Paperclip, Download, Trash2, X } from 'lucide-react';
 import type { Message } from '../types';
 
 interface ConversationHistoryProps {
@@ -34,8 +27,6 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
   onExport,
   onRemoveMessage,
   onMessageClick,
-  isOpen = true,
-  onToggle,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -80,37 +71,10 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
     setShowClearConfirm(false);
   };
 
-  if (!isOpen) {
-    return (
-      <div className="conversation-history-collapsed">
-        <button
-          onClick={onToggle}
-          className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-          aria-label="Open conversation history"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className="conversation-history flex flex-col h-full border-l bg-gray-50 dark:bg-gray-900 w-80">
-      {/* Header */}
-      <div className="p-4 border-b bg-white dark:bg-gray-800">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold">History</h3>
-          {onToggle && (
-            <button
-              onClick={onToggle}
-              className="p-1 text-gray-500 hover:text-gray-700"
-              aria-label="Close conversation history"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
-        </div>
-
+    <div className="conversation-history flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+      {/* Search Section */}
+      <div className="p-4 bg-white dark:bg-gray-800 border-b">
         {/* Search Input */}
         <div className="relative">
           <input
@@ -183,7 +147,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
       </div>
 
       {/* Message List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+      <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800 hover:scrollbar-thumb-gray-500 dark:hover:scrollbar-thumb-gray-500 scroll-smooth">
         {filteredMessages.length === 0 ? (
           <div className="text-center text-gray-500 dark:text-gray-400 py-8">
             {searchQuery ? 'No messages found' : 'No messages yet'}

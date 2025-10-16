@@ -29,13 +29,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const bottomRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const lastMessageCountRef = useRef(messages.length);
 
-  // Scroll to bottom handler
-  const scrollToBottom = useCallback(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, []);
+  // Scroll to bottom handler with configurable behavior
+  const scrollToBottom = useCallback(
+    (behavior: 'auto' | 'smooth' = 'smooth') => {
+      if (bottomRef.current) {
+        // Use requestAnimationFrame to ensure DOM has updated
+        requestAnimationFrame(() => {
+          bottomRef.current?.scrollIntoView({ behavior });
+        });
+      }
+    },
+    [],
+  );
 
   // Intersection Observer to detect if user is at bottom
   useEffect(() => {
@@ -61,12 +68,44 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     };
   }, [messages.length]);
 
-  // Auto-scroll to bottom when new messages arrive (only if user was at bottom)
+  // Check if user is actually at bottom (more reliable than state during fast updates)
+  const checkIsAtBottom = useCallback(() => {
+    if (!containerRef.current) return false;
+
+    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+    // Consider "at bottom" if within 100px of bottom
+    return scrollHeight - scrollTop - clientHeight < 100;
+  }, []);
+
+  // Auto-scroll on new messages (only if user is at bottom)
   useEffect(() => {
-    if (autoScroll && isAtBottom && bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (!autoScroll) return;
+
+    const currentMessageCount = messages.length;
+    const hasNewMessage = currentMessageCount > lastMessageCountRef.current;
+
+    if (hasNewMessage) {
+      // New message added - only scroll if user is at bottom
+      if (isAtBottom) {
+        scrollToBottom('smooth');
+      }
+      lastMessageCountRef.current = currentMessageCount;
+    } else if (isStreaming && streamingContent) {
+      // Streaming in progress - check actual scroll position for accuracy
+      // This prevents scroll from happening if user scrolled up during streaming
+      if (checkIsAtBottom()) {
+        scrollToBottom('auto'); // Use 'auto' for smoother streaming experience
+      }
     }
-  }, [messages, streamingContent, autoScroll, isAtBottom]);
+  }, [
+    messages.length,
+    streamingContent,
+    isStreaming,
+    autoScroll,
+    isAtBottom,
+    scrollToBottom,
+    checkIsAtBottom,
+  ]);
 
   if (messages.length === 0 && !isStreaming) {
     return (
@@ -89,7 +128,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Chat Messages Container */}
       <div
         ref={containerRef}
-        className="chat-interface flex flex-col space-y-4 p-4 overflow-y-auto h-full"
+        className="chat-interface flex flex-col space-y-4 p-4 overflow-y-auto h-full scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-900 hover:scrollbar-thumb-gray-500 dark:hover:scrollbar-thumb-gray-500 scroll-smooth"
       >
         {messages.map((message) => (
           <MessageBubble
@@ -133,7 +172,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         {/* Scroll to Bottom Button (shown when not at bottom) */}
         {showScrollButton && !isStreaming && (
           <button
-            onClick={scrollToBottom}
+            onClick={() => {
+              scrollToBottom('smooth');
+              // Reset tracking to prevent double-scroll
+              lastMessageCountRef.current = messages.length;
+            }}
             aria-label="Scroll to bottom"
             className="p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all hover:scale-110"
             title="Scroll to bottom"

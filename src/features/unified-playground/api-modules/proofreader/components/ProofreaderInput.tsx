@@ -52,6 +52,9 @@ export interface ProofreaderInputProps {
   /** Is proofreading in progress */
   isProofreading?: boolean;
 
+  /** Current loading phase */
+  loadingPhase?: 'initializing' | 'proofreading' | null;
+
   /** Is disabled */
   disabled?: boolean;
 
@@ -90,6 +93,7 @@ export function ProofreaderInput({
   onUndo,
   onRedo,
   isProofreading = false,
+  loadingPhase = null,
   disabled = false,
   maxLength = 5000,
   correctionCount = 0,
@@ -100,6 +104,20 @@ export function ProofreaderInput({
   const characterCount = value.length;
   const isOverLimit = characterCount > maxLength;
   const canProofread = characterCount > 0 && !isOverLimit && !isProofreading;
+
+  // Get contextual button text based on loading phase
+  const getButtonText = () => {
+    if (loadingPhase === 'initializing') {
+      return 'Initializing Proofreader...';
+    }
+    if (loadingPhase === 'proofreading') {
+      return 'Proofreading Text...';
+    }
+    if (isProofreading) {
+      return 'Proofreading...';
+    }
+    return 'Proofread Text';
+  };
 
   // Keyboard shortcuts for undo/redo
   const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -178,10 +196,10 @@ export function ProofreaderInput({
             disabled={!canProofread || disabled}
             className="flex-1"
           >
-            {isProofreading ? (
+            {isProofreading || loadingPhase ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Proofreading...
+                {getButtonText()}
               </>
             ) : (
               <>

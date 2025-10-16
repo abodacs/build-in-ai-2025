@@ -129,25 +129,41 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
    * Initialize the LanguageModel instance
    */
   const initialize = useCallback(async () => {
+    console.log('usePrompt: initialize() called');
     try {
       setIsLoading(true);
       setError(null);
 
       // Create managers
       if (!promptManagerRef.current) {
+        console.log('usePrompt: Creating new PromptManager');
         promptManagerRef.current = new PromptManager();
+      } else {
+        console.log('usePrompt: Reusing existing PromptManager');
       }
 
+      // Create SessionManager if needed
       if (!sessionManagerRef.current && enableHistory) {
+        console.log('usePrompt: Creating new SessionManager');
         sessionManagerRef.current = new SessionManager(autoSave);
+      }
 
-        // Create or restore conversation
+      // Ensure active conversation exists (even if SessionManager already existed)
+      if (sessionManagerRef.current && enableHistory) {
         const existingConversation =
           sessionManagerRef.current.getActiveConversation();
         if (!existingConversation) {
+          console.log(
+            'usePrompt: No active conversation found, creating new one',
+          );
           sessionManagerRef.current.createConversation(
             config,
             'New Conversation',
+          );
+        } else {
+          console.log(
+            'usePrompt: Using existing conversation:',
+            existingConversation.id,
           );
         }
 
@@ -161,16 +177,38 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
       }
 
       // Initialize LanguageModel
+      console.log('usePrompt: About to call PromptManager.initialize()');
       await promptManagerRef.current.initialize(config, (progress) => {
         setDownloadProgress(progress);
       });
+      console.log(
+        'usePrompt: PromptManager.initialize() completed successfully',
+      );
+      console.log(
+        'usePrompt: Manager state:',
+        promptManagerRef.current?.getState(),
+      );
+      console.log(
+        'usePrompt: Manager isInitialized:',
+        promptManagerRef.current?.isInitialized(),
+      );
 
       setDownloadProgress(null);
+      console.log('usePrompt: About to set isInitialized to true');
       setIsInitialized(true);
+      console.log('usePrompt: isInitialized state has been set to true');
     } catch (err) {
+      console.error('usePrompt: Initialization FAILED with error:', err);
+      console.error('usePrompt: Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown',
+        name: err instanceof Error ? err.name : 'Unknown',
+        stack: err instanceof Error ? err.stack : 'No stack',
+      });
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to initialize';
       setError(errorMessage);
+      setIsInitialized(false);
+      console.log('usePrompt: isInitialized set to false due to error');
       throw err;
     } finally {
       setIsLoading(false);
@@ -186,7 +224,7 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
    */
   const prompt = useCallback(
     async (text: string, images?: ImageData[]): Promise<string> => {
-      if (!promptManagerRef.current || !isInitialized) {
+      if (!promptManagerRef.current?.isReady()) {
         throw new Error('Not initialized. Call initialize() first.');
       }
 
@@ -199,6 +237,19 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
 
         // Add user message
         if (sessionManagerRef.current) {
+          // Ensure active conversation exists before adding message
+          const activeConversation =
+            sessionManagerRef.current.getActiveConversation();
+          if (!activeConversation) {
+            console.warn(
+              'usePrompt: No active conversation during prompt, creating one',
+            );
+            sessionManagerRef.current.createConversation(
+              config,
+              'New Conversation',
+            );
+          }
+
           const attachments = images?.map((img) => ({
             id: img.id,
             type: 'image' as const,
@@ -214,8 +265,22 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
           setMessages(sessionManagerRef.current.getMessages());
         }
 
-        // Execute prompt
-        const response = await promptManagerRef.current.prompt(text);
+        // Execute prompt - use multimodal if images provided
+        let response: string;
+        if (images && images.length > 0) {
+          console.log(
+            'usePrompt: Sending multimodal prompt with',
+            images.length,
+            'images',
+          );
+          response = await promptManagerRef.current.promptMultimodal(
+            text,
+            images,
+            [],
+          );
+        } else {
+          response = await promptManagerRef.current.prompt(text);
+        }
 
         // Add assistant message
         if (sessionManagerRef.current) {
@@ -242,7 +307,8 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
         setIsLoading(false);
       }
     },
-    [isInitialized],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [config],
   );
 
   /**
@@ -250,7 +316,7 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
    */
   const promptStreaming = useCallback(
     async (text: string, images?: ImageData[]): Promise<string> => {
-      if (!promptManagerRef.current || !isInitialized) {
+      if (!promptManagerRef.current?.isReady()) {
         throw new Error('Not initialized. Call initialize() first.');
       }
 
@@ -279,6 +345,19 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
 
         // Add user message
         if (sessionManagerRef.current) {
+          // Ensure active conversation exists before adding message
+          const activeConversation =
+            sessionManagerRef.current.getActiveConversation();
+          if (!activeConversation) {
+            console.warn(
+              'usePrompt: No active conversation during streaming, creating one',
+            );
+            sessionManagerRef.current.createConversation(
+              config,
+              'New Conversation',
+            );
+          }
+
           const attachments = images?.map((img) => ({
             id: img.id,
             type: 'image' as const,
@@ -294,28 +373,45 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
           setMessages(sessionManagerRef.current.getMessages());
         }
 
-        // Execute streaming prompt
-        const response = await promptManagerRef.current.promptStreaming(
-          text,
-          (chunk) => {
-            // Track first chunk time
-            if (firstChunkTime === null) {
-              firstChunkTime = Date.now() - startTime.getTime();
-            }
+        // Execute streaming prompt - use multimodal if images provided
+        let response: string;
+        const onChunk = (chunk: string) => {
+          // Track first chunk time
+          if (firstChunkTime === null) {
+            firstChunkTime = Date.now() - startTime.getTime();
+          }
 
-            chunksReceived++;
-            accumulatedContent += chunk;
+          chunksReceived++;
+          accumulatedContent += chunk;
 
-            // Update UI state
-            setCurrentResponse(accumulatedContent);
-            setStreamingState((prev) => ({
-              ...prev,
-              content: accumulatedContent,
-              chunksReceived,
-              timeToFirstChunk: firstChunkTime,
-            }));
-          },
-        );
+          // Update UI state
+          setCurrentResponse(accumulatedContent);
+          setStreamingState((prev) => ({
+            ...prev,
+            content: accumulatedContent,
+            chunksReceived,
+            timeToFirstChunk: firstChunkTime,
+          }));
+        };
+
+        if (images && images.length > 0) {
+          console.log(
+            'usePrompt: Sending multimodal streaming prompt with',
+            images.length,
+            'images',
+          );
+          response = await promptManagerRef.current.promptMultimodalStreaming(
+            text,
+            onChunk,
+            images,
+            [],
+          );
+        } else {
+          response = await promptManagerRef.current.promptStreaming(
+            text,
+            onChunk,
+          );
+        }
 
         // Complete streaming
         const endTime = new Date();
@@ -361,7 +457,8 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
         setIsStreaming(false);
       }
     },
-    [isInitialized],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [config],
   );
 
   /**
@@ -497,6 +594,7 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
     return () => {
       if (promptManagerRef.current) {
         promptManagerRef.current.destroy();
+        setIsInitialized(false);
       }
     };
   }, []);

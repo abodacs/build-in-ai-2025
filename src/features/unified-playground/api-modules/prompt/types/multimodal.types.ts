@@ -11,13 +11,19 @@
 // ============================================================================
 
 /**
- * Supported file types for upload
+ * Supported file types for upload (images and audio)
  */
 export type SupportedFileType =
   | 'image/jpeg'
   | 'image/png'
   | 'image/webp'
-  | 'image/gif';
+  | 'image/gif'
+  | 'audio/mp3'
+  | 'audio/mpeg'
+  | 'audio/wav'
+  | 'audio/ogg'
+  | 'audio/webm'
+  | 'audio/m4a';
 
 /**
  * File validation result
@@ -258,6 +264,115 @@ export interface ImageProcessingResult {
 }
 
 // ============================================================================
+// Audio Processing Types
+// ============================================================================
+
+/**
+ * Audio format for processing
+ */
+export type AudioFormat = 'mp3' | 'mpeg' | 'wav' | 'ogg' | 'webm' | 'm4a';
+
+/**
+ * Audio data structure
+ */
+export interface AudioData {
+  /** Audio ID */
+  id: string;
+
+  /** Original file */
+  file: File;
+
+  /** Data URL for playback */
+  dataUrl: string;
+
+  /** Blob URL for processing */
+  blobUrl: string;
+
+  /** Audio duration in seconds */
+  duration?: number;
+
+  /** File size in bytes */
+  size: number;
+
+  /** MIME type */
+  mimeType: SupportedFileType;
+
+  /** Audio format */
+  format: AudioFormat;
+
+  /** Audio metadata */
+  metadata: AudioMetadata;
+}
+
+/**
+ * Audio metadata
+ */
+export interface AudioMetadata {
+  /** File name */
+  fileName: string;
+
+  /** Original file size */
+  originalSize: number;
+
+  /** Current file size */
+  currentSize: number;
+
+  /** Created timestamp */
+  createdAt: Date;
+
+  /** Modified timestamp */
+  modifiedAt: Date;
+
+  /** Duration in seconds */
+  duration?: number;
+
+  /** Bitrate in kbps */
+  bitrate?: number;
+
+  /** Sample rate in Hz */
+  sampleRate?: number;
+
+  /** Number of audio channels */
+  channels?: number;
+
+  /** Codec used */
+  codec?: string;
+}
+
+/**
+ * Audio processing options
+ */
+export interface AudioProcessingOptions {
+  /** Generate waveform preview? */
+  generateWaveform: boolean;
+
+  /** Normalize audio levels? */
+  normalize: boolean;
+
+  /** Extract metadata? */
+  extractMetadata: boolean;
+}
+
+/**
+ * Default audio processing options
+ */
+export const DEFAULT_AUDIO_PROCESSING: AudioProcessingOptions = {
+  generateWaveform: true,
+  normalize: false,
+  extractMetadata: true,
+};
+
+/**
+ * Unified media data type (images or audio)
+ */
+export type MediaData = ImageData | AudioData;
+
+/**
+ * Media type discriminator
+ */
+export type MediaType = 'image' | 'audio';
+
+// ============================================================================
 // File Upload State Types
 // ============================================================================
 
@@ -317,6 +432,12 @@ export interface UploadedFile {
 
   /** Processed image data (if image) */
   imageData?: ImageData;
+
+  /** Processed audio data (if audio) */
+  audioData?: AudioData;
+
+  /** Media data (unified) */
+  mediaData?: MediaData;
 
   /** Error message if failed */
   error?: string;
@@ -432,14 +553,18 @@ export interface PreviewControls {
 // ============================================================================
 
 /**
- * Multimodal message content
+ * Multimodal message content (internal representation)
+ * Note: This differs from the Chrome API MultimodalContent format in api.types.ts
  */
-export interface MultimodalContent {
+export interface MultimodalMessageContent {
   /** Text content */
   text: string;
 
   /** Attached images */
   images: ImageData[];
+
+  /** Attached audio files */
+  audios: AudioData[];
 
   /** Has multimodal content? */
   hasMultimodal: boolean;
@@ -461,6 +586,9 @@ export interface MultimodalPromptInput {
   /** Attached images */
   images: ImageData[];
 
+  /** Attached audio files */
+  audios?: AudioData[];
+
   /** Context from previous messages */
   context?: string;
 
@@ -468,6 +596,9 @@ export interface MultimodalPromptInput {
   options?: {
     /** Analyze images? */
     analyzeImages: boolean;
+
+    /** Analyze audio? (transcription, etc.) */
+    analyzeAudio: boolean;
 
     /** Extract text from images (OCR)? */
     extractText: boolean;
