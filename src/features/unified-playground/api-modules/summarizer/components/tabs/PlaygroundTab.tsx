@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
+import { validateTextInput } from '../../../shared/utils/validation';
 
 // Import components
 import { APIActionButton } from '../../../shared/components';
@@ -167,6 +168,10 @@ export function PlaygroundTab({
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [streamingMode, setStreamingMode] = useState(false);
   const [advancedOptionsOpen, setAdvancedOptionsOpen] = useState(false);
+  const [inputError, setInputError] = useState<{
+    message: string;
+    helpText?: string;
+  } | null>(null);
 
   // Use external input text if provided, otherwise use local state
   const inputText =
@@ -181,6 +186,30 @@ export function PlaygroundTab({
     'Avoid jargon, use correct grammar, focus on clarity, ' +
     "and ensure the user can grasp the article's purpose " +
     'without needing to open the original content.';
+
+  /**
+   * Validate input text
+   */
+  useEffect(() => {
+    if (inputText.length === 0) {
+      setInputError(null); // No error for empty input (not yet submitted)
+      return;
+    }
+
+    const validation = validateTextInput(inputText, {
+      minLength: 100,
+      required: false,
+    });
+
+    if (!validation.valid && validation.error) {
+      setInputError({
+        message: validation.error.message,
+        helpText: validation.error.helpText,
+      });
+    } else {
+      setInputError(null);
+    }
+  }, [inputText]);
 
   /**
    * Can summarize check - allow if model ready OR needs download (lazy download)
@@ -412,6 +441,8 @@ export function PlaygroundTab({
           showValidation
           showWordCount
           showSmartDetection
+          error={inputError?.message}
+          errorHelpText={inputError?.helpText}
         />
       </ErrorBoundary>
 

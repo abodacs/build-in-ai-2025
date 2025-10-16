@@ -41,3 +41,7 @@ export type { ContentGenerationSkeletonProps } from './ContentGenerationSkeleton
 
 export { ContentRewritingSkeleton } from './ContentRewritingSkeleton';
 export type { ContentRewritingSkeletonProps } from './ContentRewritingSkeleton';
+
+// Inline error display
+export { FieldError } from './FieldError';
+export type { FieldErrorProps } from './FieldError';

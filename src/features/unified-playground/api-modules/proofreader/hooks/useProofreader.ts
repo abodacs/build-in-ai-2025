@@ -111,6 +111,11 @@ async function withRetry<T>(
 // ============================================================================
 
 /**
+ * Loading phase type
+ */
+export type LoadingPhase = 'initializing' | 'proofreading' | null;
+
+/**
  * Proofreader hook return type
  */
 export interface UseProofreaderReturn {
@@ -134,6 +139,9 @@ export interface UseProofreaderReturn {
 
   /** Is loading (creating instance) */
   isLoading: boolean;
+
+  /** Current loading phase */
+  loadingPhase: LoadingPhase;
 
   /** Current configuration */
   config: ProofreaderConfig;
@@ -225,6 +233,7 @@ export function useProofreader(
   const [config, setConfig] = useState<ProofreaderConfig>(initialConfig);
   const [isProofreading, setIsProofreading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState<LoadingPhase>(null);
   const [corrections, setCorrections] = useState<ProofreadCorrection[]>([]);
   const [correctionStates, setCorrectionStates] = useState<CorrectionState[]>(
     [],
@@ -279,6 +288,7 @@ export function useProofreader(
       setError(null);
       setIsProofreading(true);
       setIsLoading(true);
+      setLoadingPhase('initializing'); // Set phase to initializing
       setOriginalInput(input);
       setCorrections([]);
       setCorrectionStates([]);
@@ -309,6 +319,7 @@ export function useProofreader(
         );
         console.log('✅ Proofreader instance obtained');
         setIsLoading(false);
+        setLoadingPhase('proofreading'); // Switch to proofreading phase
 
         // Perform proofread with retry logic
         const result = await withRetry(async () => {
@@ -334,6 +345,7 @@ export function useProofreader(
 
         setMetrics(tracker.getMetrics());
         setIsProofreading(false);
+        setLoadingPhase(null); // Clear loading phase
 
         console.groupEnd();
         return result;
@@ -353,6 +365,7 @@ export function useProofreader(
         setError(error);
         setIsProofreading(false);
         setIsLoading(false);
+        setLoadingPhase(null); // Clear loading phase on error
 
         console.error(
           ProofreaderErrorHandler.formatForLogging(proofreaderError),
@@ -510,6 +523,7 @@ export function useProofreader(
     setCorrectedText(null);
     setError(null);
     setIsLoading(false);
+    setLoadingPhase(null); // Clear loading phase
     setMetrics(null);
     setCanUndo(false);
     setCanRedo(false);
@@ -610,6 +624,7 @@ export function useProofreader(
     correctedText,
     error,
     isLoading,
+    loadingPhase,
     config,
     metrics,
     canUndo,

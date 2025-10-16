@@ -4,7 +4,7 @@
  * @module language-detection/components/tabs/PlaygroundTab
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,12 +17,45 @@ import {
   getLanguageName,
   getConfidenceColor,
 } from '../../types';
+import { FieldError } from '../../../shared/components';
+import { validateTextInput } from '../../../shared/utils/validation';
+import { cn } from '@/lib/utils';
 
 export function LanguageDetectionMain() {
   const [inputText, setInputText] = useState('');
+  const [inputError, setInputError] = useState<{
+    message: string;
+    helpText?: string;
+  } | null>(null);
+
   const { isDetecting, results, error, actions } = useLanguageDetection(
     DEFAULT_DETECTION_CONFIG,
   );
+
+  /**
+   * Validate input text
+   */
+  useEffect(() => {
+    if (inputText.length === 0) {
+      setInputError(null); // No error for empty input
+      return;
+    }
+
+    const validation = validateTextInput(inputText, {
+      minLength: 10,
+      maxLength: 10000,
+      required: false,
+    });
+
+    if (!validation.valid && validation.error) {
+      setInputError({
+        message: validation.error.message,
+        helpText: validation.error.helpText,
+      });
+    } else {
+      setInputError(null);
+    }
+  }, [inputText]);
 
   const handleDetect = async () => {
     if (!inputText.trim()) return;
@@ -49,13 +82,30 @@ export function LanguageDetectionMain() {
           <CardTitle className="text-base">Text to Analyze</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder="Enter text to detect language..."
-            className="min-h-[150px]"
-            disabled={isDetecting}
-          />
+          <div className="space-y-2">
+            <Textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Enter text to detect language..."
+              className={cn(
+                'min-h-[150px]',
+                inputError && 'border-red-400 dark:border-red-500',
+              )}
+              disabled={isDetecting}
+              aria-invalid={!!inputError}
+              aria-describedby={
+                inputError ? 'language-detection-error' : undefined
+              }
+            />
+            {inputError && (
+              <FieldError
+                id="language-detection-error"
+                message={inputError.message}
+                helpText={inputError.helpText}
+                severity="error"
+              />
+            )}
+          </div>
           <div className="flex gap-2">
             <Button
               onClick={handleDetect}

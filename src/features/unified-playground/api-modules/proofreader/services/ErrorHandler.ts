@@ -7,6 +7,11 @@
  * @module proofreader/services/ErrorHandler
  */
 
+import {
+  getErrorMessageWithContext,
+  type ErrorCode,
+} from '../../shared/utils/errorMessages';
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -50,94 +55,78 @@ export class ProofreaderErrorHandler {
     inputLength: number,
   ): ProofreaderError {
     if (!(error instanceof Error)) {
+      const unknownError = getErrorMessageWithContext('UNKNOWN_ERROR');
       return {
         type: 'unknown',
-        message: 'An unknown error occurred during proofreading',
+        message: unknownError.message,
         technicalDetails: String(error),
+        userMessage: unknownError.helpText,
       };
     }
+
+    // Determine error code based on error message
+    let errorCode: ErrorCode = 'UNKNOWN_ERROR';
+    let errorType: ProofreaderErrorType = 'unknown';
 
     // Not supported
     if (
       error.message.includes('not supported') ||
       (error.message.includes('Proofreader') && error.message.includes('not'))
     ) {
-      return {
-        type: 'not-supported',
-        message:
-          'Proofreader API is not supported in this browser. Chrome 141-145 required.',
-        originalError: error,
-        technicalDetails: error.message,
-      };
+      errorCode = 'API_NOT_SUPPORTED';
+      errorType = 'not-supported';
     }
-
     // Not available
-    if (error.message.includes('not available')) {
-      return {
-        type: 'not-available',
-        message: 'Proofreader API is not available. Check system requirements.',
-        originalError: error,
-        technicalDetails: error.message,
-      };
+    else if (error.message.includes('not available')) {
+      errorCode = 'API_NOT_AVAILABLE';
+      errorType = 'not-available';
     }
-
     // Model download required
-    if (
+    else if (
       error.message.includes('download') ||
       error.message.includes('after-download')
     ) {
-      return {
-        type: 'model-download',
-        message: 'Proofreader model needs to be downloaded (22GB+ required).',
-        originalError: error,
-        technicalDetails: error.message,
-      };
+      errorCode = 'MODEL_DOWNLOAD_REQUIRED';
+      errorType = 'model-download';
     }
-
     // Cancelled
-    if (
+    else if (
       error.message.includes('cancelled') ||
       error.message.includes('abort') ||
       error.name === 'AbortError'
     ) {
-      return {
-        type: 'cancelled',
-        message: 'Proofreading was cancelled.',
-        originalError: error,
-        technicalDetails: error.message,
-      };
+      errorCode = 'OPERATION_CANCELLED';
+      errorType = 'cancelled';
     }
-
     // Invalid input
-    if (
+    else if (
       error.message.includes('Input') ||
       error.message.includes('invalid') ||
       error.message.includes('empty')
     ) {
-      return {
-        type: 'invalid-input',
-        message: error.message,
-        originalError: error,
-        technicalDetails: `Input length: ${inputLength} chars`,
-      };
+      errorCode = inputLength === 0 ? 'INPUT_EMPTY' : 'INVALID_INPUT';
+      errorType = 'invalid-input';
     }
-
     // API error
-    if (error.message.includes('API') || error.message.includes('instance')) {
-      return {
-        type: 'api-error',
-        message: `Proofreader API error: ${error.message}`,
-        originalError: error,
-        technicalDetails: error.stack,
-      };
+    else if (
+      error.message.includes('API') ||
+      error.message.includes('instance')
+    ) {
+      errorCode = 'API_ERROR';
+      errorType = 'api-error';
     }
 
-    // Unknown error
+    // Get plain language error message
+    const errorMessage = getErrorMessageWithContext(errorCode, {
+      currentLength: inputLength,
+    });
+
     return {
-      type: 'unknown',
-      message: `Proofreading error: ${error.message}`,
+      type: errorType,
+      message: errorMessage.message,
       originalError: error,
-      technicalDetails: error.stack,
+      technicalDetails: error.message,
+      userMessage: errorMessage.helpText,
     };
   }
 
@@ -148,35 +137,13 @@ export class ProofreaderErrorHandler {
    * @returns User-friendly message
    */
   static getUserMessage(error: ProofreaderError): string {
+    // Use userMessage if available (contains plain language help text)
     if (error.userMessage) {
-      return error.userMessage;
+      return `${error.message}\n\n${error.userMessage}`;
     }
 
-    switch (error.type) {
-      case 'not-supported':
-        return 'Proofreader API is not supported in this browser. Please use Chrome 141-145 with Origin Trial enabled.';
-
-      case 'not-available':
-        return 'Proofreader API is not available. Check chrome://on-device-internals for details.';
-
-      case 'model-download':
-        return 'Proofreader model needs to be downloaded. This requires 22GB+ storage and unmetered connection. Check chrome://on-device-internals for download status.';
-
-      case 'cancelled':
-        return 'Proofreading was cancelled.';
-
-      case 'invalid-input':
-        return error.message;
-
-      case 'api-error':
-        return `Proofreader error: ${error.message}`;
-
-      case 'unknown':
-        return 'An unexpected error occurred. Please try again.';
-
-      default:
-        return error.message;
-    }
+    // Fallback to just the message
+    return error.message;
   }
 
   /**

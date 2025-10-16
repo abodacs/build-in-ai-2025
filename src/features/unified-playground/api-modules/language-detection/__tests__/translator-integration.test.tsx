@@ -13,6 +13,7 @@ import { useTranslator } from '../../translator/hooks/useTranslator';
 // Mock Chrome AI APIs
 const mockDetector = {
   detect: vi.fn(),
+  destroy: vi.fn(), // ✅ CRITICAL FIX: Add destroy() method
 };
 
 const mockTranslator = {
@@ -24,8 +25,10 @@ beforeEach(() => {
   vi.clearAllMocks();
 
   // Setup Language Detector mock
-  (globalThis as any).LanguageDetector = {
+  (window as any).LanguageDetector = {
+    // ✅ FIX: Use window not globalThis
     create: vi.fn().mockResolvedValue(mockDetector),
+    availability: vi.fn().mockResolvedValue('readily'), // ✅ FIX: Add availability()
     capabilities: vi.fn().mockResolvedValue({
       available: 'readily',
       defaultTopK: 3,
@@ -34,8 +37,10 @@ beforeEach(() => {
   };
 
   // Setup Translator mock
-  (globalThis as any).Translator = {
+  (window as any).Translator = {
+    // ✅ FIX: Use window not globalThis
     create: vi.fn().mockResolvedValue(mockTranslator),
+    availability: vi.fn().mockResolvedValue('readily'), // ✅ FIX: Add availability()
     capabilities: vi.fn().mockResolvedValue({
       available: 'readily',
       languagePairAvailable: vi.fn().mockResolvedValue('readily'),
@@ -81,12 +86,19 @@ describe('Language Detection + Translator Integration', () => {
         }),
       );
 
+      // Wait for translator hook to initialize
+      await waitFor(() => {
+        expect(translatorResult.current.translate).toBeDefined();
+      });
+
       await act(async () => {
-        await translatorResult.current.actions.translate('Hello world');
+        await translatorResult.current.translate('Hello world');
       });
 
       await waitFor(() => {
-        expect(translatorResult.current.translatedText).toBe('Translated text');
+        expect(translatorResult.current.result?.translated).toBe(
+          'Translated text',
+        );
       });
     });
 
@@ -127,14 +139,19 @@ describe('Language Detection + Translator Integration', () => {
         }),
       );
 
+      // Wait for translator hook to initialize
+      await waitFor(() => {
+        expect(translatorResult.current.translate).toBeDefined();
+      });
+
       mockTranslator.translate.mockResolvedValue('Hello world');
 
       await act(async () => {
-        await translatorResult.current.actions.translate(inputText);
+        await translatorResult.current.translate(inputText);
       });
 
       await waitFor(() => {
-        expect(translatorResult.current.translatedText).toBe('Hello world');
+        expect(translatorResult.current.result?.translated).toBe('Hello world');
       });
     });
 
@@ -283,12 +300,17 @@ describe('Language Detection + Translator Integration', () => {
         }),
       );
 
+      // Wait for translator hook to initialize
+      await waitFor(() => {
+        expect(translatorResult.current.translate).toBeDefined();
+      });
+
       mockTranslator.translate.mockRejectedValue(
         new Error('Translation failed'),
       );
 
       await act(async () => {
-        await translatorResult.current.actions.translate('Hello');
+        await translatorResult.current.translate('Hello');
       });
 
       await waitFor(() => {

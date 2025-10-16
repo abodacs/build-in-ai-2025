@@ -214,33 +214,6 @@ export function TranslatorConfig({
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              {/* Refresh button for failed/unavailable states */}
-              {(availability === 'no' || availability === 'after-download') &&
-                onRecheckAvailability && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onRecheckAvailability();
-                          }}
-                          disabled={isCheckingAvailability}
-                          className="h-6 w-6 p-0"
-                        >
-                          <RefreshCw
-                            className={`h-3 w-3 ${isCheckingAvailability ? 'animate-spin' : ''}`}
-                          />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-xs">Recheck availability</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
             </div>
             {isOpen ? (
               <ChevronUp className="h-4 w-4" />
@@ -249,6 +222,31 @@ export function TranslatorConfig({
             )}
           </Button>
         </CollapsibleTrigger>
+
+        {/* Refresh button moved outside CollapsibleTrigger to avoid nested button violation */}
+        {(availability === 'no' || availability === 'after-download') &&
+          onRecheckAvailability && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onRecheckAvailability}
+                    disabled={isCheckingAvailability}
+                    className="h-8 w-8 p-0"
+                  >
+                    <RefreshCw
+                      className={`h-3 w-3 ${isCheckingAvailability ? 'animate-spin' : ''}`}
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Recheck availability</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
 
         {onViewCode && <ViewCodeButton onClick={onViewCode} />}
       </div>

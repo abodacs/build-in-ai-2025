@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle2, XCircle, Loader2, Undo2, Redo2 } from 'lucide-react';
 import { HighlightedTextEditor } from './HighlightedTextEditor';
 import type { ProofreadCorrection } from '../types';
+import { FieldError } from '../../shared/components';
 
 // ============================================================================
 // Types
@@ -51,6 +52,9 @@ export interface ProofreaderInputProps {
   /** Is proofreading in progress */
   isProofreading?: boolean;
 
+  /** Current loading phase */
+  loadingPhase?: 'initializing' | 'proofreading' | null;
+
   /** Is disabled */
   disabled?: boolean;
 
@@ -62,6 +66,12 @@ export interface ProofreaderInputProps {
 
   /** Additional CSS classes */
   className?: string;
+
+  /** Inline error message to display */
+  error?: string;
+
+  /** Error help text for recovery guidance */
+  errorHelpText?: string;
 }
 
 // ============================================================================
@@ -83,14 +93,31 @@ export function ProofreaderInput({
   onUndo,
   onRedo,
   isProofreading = false,
+  loadingPhase = null,
   disabled = false,
   maxLength = 5000,
   correctionCount = 0,
   className = '',
+  error,
+  errorHelpText,
 }: ProofreaderInputProps) {
   const characterCount = value.length;
   const isOverLimit = characterCount > maxLength;
   const canProofread = characterCount > 0 && !isOverLimit && !isProofreading;
+
+  // Get contextual button text based on loading phase
+  const getButtonText = () => {
+    if (loadingPhase === 'initializing') {
+      return 'Initializing Proofreader...';
+    }
+    if (loadingPhase === 'proofreading') {
+      return 'Proofreading Text...';
+    }
+    if (isProofreading) {
+      return 'Proofreading...';
+    }
+    return 'Proofread Text';
+  };
 
   // Keyboard shortcuts for undo/redo
   const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -151,6 +178,16 @@ export function ProofreaderInput({
               characters. Please shorten the text.
             </p>
           )}
+
+          {/* Inline error message */}
+          {error && (
+            <FieldError
+              id="proofreader-input-error"
+              message={error}
+              helpText={errorHelpText}
+              severity="error"
+            />
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -159,10 +196,10 @@ export function ProofreaderInput({
             disabled={!canProofread || disabled}
             className="flex-1"
           >
-            {isProofreading ? (
+            {isProofreading || loadingPhase ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Proofreading...
+                {getButtonText()}
               </>
             ) : (
               <>

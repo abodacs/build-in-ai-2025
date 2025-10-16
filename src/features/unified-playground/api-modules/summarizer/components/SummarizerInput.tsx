@@ -27,6 +27,7 @@ import {
   suggestOutputFormat,
 } from '../utils/textPreprocessing';
 import { isValidURL } from '../utils/urlParser';
+import { FieldError } from '../../shared/components';
 
 // ============================================================================
 // Types
@@ -59,6 +60,12 @@ export interface SummarizerInputProps {
 
   /** Minimum text length for validation */
   minLength?: number;
+
+  /** Inline error message to display */
+  error?: string;
+
+  /** Error help text for recovery guidance */
+  errorHelpText?: string;
 }
 
 // ============================================================================
@@ -89,6 +96,8 @@ export function SummarizerInput({
   showWordCount = true,
   showSmartDetection = true,
   minLength = 100,
+  error,
+  errorHelpText,
 }: SummarizerInputProps) {
   // State
   const [isFocused, setIsFocused] = useState(false);
@@ -235,11 +244,14 @@ export function SummarizerInput({
             onBlur={() => setIsFocused(false)}
             placeholder={placeholder}
             disabled={disabled}
+            aria-invalid={!!error}
+            aria-describedby={error ? 'summarizer-input-error' : undefined}
             className={cn(
               'min-h-[180px] sm:min-h-[240px] resize-y text-sm leading-relaxed',
               'transition-all duration-200',
               isFocused && 'ring-2 ring-purple-500 ring-offset-2',
               !isValid && value && showValidation && 'border-amber-400',
+              error && 'border-red-400 dark:border-red-500',
             )}
           />
 
@@ -269,6 +281,16 @@ export function SummarizerInput({
             </div>
           )}
         </div>
+
+        {/* Inline error message */}
+        {error && (
+          <FieldError
+            id="summarizer-input-error"
+            message={error}
+            helpText={errorHelpText}
+            severity="error"
+          />
+        )}
 
         {/* Smart detection alerts - Compact */}
         {showSmartDetection && (

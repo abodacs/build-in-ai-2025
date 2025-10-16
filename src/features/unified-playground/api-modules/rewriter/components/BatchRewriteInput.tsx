@@ -39,6 +39,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import type { BatchRewriteItem, BatchInputFormat } from '../types/batch.types';
+import { FieldError } from '../../shared/components';
 
 // ============================================================================
 // Types
@@ -68,6 +69,12 @@ export interface BatchRewriteInputProps {
 
   /** Additional CSS classes */
   className?: string;
+
+  /** Inline error message to display */
+  error?: string;
+
+  /** Error help text for recovery guidance */
+  errorHelpText?: string;
 }
 
 // ============================================================================
@@ -98,6 +105,8 @@ export function BatchRewriteInput({
   disabled = false,
   maxItems = 100,
   className,
+  error,
+  errorHelpText,
 }: BatchRewriteInputProps) {
   // State
   const [inputText, setInputText] = useState('');
@@ -243,13 +252,18 @@ export function BatchRewriteInput({
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={disabled || !canAddMore}
+            aria-invalid={!!error}
+            aria-describedby={error ? 'batch-input-error' : undefined}
             placeholder={
               inputMode === 'single'
                 ? 'Enter text to add...'
                 : 'Paste multiple texts, one per line...'
             }
             rows={inputMode === 'single' ? 3 : 6}
-            className="resize-y font-mono text-sm"
+            className={cn(
+              'resize-y font-mono text-sm',
+              error && 'border-red-400 dark:border-red-500',
+            )}
           />
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">
@@ -267,6 +281,16 @@ export function BatchRewriteInput({
               Add
             </Button>
           </div>
+
+          {/* Inline error message */}
+          {error && (
+            <FieldError
+              id="batch-input-error"
+              message={error}
+              helpText={errorHelpText}
+              severity="error"
+            />
+          )}
         </div>
 
         {/* File Import */}

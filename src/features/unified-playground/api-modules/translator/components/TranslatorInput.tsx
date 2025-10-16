@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Search, AlertCircle, Command } from 'lucide-react';
 import { type TranslatorInputProps, SUPPORTED_LANGUAGES } from '../types';
+import { FieldError } from '../../shared/components';
 
 /**
  * TranslatorInput Component
@@ -31,6 +32,8 @@ export function TranslatorInput({
   placeholder = 'Paste or type text to translate...',
   onDetectLanguage,
   disabled = false,
+  error,
+  errorHelpText,
 }: TranslatorInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [wordCount, setWordCount] = useState(0);
@@ -184,11 +187,14 @@ export function TranslatorInput({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
-          className="min-h-[120px] resize-none font-mono text-sm"
+          aria-invalid={!!error}
+          aria-describedby={
+            error ? 'translator-input-error input-stats' : 'input-stats'
+          }
+          className={`min-h-[120px] resize-none font-mono text-sm ${error ? 'border-red-400 dark:border-red-500' : ''}`}
           data-testid="translator-input"
           maxLength={maxLength}
           aria-label="Text to translate"
-          aria-describedby="input-stats"
         />
         {/* Keyboard Shortcut Hint */}
         {!disabled && value.length > 0 && (
@@ -198,6 +204,16 @@ export function TranslatorInput({
           </div>
         )}
       </div>
+
+      {/* Inline error message */}
+      {error && (
+        <FieldError
+          id="translator-input-error"
+          message={error}
+          helpText={errorHelpText}
+          severity="error"
+        />
+      )}
 
       {/* Footer Info */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

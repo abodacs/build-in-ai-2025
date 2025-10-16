@@ -115,7 +115,10 @@ export function QuickTemplates({
               isOpen ? 'Hide quick templates' : 'Show quick templates'
             }
           >
-            <div className="flex items-center justify-between cursor-pointer group w-full hover:bg-accent/50 rounded-md px-2 py-1 -mx-2 -my-1 transition-all duration-200">
+            <button
+              type="button"
+              className="flex items-center justify-between cursor-pointer group w-full hover:bg-accent/50 rounded-md px-2 py-1 -mx-2 -my-1 transition-all duration-200"
+            >
               <div className="flex-1">
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500 group-hover:text-yellow-600 transition-colors" />
@@ -132,7 +135,7 @@ export function QuickTemplates({
                   isOpen && 'rotate-180',
                 )}
               />
-            </div>
+            </button>
           </CollapsibleTrigger>
         </CardHeader>
 

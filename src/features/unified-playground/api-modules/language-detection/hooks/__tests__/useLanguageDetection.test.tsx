@@ -9,21 +9,24 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useLanguageDetection } from '../useLanguageDetection';
 
-// Mock ChromeAILanguageDetectorService
+// Mock ChromeAILanguageDetectionService
 vi.mock('../../services', () => ({
-  ChromeAILanguageDetectorService: {
+  ChromeAILanguageDetectionService: {
+    checkAvailability: vi.fn().mockResolvedValue('readily'),
     createInstance: vi.fn().mockResolvedValue({
       detect: vi.fn().mockResolvedValue([
         { detectedLanguage: 'en', confidence: 0.95 },
-        { detectedLanguage: 'es', confidence: 0.03 },
-        { detectedLanguage: 'fr', confidence: 0.02 },
+        { detectedLanguage: 'es', confidence: 0.85 },
+        { detectedLanguage: 'fr', confidence: 0.75 },
       ]),
+      destroy: vi.fn(), // ✅ CRITICAL FIX: Add destroy() method to mock instance
     }),
     detect: vi.fn().mockResolvedValue([
       { detectedLanguage: 'en', confidence: 0.95 },
-      { detectedLanguage: 'es', confidence: 0.03 },
-      { detectedLanguage: 'fr', confidence: 0.02 },
+      { detectedLanguage: 'es', confidence: 0.85 },
+      { detectedLanguage: 'fr', confidence: 0.75 },
     ]),
+    destroy: vi.fn(), // ✅ Add destroy() static method
   },
 }));
 
@@ -146,10 +149,10 @@ describe('useLanguageDetection', () => {
     });
 
     it('should handle detection errors', async () => {
-      const { ChromeAILanguageDetectorService } = await import(
+      const { ChromeAILanguageDetectionService } = await import(
         '../../services'
       );
-      vi.mocked(ChromeAILanguageDetectorService.detect).mockRejectedValueOnce(
+      vi.mocked(ChromeAILanguageDetectionService.detect).mockRejectedValueOnce(
         new Error('Detection failed'),
       );
 
@@ -168,11 +171,11 @@ describe('useLanguageDetection', () => {
     });
 
     it('should handle instance creation errors', async () => {
-      const { ChromeAILanguageDetectorService } = await import(
+      const { ChromeAILanguageDetectionService } = await import(
         '../../services'
       );
       vi.mocked(
-        ChromeAILanguageDetectorService.createInstance,
+        ChromeAILanguageDetectionService.createInstance,
       ).mockRejectedValueOnce(new Error('Failed to create instance'));
 
       const { result } = renderHook(() => useLanguageDetection(defaultConfig));
@@ -187,10 +190,10 @@ describe('useLanguageDetection', () => {
     });
 
     it('should return null when no results above threshold', async () => {
-      const { ChromeAILanguageDetectorService } = await import(
+      const { ChromeAILanguageDetectionService } = await import(
         '../../services'
       );
-      vi.mocked(ChromeAILanguageDetectorService.detect).mockResolvedValueOnce([
+      vi.mocked(ChromeAILanguageDetectionService.detect).mockResolvedValueOnce([
         { detectedLanguage: 'unknown', confidence: 0.1 },
       ]);
 

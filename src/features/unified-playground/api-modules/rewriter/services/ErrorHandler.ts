@@ -7,6 +7,12 @@
  * @module rewriter/services/ErrorHandler
  */
 
+import {
+  getErrorMessageWithContext,
+  mapTechnicalErrorToCode,
+  type ErrorCode,
+} from '../../shared/utils/errorMessages';
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -49,12 +55,12 @@ export class RewriterErrorHandler {
     }
 
     // Handle unknown error types
+    const unknownError = getErrorMessageWithContext('UNKNOWN_ERROR');
     return {
       type: 'NotSupportedError',
-      message: 'An unknown error occurred',
+      message: unknownError.message,
       recoverable: false,
-      suggestion:
-        'Please try reloading the page. If the issue persists, check your browser version.',
+      suggestion: unknownError.helpText || '',
     };
   }
 
@@ -64,51 +70,16 @@ export class RewriterErrorHandler {
   private static handleDOMException(error: DOMException): RewriterError {
     const errorName = error.name as RewriterErrorType;
 
-    switch (errorName) {
-      case 'NotSupportedError':
-        return {
-          type: 'NotSupportedError',
-          message: 'Chrome AI Rewriter API is not supported in this browser',
-          recoverable: false,
-          suggestion:
-            'Please upgrade to Chrome 137+ and enable the Rewriter API via chrome://flags',
-        };
+    // Map technical error name to user-friendly error code
+    const errorCode = mapTechnicalErrorToCode(errorName);
+    const errorMessage = getErrorMessageWithContext(errorCode);
 
-      case 'InvalidStateError':
-        return {
-          type: 'InvalidStateError',
-          message: 'Rewriter is in an invalid state',
-          recoverable: true,
-          suggestion:
-            'The rewriter may have been destroyed or is still initializing. Try creating a new rewriter instance.',
-        };
-
-      case 'NotReadableError':
-        return {
-          type: 'NotReadableError',
-          message: 'Failed to download or read the AI model',
-          recoverable: true,
-          suggestion:
-            'Check your internet connection and available storage. Try downloading again.',
-        };
-
-      case 'AbortError':
-        return {
-          type: 'AbortError',
-          message: 'Operation was aborted',
-          recoverable: true,
-          suggestion:
-            'The operation was cancelled. You can try again if needed.',
-        };
-
-      default:
-        return {
-          type: 'NotSupportedError',
-          message: error.message || 'An unknown error occurred',
-          recoverable: false,
-          suggestion: 'Please check the browser console for more details.',
-        };
-    }
+    return {
+      type: errorName,
+      message: errorMessage.message,
+      recoverable: errorMessage.severity !== 'error',
+      suggestion: errorMessage.helpText || '',
+    };
   }
 
   /**
@@ -117,82 +88,74 @@ export class RewriterErrorHandler {
   private static handleStandardError(error: Error): RewriterError {
     const message = error.message.toLowerCase();
 
+    // Determine error code based on error message content
+    let errorCode: ErrorCode = 'UNKNOWN_ERROR';
+
     // User activation errors
     if (
       message.includes('user activation') ||
       message.includes('user gesture') ||
       message.includes('user interaction')
     ) {
-      return {
-        type: 'UserActivationError',
-        message: 'User activation required',
-        recoverable: true,
-        suggestion:
-          'Rewriter operations must be initiated from a user gesture (e.g., button click). If you clicked a button, the activation may have expired due to async operations. Please try again.',
-      };
+      errorCode = 'USER_ACTIVATION_REQUIRED';
     }
-
     // API not supported
-    if (message.includes('not supported') || message.includes('undefined')) {
-      return {
-        type: 'NotSupportedError',
-        message: 'Chrome AI Rewriter API is not available',
-        recoverable: false,
-        suggestion:
-          'Ensure you are using Chrome 137+ with the Rewriter API enabled in chrome://flags',
-      };
+    else if (
+      message.includes('not supported') ||
+      message.includes('undefined')
+    ) {
+      errorCode = 'API_NOT_SUPPORTED';
     }
-
     // Download/network errors
-    if (message.includes('download') || message.includes('network')) {
-      return {
-        type: 'NotReadableError',
-        message: 'Failed to download the AI model',
-        recoverable: true,
-        suggestion:
-          'Check your internet connection and try again. Ensure you have sufficient storage space.',
-      };
+    else if (message.includes('download') || message.includes('network')) {
+      errorCode = 'MODEL_DOWNLOAD_FAILED';
     }
-
     // Abort errors
-    if (message.includes('abort') || message.includes('cancel')) {
-      return {
-        type: 'AbortError',
-        message: 'Operation was cancelled',
-        recoverable: true,
-        suggestion: 'The operation was cancelled. You can try again if needed.',
-      };
+    else if (message.includes('abort') || message.includes('cancel')) {
+      errorCode = 'OPERATION_CANCELLED';
     }
-
     // Invalid state
-    if (message.includes('invalid') || message.includes('state')) {
-      return {
-        type: 'InvalidStateError',
-        message: 'Rewriter is in an invalid state',
-        recoverable: true,
-        suggestion: 'Try creating a new rewriter instance.',
-      };
+    else if (message.includes('invalid') || message.includes('state')) {
+      errorCode = 'INVALID_STATE';
     }
-
     // Configuration not set
-    if (message.includes('configuration not set')) {
-      return {
-        type: 'InvalidStateError',
-        message: 'Rewriter configuration not set',
-        recoverable: true,
-        suggestion:
-          'Ensure rewriter instance is created before calling rewrite operations.',
-      };
+    else if (message.includes('configuration not set')) {
+      errorCode = 'INVALID_STATE';
     }
 
-    // Generic error fallback
+    // Get plain language error message
+    const errorMessage = getErrorMessageWithContext(errorCode);
+
+    // Map error code to RewriterErrorType
+    const errorType = this.mapErrorCodeToType(errorCode);
+
     return {
-      type: 'NotSupportedError',
-      message: error.message || 'An unexpected error occurred',
-      recoverable: false,
-      suggestion:
-        'Please check the browser console for more details and try reloading the page.',
+      type: errorType,
+      message: errorMessage.message,
+      recoverable: errorMessage.severity !== 'error',
+      suggestion: errorMessage.helpText || '',
     };
+  }
+
+  /**
+   * Map error code to RewriterErrorType
+   */
+  private static mapErrorCodeToType(code: ErrorCode): RewriterErrorType {
+    switch (code) {
+      case 'API_NOT_SUPPORTED':
+        return 'NotSupportedError';
+      case 'MODEL_DOWNLOAD_FAILED':
+      case 'NETWORK_ERROR':
+        return 'NotReadableError';
+      case 'OPERATION_CANCELLED':
+        return 'AbortError';
+      case 'INVALID_STATE':
+        return 'InvalidStateError';
+      case 'USER_ACTIVATION_REQUIRED':
+        return 'UserActivationError';
+      default:
+        return 'NotSupportedError';
+    }
   }
 
   /**
@@ -202,22 +165,29 @@ export class RewriterErrorHandler {
     error: unknown,
     inputLength: number = 0,
   ): RewriterError {
-    const baseError = this.handleError(error);
-
-    // Add context-specific suggestions
-    if (inputLength > 10000) {
+    // Handle empty input
+    if (inputLength === 0) {
+      const emptyError = getErrorMessageWithContext('INPUT_EMPTY');
       return {
-        ...baseError,
-        suggestion: `${baseError.suggestion}\n\nNote: Your input is very long (${Math.round(inputLength / 1000)}K characters). Consider breaking it into smaller chunks for better results.`,
+        type: 'InvalidStateError',
+        message: emptyError.message,
+        recoverable: true,
+        suggestion: emptyError.helpText || '',
       };
     }
 
-    if (inputLength === 0) {
+    const baseError = this.handleError(error);
+
+    // Add context-specific suggestions for very long input
+    if (inputLength > 10000) {
+      const lengthWarning = getErrorMessageWithContext('INPUT_TOO_LONG', {
+        currentLength: inputLength,
+        maxLength: 10000,
+      });
+
       return {
-        type: 'InvalidStateError',
-        message: 'Cannot rewrite empty input',
-        recoverable: true,
-        suggestion: 'Please provide text to rewrite.',
+        ...baseError,
+        suggestion: `${baseError.suggestion}\n\n${lengthWarning.helpText}`,
       };
     }
 
@@ -235,14 +205,17 @@ export class RewriterErrorHandler {
 
     if (baseError.type === 'NotReadableError') {
       // Estimate model size (Rewriter model size)
-      const estimatedModelSize = 10 * 1024 * 1024; // ~10MB estimate
+      const estimatedModelSize = 10 * 1024 * 1024 * 1024; // ~10GB estimate
       const percentComplete = (bytesDownloaded / estimatedModelSize) * 100;
+
+      const errorMessage = getErrorMessageWithContext('MODEL_DOWNLOAD_FAILED', {
+        progress: percentComplete.toFixed(1),
+      });
 
       return {
         ...baseError,
-        message: `Model download failed at ${percentComplete.toFixed(1)}%`,
-        suggestion:
-          'Your connection may have been interrupted. Please check your internet connection and available storage, then try again.',
+        message: errorMessage.message,
+        suggestion: errorMessage.helpText || baseError.suggestion,
       };
     }
 

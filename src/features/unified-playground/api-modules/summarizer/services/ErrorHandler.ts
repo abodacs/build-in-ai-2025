@@ -11,6 +11,11 @@ import type {
   SummarizerError,
   SummarizerErrorType,
 } from '../types/summarizer.types';
+import {
+  getErrorMessageWithContext,
+  mapTechnicalErrorToCode,
+  type ErrorCode,
+} from '../../shared/utils/errorMessages';
 
 // ============================================================================
 // Error Handler Service
@@ -36,12 +41,12 @@ export class ErrorHandler {
     }
 
     // Handle unknown error types
+    const unknownError = getErrorMessageWithContext('UNKNOWN_ERROR');
     return {
       type: 'NotSupportedError',
-      message: 'An unknown error occurred',
+      message: unknownError.message,
       recoverable: false,
-      suggestion:
-        'Please try reloading the page. If the issue persists, check your browser version.',
+      suggestion: unknownError.helpText || '',
     };
   }
 
@@ -54,51 +59,16 @@ export class ErrorHandler {
   private static handleDOMException(error: DOMException): SummarizerError {
     const errorName = error.name as SummarizerErrorType;
 
-    switch (errorName) {
-      case 'NotSupportedError':
-        return {
-          type: 'NotSupportedError',
-          message: 'Chrome AI Summarizer API is not supported in this browser',
-          recoverable: false,
-          suggestion:
-            'Please upgrade to Chrome 138+ or ensure the Chrome AI origin trial is enabled. Visit chrome://flags and enable "Summarization API for Gemini Nano".',
-        };
+    // Map technical error name to user-friendly error code
+    const errorCode = mapTechnicalErrorToCode(errorName);
+    const errorMessage = getErrorMessageWithContext(errorCode);
 
-      case 'InvalidStateError':
-        return {
-          type: 'InvalidStateError',
-          message: 'Summarizer is in an invalid state',
-          recoverable: true,
-          suggestion:
-            'The summarizer may have been destroyed or is still initializing. Try creating a new summarizer instance.',
-        };
-
-      case 'NotReadableError':
-        return {
-          type: 'NotReadableError',
-          message: 'Failed to download or read the AI model',
-          recoverable: true,
-          suggestion:
-            'Check your internet connection and available storage (22GB+ required). Ensure you have 4GB+ VRAM. Try downloading again.',
-        };
-
-      case 'AbortError':
-        return {
-          type: 'AbortError',
-          message: 'Operation was aborted',
-          recoverable: true,
-          suggestion:
-            'The operation was cancelled. You can try again if needed.',
-        };
-
-      default:
-        return {
-          type: 'NotSupportedError',
-          message: error.message || 'An unknown error occurred',
-          recoverable: false,
-          suggestion: 'Please check the browser console for more details.',
-        };
-    }
+    return {
+      type: errorName,
+      message: errorMessage.message,
+      recoverable: errorMessage.severity !== 'error',
+      suggestion: errorMessage.helpText || '',
+    };
   }
 
   /**
@@ -111,52 +81,53 @@ export class ErrorHandler {
     // Check for specific error messages
     const message = error.message.toLowerCase();
 
+    // Determine error code based on error message content
+    let errorCode: ErrorCode = 'UNKNOWN_ERROR';
+
     if (message.includes('not supported') || message.includes('undefined')) {
-      return {
-        type: 'NotSupportedError',
-        message: 'Chrome AI Summarizer API is not available',
-        recoverable: false,
-        suggestion:
-          'Ensure you are using Chrome 138+ with the Summarization API enabled in chrome://flags.',
-      };
+      errorCode = 'API_NOT_SUPPORTED';
+    } else if (message.includes('download') || message.includes('network')) {
+      errorCode = 'MODEL_DOWNLOAD_FAILED';
+    } else if (message.includes('abort') || message.includes('cancel')) {
+      errorCode = 'OPERATION_CANCELLED';
+    } else if (message.includes('invalid') || message.includes('state')) {
+      errorCode = 'INVALID_STATE';
     }
 
-    if (message.includes('download') || message.includes('network')) {
-      return {
-        type: 'NotReadableError',
-        message: 'Failed to download the AI model',
-        recoverable: true,
-        suggestion:
-          'Check your internet connection and try again. Ensure you have 22GB+ free storage.',
-      };
-    }
+    // Get plain language error message
+    const errorMessage = getErrorMessageWithContext(errorCode);
 
-    if (message.includes('abort') || message.includes('cancel')) {
-      return {
-        type: 'AbortError',
-        message: 'Operation was cancelled',
-        recoverable: true,
-        suggestion: 'The operation was cancelled. You can try again if needed.',
-      };
-    }
+    // Map error code to SummarizerErrorType
+    const errorType = this.mapErrorCodeToType(errorCode);
 
-    if (message.includes('invalid') || message.includes('state')) {
-      return {
-        type: 'InvalidStateError',
-        message: 'Summarizer is in an invalid state',
-        recoverable: true,
-        suggestion: 'Try creating a new summarizer instance.',
-      };
-    }
-
-    // Generic error fallback
     return {
-      type: 'NotSupportedError',
-      message: error.message || 'An unexpected error occurred',
-      recoverable: false,
-      suggestion:
-        'Please check the browser console for more details and try reloading the page.',
+      type: errorType,
+      message: errorMessage.message,
+      recoverable: errorMessage.severity !== 'error',
+      suggestion: errorMessage.helpText || '',
     };
+  }
+
+  /**
+   * Map error code to SummarizerErrorType
+   *
+   * @param {ErrorCode} code - Error code
+   * @returns {SummarizerErrorType} Summarizer error type
+   */
+  private static mapErrorCodeToType(code: ErrorCode): SummarizerErrorType {
+    switch (code) {
+      case 'API_NOT_SUPPORTED':
+        return 'NotSupportedError';
+      case 'MODEL_DOWNLOAD_FAILED':
+      case 'NETWORK_ERROR':
+        return 'NotReadableError';
+      case 'OPERATION_CANCELLED':
+        return 'AbortError';
+      case 'INVALID_STATE':
+        return 'InvalidStateError';
+      default:
+        return 'NotSupportedError';
+    }
   }
 
   /**
@@ -222,13 +193,16 @@ export class ErrorHandler {
     const baseError = this.handleError(error);
 
     if (baseError.type === 'NotReadableError') {
-      const percentComplete = (bytesDownloaded / (22 * 1024 * 1024)) * 100;
+      const percentComplete =
+        (bytesDownloaded / (22 * 1024 * 1024 * 1024)) * 100;
+      const errorMessage = getErrorMessageWithContext('MODEL_DOWNLOAD_FAILED', {
+        progress: percentComplete.toFixed(1),
+      });
 
       return {
         ...baseError,
-        message: `Model download failed at ${percentComplete.toFixed(1)}%`,
-        suggestion:
-          'Your connection may have been interrupted. Please check your internet connection and available storage (22GB+ required), then try again.',
+        message: errorMessage.message,
+        suggestion: errorMessage.helpText || baseError.suggestion,
       };
     }
 
@@ -246,22 +220,29 @@ export class ErrorHandler {
     error: unknown,
     inputLength: number = 0,
   ): SummarizerError {
-    const baseError = this.handleError(error);
-
-    // Add context-specific suggestions
-    if (inputLength > 100000) {
+    // Handle empty input
+    if (inputLength === 0) {
+      const emptyError = getErrorMessageWithContext('INPUT_EMPTY');
       return {
-        ...baseError,
-        suggestion: `${baseError.suggestion}\n\nNote: Your input is very long (${Math.round(inputLength / 1000)}K characters). Consider using chunking strategies for better results.`,
+        type: 'InvalidStateError',
+        message: emptyError.message,
+        recoverable: true,
+        suggestion: emptyError.helpText || '',
       };
     }
 
-    if (inputLength === 0) {
+    const baseError = this.handleError(error);
+
+    // Add context-specific suggestions for very long input
+    if (inputLength > 100000) {
+      const lengthWarning = getErrorMessageWithContext('INPUT_TOO_LONG', {
+        currentLength: inputLength,
+        maxLength: 100000,
+      });
+
       return {
-        type: 'InvalidStateError',
-        message: 'Cannot summarize empty text',
-        recoverable: true,
-        suggestion: 'Please provide some text to summarize.',
+        ...baseError,
+        suggestion: `${baseError.suggestion}\n\n${lengthWarning.helpText}`,
       };
     }
 
@@ -284,11 +265,16 @@ export class ErrorHandler {
     online: boolean;
   }): SummarizerError | null {
     if (!requirements.browser.supported) {
+      const browserError = getErrorMessageWithContext('BROWSER_NOT_SUPPORTED', {
+        currentVersion: requirements.browser.version,
+        requiredVersion: requirements.browser.requiredVersion,
+      });
+
       return {
         type: 'NotSupportedError',
-        message: `Chrome ${requirements.browser.version} is not supported`,
+        message: browserError.message,
         recoverable: false,
-        suggestion: `Please upgrade to Chrome ${requirements.browser.requiredVersion}+ to use Chrome AI Summarizer.`,
+        suggestion: browserError.helpText || '',
       };
     }
 
@@ -302,21 +288,27 @@ export class ErrorHandler {
         (1024 * 1024 * 1024)
       ).toFixed(1);
 
+      const storageError = getErrorMessageWithContext('STORAGE_ERROR', {
+        available: availableGB,
+        required: requiredGB,
+      });
+
       return {
         type: 'NotReadableError',
-        message: `Insufficient storage: ${availableGB}GB available, ${requiredGB}GB required`,
+        message: storageError.message,
         recoverable: true,
-        suggestion: 'Please free up storage space and try again.',
+        suggestion: storageError.helpText || '',
       };
     }
 
     if (!requirements.online) {
+      const networkError = getErrorMessageWithContext('NETWORK_ERROR');
+
       return {
         type: 'NotReadableError',
-        message: 'No internet connection',
+        message: networkError.message,
         recoverable: true,
-        suggestion:
-          'Model download requires an internet connection. Please check your connection and try again.',
+        suggestion: networkError.helpText || '',
       };
     }
 

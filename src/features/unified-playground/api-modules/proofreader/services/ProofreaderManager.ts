@@ -103,6 +103,13 @@ export class ProofreaderManager extends BaseWritingManager<
     return newLangs.every((lang) => currentSet.has(lang));
   }
 
+  /**
+   * Destroy Proofreader instance
+   */
+  protected destroyInstance(instance: Proofreader): void {
+    ChromeAIProofreaderService.destroy(instance);
+  }
+
   // ==========================================================================
   // Proofreader Operations
   // ==========================================================================
@@ -305,6 +312,37 @@ export class ProofreaderManager extends BaseWritingManager<
    */
   updateConfig(config: ProofreaderConfig): void {
     this.config = config;
+  }
+
+  /**
+   * Destroy manager and cleanup resources
+   *
+   * Overrides BaseWritingManager.destroy() to use destroyInstance()
+   * for consistent cleanup through the service layer.
+   */
+  destroy(): void {
+    try {
+      // Abort any ongoing operations
+      if (this.abortController) {
+        this.abortController.abort();
+        this.abortController = null;
+      }
+
+      // Destroy instance using service
+      if (this.instance) {
+        this.destroyInstance(this.instance);
+        this.instance = null;
+      }
+    } catch (error) {
+      console.error('[ProofreaderManager] Error destroying instance:', error);
+    } finally {
+      // Reset state
+      this.config = null;
+      this.downloadProgress = null;
+      this.metadata = null;
+      this.state = 'destroyed';
+      this.isCreating = false;
+    }
   }
 
   /**

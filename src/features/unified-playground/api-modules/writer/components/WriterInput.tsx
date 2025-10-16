@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { CharacterCount } from '../../shared/components';
+import { CharacterCount, FieldError } from '../../shared/components';
 import { cn } from '@/lib/utils';
 
 // ============================================================================
@@ -76,6 +76,12 @@ export interface WriterInputProps {
 
   /** Input ID for accessibility */
   id?: string;
+
+  /** Inline error message to display */
+  error?: string;
+
+  /** Error help text for recovery guidance */
+  errorHelpText?: string;
 }
 
 // ============================================================================
@@ -110,6 +116,8 @@ export function WriterInput({
   maxLength = 5000,
   className,
   id = 'writer-prompt',
+  error,
+  errorHelpText,
 }: WriterInputProps) {
   /**
    * Handle keyboard shortcuts
@@ -150,11 +158,14 @@ export function WriterInput({
             placeholder={placeholder}
             disabled={disabled}
             maxLength={maxLength}
+            aria-invalid={!!error}
+            aria-describedby={error ? 'writer-prompt-error' : undefined}
             className={cn(
               'min-h-[120px] sm:min-h-[150px] md:min-h-[180px]',
               'resize-y text-sm sm:text-base',
               'focus-visible:ring-2 focus-visible:ring-purple-500',
               'transition-all duration-200',
+              error && 'border-red-400 dark:border-red-500',
             )}
             aria-label="Writing prompt"
           />
@@ -166,6 +177,16 @@ export function WriterInput({
             </div>
           )}
         </div>
+
+        {/* Inline error message */}
+        {error && (
+          <FieldError
+            id="writer-prompt-error"
+            message={error}
+            helpText={errorHelpText}
+            severity="error"
+          />
+        )}
 
         {/* Task-Specific Context (Optional) */}
         {onContextChange && (

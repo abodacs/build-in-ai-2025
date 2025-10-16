@@ -114,6 +114,8 @@ describe('ProofreaderManager', () => {
     });
 
     it('should proofread text successfully', async () => {
+      manager.updateConfig(defaultConfig);
+
       const result = await manager.proofread('teh test');
 
       expect(result.corrections).toEqual(mockCorrections);
@@ -176,10 +178,23 @@ describe('ProofreaderManager', () => {
 
     it('should update manager state during operation', async () => {
       manager.updateConfig(defaultConfig);
+      // Pre-create instance so getInstance returns immediately from cache
+      await manager.getInstance(defaultConfig);
+
+      // Make proofread async with delay so we can check state during execution
+      vi.mocked(ChromeAIProofreaderService.proofread).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            setTimeout(() => resolve({ corrections: mockCorrections }), 10);
+          }),
+      );
 
       const promise = manager.proofread('test');
 
-      // State should be processing
+      // Wait a tick for promise to start executing
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      // State should be processing (since instance is cached and operation started)
       expect(manager.getState()).toBe('processing');
 
       await promise;

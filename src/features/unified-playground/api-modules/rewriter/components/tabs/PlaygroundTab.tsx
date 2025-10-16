@@ -25,6 +25,7 @@ import {
   type RewriterTemplate,
   type RewriterConfig,
 } from '../../types';
+import { validateTextInput } from '../../../shared/utils/validation';
 
 // ============================================================================
 // Component
@@ -49,6 +50,10 @@ export function PlaygroundTab() {
   const [inputText, setInputText] = useState('');
   const [context, setContext] = useState('');
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+  const [inputError, setInputError] = useState<{
+    message: string;
+    helpText?: string;
+  } | null>(null);
 
   // Rewriter hook
   const {
@@ -73,6 +78,31 @@ export function PlaygroundTab() {
 
   // Toast hook
   const { toast, open, showToast, hideToast } = useToast();
+
+  /**
+   * Validate input text
+   */
+  useEffect(() => {
+    if (inputText.length === 0) {
+      setInputError(null); // No error for empty input
+      return;
+    }
+
+    const validation = validateTextInput(inputText, {
+      minLength: 10,
+      maxLength: 10000,
+      required: false,
+    });
+
+    if (!validation.valid && validation.error) {
+      setInputError({
+        message: validation.error.message,
+        helpText: validation.error.helpText,
+      });
+    } else {
+      setInputError(null);
+    }
+  }, [inputText]);
 
   /**
    * Handle rewrite action
@@ -331,6 +361,8 @@ export function PlaygroundTab() {
         onContextChange={setContext}
         disabled={isRewriting}
         showCharacterCount
+        error={inputError?.message}
+        errorHelpText={inputError?.helpText}
       />
 
       {/* Rewrite Button */}

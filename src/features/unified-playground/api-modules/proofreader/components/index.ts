@@ -10,6 +10,7 @@ export { ProofreaderResults } from './ProofreaderResults';
 export { CorrectionCard } from './CorrectionCard';
 export { HighlightedTextEditor } from './HighlightedTextEditor';
 export { InlineCorrectionPopover } from './InlineCorrectionPopover';
+export { ProofreaderLoadingCard } from './ProofreaderLoadingCard';
 export { ProofreaderMain } from './tabs/PlaygroundTab';
 
 export type { ProofreaderConfigProps } from './ProofreaderConfig';
@@ -18,3 +19,4 @@ export type { ProofreaderResultsProps } from './ProofreaderResults';
 export type { CorrectionCardProps } from './CorrectionCard';
 export type { HighlightedTextEditorProps } from './HighlightedTextEditor';
 export type { InlineCorrectionPopoverProps } from './InlineCorrectionPopover';
+export type { ProofreaderLoadingCardProps } from './ProofreaderLoadingCard';

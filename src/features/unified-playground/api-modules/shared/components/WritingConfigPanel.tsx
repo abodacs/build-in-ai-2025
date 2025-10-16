@@ -174,7 +174,10 @@ export function WritingConfigPanel<
                   : `Show ${title.toLowerCase()}`
               }
             >
-              <div className="flex items-center cursor-pointer group flex-1 hover:bg-accent/50 rounded-md px-2 py-1 -mx-2 -my-1 transition-all duration-200">
+              <button
+                type="button"
+                className="flex items-center cursor-pointer group flex-1 hover:bg-accent/50 rounded-md px-2 py-1 -mx-2 -my-1 transition-all duration-200"
+              >
                 <div className="flex-1">
                   <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                     <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -191,7 +194,7 @@ export function WritingConfigPanel<
                     isOpen && 'rotate-180',
                   )}
                 />
-              </div>
+              </button>
             </CollapsibleTrigger>
 
             {/* View Code Button */}
