@@ -321,7 +321,7 @@ export function TranslatorConfig({
             variant="outline"
             size="sm"
             onClick={onSwapLanguages}
-            className="gap-2 transition-transform hover:scale-105"
+            className="h-10 lg:h-8 gap-2 tap-fast transition-transform hover:scale-105"
             data-testid="swap-languages-btn"
             title="Swap source and target languages (Alt+S)"
           >

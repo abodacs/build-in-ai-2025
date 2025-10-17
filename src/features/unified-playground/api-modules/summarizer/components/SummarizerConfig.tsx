@@ -156,32 +156,32 @@ export function SummarizerConfig({
                         value as SummarizerCreateOptions['type'],
                       );
                   }}
-                  className="grid grid-cols-2 gap-1"
+                  className="grid grid-cols-2 touch-gap"
                 >
                   <ToggleGroupItem
                     value="key-points"
-                    className="h-auto py-2 px-2 text-xs data-[state=on]:bg-purple-100 data-[state=on]:text-purple-900"
+                    className="h-12 lg:h-auto py-2 px-2 text-xs tap-fast data-[state=on]:bg-purple-100 data-[state=on]:text-purple-900"
                   >
                     <List className="w-3 h-3 mr-1" />
                     Key Points
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="tldr"
-                    className="h-auto py-2 px-2 text-xs data-[state=on]:bg-purple-100 data-[state=on]:text-purple-900"
+                    className="h-12 lg:h-auto py-2 px-2 text-xs tap-fast data-[state=on]:bg-purple-100 data-[state=on]:text-purple-900"
                   >
                     <FileText className="w-3 h-3 mr-1" />
                     TL;DR
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="teaser"
-                    className="h-auto py-2 px-2 text-xs data-[state=on]:bg-purple-100 data-[state=on]:text-purple-900"
+                    className="h-12 lg:h-auto py-2 px-2 text-xs tap-fast data-[state=on]:bg-purple-100 data-[state=on]:text-purple-900"
                   >
                     <Eye className="w-3 h-3 mr-1" />
                     Teaser
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="headline"
-                    className="h-auto py-2 px-2 text-xs data-[state=on]:bg-purple-100 data-[state=on]:text-purple-900"
+                    className="h-12 lg:h-auto py-2 px-2 text-xs tap-fast data-[state=on]:bg-purple-100 data-[state=on]:text-purple-900"
                   >
                     <Newspaper className="w-3 h-3 mr-1" />
                     Headline
@@ -211,18 +211,18 @@ export function SummarizerConfig({
                         value as SummarizerCreateOptions['format'],
                       );
                   }}
-                  className="grid grid-cols-1 gap-1"
+                  className="grid grid-cols-1 touch-gap"
                 >
                   <ToggleGroupItem
                     value="markdown"
-                    className="h-auto py-2 px-2 text-xs data-[state=on]:bg-blue-100 data-[state=on]:text-blue-900"
+                    className="h-12 lg:h-auto py-2 px-2 text-xs tap-fast data-[state=on]:bg-blue-100 data-[state=on]:text-blue-900"
                   >
                     <FileCode className="w-3 h-3 mr-1" />
                     Markdown
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="plain-text"
-                    className="h-auto py-2 px-2 text-xs data-[state=on]:bg-blue-100 data-[state=on]:text-blue-900"
+                    className="h-12 lg:h-auto py-2 px-2 text-xs tap-fast data-[state=on]:bg-blue-100 data-[state=on]:text-blue-900"
                   >
                     <AlignLeft className="w-3 h-3 mr-1" />
                     Plain Text
@@ -254,25 +254,25 @@ export function SummarizerConfig({
                         value as SummarizerCreateOptions['length'],
                       );
                   }}
-                  className="grid grid-cols-1 gap-1"
+                  className="grid grid-cols-1 touch-gap"
                 >
                   <ToggleGroupItem
                     value="short"
-                    className="h-auto py-2 px-2 text-xs data-[state=on]:bg-green-100 data-[state=on]:text-green-900"
+                    className="h-12 lg:h-auto py-2 px-2 text-xs tap-fast data-[state=on]:bg-green-100 data-[state=on]:text-green-900"
                   >
                     <Zap className="w-3 h-3 mr-1" />
                     Short
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="medium"
-                    className="h-auto py-2 px-2 text-xs data-[state=on]:bg-green-100 data-[state=on]:text-green-900"
+                    className="h-12 lg:h-auto py-2 px-2 text-xs tap-fast data-[state=on]:bg-green-100 data-[state=on]:text-green-900"
                   >
                     <Scale className="w-3 h-3 mr-1" />
                     Medium
                   </ToggleGroupItem>
                   <ToggleGroupItem
                     value="long"
-                    className="h-auto py-2 px-2 text-xs data-[state=on]:bg-green-100 data-[state=on]:text-green-900"
+                    className="h-12 lg:h-auto py-2 px-2 text-xs tap-fast data-[state=on]:bg-green-100 data-[state=on]:text-green-900"
                   >
                     <BookOpen className="w-3 h-3 mr-1" />
                     Long
@@ -338,7 +338,7 @@ export function SummarizerConfig({
                     sharedContext: '',
                   })
                 }
-                className="text-xs"
+                className="h-10 lg:h-8 text-xs tap-fast"
               >
                 Reset to Defaults
               </Button>

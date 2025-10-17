@@ -146,19 +146,19 @@ export function TranslatorResults({
               variant="ghost"
               size="sm"
               onClick={() => handleCopy(translatedText, 'translation')}
-              className="h-7 gap-1 px-2"
+              className="h-10 lg:h-7 gap-1 px-2 tap-fast"
               data-testid="copy-translation-btn"
               disabled={!translatedText || isStreaming}
             >
               {copiedText === 'translation' ? (
                 <>
-                  <Check className="h-3 w-3" />
-                  Copied
+                  <Check className="h-3 w-3 sm:mr-1" />
+                  <span className="hidden sm:inline">Copied</span>
                 </>
               ) : (
                 <>
-                  <Copy className="h-3 w-3" />
-                  Copy
+                  <Copy className="h-3 w-3 sm:mr-1" />
+                  <span className="hidden sm:inline">Copy</span>
                 </>
               )}
             </Button>
@@ -232,26 +232,26 @@ export function TranslatorResults({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center touch-gap">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onDownload}
-                className="gap-1"
+                className="h-10 lg:h-8 gap-1 tap-fast"
                 data-testid="download-btn"
               >
-                <Download className="h-4 w-4" />
-                Download
+                <Download className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Download</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onRetry}
-                className="gap-1"
+                className="h-10 lg:h-8 gap-1 tap-fast"
                 data-testid="retry-btn"
               >
-                <RefreshCw className="h-4 w-4" />
-                Retry
+                <RefreshCw className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Retry</span>
               </Button>
             </div>
           </div>
@@ -264,7 +264,7 @@ export function TranslatorResults({
           <Button
             variant="default"
             onClick={onRetry}
-            className="gap-2"
+            className="h-12 lg:h-10 gap-2 tap-fast"
             data-testid="translate-now-btn"
           >
             <Zap className="h-4 w-4" />

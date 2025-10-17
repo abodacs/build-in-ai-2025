@@ -189,13 +189,13 @@ export function RewriterResults({
 
           {/* Action Buttons */}
           {hasContent && !isRewriting && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center touch-gap">
               {onCopyRewritten && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={onCopyRewritten}
-                  className="h-8 px-2 sm:px-3"
+                  className="h-10 lg:h-8 px-2 sm:px-3 tap-fast"
                   title="Copy rewritten text"
                 >
                   <Copy className="w-4 h-4" />
@@ -208,7 +208,7 @@ export function RewriterResults({
                   variant="ghost"
                   size="sm"
                   onClick={onCopyOriginal}
-                  className="h-8 px-2 sm:px-3"
+                  className="h-10 lg:h-8 px-2 sm:px-3 tap-fast"
                   title="Copy original text"
                 >
                   <Copy className="w-4 h-4 text-muted-foreground" />
@@ -223,7 +223,7 @@ export function RewriterResults({
                   variant="ghost"
                   size="sm"
                   onClick={onDownload}
-                  className="h-8 px-2"
+                  className="h-10 lg:h-8 px-2 tap-fast"
                   title="Download as file"
                 >
                   <Download className="w-4 h-4" />
@@ -235,7 +235,7 @@ export function RewriterResults({
                   variant="ghost"
                   size="sm"
                   onClick={onRetry}
-                  className="h-8 px-2"
+                  className="h-10 lg:h-8 px-2 tap-fast"
                   title="Retry rewrite"
                 >
                   <RotateCcw className="w-4 h-4" />
@@ -249,7 +249,7 @@ export function RewriterResults({
               variant="ghost"
               size="sm"
               onClick={onCancel}
-              className="h-8 px-2"
+              className="h-10 lg:h-8 px-2 tap-fast"
               title="Cancel streaming"
             >
               <X className="w-4 h-4" />

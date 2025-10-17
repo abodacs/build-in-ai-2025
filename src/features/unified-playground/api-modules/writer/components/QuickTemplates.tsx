@@ -159,13 +159,13 @@ export function QuickTemplates({
 
             {/* Category Filters */}
             {!searchQuery && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap touch-gap">
                 <Button
                   variant={selectedCategory === null ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setSelectedCategory(null)}
                   disabled={disabled}
-                  className="h-8 text-xs"
+                  className="h-10 lg:h-8 text-xs tap-fast"
                 >
                   All Categories
                 </Button>
@@ -178,7 +178,7 @@ export function QuickTemplates({
                     size="sm"
                     onClick={() => setSelectedCategory(category.id)}
                     disabled={disabled}
-                    className="h-8 text-xs"
+                    className="h-10 lg:h-8 text-xs tap-fast"
                   >
                     {category.icon} {category.name}
                   </Button>
