@@ -33,6 +33,8 @@
     "test:e2e": "playwright test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "check:duplication": "npx jscpd src",
+    "check:duplication:report": "npx jscpd src --reporters html,console",
     "build:cloudflare": "pnpm type-check && pnpm lint:cloudflare && pnpm build",
     "deploy:preview": "pnpm build:cloudflare && wrangler pages deploy dist --commit-dirty=true",
     "deploy:production": "pnpm build:cloudflare && wrangler pages deploy dist --project-name chrome-ai-devbench --commit-dirty=true",

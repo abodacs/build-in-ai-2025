@@ -7,7 +7,42 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAppStore } from '@/stores/appStore';
 import { isAiAvailable } from '@/lib/utils';
 import { ChromeAICompatibility } from '../../api-modules/summarizer/services/ChromeAICompatibility';
-import { TODO_TYPE } from '../../../../types/global';
+import {
+  TODO_TYPE,
+  isSummarizerSupported,
+  isTranslatorSupported,
+  isWriterSupported,
+  isRewriterSupported,
+  isProofreaderSupported,
+  isLanguageModelSupported,
+  isLanguageDetectorSupported,
+} from '../../../../types/global';
+
+// ============================================================================
+// Debug Configuration
+// ============================================================================
+
+const DEBUG_API_DETECTION = import.meta.env.DEV; // Only debug in development mode
+
+/**
+ * Debug logger utility for structured console output
+ */
+function debugLog(apiName: string, stage: string, data: unknown) {
+  if (!DEBUG_API_DETECTION) return;
+
+  const emoji = {
+    start: '🔍',
+    available: '✓',
+    unavailable: '✗',
+    loading: '⏳',
+    error: '⚠️',
+    summary: '📊',
+  };
+
+  const icon =
+    emoji[stage as keyof typeof emoji] || emoji[data as keyof typeof emoji];
+  console.log(`${icon} [${apiName}] ${stage}:`, data);
+}
 
 // ============================================================================
 // Types
@@ -42,177 +77,394 @@ const AI_APIS = [
   'languageDetection',
 ] as const;
 
-async function checkAICapability(apiName: string): Promise<AICapability> {
+/**
+ * Check depth options for API availability
+ * - 'basic': Fast check, only verifies API class exists in globalThis (synchronous)
+ * - 'availability': Full check, calls .availability() method for detailed status (asynchronous)
+ *
+ * @example
+ * // Quick check for UI indicators
+ * await checkAPIAvailability('summarizer', 'basic');
+ *
+ * // Full check before using API
+ * await checkAPIAvailability('summarizer', 'availability');
+ */
+type CheckDepth = 'basic' | 'availability';
+
+/**
+ * Centralized API configuration for consistent checking
+ */
+const API_CONFIG: Record<
+  string,
+  {
+    globalName: string;
+    supportCheck: () => boolean;
+    hasAvailabilityMethod: boolean;
+  }
+> = {
+  summarizer: {
+    globalName: 'Summarizer',
+    supportCheck: isSummarizerSupported,
+    hasAvailabilityMethod: true,
+  },
+  translator: {
+    globalName: 'Translator',
+    supportCheck: isTranslatorSupported,
+    hasAvailabilityMethod: true,
+  },
+  writer: {
+    globalName: 'Writer',
+    supportCheck: isWriterSupported,
+    hasAvailabilityMethod: true,
+  },
+  rewriter: {
+    globalName: 'Rewriter',
+    supportCheck: isRewriterSupported,
+    hasAvailabilityMethod: true,
+  },
+  proofreader: {
+    globalName: 'Proofreader',
+    supportCheck: isProofreaderSupported,
+    hasAvailabilityMethod: true,
+  },
+  prompt: {
+    globalName: 'LanguageModel',
+    supportCheck: isLanguageModelSupported,
+    hasAvailabilityMethod: true,
+  },
+  languageDetection: {
+    globalName: 'LanguageDetector',
+    supportCheck: isLanguageDetectorSupported,
+    hasAvailabilityMethod: true,
+  },
+};
+
+/**
+ * Normalize availability status across all Chrome AI APIs
+ *
+ * Chrome AI APIs return inconsistent status values:
+ * - "readily" | "available" | "after-download" → normalized to "available"
+ * - Any other value → normalized to "unavailable"
+ *
+ * The individual API playgrounds will handle model downloads when status is "after-download".
+ * This function provides a consistent boolean-like status for UI display.
+ *
+ * @param rawStatus - The raw status string from Chrome AI API
+ * @returns Normalized status: "available" or "unavailable"
+ *
+ * @example
+ * normalizeAvailability('readily') // Returns: 'available'
+ * normalizeAvailability('after-download') // Returns: 'available'
+ * normalizeAvailability('no') // Returns: 'unavailable'
+ */
+function normalizeAvailability(rawStatus: string): 'available' | 'unavailable' {
+  if (
+    rawStatus === 'readily' ||
+    rawStatus === 'available' ||
+    rawStatus === 'after-download'
+  ) {
+    return 'available';
+  }
+  return 'unavailable';
+}
+
+/**
+ * Check Chrome AI API availability with configurable depth
+ *
+ * Single source of truth for all API capability detection in the application.
+ * Performs multi-stage verification:
+ * 1. Check if Chrome AI is globally available (Chrome 138+)
+ * 2. Check if specific API class exists in globalThis
+ * 3. Optionally call .availability() method for detailed status
+ *
+ * @param apiName - The API to check (e.g., 'summarizer', 'translator')
+ * @param depth - Check depth: 'basic' for existence only, 'availability' for full check
+ * @returns Promise<AICapability> with status, error message, and timestamp
+ *
+ * @example
+ * // Quick check
+ * const status = await checkAPIAvailability('summarizer', 'basic');
+ *
+ * // Full check with availability() call
+ * const status = await checkAPIAvailability('translator', 'availability');
+ */
+async function checkAPIAvailability(
+  apiName: string,
+  depth: CheckDepth = 'availability',
+): Promise<AICapability> {
   const startTime = Date.now();
 
+  if (DEBUG_API_DETECTION) {
+    console.group(`🔍 API Detection: ${apiName}`);
+    debugLog(apiName, 'start', { depth, timestamp: new Date().toISOString() });
+  }
+
   try {
-    // Check if Chrome AI APIs are available
-    if (!isAiAvailable()) {
+    // Check if Chrome AI APIs are available at all
+    const chromeAiAvailable = isAiAvailable();
+    debugLog(
+      apiName,
+      'Chrome AI Available',
+      chromeAiAvailable ? '✓ Yes' : '✗ No',
+    );
+
+    if (!chromeAiAvailable) {
+      debugLog(
+        apiName,
+        'error',
+        'Chrome AI APIs not available. Requires Chrome 138+ with flags enabled.',
+      );
+      if (DEBUG_API_DETECTION) console.groupEnd();
       return {
         name: apiName,
         status: 'unavailable',
         lastChecked: startTime,
         error:
-          'Chrome AI APIs not available. Requires Chrome 139+ with flags enabled.',
+          'Chrome AI APIs not available. Requires Chrome 138+ with flags enabled.',
       };
     }
 
-    // API-specific capability checks
-    switch (apiName) {
-      case 'summarizer': {
-        // Use ChromeAICompatibility service for proper detection
-        const isSupported = ChromeAICompatibility.isSupported();
+    // Get API configuration
+    const config = API_CONFIG[apiName];
+    debugLog(
+      apiName,
+      'Config Found',
+      config ? `✓ ${config.globalName}` : '✗ Unknown API',
+    );
 
-        if (!isSupported) {
-          return {
-            name: apiName,
-            status: 'unavailable',
-            lastChecked: Date.now(),
-            error: 'Summarizer API not available. Enable in chrome://flags',
-          };
-        }
+    if (!config) {
+      if (DEBUG_API_DETECTION) console.groupEnd();
+      return {
+        name: apiName,
+        status: 'unavailable',
+        lastChecked: Date.now(),
+        error: 'Unknown API',
+      };
+    }
 
-        // Check actual availability status
-        const availability = await ChromeAICompatibility.checkAvailability();
+    // Step 1: Basic check - Does the API class exist?
+    const supportCheckResult = config.supportCheck();
+    debugLog(
+      apiName,
+      'Support Check',
+      supportCheckResult
+        ? `✓ globalThis.${config.globalName} exists`
+        : `✗ globalThis.${config.globalName} not found`,
+    );
 
-        const statusMap = {
-          readily: 'available' as const,
-          'after-download': 'unavailable' as const,
-          no: 'unavailable' as const,
-        };
-
-        return {
-          name: apiName,
-          status: statusMap[availability],
-          lastChecked: Date.now(),
-          error:
-            availability === 'readily'
-              ? undefined
-              : availability === 'after-download'
-                ? 'Model download required'
-                : 'Summarizer API not available',
-        };
+    if (!supportCheckResult) {
+      debugLog(
+        apiName,
+        'unavailable',
+        `Enable in chrome://flags/#optimization-guide-on-device-model`,
+      );
+      if (DEBUG_API_DETECTION) {
+        console.groupEnd();
       }
+      return {
+        name: apiName,
+        status: 'unavailable',
+        lastChecked: Date.now(),
+        error: `${config.globalName} API not available. Enable in chrome://flags`,
+      };
+    }
 
-      case 'translator': {
-        // Check using Chrome AI Translator API (capital T, as per spec)
-        const translatorAvailable = 'Translator' in window;
+    // Step 2: If basic check only, return available
+    if (depth === 'basic') {
+      debugLog(apiName, 'available', 'Basic check passed (depth=basic)');
+      if (DEBUG_API_DETECTION) {
+        console.groupEnd();
+      }
+      return {
+        name: apiName,
+        status: 'available',
+        lastChecked: Date.now(),
+        error: undefined,
+      };
+    }
 
-        if (!translatorAvailable) {
+    // Step 3: Deep check - Call .availability() method if available
+    if (config.hasAvailabilityMethod && depth === 'availability') {
+      debugLog(apiName, 'loading', 'Calling .availability() method...');
+
+      try {
+        // Special handling for Summarizer (uses ChromeAICompatibility)
+        if (apiName === 'summarizer') {
+          const availability = await ChromeAICompatibility.checkAvailability();
+          debugLog(apiName, 'Raw Availability Response', availability);
+
+          const status = normalizeAvailability(availability);
+          debugLog(apiName, 'Normalized Status', status);
+
+          const duration = Date.now() - startTime;
+          debugLog(apiName, 'Check Duration', `${duration}ms`);
+
+          if (DEBUG_API_DETECTION) {
+            console.groupEnd();
+          }
+
           return {
             name: apiName,
-            status: 'unavailable',
-            lastChecked: Date.now(),
-            error: 'Translator API not available in this browser',
-          };
-        }
-
-        // Check availability status (matching Summarizer pattern)
-        try {
-          // Quick check with common language pair (en-es)
-          const status = (await (window as TODO_TYPE).Translator.availability({
-            sourceLanguage: 'en',
-            targetLanguage: 'es',
-          })) as 'readily' | 'after-download' | 'no';
-
-          const statusMap: Record<typeof status, 'available' | 'unavailable'> =
-            {
-              readily: 'available',
-              'after-download': 'unavailable',
-              no: 'unavailable',
-            };
-
-          return {
-            name: apiName,
-            status: statusMap[status],
+            status,
             lastChecked: Date.now(),
             error:
-              status === 'readily'
+              status === 'available'
                 ? undefined
-                : status === 'after-download'
+                : availability === 'after-download'
                   ? 'Model download required'
-                  : 'Translator API not available',
-          };
-        } catch {
-          return {
-            name: apiName,
-            status: 'unavailable',
-            lastChecked: Date.now(),
-            error: 'Failed to check Translator availability',
+                  : 'Summarizer model not available',
           };
         }
-      }
 
-      case 'writer': {
-        const writerAvailable =
-          typeof (globalThis as TODO_TYPE).writer !== 'undefined';
+        // Special handling for Translator (requires language pair params)
+        if (apiName === 'translator') {
+          const globalAPI = (globalThis as TODO_TYPE)[config.globalName];
+          debugLog(
+            apiName,
+            'loading',
+            'Calling Translator.availability({sourceLanguage: "en", targetLanguage: "es"})...',
+          );
+
+          const rawStatus = await globalAPI.availability({
+            sourceLanguage: 'en',
+            targetLanguage: 'es',
+          });
+          debugLog(apiName, 'Raw Availability Response', rawStatus);
+
+          const status = normalizeAvailability(rawStatus);
+          debugLog(apiName, 'Normalized Status', status);
+
+          const duration = Date.now() - startTime;
+          debugLog(apiName, 'Check Duration', `${duration}ms`);
+
+          if (DEBUG_API_DETECTION) {
+            console.groupEnd();
+          }
+
+          return {
+            name: apiName,
+            status,
+            lastChecked: Date.now(),
+            error:
+              status === 'available'
+                ? undefined
+                : rawStatus === 'after-download'
+                  ? 'Model download required'
+                  : 'Translator model not available',
+          };
+        }
+
+        // Standard availability check for other APIs
+        const globalAPI = (globalThis as TODO_TYPE)[config.globalName];
+        debugLog(
+          apiName,
+          'Global API Check',
+          globalAPI
+            ? `✓ globalThis.${config.globalName} exists`
+            : `✗ globalThis.${config.globalName} not found`,
+        );
+        debugLog(
+          apiName,
+          'Availability Method',
+          typeof globalAPI?.availability === 'function'
+            ? '✓ .availability() method exists'
+            : '✗ .availability() method not found',
+        );
+
+        if (globalAPI && typeof globalAPI.availability === 'function') {
+          debugLog(
+            apiName,
+            'loading',
+            `Calling ${config.globalName}.availability()...`,
+          );
+
+          const rawStatus = await globalAPI.availability();
+          debugLog(apiName, 'Raw Availability Response', rawStatus);
+
+          const status = normalizeAvailability(rawStatus);
+          debugLog(apiName, 'Normalized Status', status);
+
+          const duration = Date.now() - startTime;
+          debugLog(apiName, 'Check Duration', `${duration}ms`);
+
+          if (DEBUG_API_DETECTION) {
+            console.groupEnd();
+          }
+
+          return {
+            name: apiName,
+            status,
+            lastChecked: Date.now(),
+            error:
+              status === 'available'
+                ? undefined
+                : rawStatus === 'after-download'
+                  ? 'Model download required'
+                  : `${config.globalName} model not available`,
+          };
+        }
+
+        // Fallback: If availability() not found, assume available if class exists
+        debugLog(
+          apiName,
+          'available',
+          'Fallback: Class exists but no .availability() method',
+        );
+
+        if (DEBUG_API_DETECTION) {
+          console.groupEnd();
+        }
+
         return {
           name: apiName,
-          status: writerAvailable ? 'available' : 'unavailable',
+          status: 'available',
           lastChecked: Date.now(),
-          error: writerAvailable ? undefined : 'Writer API not available',
+          error: undefined,
         };
-      }
+      } catch (error) {
+        debugLog(
+          apiName,
+          'error',
+          `Failed to check availability: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
 
-      case 'rewriter': {
-        const rewriterAvailable =
-          typeof (globalThis as TODO_TYPE).rewriter !== 'undefined';
-        return {
-          name: apiName,
-          status: rewriterAvailable ? 'available' : 'unavailable',
-          lastChecked: Date.now(),
-          error: rewriterAvailable ? undefined : 'Rewriter API not available',
-        };
-      }
+        if (DEBUG_API_DETECTION) {
+          console.groupEnd();
+        }
 
-      case 'proofreader': {
-        const proofreaderAvailable =
-          typeof (globalThis as TODO_TYPE).proofreader !== 'undefined';
-        return {
-          name: apiName,
-          status: proofreaderAvailable ? 'available' : 'unavailable',
-          lastChecked: Date.now(),
-          error: proofreaderAvailable
-            ? undefined
-            : 'Proofreader API not available',
-        };
-      }
-
-      case 'prompt': {
-        const promptAvailable =
-          typeof (globalThis as TODO_TYPE).languageModel !== 'undefined';
-        return {
-          name: apiName,
-          status: promptAvailable ? 'available' : 'unavailable',
-          lastChecked: Date.now(),
-          error: promptAvailable
-            ? undefined
-            : 'Prompt API (Language Model) not available',
-        };
-      }
-
-      case 'languageDetection': {
-        const languageDetectionAvailable =
-          typeof (globalThis as TODO_TYPE).languageDetector !== 'undefined';
-        return {
-          name: apiName,
-          status: languageDetectionAvailable ? 'available' : 'unavailable',
-          lastChecked: Date.now(),
-          error: languageDetectionAvailable
-            ? undefined
-            : 'Language Detection API not available',
-        };
-      }
-
-      default:
         return {
           name: apiName,
           status: 'unavailable',
           lastChecked: Date.now(),
-          error: 'Unknown API',
+          error: `Failed to check ${config.globalName} availability: ${error instanceof Error ? error.message : 'Unknown error'}`,
         };
+      }
     }
+
+    // Default: API exists but no deep check performed
+    debugLog(apiName, 'available', 'No deep check required');
+
+    if (DEBUG_API_DETECTION) {
+      console.groupEnd();
+    }
+
+    return {
+      name: apiName,
+      status: 'available',
+      lastChecked: Date.now(),
+      error: undefined,
+    };
   } catch (error) {
+    debugLog(
+      apiName,
+      'error',
+      error instanceof Error ? error.message : 'Unknown error occurred',
+    );
+
+    if (DEBUG_API_DETECTION) {
+      console.groupEnd();
+    }
+
     return {
       name: apiName,
       status: 'error',
@@ -220,6 +472,11 @@ async function checkAICapability(apiName: string): Promise<AICapability> {
       error: error instanceof Error ? error.message : 'Unknown error occurred',
     };
   }
+}
+
+// Legacy alias for backwards compatibility
+async function checkAICapability(apiName: string): Promise<AICapability> {
+  return checkAPIAvailability(apiName, 'availability');
 }
 
 // ============================================================================
@@ -247,6 +504,10 @@ export function usePlaygroundState() {
   const checkAllCapabilities = useCallback(async () => {
     setIsLoading(true);
     setErrors([]);
+
+    if (DEBUG_API_DETECTION) {
+      console.group('📊 API Detection Summary - Starting...');
+    }
 
     try {
       const capabilityChecks = AI_APIS.map((apiName) =>
@@ -276,11 +537,44 @@ export function usePlaygroundState() {
         }
       });
 
+      // Log summary table
+      if (DEBUG_API_DETECTION) {
+        console.groupEnd();
+        console.group('📊 API Detection Summary - Results');
+
+        const tableData = AI_APIS.map((apiName) => {
+          const cap = newCapabilities[apiName];
+          const config = API_CONFIG[apiName];
+
+          return {
+            API: apiName,
+            'Global Name': config?.globalName || 'Unknown',
+            Status: cap.status,
+            Error: cap.error || 'None',
+          };
+        });
+
+        console.table(tableData);
+
+        const availableCount = Object.values(newCapabilities).filter(
+          (cap) => cap.status === 'available',
+        ).length;
+
+        console.log(`✓ Available: ${availableCount}/${AI_APIS.length}`);
+        console.log(
+          `✗ Unavailable: ${AI_APIS.length - availableCount}/${AI_APIS.length}`,
+        );
+        console.groupEnd();
+      }
+
       setCapabilities(newCapabilities);
       setErrors(newErrors);
       setIsInitialized(true);
     } catch {
       setErrors(['Failed to initialize AI capabilities']);
+      if (DEBUG_API_DETECTION) {
+        console.groupEnd();
+      }
     } finally {
       setIsLoading(false);
     }

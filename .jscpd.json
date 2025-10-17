@@ -1,0 +1,32 @@
+{
+  "threshold": 0,
+  "reporters": ["html", "console", "badge"],
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**",
+    "**/tests/**",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/coverage/**",
+    "**/.vite/**",
+    "**/vite.config.ts",
+    "**/eslint.config.js",
+    "**/tailwind.config.js",
+    "**/postcss.config.js"
+  ],
+  "format": ["typescript", "tsx", "javascript", "jsx"],
+  "minLines": 5,
+  "minTokens": 50,
+  "output": "./jscpd-report",
+  "gitignore": true,
+  "blame": false,
+  "silent": false,
+  "verbose": false,
+  "absolute": false,
+  "skipLocal": true,
+  "mode": "mild"
+}

@@ -82,7 +82,7 @@ export function classifyError(error: unknown): PlaygroundError {
         severity: 'high',
         message: 'Chrome AI API not available',
         details:
-          'This feature requires Chrome 139+ with experimental AI flags enabled.',
+          'This feature requires Chrome 138+ with experimental AI flags enabled.',
         timestamp,
         recoverable: false,
         retryable: false,
