@@ -9,7 +9,13 @@ import prettier from 'eslint-plugin-prettier';
 
 export default [
   {
-    ignores: ['dist', 'node_modules', '*.config.js', '*.config.ts'],
+    ignores: [
+      'dist',
+      'node_modules',
+      '*.config.js',
+      '*.config.ts',
+      'jscpd-report',
+    ],
   },
   {
     files: ['**/*.{ts,tsx}'],

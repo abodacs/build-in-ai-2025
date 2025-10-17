@@ -16,7 +16,8 @@
     "**/vite.config.ts",
     "**/eslint.config.js",
     "**/tailwind.config.js",
-    "**/postcss.config.js"
+    "**/postcss.config.js",
+    "**/jscpd-report/**"
   ],
   "format": ["typescript", "tsx", "javascript", "jsx"],
   "minLines": 5,
