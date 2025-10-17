@@ -6,10 +6,9 @@
 import { useEffect, Suspense } from 'react';
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
 import { LoadingSpinner } from '../shared/components/LoadingScreen';
-import { ThemeToggle } from '../shared/components/ThemeToggle';
+import { Header } from '@/components/layout/header/Header';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   AlertTriangle,
   RefreshCw,
@@ -21,7 +20,6 @@ import {
 import { usePlaygroundState } from '../shared/hooks/usePlaygroundState';
 import { usePerformanceMetrics } from '../shared/hooks/usePerformanceMetrics';
 import { cn } from '@/lib/utils';
-import { TODO_TYPE } from '../../../types/global';
 
 // ============================================================================
 // Types & Interfaces
@@ -32,17 +30,6 @@ interface PlaygroundContainerProps {
   className?: string;
   showPerformanceMetrics?: boolean;
   enableKeyboardShortcuts?: boolean;
-}
-
-interface PlaygroundHeaderProps {
-  capabilities: Record<string, TODO_TYPE>;
-  performanceScore: number;
-}
-
-interface APIStatusIndicatorProps {
-  apiName: string;
-  status: 'available' | 'unavailable' | 'loading' | 'error';
-  error?: string;
 }
 
 // ============================================================================
@@ -115,117 +102,6 @@ function PlaygroundSuspenseFallback() {
   );
 }
 
-// API Status Indicator Component
-function APIStatusIndicator({
-  apiName,
-  status,
-  error,
-}: APIStatusIndicatorProps) {
-  const getStatusColor = () => {
-    switch (status) {
-      case 'available':
-        return 'bg-green-500 hover:bg-green-600 text-white';
-      case 'loading':
-        return 'bg-blue-500 animate-pulse text-white';
-      case 'error':
-        return 'bg-red-500 hover:bg-red-600 text-white';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
-  };
-
-  return (
-    <Badge
-      className={cn(
-        'text-xs transition-all duration-200 cursor-pointer',
-        getStatusColor(),
-      )}
-      title={error || `${apiName} is ${status}`}
-    >
-      {apiName}
-    </Badge>
-  );
-}
-
-// Performance indicator component
-function PerformanceIndicator({ score }: { score: number }) {
-  const getScoreColor = () => {
-    if (score >= 90) return 'text-green-600';
-    if (score >= 70) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  return (
-    <div className="flex items-center gap-1 text-xs">
-      <Activity className="w-3 h-3" />
-      <span className={cn('font-medium', getScoreColor())}>{score}/100</span>
-    </div>
-  );
-}
-
-// Playground Header Component
-function PlaygroundHeader({
-  capabilities,
-  performanceScore,
-}: PlaygroundHeaderProps) {
-  const availableApis = Object.values(capabilities).filter(
-    (cap: TODO_TYPE) => cap.status === 'available',
-  );
-
-  return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/50 bg-background/95 backdrop-blur-sm">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        {/* Logo and Title */}
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 via-purple-600 to-green-500 flex items-center justify-center animate-aiPulse">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <div className="absolute -top-1 -right-1">
-              <Shield
-                className="w-3 h-3 text-green-500"
-                aria-label="Secure & Validated"
-              />
-            </div>
-          </div>
-
-          <div>
-            <h1 className="text-lg font-semibold text-foreground">
-              Chrome AI DevBench
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Secure • Performant • Enterprise-Ready
-            </p>
-          </div>
-        </div>
-
-        {/* AI Status Indicators */}
-        <div className="hidden md:flex items-center gap-2">
-          <span className="text-xs text-muted-foreground mr-2">
-            AI Status ({availableApis.length}/7):
-          </span>
-          {Object.entries(capabilities).map(
-            ([apiName, capability]: [string, TODO_TYPE]) => (
-              <APIStatusIndicator
-                key={apiName}
-                apiName={apiName}
-                status={capability.status}
-                error={capability.error}
-              />
-            ),
-          )}
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2">
-          <PerformanceIndicator score={performanceScore} />
-          <ThemeToggle variant="icon" className="hover-lift" />
-        </div>
-      </div>
-    </header>
-  );
-}
-
 // ============================================================================
 // Main Playground Container Component
 // ============================================================================
@@ -236,8 +112,7 @@ export function PlaygroundContainer({
   showPerformanceMetrics = true,
 }: PlaygroundContainerProps) {
   // State management with custom hooks
-  const { capabilities, hasAvailableApis, availableApiCount } =
-    usePlaygroundState();
+  const { hasAvailableApis, availableApiCount } = usePlaygroundState();
 
   const { performanceScore, measureComponentRender, optimizationSuggestions } =
     usePerformanceMetrics();
@@ -266,10 +141,8 @@ export function PlaygroundContainer({
           className,
         )}
       >
-        <PlaygroundHeader
-          capabilities={capabilities}
-          performanceScore={performanceScore}
-        />
+        {/* Unified Header Component */}
+        <Header />
 
         {/* Main Content */}
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-7xl">
@@ -378,7 +251,7 @@ export function PlaygroundContainer({
 
                     {!hasAvailableApis && (
                       <p className="text-sm text-muted-foreground mt-4">
-                        Requires Chrome 139+ with experimental AI flags enabled.
+                        Requires Chrome 138+ with experimental AI flags enabled.
                       </p>
                     )}
                   </div>
@@ -429,9 +302,6 @@ export function PlaygroundContainer({
 
 export const Playground = {
   Container: PlaygroundContainer,
-  Header: PlaygroundHeader,
-  StatusIndicator: APIStatusIndicator,
-  PerformanceIndicator,
   ErrorFallback: PlaygroundErrorFallback,
   SuspenseFallback: PlaygroundSuspenseFallback,
 } as const;

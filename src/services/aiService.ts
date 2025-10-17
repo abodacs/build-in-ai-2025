@@ -87,7 +87,7 @@ export async function runAiTask<T>(
   try {
     if (!isAiAvailable()) {
       throw new Error(
-        'Chrome AI APIs not available. Please use Chrome 136.0.7103.0+ (Canary) with AI features enabled.',
+        'Chrome AI APIs not available. Please use Chrome 138+ with AI features enabled.',
       );
     }
 
@@ -322,15 +322,9 @@ export async function testAiAvailability() {
     checkFunction: () => boolean,
   ) => {
     try {
+      console.log(`Checking availability for ${apiName}...`);
       if (!checkFunction()) return 'unavailable';
-
-      // Try to check if we can actually create an instance
-      const apiClass = (globalThis as TODO_TYPE)[apiName];
-      if (!apiClass || typeof apiClass.create !== 'function') {
-        return 'unavailable';
-      }
-
-      // For now, assume it's available if the class exists
+      // For now, assume it's available if the support check passes
       return 'available';
     } catch {
       return 'unavailable';

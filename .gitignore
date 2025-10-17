@@ -149,3 +149,6 @@ playwright/.cache/
 
 # Wrangler
 .wrangler/
+
+# Code duplication reports
+jscpd-report/

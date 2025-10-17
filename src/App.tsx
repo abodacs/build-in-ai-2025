@@ -5,8 +5,6 @@ import { Layout } from '@/components/layout/Layout';
 import { LoadingSpinner } from '@/components/common/loading-spinner/LoadingSpinner';
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
 
-// Lazy load feature components for better performance
-import { HomePage } from '@/features/api-playground/components/HomePage';
 import {
   UnifiedPlayground,
   PlaygroundContainer,
@@ -30,16 +28,6 @@ function App() {
 
             {/* Redirect /playground to root */}
             <Route path="/playground" element={<Navigate to="/" replace />} />
-
-            {/* Old playground - preserved for reference */}
-            <Route
-              path="/old-playground"
-              element={
-                <Layout>
-                  <HomePage />
-                </Layout>
-              }
-            />
 
             {/* Redirect /unified to root */}
             <Route path="/unified" element={<Navigate to="/" replace />} />

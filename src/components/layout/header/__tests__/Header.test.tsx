@@ -75,19 +75,17 @@ describe('Header Component', () => {
     it('renders with correct structure', () => {
       renderHeader();
 
-      // Check main container
-      const container = document.querySelector(
-        '.flex.items-center.justify-between',
-      );
+      // Check main container with responsive classes
+      const container = document.querySelector('.flex.flex-col.sm\\:flex-row');
       expect(container).toBeInTheDocument();
     });
 
-    it('displays Chrome logo', () => {
+    it('displays Chrome AI DevBench logo', () => {
       renderHeader();
 
-      const logo = document.querySelector('svg');
+      const logo = document.querySelector('img[alt="Chrome AI DevBench Logo"]');
       expect(logo).toBeInTheDocument();
-      expect(logo).toHaveAttribute('viewBox', '0 0 24 24');
+      expect(logo).toHaveAttribute('src', '/logo.svg');
     });
 
     it('displays correct branding text', () => {
@@ -103,17 +101,10 @@ describe('Header Component', () => {
       ).toBeInTheDocument();
     });
 
-    it('displays API status chip', () => {
+    it('displays API status counter', () => {
       renderHeader();
 
-      expect(screen.getByText('Chrome AI APIs Required')).toBeInTheDocument();
-    });
-
-    it('displays Documentation button', () => {
-      renderHeader();
-
-      const docButton = screen.getByRole('button', { name: 'Documentation' });
-      expect(docButton).toBeInTheDocument();
+      expect(screen.getByText(/AI Status \(\d+\/\d+\)/)).toBeInTheDocument();
     });
   });
 
@@ -164,7 +155,7 @@ describe('Header Component', () => {
       render(<Header />);
 
       const statusIndicator = document.querySelector(
-        '.bg-yellow-500.animate-pulse',
+        '.bg-blue-500.animate-pulse',
       );
       expect(statusIndicator).toBeInTheDocument();
     });
@@ -230,19 +221,6 @@ describe('Header Component', () => {
     });
   });
 
-  describe('Interactions', () => {
-    it('handles Documentation button click', async () => {
-      const user = userEvent.setup();
-      render(<Header />);
-
-      const docButton = screen.getByRole('button', { name: 'Documentation' });
-      await user.click(docButton);
-
-      // Button should be clickable (no error thrown)
-      expect(docButton).toBeInTheDocument();
-    });
-  });
-
   describe('Accessibility', () => {
     it('has proper heading hierarchy', () => {
       render(<Header />);
@@ -251,49 +229,41 @@ describe('Header Component', () => {
       expect(mainHeading).toHaveTextContent('Chrome AI DevBench');
     });
 
-    it('has accessible button labels', () => {
-      render(<Header />);
-
-      const docButton = screen.getByRole('button', { name: 'Documentation' });
-      expect(docButton).toBeInTheDocument();
-    });
-
     it('provides semantic information about status', () => {
       render(<Header />);
 
       // Status text should be descriptive
-      expect(screen.getByText('Chrome AI APIs Required')).toBeInTheDocument();
+      expect(screen.getByText(/AI Status \(\d+\/\d+\)/)).toBeInTheDocument();
     });
 
-    it('has accessible logo with proper SVG structure', () => {
+    it('has accessible logo image', () => {
       render(<Header />);
 
-      const logo = document.querySelector('svg');
+      const logo = document.querySelector('img[alt="Chrome AI DevBench Logo"]');
       expect(logo).toBeInTheDocument();
-      expect(logo).toHaveAttribute('viewBox');
+      expect(logo).toHaveAttribute('src', '/logo.svg');
     });
   });
 
   describe('Visual Design', () => {
-    it('applies correct typography classes', () => {
+    it('applies correct typography classes with responsive design', () => {
       render(<Header />);
 
       const heading = screen.getByRole('heading', { level: 1 });
-      expect(heading).toHaveClass('text-xl', 'font-semibold', 'text-gray-900');
+      expect(heading).toHaveClass('font-semibold', 'text-gray-900');
 
       const subtitle = screen.getByText(
         "Interactive playground for Chrome's built-in AI APIs",
       );
-      expect(subtitle).toHaveClass('text-sm', 'text-gray-500');
+      expect(subtitle).toHaveClass('text-gray-500');
     });
 
-    it('applies correct spacing and layout classes', () => {
+    it('applies mobile-friendly responsive classes', () => {
       render(<Header />);
 
-      const container = document.querySelector(
-        '.flex.items-center.justify-between',
-      );
-      expect(container).toHaveClass('px-6', 'py-4');
+      const container = document.querySelector('.flex.flex-col.sm\\:flex-row');
+      expect(container).toBeInTheDocument();
+      expect(container).toHaveClass('py-4');
     });
 
     it('styles status chip correctly', () => {
@@ -303,6 +273,22 @@ describe('Header Component', () => {
         '.px-3.py-1.bg-gray-100.rounded-full',
       );
       expect(statusChip).toBeInTheDocument();
+    });
+
+    it('applies responsive sizing to logo', () => {
+      render(<Header />);
+
+      const logo = document.querySelector('img[alt="Chrome AI DevBench Logo"]');
+      expect(logo).toHaveClass('w-6', 'h-6', 'sm:w-8', 'sm:h-8');
+    });
+
+    it('hides subtitle on mobile with sm:block', () => {
+      render(<Header />);
+
+      const subtitle = screen.getByText(
+        "Interactive playground for Chrome's built-in AI APIs",
+      );
+      expect(subtitle).toHaveClass('hidden', 'sm:block');
     });
   });
 
@@ -342,32 +328,6 @@ describe('Header Component', () => {
       });
 
       expect(() => render(<Header />)).toThrow('Store error');
-    });
-  });
-
-  describe('Chrome Logo SVG', () => {
-    it('renders Chrome logo with correct colors and structure', () => {
-      render(<Header />);
-
-      const svg = document.querySelector('svg');
-      expect(svg).toBeInTheDocument();
-
-      // Check for Chrome logo elements
-      const circles = svg?.querySelectorAll('circle');
-      expect(circles).toHaveLength(4);
-
-      // Check color attributes
-      const outerCircle = circles?.[0];
-      expect(outerCircle).toHaveAttribute('stroke', '#4285F4');
-
-      const redCircle = circles?.[1];
-      expect(redCircle).toHaveAttribute('fill', '#EA4335');
-
-      const yellowCircle = circles?.[2];
-      expect(yellowCircle).toHaveAttribute('fill', '#FBBC04');
-
-      const greenCircle = circles?.[3];
-      expect(greenCircle).toHaveAttribute('fill', '#34A853');
     });
   });
 
@@ -479,7 +439,7 @@ describe('Header Component', () => {
 
         // Should still show loading state when error occurs
         expect(
-          container.querySelector('.bg-yellow-500.animate-pulse'),
+          container.querySelector('.bg-blue-500.animate-pulse'),
         ).toBeInTheDocument();
 
         consoleError.mockRestore();
@@ -575,23 +535,7 @@ describe('Header Component', () => {
         expect(statusIndicator).toBeInTheDocument();
 
         // Text should be descriptive for screen readers
-        expect(screen.getByText('Chrome AI APIs Required')).toBeInTheDocument();
-      });
-
-      it('should maintain keyboard navigation support', async () => {
-        const user = userEvent.setup();
-        render(<Header />);
-
-        const docButton = screen.getByRole('button', { name: 'Documentation' });
-
-        // Button should be focusable
-        await user.tab();
-        expect(docButton).toHaveFocus();
-
-        // Should support keyboard activation
-        await user.keyboard('{Enter}');
-        // No error should be thrown
-        expect(docButton).toBeInTheDocument();
+        expect(screen.getByText(/AI Status \(\d+\/\d+\)/)).toBeInTheDocument();
       });
 
       it('should provide proper semantic structure for assistive technologies', () => {
@@ -606,10 +550,6 @@ describe('Header Component', () => {
           "Interactive playground for Chrome's built-in AI APIs",
         );
         expect(subtitle).toBeInTheDocument();
-
-        // Button should have proper role
-        const button = screen.getByRole('button', { name: 'Documentation' });
-        expect(button).toBeInTheDocument();
       });
     });
 
@@ -648,9 +588,6 @@ describe('Header Component', () => {
 
         // Component should still work correctly
         expect(screen.getByText('Chrome AI DevBench')).toBeInTheDocument();
-        expect(
-          screen.getByRole('button', { name: 'Documentation' }),
-        ).toBeInTheDocument();
       });
 
       it("should optimize re-renders when props/state haven't changed", async () => {
@@ -668,35 +605,6 @@ describe('Header Component', () => {
             mockTestAiAvailability.mock.calls.length,
           ).toBeGreaterThanOrEqual(initialCallCount);
         });
-      });
-    });
-
-    describe('Chrome Logo Advanced Rendering', () => {
-      it('should handle SVG rendering across different environments', () => {
-        const { container } = render(<Header />);
-
-        const svg = document.querySelector('svg');
-        expect(svg).toBeTruthy();
-
-        // Component should render
-        expect(container).toBeTruthy();
-      });
-
-      it('should maintain Chrome logo visual consistency', () => {
-        render(<Header />);
-
-        const svg = document.querySelector('svg');
-        const circles = svg?.querySelectorAll('circle');
-
-        // Verify Google brand colors exactly
-        expect(circles?.[0]).toHaveAttribute('stroke', '#4285F4'); // Google Blue
-        expect(circles?.[1]).toHaveAttribute('fill', '#EA4335'); // Google Red
-        expect(circles?.[2]).toHaveAttribute('fill', '#FBBC04'); // Google Yellow
-        expect(circles?.[3]).toHaveAttribute('fill', '#34A853'); // Google Green
-
-        // Verify stroke width and fill properties (SVG attributes are kebab-case in DOM)
-        expect(circles?.[0]).toHaveAttribute('stroke-width', '2');
-        expect(circles?.[0]).toHaveAttribute('fill', 'none');
       });
     });
 
@@ -736,9 +644,6 @@ describe('Header Component', () => {
 
           // Core functionality should work in all contexts
           expect(screen.getByText('Chrome AI DevBench')).toBeInTheDocument();
-          expect(
-            screen.getByRole('button', { name: 'Documentation' }),
-          ).toBeInTheDocument();
           expect(
             document.querySelector('.w-2.h-2.rounded-full'),
           ).toBeInTheDocument();
