@@ -145,7 +145,7 @@ export function PlaygroundContainer({
         <Header />
 
         {/* Main Content */}
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-7xl">
+        <main className="container mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-screen-2xl">
           {/* Performance Insights */}
           {showPerformanceMetrics && optimizationSuggestions.length > 0 && (
             <div className="mb-6 animate-fadeInDown">
