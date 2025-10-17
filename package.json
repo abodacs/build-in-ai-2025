@@ -1,6 +1,6 @@
 {
   "name": "chrome-ai-devbench",
-  "version": "1.2.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "Interactive learning playground for Chrome's built-in AI APIs",
