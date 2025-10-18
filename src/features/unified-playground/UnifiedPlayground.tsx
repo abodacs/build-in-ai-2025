@@ -114,9 +114,11 @@ function APISelectorContent({
 function MobileAPISelector({
   selectedAPI,
   onSelect,
+  className,
 }: {
   selectedAPI: string;
   onSelect: (apiId: string) => void;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -126,7 +128,7 @@ function MobileAPISelector({
         <Button
           variant="outline"
           size="lg"
-          className="w-full justify-start gap-3 touch-target-lg tap-fast"
+          className={`w-full justify-start gap-3 touch-target-lg tap-fast ${className || ''}`}
         >
           <Menu className="h-5 w-5" />
           <span className="flex-1 text-left">
@@ -273,12 +275,11 @@ export function UnifiedPlayground({
     <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-12 lg:gap-6">
       {/* Mobile: Drawer Button */}
       {!isDesktop && (
-        <div className="lg:hidden">
-          <MobileAPISelector
-            selectedAPI={selectedAPI}
-            onSelect={setSelectedAPI}
-          />
-        </div>
+        <MobileAPISelector
+          className="lg:hidden"
+          selectedAPI={selectedAPI}
+          onSelect={setSelectedAPI}
+        />
       )}
 
       {/* Desktop: Fixed Sidebar */}

@@ -536,6 +536,51 @@ Consider using:
 5. **Don't use h-8 alone** on mobile (use h-10 lg:h-8)
 6. **Don't nest buttons** (causes accessibility violations)
 7. **Don't use px-0** without padding variant="none"
+8. **Don't create unnecessary wrapper divs** (apply classes directly to components when possible)
+
+### Wrapper Div Best Practices
+
+**When to Use Wrapper Divs**:
+
+✅ **Necessary wrapper divs**:
+
+```tsx
+// Grid/flex layout container
+<div className="grid grid-cols-2 gap-4">
+  <Item />
+  <Item />
+</div>
+
+// Grid positioning (direct child of grid)
+<div className="lg:col-span-3">
+  <Component />
+</div>
+
+// Semantic sections
+<section className="space-y-4">
+  <Content />
+</section>
+```
+
+❌ **Unnecessary wrapper divs**:
+
+```tsx
+// Don't wrap components just for conditional classes
+❌ {isDesktop && <div className="lg:hidden"><Component /></div>}
+✅ {isDesktop && <Component className="lg:hidden" />}
+
+// Don't wrap when component accepts className
+❌ <div className="mb-4"><CustomComponent /></div>
+✅ <CustomComponent className="mb-4" />
+```
+
+**Decision Tree**:
+
+1. Does the div provide layout structure (flex/grid)? → **Keep it**
+2. Is the div a direct child of a grid container with grid positioning? → **Keep it**
+3. Is it a semantic HTML element (section, article, main)? → **Keep it**
+4. Can the className be applied directly to the child component? → **Remove wrapper**
+5. Is it wrapping a single component for conditional classes? → **Apply className directly**
 
 ### Common Patterns
 
@@ -617,5 +662,5 @@ For questions or issues:
 ---
 
 **Last Updated**: 2025-10-18
-**Version**: 2.0 (Phase 2)
+**Version**: 2.1 (Phase 2 + Optimizations)
 **Test Coverage**: 92 tests (100% passing)
