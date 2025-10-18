@@ -374,8 +374,14 @@ export const PlaygroundTab: React.FC = () => {
 
           {/* Streaming Mode */}
           <div className="space-y-2 pt-2 border-t">
-            <label className="text-sm font-medium">Streaming Mode</label>
-            <div className="flex items-center gap-2">
+            <div className="text-sm font-medium" id="streaming-mode-label">
+              Streaming Mode
+            </div>
+            <div
+              className="flex items-center gap-2"
+              role="group"
+              aria-labelledby="streaming-mode-label"
+            >
               <Button
                 variant={streamingMode ? 'default' : 'outline'}
                 size="sm"

@@ -158,8 +158,8 @@ export function ProofreaderInput({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2" onKeyDown={handleKeyDown}>
+      <CardContent className="space-y-4" onKeyDown={handleKeyDown}>
+        <div className="space-y-2">
           <Label htmlFor="proofreader-input">Input Text</Label>
           <HighlightedTextEditor
             id="proofreader-input"
