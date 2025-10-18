@@ -14,6 +14,7 @@
  * @module shared/components/SuccessFeedback
  */
 
+import { useEffect } from 'react';
 import { CheckCircle2, PartyPopper } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -78,10 +79,13 @@ export function SuccessFeedback({
   autoDismiss,
   onDismiss,
 }: SuccessFeedbackProps) {
-  // Auto-dismiss effect
-  if (autoDismiss && onDismiss) {
-    setTimeout(onDismiss, autoDismiss);
-  }
+  // Auto-dismiss effect with proper cleanup
+  useEffect(() => {
+    if (autoDismiss && onDismiss) {
+      const timer = setTimeout(onDismiss, autoDismiss);
+      return () => clearTimeout(timer);
+    }
+  }, [autoDismiss, onDismiss]);
 
   // Get variant styles
   const styles = getVariantStyles(variant);

@@ -14,7 +14,7 @@
  * @module shared/components/CopyButton
  */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -104,6 +104,16 @@ export function CopyButton({
   onCopy,
 }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
+  const timeoutRef = useRef<number | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   /**
    * Handle copy to clipboard
@@ -123,8 +133,11 @@ export function CopyButton({
       // Call callback if provided
       onCopy?.();
 
-      // Reset copied state after duration
-      setTimeout(() => {
+      // Reset copied state after duration with cleanup
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = window.setTimeout(() => {
         setCopied(false);
       }, copiedDuration);
     } catch (error) {
@@ -158,7 +171,7 @@ export function CopyButton({
               : 'opacity-100 scale-100 relative',
           )}
         >
-          <Copy className={size === 'icon' ? 'w-4 h-4' : 'w-4 h-4'} />
+          <Copy className="w-4 h-4" />
         </div>
 
         {/* Check Icon with success animation */}
@@ -170,7 +183,7 @@ export function CopyButton({
               : 'opacity-0 scale-0 absolute',
           )}
         >
-          <Check className={size === 'icon' ? 'w-4 h-4' : 'w-4 h-4'} />
+          <Check className="w-4 h-4" />
         </div>
 
         {/* Label text */}

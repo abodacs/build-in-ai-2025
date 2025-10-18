@@ -14,7 +14,7 @@
  * @module shared/hooks/useFieldValidation
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 // ============================================================================
 // Types
@@ -126,6 +126,11 @@ export function useFieldValidation<T = any>(
 
   const [isInitialMount, setIsInitialMount] = useState(true);
 
+  // Memoize rules to prevent unnecessary re-validation when parent doesn't memoize
+  // Uses JSON.stringify for deep comparison
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stableRules = useMemo(() => rules, [JSON.stringify(rules)]);
+
   // Validation function
   const validate = useCallback(() => {
     // Skip if initial mount and skipInitialValidation is true
@@ -138,7 +143,7 @@ export function useFieldValidation<T = any>(
     setValidationState((prev) => ({ ...prev, isValidating: true }));
 
     // Sort rules by priority (higher first)
-    const sortedRules = [...rules].sort(
+    const sortedRules = [...stableRules].sort(
       (a, b) => (b.priority || 0) - (a.priority || 0),
     );
 
@@ -163,7 +168,7 @@ export function useFieldValidation<T = any>(
     }
   }, [
     value,
-    rules,
+    stableRules,
     isInitialMount,
     skipInitialValidation,
     successMessage,

@@ -102,7 +102,7 @@ export function ProgressWithStages({
 
             return (
               <div
-                key={stage.label}
+                key={`${stage.label}-${index}`}
                 className={cn(
                   'flex items-center gap-2 flex-1',
                   index < stages.length - 1 && 'relative',
@@ -117,6 +117,7 @@ export function ProgressWithStages({
                 >
                   {isComplete ? (
                     <CheckCircle2
+                      key={`complete-${index}`}
                       className={cn(
                         'w-5 h-5 text-green-500',
                         'animate-scaleIn',
@@ -124,13 +125,17 @@ export function ProgressWithStages({
                     />
                   ) : isCurrent ? (
                     <Circle
+                      key={`current-${index}`}
                       className={cn(
                         'w-5 h-5 text-blue-500',
                         'animate-pulse fill-current',
                       )}
                     />
                   ) : (
-                    <Circle className="w-5 h-5 text-muted-foreground/40" />
+                    <Circle
+                      key={`pending-${index}`}
+                      className="w-5 h-5 text-muted-foreground/40"
+                    />
                   )}
                 </div>
 
