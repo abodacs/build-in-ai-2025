@@ -85,6 +85,22 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
     }
   };
 
+  // Handle keyboard events for image interaction
+  const handleImageKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleImageClick();
+    }
+  };
+
+  // Handle keyboard events for modal close
+  const handleModalKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setShowZoomModal(false);
+    }
+  };
+
   // Handle image error
   const handleImageError = () => {
     setImageError(true);
@@ -109,8 +125,12 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
               alt={alt || name}
               className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
               onClick={handleImageClick}
+              onKeyDown={handleImageKeyDown}
               onError={handleImageError}
               loading="lazy"
+              role="button"
+              tabIndex={0}
+              aria-label={`View ${alt || name} in full size`}
             />
           )}
 
@@ -118,6 +138,10 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
           <div
             className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity cursor-pointer flex items-center justify-center"
             onClick={handleImageClick}
+            onKeyDown={handleImageKeyDown}
+            role="button"
+            tabIndex={0}
+            aria-label="Enlarge image"
           >
             <span className="opacity-0 group-hover:opacity-100 text-white text-sm font-medium">
               Click to enlarge
@@ -165,6 +189,11 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4"
           onClick={() => setShowZoomModal(false)}
+          onKeyDown={handleModalKeyDown}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image zoom modal"
+          tabIndex={-1}
         >
           <div className="relative max-w-7xl max-h-full">
             {/* Close button */}
@@ -183,6 +212,9 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
                 alt={alt || name}
                 className="max-w-full max-h-[80vh] object-contain"
                 onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+                role="img"
+                tabIndex={0}
               />
 
               {/* Image info footer */}

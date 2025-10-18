@@ -374,7 +374,14 @@ export function HighlightedTextEditor({
       suppressContentEditableWarning
       onInput={handleInput}
       onClick={handleClick}
+      onKeyDown={(e) => {
+        // Allow normal text editing keys
+        if (e.key === 'Enter' && !e.shiftKey && !disabled) {
+          // Let Enter work normally in multiline editor
+        }
+      }}
       onPaste={handlePaste}
+      tabIndex={disabled ? -1 : 0}
       data-placeholder={placeholder}
       className={`proofreader-editor ${className}`}
       style={{

@@ -1,0 +1,82 @@
+
+> chrome-ai-devbench@1.0.0 lint /mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench
+> eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 100
+
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/src/components/ui/pagination.tsx
+  52:5  warning  Anchors must have content and the content must be accessible by a screen reader  jsx-a11y/anchor-has-content
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/src/features/unified-playground/api-modules/prompt/components/ConversationHistory.tsx
+  157:13  warning  Visible, non-interactive elements with click handlers must have at least one keyboard listener                                                                                                     jsx-a11y/click-events-have-key-events
+  157:13  warning  Avoid non-native interactive elements. If using native HTML is not possible, add an appropriate role and support for tabbing, mouse, keyboard, and touch inputs to an interactive content element  jsx-a11y/no-static-element-interactions
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/src/features/unified-playground/api-modules/prompt/components/FileUploadZone.tsx
+  54:7  warning  Visible, non-interactive elements with click handlers must have at least one keyboard listener                                                                                                     jsx-a11y/click-events-have-key-events
+  54:7  warning  Avoid non-native interactive elements. If using native HTML is not possible, add an appropriate role and support for tabbing, mouse, keyboard, and touch inputs to an interactive content element  jsx-a11y/no-static-element-interactions
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/src/features/unified-playground/api-modules/prompt/components/ImagePreview.tsx
+  107:13  warning  Visible, non-interactive elements with click handlers must have at least one keyboard listener                                                                                                     jsx-a11y/click-events-have-key-events
+  107:13  warning  Non-interactive elements should not be assigned mouse or keyboard event listeners                                                                                                                  jsx-a11y/no-noninteractive-element-interactions
+  118:11  warning  Visible, non-interactive elements with click handlers must have at least one keyboard listener                                                                                                     jsx-a11y/click-events-have-key-events
+  118:11  warning  Avoid non-native interactive elements. If using native HTML is not possible, add an appropriate role and support for tabbing, mouse, keyboard, and touch inputs to an interactive content element  jsx-a11y/no-static-element-interactions
+  165:9   warning  Visible, non-interactive elements with click handlers must have at least one keyboard listener                                                                                                     jsx-a11y/click-events-have-key-events
+  165:9   warning  Avoid non-native interactive elements. If using native HTML is not possible, add an appropriate role and support for tabbing, mouse, keyboard, and touch inputs to an interactive content element  jsx-a11y/no-static-element-interactions
+  181:15  warning  Visible, non-interactive elements with click handlers must have at least one keyboard listener                                                                                                     jsx-a11y/click-events-have-key-events
+  181:15  warning  Non-interactive elements should not be assigned mouse or keyboard event listeners                                                                                                                  jsx-a11y/no-noninteractive-element-interactions
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/src/features/unified-playground/api-modules/prompt/components/MessageBubble.tsx
+   33:66  warning  Unexpected any. Specify a different type                                                       @typescript-eslint/no-explicit-any
+  262:15  warning  The autoFocus prop should not be used, as it can reduce usability and accessibility for users  jsx-a11y/no-autofocus
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/src/features/unified-playground/api-modules/prompt/components/tabs/PlaygroundTab.tsx
+  137:9   warning  The 'handleSubmit' function makes the dependencies of useEffect Hook (at line 211) change on every render. To fix this, wrap the definition of 'handleSubmit' in its own useCallback() Hook  react-hooks/exhaustive-deps
+  377:13  warning  A form label must be associated with a control                                                                                                                                               jsx-a11y/label-has-associated-control
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/src/features/unified-playground/api-modules/prompt/hooks/useConversationHistory.ts
+  180:5  warning  React Hook useCallback has a missing dependency: 'autoSave'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/src/features/unified-playground/api-modules/proofreader/components/HighlightedTextEditor.tsx
+   68:29  warning  Unexpected any. Specify a different type                                                        @typescript-eslint/no-explicit-any
+  178:17  warning  Unexpected any. Specify a different type                                                        @typescript-eslint/no-explicit-any
+  179:34  warning  Unexpected any. Specify a different type                                                        @typescript-eslint/no-explicit-any
+  179:65  warning  Unexpected any. Specify a different type                                                        @typescript-eslint/no-explicit-any
+  208:42  warning  Unexpected any. Specify a different type                                                        @typescript-eslint/no-explicit-any
+  232:17  warning  Unexpected any. Specify a different type                                                        @typescript-eslint/no-explicit-any
+  351:42  warning  Unexpected any. Specify a different type                                                        @typescript-eslint/no-explicit-any
+  352:17  warning  Unexpected any. Specify a different type                                                        @typescript-eslint/no-explicit-any
+  367:5   warning  Visible, non-interactive elements with click handlers must have at least one keyboard listener  jsx-a11y/click-events-have-key-events
+  367:5   warning  Elements with the 'textbox' interactive role must be focusable                                  jsx-a11y/interactive-supports-focus
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/src/features/unified-playground/api-modules/proofreader/components/ProofreaderInput.tsx
+  162:9  warning  Avoid non-native interactive elements. If using native HTML is not possible, add an appropriate role and support for tabbing, mouse, keyboard, and touch inputs to an interactive content element  jsx-a11y/no-static-element-interactions
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/src/features/unified-playground/api-modules/rewriter/components/BatchRewriteResults.tsx
+  343:17  warning  Visible, non-interactive elements with click handlers must have at least one keyboard listener                                                                                                     jsx-a11y/click-events-have-key-events
+  343:17  warning  Avoid non-native interactive elements. If using native HTML is not possible, add an appropriate role and support for tabbing, mouse, keyboard, and touch inputs to an interactive content element  jsx-a11y/no-static-element-interactions
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/src/features/unified-playground/api-modules/rewriter/components/tabs/PlaygroundTab.tsx
+  110:9  warning  The 'handleRewrite' function makes the dependencies of useEffect Hook (at line 284) change on every render. To fix this, wrap the definition of 'handleRewrite' in its own useCallback() Hook  react-hooks/exhaustive-deps
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/src/features/unified-playground/api-modules/summarizer/components/tabs/PlaygroundTab.tsx
+  227:9   warning  The 'handleSummarize' function makes the dependencies of useEffect Hook (at line 279) change on every render. To fix this, wrap the definition of 'handleSummarize' in its own useCallback() Hook  react-hooks/exhaustive-deps
+  513:15  warning  A form label must be associated with a control                                                                                                                                                     jsx-a11y/label-has-associated-control
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/src/features/unified-playground/api-modules/writer/components/tabs/PlaygroundTab.tsx
+  136:9  warning  The 'handleGenerate' function makes the dependencies of useEffect Hook (at line 254) change on every render. To fix this, wrap the definition of 'handleGenerate' in its own useCallback() Hook  react-hooks/exhaustive-deps
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/src/features/unified-playground/shared/components/SecureInput.tsx
+  305:13  warning  The autoFocus prop should not be used, as it can reduce usability and accessibility for users  jsx-a11y/no-autofocus
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/src/features/unified-playground/shared/hooks/useFieldValidation.ts
+   26:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/tests/accessibility/setup.ts
+  181:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/mnt/f32b06de-7703-4583-ba3f-b589b79c0001/home/abdullah/personal/chrome-build-in-ai-challenge/chrome-ai-devbench/tests/setup.ts
+  15:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 41 problems (0 errors, 41 warnings)
+
