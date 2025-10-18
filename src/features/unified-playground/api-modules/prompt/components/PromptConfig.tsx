@@ -27,6 +27,9 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { ViewCodeButton } from '@/components/shared/ViewCodeButton';
+import { ValidationMessage } from '../../../shared/components/ValidationMessage';
+import { useFieldValidation } from '../../../shared/hooks/useFieldValidation';
+import { validationRules } from '../../../shared/utils/validationRules';
 import type { PromptConfig as PromptConfigType } from '../types';
 
 // ============================================================================
@@ -86,6 +89,13 @@ export function PromptConfig({
   onReset,
 }: PromptConfigProps) {
   const [isOpen, setIsOpen] = useState(!defaultCollapsed);
+
+  // Validation for temperature
+  const temperatureValidation = useFieldValidation(
+    config.temperature || 0.8,
+    validationRules.temperature(config.temperature || 0.8),
+    { debounceMs: 100, skipInitialValidation: true },
+  );
 
   /**
    * Update configuration field
@@ -193,10 +203,31 @@ export function PromptConfig({
                   step={0.01}
                   disabled={disabled}
                   className="w-full"
+                  aria-describedby={
+                    !temperatureValidation.isValid
+                      ? 'temp-validation'
+                      : undefined
+                  }
                 />
-                <p className="text-[10px] text-slate-500">
-                  Lower = focused, Higher = creative
-                </p>
+
+                {/* Real-time validation feedback */}
+                {!temperatureValidation.isValid &&
+                  temperatureValidation.message && (
+                    <ValidationMessage
+                      id="temp-validation"
+                      type={temperatureValidation.type || 'info'}
+                      showIcon={false}
+                      className="text-[10px] py-1 px-2"
+                    >
+                      {temperatureValidation.message}
+                    </ValidationMessage>
+                  )}
+
+                {temperatureValidation.isValid && (
+                  <p className="text-[10px] text-slate-500">
+                    Lower = focused, Higher = creative
+                  </p>
+                )}
               </div>
 
               {/* Top K */}

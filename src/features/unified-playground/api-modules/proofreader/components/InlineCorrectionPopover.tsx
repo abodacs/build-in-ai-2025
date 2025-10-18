@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, X as XIcon } from 'lucide-react';
 import type { ProofreadCorrection } from '../types';
-import '../styles/highlights.css';
+import '@/styles/highlights.css';
 
 // ============================================================================
 // Types

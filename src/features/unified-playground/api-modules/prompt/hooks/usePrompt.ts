@@ -221,6 +221,17 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
 
   /**
    * Execute a prompt (non-streaming)
+   *
+   * Uses Ref Pattern for Stable Manager Access:
+   * - promptManagerRef, sessionManagerRef, multimodalHandlerRef are intentionally
+   *   excluded from deps because they are stable container references
+   * - Manager instances are accessed at call-time via .current, not closure-time
+   * - Only `config` is included as a dependency since it's the only value that
+   *   should trigger callback recreation
+   * - updateMetrics() is also stable (useCallback with stable deps)
+   *
+   * This pattern prevents unnecessary callback recreation while maintaining
+   * access to the latest manager instances and state setters.
    */
   const prompt = useCallback(
     async (text: string, images?: ImageData[]): Promise<string> => {
@@ -307,12 +318,24 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
         setIsLoading(false);
       }
     },
+    // Refs intentionally excluded - they're stable containers accessed at call-time
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [config],
   );
 
   /**
    * Execute a prompt with streaming
+   *
+   * Uses Ref Pattern for Stable Manager Access:
+   * - promptManagerRef, sessionManagerRef, multimodalHandlerRef are intentionally
+   *   excluded from deps because they are stable container references
+   * - Manager instances are accessed at call-time via .current, not closure-time
+   * - Only `config` is included as a dependency since it's the only value that
+   *   should trigger callback recreation
+   * - updateMetrics() is also stable (useCallback with stable deps)
+   *
+   * This pattern prevents unnecessary callback recreation while maintaining
+   * access to the latest manager instances and state setters.
    */
   const promptStreaming = useCallback(
     async (text: string, images?: ImageData[]): Promise<string> => {
@@ -457,6 +480,7 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
         setIsStreaming(false);
       }
     },
+    // Refs intentionally excluded - they're stable containers accessed at call-time
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [config],
   );

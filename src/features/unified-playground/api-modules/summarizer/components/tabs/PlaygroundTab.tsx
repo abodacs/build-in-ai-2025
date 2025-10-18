@@ -260,8 +260,27 @@ export function PlaygroundTab({
     }
   };
 
+  // Ref to hold latest handlers - prevents stale closures
+  const handlersRef = useRef({
+    handleSummarize,
+    canSummarize,
+    isLoading,
+    isStreaming,
+  });
+
+  // Keep ref in sync with latest values
+  useEffect(() => {
+    handlersRef.current = {
+      handleSummarize,
+      canSummarize,
+      isLoading,
+      isStreaming,
+    };
+  }, [handleSummarize, canSummarize, isLoading, isStreaming]);
+
   /**
    * Auto-run summarization after download completes
+   * Uses handlersRef to access latest handleSummarize
    */
   useEffect(() => {
     // Check if availability just changed from 'after-download' to 'readily'
@@ -272,15 +291,15 @@ export function PlaygroundTab({
       inputText.length >= 100
     ) {
       // Download complete, auto-running summarization
-      handleSummarize();
+      handlersRef.current.handleSummarize();
     }
 
     previousAvailability.current = availability;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availability, pendingSummarization, inputText.length]); // handleSummarize excluded - stable function with internal deps
+  }, [availability, pendingSummarization, inputText.length]);
 
   /**
    * Keyboard shortcuts (Cmd/Ctrl+K, Cmd/Ctrl+Enter, Escape)
+   * Uses handlersRef to avoid stale closures while maintaining stable event listeners
    */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -291,7 +310,10 @@ export function PlaygroundTab({
       }
 
       // Escape: Cancel summarization (if streaming/loading)
-      if (e.key === 'Escape' && (isLoading || isStreaming)) {
+      if (
+        e.key === 'Escape' &&
+        (handlersRef.current.isLoading || handlersRef.current.isStreaming)
+      ) {
         e.preventDefault();
         // Note: Summarizer doesn't have explicit cancel yet
         console.log('Escape pressed - cancel not implemented');
@@ -300,8 +322,8 @@ export function PlaygroundTab({
 
     // Listen for Cmd+Enter from SummarizerInput
     const handleSummarizerSummarize = () => {
-      if (canSummarize) {
-        handleSummarize();
+      if (handlersRef.current.canSummarize) {
+        handlersRef.current.handleSummarize();
       }
     };
 
@@ -318,8 +340,7 @@ export function PlaygroundTab({
         handleSummarizerSummarize,
       );
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, isStreaming, canSummarize]);
+  }, []); // No deps needed - handlers accessed via ref
 
   /**
    * Handle config change (delegated to parent)

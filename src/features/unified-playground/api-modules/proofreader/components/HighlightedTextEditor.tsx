@@ -19,7 +19,7 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import type { ProofreadCorrection, CorrectionType } from '../types';
-import '../styles/highlights.css';
+import '@/styles/highlights.css';
 
 // ============================================================================
 // Types

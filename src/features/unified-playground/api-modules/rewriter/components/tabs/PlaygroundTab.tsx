@@ -7,7 +7,7 @@
  * @module rewriter/components/tabs/PlaygroundTab
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { RefreshCw, AlertCircle, X, RotateCcw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -265,8 +265,27 @@ export function PlaygroundTab() {
   const canRewrite =
     !isRewriting && !isLoading && inputText.trim().length > 0 && isSupported;
 
+  // Ref to hold latest handlers - prevents stale closures in event listeners
+  const handlersRef = useRef({
+    handleRewrite,
+    canRewrite,
+    isRewriting,
+    cancelFn: actions.cancel,
+  });
+
+  // Keep ref in sync with latest values
+  useEffect(() => {
+    handlersRef.current = {
+      handleRewrite,
+      canRewrite,
+      isRewriting,
+      cancelFn: actions.cancel,
+    };
+  }, [handleRewrite, canRewrite, isRewriting, actions.cancel]);
+
   /**
    * Keyboard shortcuts
+   * Uses handlersRef to avoid stale closures while maintaining stable event listeners
    */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -277,16 +296,16 @@ export function PlaygroundTab() {
       }
 
       // Escape: Cancel rewriting
-      if (e.key === 'Escape' && isRewriting) {
+      if (e.key === 'Escape' && handlersRef.current.isRewriting) {
         e.preventDefault();
-        actions.cancel();
+        handlersRef.current.cancelFn();
       }
     };
 
     // Listen for Cmd+Enter from RewriterInput
     const handleRewriterRewrite = () => {
-      if (canRewrite) {
-        handleRewrite();
+      if (handlersRef.current.canRewrite) {
+        handlersRef.current.handleRewrite();
       }
     };
 
@@ -297,8 +316,7 @@ export function PlaygroundTab() {
       window.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('rewriter-rewrite', handleRewriterRewrite);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRewriting, canRewrite]);
+  }, []); // No deps needed - handlers accessed via ref
 
   return (
     <div className="space-y-4 p-4 sm:p-6">
