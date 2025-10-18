@@ -103,7 +103,8 @@ export default defineConfig({
           // Syntax highlighting - separate for code splitting
           if (
             id.includes('react-syntax-highlighter') ||
-            id.includes('highlight.js')
+            id.includes('highlight.js') ||
+            id.includes('sugar-high')
           ) {
             return 'syntax-highlighter';
           }
