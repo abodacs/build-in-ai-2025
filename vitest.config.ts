@@ -15,9 +15,18 @@ export default defineConfig({
       threads: {
         singleThread: false,
         useAtomics: true,
+        // Memory-safe: Limit max threads to prevent excessive memory usage
+        maxThreads: 4,
+        minThreads: 1,
       },
     },
     maxConcurrency: 10,
+    // Memory-safe: Limit concurrent worker processes
+    maxWorkers: 4,
+    minWorkers: 1,
+
+    // Memory monitoring
+    logHeapUsage: true,
 
     // Timeouts for faster test execution
     testTimeout: 10000, // 10 seconds max per test
@@ -62,9 +71,17 @@ export default defineConfig({
       '**/e2e/**', // Exclude E2E tests from unit test runs
     ],
 
-    // Increase performance by reusing test context
-    // NOTE: Set to true to prevent test interference with coverage
+    // Memory-safe: Isolate tests to prevent memory leaks and state pollution
+    // Set to true to prevent test interference with coverage and ensure clean state
     isolate: true,
+
+    // Memory-safe: Ensure proper cleanup between test files
+    sequence: {
+      shuffle: false, // Deterministic test order for debugging memory issues
+    },
+
+    // Memory-safe: Limit file parallelism to prevent memory spikes
+    fileParallelism: true,
   },
   resolve: {
     alias: {
