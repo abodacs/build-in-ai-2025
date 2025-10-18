@@ -75,16 +75,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build application
-        run: pnpm build
+        run: pnpm build:cloudflare
         env:
           NODE_ENV: production
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: chrome-ai-devbench
-          directory: dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          wranglerVersion: '4'
+          command: pages deploy dist --project-name=chrome-ai-devbench

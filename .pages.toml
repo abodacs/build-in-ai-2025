@@ -7,4 +7,4 @@ directory = "dist"
 
 [build.environment]
 NODE_VERSION = "22"
-PNPM_VERSION = "8"
+PNPM_VERSION = "10"
