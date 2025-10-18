@@ -205,15 +205,10 @@ export const PlaygroundTab: React.FC = () => {
   }, [
     inputValue,
     availability.requiresDownload,
-    prompt.isLoading,
-    prompt.isInitialized,
-    prompt.initialize,
-    prompt.promptStreaming,
-    prompt.prompt,
     streamingMode,
     history,
-    fileUpload.files,
-    fileUpload.clearFiles,
+    prompt,
+    fileUpload,
   ]);
 
   // Keep ref in sync with latest values

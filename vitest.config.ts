@@ -10,19 +10,18 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
 
     // Performance optimizations
-    pool: 'threads',
+    pool: 'forks',
     poolOptions: {
-      threads: {
-        singleThread: false,
-        useAtomics: true,
-        // Memory-safe: Limit max threads to prevent excessive memory usage
-        maxThreads: 4,
-        minThreads: 1,
+      forks: {
+        singleFork: false,
+        // Memory-safe: Limit max forks to prevent excessive memory usage
+        maxForks: 1,
+        minForks: 1,
       },
     },
-    maxConcurrency: 10,
+    maxConcurrency: 5,
     // Memory-safe: Limit concurrent worker processes
-    maxWorkers: 4,
+    maxWorkers: 1,
     minWorkers: 1,
 
     // Memory monitoring

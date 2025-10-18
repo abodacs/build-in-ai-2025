@@ -7,7 +7,7 @@
  * @module rewriter/components/tabs/PlaygroundTab
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { RefreshCw, AlertCircle, X, RotateCcw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -114,7 +114,7 @@ export function PlaygroundTab() {
   /**
    * Handle rewrite action
    */
-  const handleRewrite = async () => {
+  const handleRewrite = useCallback(async () => {
     if (!inputText.trim()) {
       showToast({
         variant: 'error',
@@ -135,7 +135,7 @@ export function PlaygroundTab() {
       },
       context || undefined, // Pass context if provided
     );
-  };
+  }, [inputText, context, actions, showToast]);
 
   /**
    * Handle copy rewritten text

@@ -25,13 +25,13 @@ describe('Vitest Configuration Memory Safety', () => {
     expect(config).toMatch(/minWorkers:\s*\d+/);
   });
 
-  it('should have thread pool limits configured', () => {
+  it('should have fork pool limits configured', () => {
     const config = readConfig('vitest.config.ts');
 
-    expect(config).toContain('maxThreads');
-    expect(config).toContain('minThreads');
-    expect(config).toMatch(/maxThreads:\s*\d+/);
-    expect(config).toMatch(/minThreads:\s*\d+/);
+    expect(config).toContain('maxForks');
+    expect(config).toContain('minForks');
+    expect(config).toMatch(/maxForks:\s*\d+/);
+    expect(config).toMatch(/minForks:\s*\d+/);
   });
 
   it('should have heap usage logging enabled', () => {
@@ -247,18 +247,18 @@ describe('Runtime Memory Constraints', () => {
     if (maxWorkersMatch) {
       const maxWorkers = parseInt(maxWorkersMatch[1], 10);
       expect(maxWorkers).toBeGreaterThan(0);
-      expect(maxWorkers).toBeLessThanOrEqual(8); // Reasonable upper limit
+      expect(maxWorkers).toBeLessThanOrEqual(4); // Conservative limit for memory safety
     }
   });
 
-  it('should have thread limits that prevent memory exhaustion', () => {
+  it('should have fork limits that prevent memory exhaustion', () => {
     const vitestConfig = readConfig('vitest.config.ts');
-    const maxThreadsMatch = vitestConfig.match(/maxThreads:\s*(\d+)/);
+    const maxForksMatch = vitestConfig.match(/maxForks:\s*(\d+)/);
 
-    if (maxThreadsMatch) {
-      const maxThreads = parseInt(maxThreadsMatch[1], 10);
-      expect(maxThreads).toBeGreaterThan(0);
-      expect(maxThreads).toBeLessThanOrEqual(8); // Reasonable upper limit
+    if (maxForksMatch) {
+      const maxForks = parseInt(maxForksMatch[1], 10);
+      expect(maxForks).toBeGreaterThan(0);
+      expect(maxForks).toBeLessThanOrEqual(2); // Very conservative limit for memory safety
     }
   });
 });

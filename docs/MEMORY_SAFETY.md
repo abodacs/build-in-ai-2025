@@ -34,24 +34,25 @@ Location: `vitest.config.ts`
 #### Worker Limits
 
 ```typescript
-maxWorkers: 4,
+maxWorkers: 1,
 minWorkers: 1,
 ```
 
-**Why**: Limiting concurrent workers prevents excessive memory consumption during parallel test execution.
+**Why**: Single worker configuration prevents excessive memory consumption and ensures tests run sequentially for maximum stability.
 
-#### Thread Pool Configuration
+#### Fork Pool Configuration
 
 ```typescript
+pool: 'forks',
 poolOptions: {
-  threads: {
-    maxThreads: 4,
-    minThreads: 1,
+  forks: {
+    maxForks: 1,
+    minForks: 1,
   }
 }
 ```
 
-**Why**: Thread pool limits ensure consistent resource usage and prevent thread exhaustion.
+**Why**: Using forks instead of threads provides better memory isolation. Single fork ensures tests don't compete for memory resources.
 
 #### Memory Monitoring
 

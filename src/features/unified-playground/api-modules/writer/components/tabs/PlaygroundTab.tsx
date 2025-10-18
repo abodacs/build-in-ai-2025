@@ -7,7 +7,7 @@
  * @module writer/components/tabs/PlaygroundTab
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Wand2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -138,14 +138,13 @@ export function PlaygroundTab() {
   /**
    * Handle generate action
    */
-  const handleGenerate = async () => {
+  const handleGenerate = useCallback(async () => {
     console.log('🎯 handleGenerate called!');
     console.log('  → Prompt length:', prompt.length);
     console.log('  → Context length:', context?.length || 0);
     console.log('  → isWriting:', isWriting);
     console.log('  → isLoading:', isLoading);
     console.log('  → isSupported:', isSupported);
-    console.log('  → canGenerate:', canGenerate);
 
     if (!prompt.trim()) {
       console.warn('⚠️ No prompt provided, aborting');
@@ -169,7 +168,7 @@ export function PlaygroundTab() {
       // Error is already handled by the hook
       console.error('❌ Writer generation failed in handleGenerate:', err);
     }
-  };
+  }, [prompt, context, isWriting, isLoading, isSupported, actions]);
 
   /**
    * Handle copy action

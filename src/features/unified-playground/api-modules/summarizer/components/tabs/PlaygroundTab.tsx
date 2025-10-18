@@ -7,7 +7,7 @@
  * @module PlaygroundTab
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { AlertCircle, Loader, Radio, ChevronDown } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -224,7 +224,7 @@ export function PlaygroundTab({
   /**
    * Handle summarization with lazy download support
    */
-  const handleSummarize = async () => {
+  const handleSummarize = useCallback(async () => {
     try {
       // Check if model needs to be downloaded first
       if (availability === 'after-download' && !isDownloading) {
@@ -258,7 +258,17 @@ export function PlaygroundTab({
     } finally {
       setPendingSummarization(false);
     }
-  };
+  }, [
+    availability,
+    isDownloading,
+    isReady,
+    config,
+    streamingMode,
+    inputText,
+    startDownload,
+    summarizeStreaming,
+    summarize,
+  ]);
 
   // Ref to hold latest handlers - prevents stale closures
   const handlersRef = useRef({
