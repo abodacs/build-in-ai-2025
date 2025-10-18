@@ -7,7 +7,7 @@
  * @module writer/components/tabs/PlaygroundTab
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Wand2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -235,8 +235,27 @@ export function PlaygroundTab() {
   const canGenerate =
     !isWriting && !isLoading && prompt.trim().length > 0 && isSupported;
 
+  // Ref to hold latest handlers - prevents stale closures in event listeners
+  const handlersRef = useRef({
+    handleGenerate,
+    canGenerate,
+    isWriting,
+    cancelFn: actions.cancel,
+  });
+
+  // Keep ref in sync with latest values
+  useEffect(() => {
+    handlersRef.current = {
+      handleGenerate,
+      canGenerate,
+      isWriting,
+      cancelFn: actions.cancel,
+    };
+  }, [handleGenerate, canGenerate, isWriting, actions.cancel]);
+
   /**
    * Keyboard shortcuts
+   * Uses handlersRef to avoid stale closures while maintaining stable event listeners
    */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -247,16 +266,16 @@ export function PlaygroundTab() {
       }
 
       // Escape: Cancel generation
-      if (e.key === 'Escape' && isWriting) {
+      if (e.key === 'Escape' && handlersRef.current.isWriting) {
         e.preventDefault();
-        actions.cancel();
+        handlersRef.current.cancelFn();
       }
     };
 
     // Listen for Cmd+Enter from WriterInput
     const handleWriterGenerate = () => {
-      if (canGenerate) {
-        handleGenerate();
+      if (handlersRef.current.canGenerate) {
+        handlersRef.current.handleGenerate();
       }
     };
 
@@ -267,8 +286,7 @@ export function PlaygroundTab() {
       window.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('writer-generate', handleWriterGenerate);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isWriting, canGenerate]);
+  }, []); // No deps needed - handlers accessed via ref
 
   return (
     <div className="space-y-4 p-4 sm:p-6">

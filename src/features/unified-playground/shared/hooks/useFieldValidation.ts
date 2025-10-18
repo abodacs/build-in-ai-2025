@@ -14,7 +14,7 @@
  * @module shared/hooks/useFieldValidation
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 // ============================================================================
 // Types
@@ -78,9 +78,13 @@ export interface UseFieldValidationOptions {
 /**
  * Field validation hook with debouncing
  *
+ * IMPORTANT: For optimal performance, wrap the `rules` array in useMemo
+ * at the call site to prevent unnecessary re-validation:
+ *
  * @example
  * ```tsx
- * const temperatureValidation = useFieldValidation(temperature, [
+ * // ✅ GOOD: Memoize rules array in parent component
+ * const temperatureRules = useMemo(() => [
  *   {
  *     validate: (val) => val >= 0 && val <= 1,
  *     message: 'Temperature must be between 0 and 1',
@@ -93,7 +97,9 @@ export interface UseFieldValidationOptions {
  *     type: 'warning',
  *     priority: 5,
  *   },
- * ]);
+ * ], []); // Empty deps if rules are static
+ *
+ * const temperatureValidation = useFieldValidation(temperature, temperatureRules);
  *
  * return (
  *   <>
@@ -105,6 +111,14 @@ export interface UseFieldValidationOptions {
  *     )}
  *   </>
  * );
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // ❌ BAD: Creating new rules array on every render
+ * const temperatureValidation = useFieldValidation(temperature, [
+ *   { validate: (val) => val >= 0, message: 'Invalid', type: 'error' },
+ * ]); // This will cause validation on EVERY render!
  * ```
  */
 export function useFieldValidation<T = any>(
@@ -126,11 +140,6 @@ export function useFieldValidation<T = any>(
 
   const [isInitialMount, setIsInitialMount] = useState(true);
 
-  // Memoize rules to prevent unnecessary re-validation when parent doesn't memoize
-  // Uses JSON.stringify for deep comparison
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const stableRules = useMemo(() => rules, [JSON.stringify(rules)]);
-
   // Validation function
   const validate = useCallback(() => {
     // Skip if initial mount and skipInitialValidation is true
@@ -143,7 +152,7 @@ export function useFieldValidation<T = any>(
     setValidationState((prev) => ({ ...prev, isValidating: true }));
 
     // Sort rules by priority (higher first)
-    const sortedRules = [...stableRules].sort(
+    const sortedRules = [...rules].sort(
       (a, b) => (b.priority || 0) - (a.priority || 0),
     );
 
@@ -168,7 +177,7 @@ export function useFieldValidation<T = any>(
     }
   }, [
     value,
-    stableRules,
+    rules,
     isInitialMount,
     skipInitialValidation,
     successMessage,

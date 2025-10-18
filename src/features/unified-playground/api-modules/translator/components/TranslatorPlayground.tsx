@@ -7,7 +7,7 @@
  * @module TranslatorPlayground
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Zap, RotateCcw, Package } from 'lucide-react';
 import { TranslatorConfig } from './TranslatorConfig';
@@ -269,8 +269,27 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
   const canTranslate =
     !isLoading && !isStreaming && inputText.trim().length > 0;
 
+  // Ref to hold latest handlers - prevents stale closures in event listeners
+  const handlersRef = useRef({
+    handleTranslate,
+    cancel,
+    canTranslate,
+    isStreaming,
+  });
+
+  // Keep ref in sync with latest values
+  useEffect(() => {
+    handlersRef.current = {
+      handleTranslate,
+      cancel,
+      canTranslate,
+      isStreaming,
+    };
+  }, [handleTranslate, cancel, canTranslate, isStreaming]);
+
   /**
    * Keyboard shortcuts
+   * Uses handlersRef to avoid stale closures while maintaining stable event listeners
    */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -281,16 +300,16 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
       }
 
       // Escape: Cancel translation
-      if (e.key === 'Escape' && isStreaming) {
+      if (e.key === 'Escape' && handlersRef.current.isStreaming) {
         e.preventDefault();
-        cancel();
+        handlersRef.current.cancel();
       }
     };
 
     // Listen for Cmd+Enter from TranslatorInput
     const handleTranslatorTranslate = () => {
-      if (canTranslate) {
-        handleTranslate();
+      if (handlersRef.current.canTranslate) {
+        handlersRef.current.handleTranslate();
       }
     };
 
@@ -307,8 +326,7 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
         handleTranslatorTranslate,
       );
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isStreaming, canTranslate]);
+  }, []); // No deps needed - handlers accessed via ref
 
   // ============================================================================
   // Render

@@ -69,6 +69,14 @@ export const PlaygroundTab: React.FC = () => {
   // Track previous initialization state for auto-run after download
   const previousIsReady = useRef(prompt.isInitialized);
 
+  // Ref to hold latest handlers - prevents stale closures in event listeners/effects
+  const handlersRef = useRef({
+    handleSubmit: null as (() => Promise<void>) | null,
+    initializeFn: prompt.initialize,
+    isInitialized: prompt.isInitialized,
+    isReady: availability.isReady,
+  });
+
   /**
    * Validate input text
    */
@@ -115,48 +123,6 @@ export const PlaygroundTab: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isCodeModalOpen]);
-
-  /**
-   * Auto-run prompt after download completes
-   */
-  useEffect(() => {
-    // Check if initialization just completed (was false, now true)
-    if (
-      !previousIsReady.current &&
-      prompt.isInitialized &&
-      pendingPrompt &&
-      inputValue.trim()
-    ) {
-      console.log(
-        '[PlaygroundTab] Download complete, auto-running pending prompt',
-      );
-      handleSubmit();
-    }
-
-    previousIsReady.current = prompt.isInitialized;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prompt.isInitialized, pendingPrompt, inputValue]); // handleSubmit excluded - stable function with internal deps
-
-  // Initialize on mount
-  useEffect(() => {
-    console.log('PlaygroundTab: Auto-init useEffect triggered');
-    console.log('PlaygroundTab: availability.isReady =', availability.isReady);
-    console.log('PlaygroundTab: prompt.isInitialized =', prompt.isInitialized);
-    console.log(
-      'PlaygroundTab: Should initialize?',
-      availability.isReady && !prompt.isInitialized,
-    );
-
-    if (availability.isReady && !prompt.isInitialized) {
-      console.log('PlaygroundTab: Calling prompt.initialize()...');
-      prompt.initialize().catch((err) => {
-        console.error('PlaygroundTab: Auto-init failed:', err);
-      });
-    } else {
-      console.log('PlaygroundTab: Skipping initialization - condition not met');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availability.isReady, prompt.isInitialized]);
 
   // Handle config change
   const handleConfigChange = (newConfig: Partial<typeof config>) => {
@@ -233,6 +199,71 @@ export const PlaygroundTab: React.FC = () => {
       setPendingPrompt(false);
     }
   };
+
+  // Keep ref in sync with latest values
+  useEffect(() => {
+    handlersRef.current = {
+      handleSubmit,
+      initializeFn: prompt.initialize,
+      isInitialized: prompt.isInitialized,
+      isReady: availability.isReady,
+    };
+  }, [
+    handleSubmit,
+    prompt.initialize,
+    prompt.isInitialized,
+    availability.isReady,
+  ]);
+
+  /**
+   * Auto-run prompt after download completes
+   * Uses handlersRef to avoid stale closures while maintaining stable effect
+   */
+  useEffect(() => {
+    // Check if initialization just completed (was false, now true)
+    if (
+      !previousIsReady.current &&
+      prompt.isInitialized &&
+      pendingPrompt &&
+      inputValue.trim()
+    ) {
+      console.log(
+        '[PlaygroundTab] Download complete, auto-running pending prompt',
+      );
+      handlersRef.current.handleSubmit?.();
+    }
+
+    previousIsReady.current = prompt.isInitialized;
+  }, [prompt.isInitialized, pendingPrompt, inputValue]);
+
+  /**
+   * Initialize on mount
+   * Uses handlersRef to avoid stale closures while maintaining stable effect
+   */
+  useEffect(() => {
+    console.log('PlaygroundTab: Auto-init useEffect triggered');
+    console.log(
+      'PlaygroundTab: availability.isReady =',
+      handlersRef.current.isReady,
+    );
+    console.log(
+      'PlaygroundTab: prompt.isInitialized =',
+      handlersRef.current.isInitialized,
+    );
+    console.log(
+      'PlaygroundTab: Should initialize?',
+      handlersRef.current.isReady && !handlersRef.current.isInitialized,
+    );
+
+    if (handlersRef.current.isReady && !handlersRef.current.isInitialized) {
+      console.log('PlaygroundTab: Calling prompt.initialize()...');
+      handlersRef.current.initializeFn().catch((err) => {
+        console.error('PlaygroundTab: Auto-init failed:', err);
+      });
+    } else {
+      console.log('PlaygroundTab: Skipping initialization - condition not met');
+    }
+  }, [availability.isReady, prompt.isInitialized]);
 
   // Render availability check
   if (!availability.isSupported) {
