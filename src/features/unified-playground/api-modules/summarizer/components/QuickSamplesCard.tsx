@@ -293,7 +293,7 @@ export function QuickSamplesCard({
 
         <CollapsibleContent>
           <CardContent>
-            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 touch-gap">
               {QUICK_SAMPLES.map((sample) => {
                 const IconComponent = ICON_COMPONENTS[sample.id];
                 const isSelected = selectedSampleId === sample.id;
@@ -304,7 +304,7 @@ export function QuickSamplesCard({
                     variant={isSelected ? 'default' : 'outline'}
                     onClick={() => onSampleSelect(sample)}
                     className={cn(
-                      'h-auto flex-col gap-2 p-4 relative',
+                      'h-auto flex-col gap-2 p-4 relative touch-target tap-fast',
                       isSelected
                         ? 'bg-purple-600 text-white border-purple-700 hover:bg-purple-700'
                         : 'hover:border-purple-300 hover:bg-purple-50/50',

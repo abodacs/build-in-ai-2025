@@ -137,18 +137,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
-      - name: Cache node_modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            ~/.cache/pnpm
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline --prefer-offline
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Run unit tests (shard ${{ matrix.shard }}/3)
         run: pnpm test:coverage --shard=${{ matrix.shard }}/3

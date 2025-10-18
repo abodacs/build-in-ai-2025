@@ -194,7 +194,7 @@ export function TranslatorConfig({
             className="flex flex-1 items-center justify-between p-2 hover:bg-accent"
           >
             <div className="flex items-center gap-2">
-              <span className="text-lg font-semibold">
+              <span className="text-fluid-lg font-semibold">
                 ⚙️ Translation Settings
               </span>
               <TooltipProvider>
@@ -321,7 +321,7 @@ export function TranslatorConfig({
             variant="outline"
             size="sm"
             onClick={onSwapLanguages}
-            className="gap-2 transition-transform hover:scale-105"
+            className="h-10 lg:h-8 gap-2 tap-fast transition-transform hover:scale-105"
             data-testid="swap-languages-btn"
             title="Swap source and target languages (Alt+S)"
           >
@@ -348,8 +348,10 @@ export function TranslatorConfig({
             className="min-h-[80px] resize-none"
             data-testid="context-input"
             maxLength={1000}
+            aria-label="Translation context"
+            aria-describedby="context-description"
           />
-          <p className="text-xs text-muted-foreground">
+          <p id="context-description" className="text-xs text-muted-foreground">
             Context helps disambiguate terms with multiple meanings
           </p>
         </div>

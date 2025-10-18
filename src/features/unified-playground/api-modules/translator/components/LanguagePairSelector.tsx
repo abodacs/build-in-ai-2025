@@ -40,7 +40,7 @@ export function LanguagePairSelector({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 touch-gap sm:grid-cols-2 lg:grid-cols-3">
           {POPULAR_LANGUAGE_PAIRS.map((pair) => {
             const sourceInfo = SUPPORTED_LANGUAGES[pair.source];
             const targetInfo = SUPPORTED_LANGUAGES[pair.target];
@@ -50,7 +50,7 @@ export function LanguagePairSelector({
               <Button
                 key={`${pair.source}-${pair.target}`}
                 variant={isCurrent ? 'default' : 'outline'}
-                className="h-auto justify-start gap-2 p-3"
+                className="h-auto justify-start gap-2 p-3 touch-target tap-fast"
                 onClick={() => onSelectPair(pair.source, pair.target)}
                 data-testid={`pair-${pair.source}-${pair.target}`}
               >

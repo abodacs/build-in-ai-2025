@@ -266,6 +266,194 @@
     text-wrap: balance;
   }
 
+  /* ========================================================================
+   * Responsive Touch Target Utilities (WCAG AAA Compliant)
+   * ======================================================================== */
+
+  /**
+   * .touch-target - Minimum 48x48px touch target (WCAG AAA)
+   * Use for all interactive elements on mobile/tablet
+   */
+  .touch-target {
+    min-width: 48px;
+    min-height: 48px;
+    @apply inline-flex items-center justify-center;
+  }
+
+  /**
+   * .touch-target-lg - Larger 56x56px touch target
+   * Use for primary actions on mobile
+   */
+  .touch-target-lg {
+    min-width: 56px;
+    min-height: 56px;
+    @apply inline-flex items-center justify-center;
+  }
+
+  /**
+   * .touch-gap - 8px minimum spacing between touch targets
+   * Use between adjacent interactive elements
+   */
+  .touch-gap {
+    gap: 0.5rem; /* 8px */
+  }
+
+  /**
+   * .touch-gap-lg - 12px spacing for better separation
+   */
+  .touch-gap-lg {
+    gap: 0.75rem; /* 12px */
+  }
+
+  /* ========================================================================
+   * Responsive Typography Scale (Fluid Sizing)
+   * ======================================================================== */
+
+  /**
+   * Fluid font sizes using clamp() for smooth scaling across breakpoints
+   * Benefits: No layout shifts, smooth transitions
+   */
+  .text-fluid-xs {
+    font-size: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  }
+
+  .text-fluid-sm {
+    font-size: clamp(0.875rem, 0.8rem + 0.375vw, 1rem);
+  }
+
+  .text-fluid-base {
+    font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  }
+
+  .text-fluid-lg {
+    font-size: clamp(1.125rem, 1rem + 0.625vw, 1.25rem);
+  }
+
+  .text-fluid-xl {
+    font-size: clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem);
+  }
+
+  .text-fluid-2xl {
+    font-size: clamp(1.5rem, 1.3rem + 1vw, 1.875rem);
+  }
+
+  .text-fluid-3xl {
+    font-size: clamp(1.875rem, 1.5rem + 1.5vw, 2.25rem);
+  }
+
+  /* ========================================================================
+   * Mobile-Optimized Focus States
+   * ======================================================================== */
+
+  /**
+   * Larger, more visible focus indicators on mobile
+   * Ensures accessibility for touch navigation
+   */
+  @media (max-width: 1023px) {
+    *:focus-visible {
+      outline-width: 3px;
+      outline-offset: 2px;
+      outline-color: hsl(var(--color-ring));
+    }
+  }
+
+  /* ========================================================================
+   * Touch Device Optimizations
+   * ======================================================================== */
+
+  /**
+   * Disable hover effects on touch-only devices
+   * Prevents sticky hover states on mobile
+   */
+  @media (hover: none) {
+    .hover-lift:hover {
+      transform: none;
+    }
+
+    .hover-glow:hover {
+      box-shadow: none;
+    }
+
+    /* Remove hover transitions on touch devices */
+    .hover-disabled-touch:hover {
+      opacity: 1;
+      transform: none;
+      background-color: inherit;
+    }
+  }
+
+  /**
+   * Enable fast tap (removes 300ms delay on older browsers)
+   */
+  .tap-fast {
+    touch-action: manipulation;
+  }
+
+  /* ========================================================================
+   * Responsive Spacing Utilities
+   * ======================================================================== */
+
+  /**
+   * Adaptive padding that scales with breakpoints
+   */
+  .padding-responsive {
+    padding: 0.75rem; /* 12px - mobile */
+  }
+
+  @media (min-width: 640px) {
+    .padding-responsive {
+      padding: 1rem; /* 16px - sm */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .padding-responsive {
+      padding: 1.5rem; /* 24px - lg */
+    }
+  }
+
+  /**
+   * Adaptive gap that scales with breakpoints
+   */
+  .gap-responsive {
+    gap: 1rem; /* 16px - mobile */
+  }
+
+  @media (min-width: 768px) {
+    .gap-responsive {
+      gap: 1.25rem; /* 20px - md */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .gap-responsive {
+      gap: 1.5rem; /* 24px - lg */
+    }
+  }
+
+  /* ========================================================================
+   * Safe Area Insets (for notched devices)
+   * ======================================================================== */
+
+  /**
+   * Respect safe area insets on devices with notches
+   */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
   /* Typography utilities for better readability */
   .prose-enhanced {
     line-height: 1.75;

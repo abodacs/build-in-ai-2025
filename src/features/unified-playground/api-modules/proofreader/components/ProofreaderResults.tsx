@@ -97,8 +97,10 @@ export function ProofreaderResults({
       <Card className={className}>
         <CardContent className="py-12 text-center">
           <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-primary" />
-          <h3 className="text-lg font-semibold mb-2">No Corrections Needed!</h3>
-          <p className="text-muted-foreground">
+          <h3 className="text-fluid-lg font-semibold mb-2">
+            No Corrections Needed!
+          </h3>
+          <p className="text-fluid-sm text-muted-foreground">
             Your text looks great. No errors or improvements found.
           </p>
         </CardContent>
@@ -112,24 +114,26 @@ export function ProofreaderResults({
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Corrections Found</CardTitle>
-            <div className="flex items-center gap-2">
+            <CardTitle className="text-fluid-base">Corrections Found</CardTitle>
+            <div className="flex items-center touch-gap">
               <Button
                 onClick={onApplyAll}
                 disabled={!hasPending || disabled}
                 size="sm"
+                className="h-10 lg:h-8 tap-fast"
               >
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Apply All
+                <CheckCircle2 className="mr-2 h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Apply All</span>
               </Button>
               <Button
                 onClick={onReset}
                 disabled={disabled}
                 size="sm"
                 variant="outline"
+                className="h-10 lg:h-8 tap-fast"
               >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Reset
+                <RefreshCw className="mr-2 h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Reset</span>
               </Button>
             </div>
           </div>
@@ -168,15 +172,25 @@ export function ProofreaderResults({
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Corrected Text</CardTitle>
-            <div className="flex items-center gap-2">
-              <Button onClick={handleCopy} size="sm" variant="outline">
-                <Copy className="mr-2 h-4 w-4" />
-                Copy
+            <CardTitle className="text-fluid-base">Corrected Text</CardTitle>
+            <div className="flex items-center touch-gap">
+              <Button
+                onClick={handleCopy}
+                size="sm"
+                variant="outline"
+                className="h-10 lg:h-8 tap-fast"
+              >
+                <Copy className="mr-2 h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Copy</span>
               </Button>
-              <Button onClick={handleDownload} size="sm" variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Download
+              <Button
+                onClick={handleDownload}
+                size="sm"
+                variant="outline"
+                className="h-10 lg:h-8 tap-fast"
+              >
+                <Download className="mr-2 h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">Download</span>
               </Button>
             </div>
           </div>
@@ -186,13 +200,14 @@ export function ProofreaderResults({
             value={correctedText}
             readOnly
             className="min-h-[200px] font-mono text-sm"
+            aria-label="Corrected text output"
           />
         </CardContent>
       </Card>
 
       {/* Correction Cards */}
       <div className="space-y-3">
-        <h3 className="text-sm font-medium">Individual Corrections</h3>
+        <h3 className="text-fluid-sm font-medium">Individual Corrections</h3>
         {correctionStates.map((state) => (
           <CorrectionCard
             key={state.index}

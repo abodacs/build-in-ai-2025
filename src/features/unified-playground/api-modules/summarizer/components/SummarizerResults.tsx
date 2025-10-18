@@ -160,23 +160,23 @@ export function SummarizerResults({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center touch-gap">
             <Button
               variant="outline"
               size="sm"
               onClick={handleCopy}
               disabled={isStreaming}
-              className="text-xs"
+              className="h-10 lg:h-8 text-xs tap-fast"
             >
               {copied ? (
                 <>
-                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                  Copied
+                  <CheckCircle2 className="w-3 h-3 sm:mr-1" />
+                  <span className="hidden sm:inline">Copied</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-3 h-3 mr-1" />
-                  Copy
+                  <Copy className="w-3 h-3 sm:mr-1" />
+                  <span className="hidden sm:inline">Copy</span>
                 </>
               )}
             </Button>
@@ -186,10 +186,10 @@ export function SummarizerResults({
               size="sm"
               onClick={handleExport}
               disabled={isStreaming}
-              className="text-xs"
+              className="h-10 lg:h-8 text-xs tap-fast"
             >
-              <Download className="w-3 h-3 mr-1" />
-              Export
+              <Download className="w-3 h-3 sm:mr-1" />
+              <span className="hidden sm:inline">Export</span>
             </Button>
           </div>
         </div>
