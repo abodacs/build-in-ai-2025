@@ -8,10 +8,12 @@ import DOMPurify from 'dompurify';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Search, AlertCircle, Command } from 'lucide-react';
+import { Search, Command } from 'lucide-react';
 import { type TranslatorInputProps, SUPPORTED_LANGUAGES } from '../types';
 import { FieldError } from '../../shared/components';
+import { ValidationMessage } from '../../../shared/components/ValidationMessage';
+import { useFieldValidation } from '../../../shared/hooks/useFieldValidation';
+import { validationRules } from '../../../shared/utils/validationRules';
 
 /**
  * TranslatorInput Component
@@ -38,7 +40,13 @@ export function TranslatorInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
-  const [showWarning, setShowWarning] = useState(false);
+
+  // Real-time character limit validation
+  const textValidation = useFieldValidation(
+    value,
+    validationRules.textLength(maxLength),
+    { debounceMs: 200, skipInitialValidation: true },
+  );
 
   /**
    * Auto-resize textarea to fit content
@@ -63,10 +71,7 @@ export function TranslatorInput({
 
     setCharCount(chars);
     setWordCount(words);
-
-    // Show warning at 45,000 characters (90% of limit)
-    setShowWarning(chars >= maxLength * 0.9);
-  }, [value, maxLength]);
+  }, [value]);
 
   /**
    * Handle text change with sanitization
@@ -143,7 +148,9 @@ export function TranslatorInput({
             <span className="text-muted-foreground">
               Words: <span className="font-medium">{wordCount}</span>
             </span>
-            <span className={getCharCountColor()}>
+            <span
+              className={`${getCharCountColor()} transition-colors duration-200`}
+            >
               Characters:{' '}
               <span className="font-medium">
                 {charCount.toLocaleString()}/{maxLength.toLocaleString()}
@@ -153,29 +160,11 @@ export function TranslatorInput({
         </div>
       </div>
 
-      {/* Character Limit Warning */}
-      {showWarning && charCount < maxLength && (
-        <Alert
-          variant="default"
-          className="border-orange-500/50 bg-orange-50 dark:bg-orange-950/20"
-        >
-          <AlertCircle className="h-4 w-4 text-orange-500" />
-          <AlertDescription className="text-orange-700 dark:text-orange-300">
-            Approaching character limit. {maxLength - charCount} characters
-            remaining.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Max Length Error */}
-      {charCount >= maxLength && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Maximum character limit reached ({maxLength.toLocaleString()}{' '}
-            characters).
-          </AlertDescription>
-        </Alert>
+      {/* Real-time validation feedback */}
+      {!textValidation.isValid && textValidation.message && (
+        <ValidationMessage type={textValidation.type || 'warning'} animated>
+          {textValidation.message}
+        </ValidationMessage>
       )}
 
       {/* Textarea */}

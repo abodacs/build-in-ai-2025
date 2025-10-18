@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import '../features/unified-playground/shared/design-system/animations.css';
 
 @custom-variant dark (&:is(.dark *));
 

@@ -20,3 +20,11 @@ export {
   useIsDesktop,
   type Breakpoint,
 } from './useBreakpoint';
+
+// Validation hooks
+export { useFieldValidation } from './useFieldValidation';
+export type {
+  ValidationRule,
+  ValidationState,
+  UseFieldValidationOptions,
+} from './useFieldValidation';
