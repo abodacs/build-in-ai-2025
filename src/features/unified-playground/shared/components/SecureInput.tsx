@@ -22,7 +22,6 @@ interface SecureInputProps {
   minLength?: number;
   required?: boolean;
   disabled?: boolean;
-  autoFocus?: boolean;
   'aria-label'?: string;
   'aria-describedby'?: string;
   onValidationChange?: (isValid: boolean, errors: string[]) => void;
@@ -53,7 +52,6 @@ export const SecureInput = forwardRef<HTMLTextAreaElement, SecureInputProps>(
       maxLength = 50000,
       required = false,
       disabled = false,
-      autoFocus = false,
       'aria-label': ariaLabel,
       'aria-describedby': ariaDescribedBy,
       onValidationChange,
@@ -302,7 +300,6 @@ export const SecureInput = forwardRef<HTMLTextAreaElement, SecureInputProps>(
             maxLength={maxLength + 100} // Allow some buffer for validation
             required={required}
             disabled={disabled}
-            autoFocus={autoFocus}
             aria-label={ariaLabel}
             aria-describedby={ariaDescribedBy}
             aria-invalid={!validation.isValid}

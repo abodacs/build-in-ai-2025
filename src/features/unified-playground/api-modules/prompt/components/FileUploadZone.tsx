@@ -57,6 +57,16 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         onClick={handleClick}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleClick();
+          }
+        }}
+        role="button"
+        tabIndex={disabled || !canAddMore ? -1 : 0}
+        aria-label="Upload files - click or drop files here"
+        aria-disabled={disabled || !canAddMore}
         className={`
           border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
           ${isDragOver ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300'}

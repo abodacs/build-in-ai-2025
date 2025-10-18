@@ -343,6 +343,16 @@ export function BatchRewriteResults({
                 <div
                   className="flex items-start gap-2 p-3 cursor-pointer hover:bg-muted/50"
                   onClick={() => toggleExpanded(item.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      toggleExpanded(item.id);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isExpanded}
+                  aria-label={`Toggle details for rewrite item ${index + 1}`}
                 >
                   <span className="text-xs text-muted-foreground mt-0.5 min-w-[2rem]">
                     #{index + 1}

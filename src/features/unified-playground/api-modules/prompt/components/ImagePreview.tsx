@@ -3,7 +3,7 @@
  * Display image thumbnails with zoom modal and image details
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface ImagePreviewProps {
   /**
@@ -69,6 +69,20 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
   const [showZoomModal, setShowZoomModal] = useState(false);
   const [imageError, setImageError] = useState(false);
 
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showZoomModal) {
+        setShowZoomModal(false);
+      }
+    };
+
+    if (showZoomModal) {
+      window.addEventListener('keydown', handleEscape);
+      return () => window.removeEventListener('keydown', handleEscape);
+    }
+  }, [showZoomModal]);
+
   // Format file size
   const formatSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
@@ -104,25 +118,28 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
               </div>
             </div>
           ) : (
-            <img
-              src={url}
-              alt={alt || name}
-              className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+            <button
               onClick={handleImageClick}
-              onError={handleImageError}
-              loading="lazy"
-            />
+              className="relative w-full h-full p-0 border-0 bg-transparent cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              aria-label={`View ${alt || name} in full size. Press Enter to open.`}
+              type="button"
+            >
+              {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+              <img
+                src={url}
+                alt={alt || name}
+                className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+                onError={handleImageError}
+                loading="lazy"
+              />
+              {/* Overlay on hover */}
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-center justify-center pointer-events-none">
+                <span className="opacity-0 group-hover:opacity-100 text-white text-sm font-medium">
+                  Click to enlarge
+                </span>
+              </div>
+            </button>
           )}
-
-          {/* Overlay on hover */}
-          <div
-            className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity cursor-pointer flex items-center justify-center"
-            onClick={handleImageClick}
-          >
-            <span className="opacity-0 group-hover:opacity-100 text-white text-sm font-medium">
-              Click to enlarge
-            </span>
-          </div>
 
           {/* Remove button */}
           {removable && onRemove && (
@@ -162,9 +179,13 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
 
       {/* Zoom Modal */}
       {showZoomModal && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4"
           onClick={() => setShowZoomModal(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image zoom modal - Press Escape to close"
         >
           <div className="relative max-w-7xl max-h-full">
             {/* Close button */}
@@ -182,7 +203,6 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
                 src={url}
                 alt={alt || name}
                 className="max-w-full max-h-[80vh] object-contain"
-                onClick={(e) => e.stopPropagation()}
               />
 
               {/* Image info footer */}

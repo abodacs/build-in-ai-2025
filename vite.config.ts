@@ -41,112 +41,17 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false,
-    minify: 'terser',
+    sourcemap: true,
+    minify: 'esbuild',
     chunkSizeWarningLimit: 500,
-    target: 'esnext',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-        pure_funcs: ['console.log', 'console.debug', 'console.trace'],
-        passes: 2,
-        unsafe_arrows: true,
-        unsafe_methods: true,
-      },
-      mangle: {
-        safari10: true,
-        toplevel: true,
-      },
-      format: {
-        comments: false,
-      },
-    },
+    target: 'ES2022',
     rollupOptions: {
       treeshake: {
         preset: 'recommended',
-        moduleSideEffects: false,
-        propertyReadSideEffects: false,
+        moduleSideEffects: 'no-external',
       },
-      output: {
-        manualChunks: (id) => {
-          // CHUNK STRATEGY:
-          // Order matters! Libraries that depend on React must be in react-vendor
-          // or loaded AFTER react-vendor to avoid undefined errors.
-
-          // 1. REACT CORE (highest priority - must load first)
-          // All React-dependent libraries that don't work without React loaded
-          if (
-            id.includes('node_modules/react/') ||
-            id.includes('node_modules/react-dom/') ||
-            id.includes('node_modules/scheduler/') ||
-            // React-dependent UI libraries that need React available immediately
-            id.includes('node_modules/lucide-react/') ||
-            id.includes('node_modules/@radix-ui/react-slot/') ||
-            id.includes('node_modules/class-variance-authority/')
-          ) {
-            return 'react-vendor';
-          }
-
-          // 2. ROUTER (loaded on all routes, depends on react-vendor)
-          if (id.includes('node_modules/react-router')) {
-            return 'router';
-          }
-
-          // 3. UI COMPONENTS (Radix UI - depends on react-vendor)
-          // Safe to separate since react-vendor loads first
-          if (id.includes('@radix-ui')) {
-            return 'ui-components';
-          }
-
-          // 4. HEAVY LIBRARIES (lazy-loaded features)
-          // Syntax highlighting - separate for code splitting
-          if (
-            id.includes('react-syntax-highlighter') ||
-            id.includes('highlight.js') ||
-            id.includes('sugar-high')
-          ) {
-            return 'syntax-highlighter';
-          }
-
-          // Charts - only load when dashboard/analytics is accessed
-          if (id.includes('recharts') || id.includes('d3-')) {
-            return 'charts';
-          }
-
-          // 5. FORM LIBRARIES (commonly used together)
-          if (
-            id.includes('react-hook-form') ||
-            id.includes('@hookform/') ||
-            id.includes('zod')
-          ) {
-            return 'forms';
-          }
-
-          // 6. STATE MANAGEMENT & UTILITIES
-          if (
-            id.includes('zustand') ||
-            id.includes('node_modules/clsx/') ||
-            id.includes('node_modules/tailwind-merge/')
-          ) {
-            return 'state-utils';
-          }
-
-          // 7. CATCH-ALL for other node_modules
-          // Any remaining dependencies go here
-          if (id.includes('node_modules')) {
-            return 'vendor-libs';
-          }
-
-          // 8. FEATURE MODULES (application code)
-          // Lazy-load heavy feature modules
-          if (
-            id.includes('features/unified-playground/api-modules/summarizer')
-          ) {
-            return 'summarizer';
-          }
-        },
-      },
+      // Let Vite handle automatic code splitting
+      // Manual chunking was causing TDZ errors with minification
     },
   },
   server: {

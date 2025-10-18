@@ -158,6 +158,15 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
               key={message.id}
               className="group relative p-3 border rounded hover:bg-white dark:hover:bg-gray-800 cursor-pointer transition-colors"
               onClick={() => onMessageClick?.(message.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onMessageClick?.(message.id);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label={`View ${message.role} message from ${new Date(message.timestamp).toLocaleString()}`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">

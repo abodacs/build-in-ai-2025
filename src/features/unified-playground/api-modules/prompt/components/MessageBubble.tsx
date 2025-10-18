@@ -259,7 +259,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
               className="w-full p-2 border rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-[100px] resize-y"
-              autoFocus
+              aria-label="Edit message content"
             />
             <div className="flex justify-end gap-2">
               <button
