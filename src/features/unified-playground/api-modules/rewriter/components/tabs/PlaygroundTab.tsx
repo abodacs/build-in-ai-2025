@@ -18,7 +18,12 @@ import {
   QuickSamples,
 } from '../index';
 import { CodeModal } from '../CodeModal';
-import { APIActionButton, Toast, useToast } from '../../../shared/components';
+import {
+  APIActionButton,
+  Toast,
+  useToast,
+  UnifiedModelManager,
+} from '../../../shared/components';
 import { useRewriter, useRewriterAvailability } from '../../hooks';
 import {
   DEFAULT_REWRITER_CONFIG,
@@ -70,10 +75,12 @@ export function PlaygroundTab() {
 
   // Availability hook
   const {
+    availability,
     isChecking,
     error: availabilityError,
     isSupported,
     requiresDownload,
+    isReady,
   } = useRewriterAvailability();
 
   // Toast hook
@@ -564,6 +571,34 @@ export function PlaygroundTab() {
           onCancel={isStreaming ? actions.cancel : undefined}
         />
       )}
+
+      {/* Model Management */}
+      <div className="space-y-3 pt-6 border-t">
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-slate-900">
+            Model Management
+          </h3>
+          <p className="text-sm text-slate-600">
+            Monitor and manage AI model status
+          </p>
+        </div>
+
+        <UnifiedModelManager
+          apiName="Rewriter"
+          availability={availability || 'no'}
+          isReady={isReady}
+          isLoading={isLoading}
+          loadingPhase={isLoading ? 'initializing' : null}
+          error={error?.message || availabilityError?.message || null}
+          modelInfo={{
+            name: 'Rewriter Model',
+            chromeVersion: '138+',
+            requiresOriginTrial: false,
+            storageRequirement: '22GB+ free space',
+            vramRequirement: '4GB+ VRAM',
+          }}
+        />
+      </div>
 
       {/* Code Modal */}
       <CodeModal

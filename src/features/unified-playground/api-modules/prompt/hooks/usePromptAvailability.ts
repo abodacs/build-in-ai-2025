@@ -6,7 +6,7 @@
  * @module prompt/hooks/usePromptAvailability
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ChromeAIPromptService } from '../services/ChromeAIPromptService';
 import type {
   LanguageModelAvailability,
@@ -71,10 +71,16 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
   const [capabilities, setCapabilities] =
     useState<LanguageModelCapabilities | null>(null);
 
-  // Derived state
+  // Derived state (memoized to prevent infinite loops in dependent components)
   // Chrome may return either 'available' or 'readily' depending on version
-  const isReady = availability === 'available' || availability === 'readily';
-  const requiresDownload = availability === 'after-download';
+  const isReady = useMemo(
+    () => availability === 'available' || availability === 'readily',
+    [availability],
+  );
+  const requiresDownload = useMemo(
+    () => availability === 'after-download',
+    [availability],
+  );
 
   console.log(
     'usePromptAvailability: Derived state - availability:',

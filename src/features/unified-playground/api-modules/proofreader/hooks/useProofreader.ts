@@ -602,6 +602,9 @@ export function useProofreader(
 
   /**
    * Track history when corrections or text changes (but not during history application)
+   * Note: We don't include pushHistory in deps because it already depends on
+   * correctedText, correctionStates, and originalInput. Including it would cause
+   * unnecessary re-runs when the function reference changes.
    */
   useEffect(() => {
     if (isApplyingHistoryRef.current || !correctedText) return;
@@ -614,7 +617,8 @@ export function useProofreader(
 
       return () => clearTimeout(timer);
     }
-  }, [correctedText, correctionStates, corrections.length, pushHistory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [correctedText, correctionStates, corrections.length]);
 
   return {
     isProofreading,

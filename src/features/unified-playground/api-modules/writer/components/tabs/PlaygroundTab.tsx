@@ -22,6 +22,7 @@ import {
   APIActionButton,
   Toast,
   useToast,
+  UnifiedModelManager,
 } from '../../../shared/components';
 import { useWriter, useWriterAvailability } from '../../hooks';
 import { DEFAULT_WRITER_CONFIG } from '../../types';
@@ -83,11 +84,15 @@ export function PlaygroundTab() {
 
   // Availability hook
   const {
+    availability,
     isChecking,
     error: availabilityError,
     isSupported,
     requiresDownload,
   } = useWriterAvailability();
+
+  // Derive isReady state for UnifiedModelManager
+  const isReady = availability === 'readily';
 
   // Toast hook
   const { toast, open, showToast, hideToast } = useToast();
@@ -434,6 +439,34 @@ export function PlaygroundTab() {
         console.log('→ Rendering nothing');
         return null;
       })()}
+
+      {/* Model Management */}
+      <div className="space-y-3 pt-6 border-t">
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-slate-900">
+            Model Management
+          </h3>
+          <p className="text-sm text-slate-600">
+            Monitor and manage AI model status
+          </p>
+        </div>
+
+        <UnifiedModelManager
+          apiName="Writer"
+          availability={availability || 'no'}
+          isReady={isReady}
+          isLoading={isLoading}
+          loadingPhase={isLoading ? 'initializing' : null}
+          error={error?.message || availabilityError?.message || null}
+          modelInfo={{
+            name: 'Writer Model',
+            chromeVersion: '138+',
+            requiresOriginTrial: false,
+            storageRequirement: '22GB+ free space',
+            vramRequirement: '4GB+ VRAM',
+          }}
+        />
+      </div>
 
       {/* Code Modal */}
       <CodeModal

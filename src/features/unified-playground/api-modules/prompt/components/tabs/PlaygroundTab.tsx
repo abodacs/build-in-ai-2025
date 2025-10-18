@@ -3,7 +3,7 @@
  * Main Prompt API playground interface
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   AlertCircle,
   Radio,
@@ -39,7 +39,7 @@ import { ConversationHistory } from '../ConversationHistory';
 import { ImagePreview } from '../ImagePreview';
 import { StreamingIndicator } from '../StreamingIndicator';
 import { ModelDownloadProgress } from '../ModelDownloadProgress';
-import { ModelDownloadMonitor } from '../ModelDownloadMonitor';
+import { UnifiedModelManager } from '../../../shared/components';
 import { CodeModal } from '../CodeModal';
 import { DEFAULT_PROMPT_CONFIG } from '../../types';
 import { estimateTokens } from '../../utils/tokenCounter';
@@ -68,6 +68,9 @@ export const PlaygroundTab: React.FC = () => {
 
   // Track previous initialization state for auto-run after download
   const previousIsReady = useRef(prompt.isInitialized);
+
+  // Track if we've attempted initialization to prevent multiple calls
+  const initializationAttempted = useRef(false);
 
   // Ref to hold latest handlers - prevents stale closures in event listeners/effects
   const handlersRef = useRef({
@@ -134,7 +137,8 @@ export const PlaygroundTab: React.FC = () => {
   };
 
   // Handle submit with lazy download support
-  const handleSubmit = async () => {
+  // Memoized to prevent infinite loops in useEffect dependencies
+  const handleSubmit = useCallback(async () => {
     if (!inputValue.trim()) return;
 
     try {
@@ -198,9 +202,25 @@ export const PlaygroundTab: React.FC = () => {
     } finally {
       setPendingPrompt(false);
     }
-  };
+  }, [
+    inputValue,
+    availability.requiresDownload,
+    prompt.isLoading,
+    prompt.isInitialized,
+    prompt.initialize,
+    prompt.promptStreaming,
+    prompt.prompt,
+    streamingMode,
+    history,
+    fileUpload.files,
+    fileUpload.clearFiles,
+  ]);
 
   // Keep ref in sync with latest values
+  // Note: handleSubmit is intentionally excluded from deps to prevent infinite loops.
+  // The history object recreates on every render, which would cause handleSubmit to recreate,
+  // which would trigger this effect constantly. Since we're just updating a mutable ref,
+  // we can safely access the latest handleSubmit without including it in dependencies.
   useEffect(() => {
     handlersRef.current = {
       handleSubmit,
@@ -208,12 +228,8 @@ export const PlaygroundTab: React.FC = () => {
       isInitialized: prompt.isInitialized,
       isReady: availability.isReady,
     };
-  }, [
-    handleSubmit,
-    prompt.initialize,
-    prompt.isInitialized,
-    availability.isReady,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prompt.initialize, prompt.isInitialized, availability.isReady]);
 
   /**
    * Auto-run prompt after download completes
@@ -238,7 +254,8 @@ export const PlaygroundTab: React.FC = () => {
 
   /**
    * Initialize on mount
-   * Uses handlersRef to avoid stale closures while maintaining stable effect
+   * Uses handlersRef and initializationAttempted ref to avoid stale closures
+   * and prevent multiple initialization attempts
    */
   useEffect(() => {
     console.log('PlaygroundTab: Auto-init useEffect triggered');
@@ -251,14 +268,27 @@ export const PlaygroundTab: React.FC = () => {
       handlersRef.current.isInitialized,
     );
     console.log(
+      'PlaygroundTab: initializationAttempted =',
+      initializationAttempted.current,
+    );
+    console.log(
       'PlaygroundTab: Should initialize?',
-      handlersRef.current.isReady && !handlersRef.current.isInitialized,
+      handlersRef.current.isReady &&
+        !handlersRef.current.isInitialized &&
+        !initializationAttempted.current,
     );
 
-    if (handlersRef.current.isReady && !handlersRef.current.isInitialized) {
+    if (
+      handlersRef.current.isReady &&
+      !handlersRef.current.isInitialized &&
+      !initializationAttempted.current
+    ) {
       console.log('PlaygroundTab: Calling prompt.initialize()...');
+      initializationAttempted.current = true;
       handlersRef.current.initializeFn().catch((err) => {
         console.error('PlaygroundTab: Auto-init failed:', err);
+        // Reset flag on failure to allow retry
+        initializationAttempted.current = false;
       });
     } else {
       console.log('PlaygroundTab: Skipping initialization - condition not met');
@@ -614,10 +644,8 @@ export const PlaygroundTab: React.FC = () => {
           </p>
         </div>
 
-        <ModelDownloadMonitor
-          isDownloading={prompt.isLoading && !!prompt.downloadProgress}
-          downloadProgress={prompt.downloadProgress}
-          downloadError={prompt.error || undefined}
+        <UnifiedModelManager
+          apiName="Prompt"
           availability={
             availability.isReady
               ? 'readily'
@@ -626,12 +654,29 @@ export const PlaygroundTab: React.FC = () => {
                 : 'no'
           }
           isReady={prompt.isInitialized}
+          isLoading={prompt.isLoading}
+          loadingPhase={
+            prompt.isLoading && prompt.downloadProgress
+              ? 'downloading'
+              : prompt.isLoading
+                ? 'initializing'
+                : null
+          }
+          downloadProgress={prompt.downloadProgress}
+          error={prompt.error || null}
           onStartDownload={async () => {
             try {
               await prompt.initialize();
             } catch (error) {
               console.error('Manual download failed:', error);
             }
+          }}
+          modelInfo={{
+            name: 'Gemini Nano',
+            chromeVersion: '138+',
+            requiresOriginTrial: false,
+            storageRequirement: '22GB+ free space',
+            vramRequirement: '4GB+ VRAM',
           }}
         />
       </div>

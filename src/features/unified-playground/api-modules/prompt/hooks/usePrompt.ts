@@ -589,6 +589,9 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
 
   /**
    * Update token estimates
+   * Note: This function is defined with useCallback but the effect below
+   * only depends on the actual data (messages, config.maxTokens), not the function itself.
+   * This prevents the infinite loop where the function recreates itself when messages change.
    */
   const updateTokenEstimates = useCallback(() => {
     // This would use actual token counting if available
@@ -605,10 +608,13 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
     setContextWindowUsage(Math.min(usage, 100));
   }, [messages, config.maxTokens]);
 
-  // Update token estimates when messages change
+  // Update token estimates when messages or maxTokens change
+  // Note: We don't include updateTokenEstimates in deps because it already depends on messages
+  // Including it would cause unnecessary re-runs when the function reference changes
   useEffect(() => {
     updateTokenEstimates();
-  }, [messages, updateTokenEstimates]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, config.maxTokens]);
 
   // ============================================================================
   // Cleanup
