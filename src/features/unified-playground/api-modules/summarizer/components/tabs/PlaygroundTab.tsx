@@ -7,7 +7,7 @@
  * @module PlaygroundTab
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { AlertCircle, Loader, Radio, ChevronDown } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ import { SummarizerInput } from '../SummarizerInput';
 import { SummarizerResults } from '../SummarizerResults';
 import { ResultsSkeleton } from '../ResultsSkeleton';
 import { StreamingIndicator } from '../StreamingIndicator';
-import { ModelDownloadMonitor } from '../ModelDownloadMonitor';
+import { UnifiedModelManager } from '../../../shared/components';
 import { QuickSamplesCard } from '../QuickSamplesCard';
 import { ChunkingStrategySelector } from '../ChunkingStrategySelector';
 import { CodeModal } from '../CodeModal';
@@ -224,7 +224,7 @@ export function PlaygroundTab({
   /**
    * Handle summarization with lazy download support
    */
-  const handleSummarize = async () => {
+  const handleSummarize = useCallback(async () => {
     try {
       // Check if model needs to be downloaded first
       if (availability === 'after-download' && !isDownloading) {
@@ -258,7 +258,17 @@ export function PlaygroundTab({
     } finally {
       setPendingSummarization(false);
     }
-  };
+  }, [
+    availability,
+    isDownloading,
+    isReady,
+    config,
+    streamingMode,
+    inputText,
+    startDownload,
+    summarizeStreaming,
+    summarize,
+  ]);
 
   // Ref to hold latest handlers - prevents stale closures
   const handlersRef = useRef({
@@ -622,13 +632,31 @@ export function PlaygroundTab({
           </p>
         </div>
 
-        <ModelDownloadMonitor
-          isDownloading={isDownloading}
-          downloadProgress={downloadProgress}
-          downloadError={null}
+        <UnifiedModelManager
+          apiName="Summarizer"
           availability={availability}
           isReady={isReady}
+          isLoading={isDownloading}
+          loadingPhase={isDownloading ? 'downloading' : null}
+          downloadProgress={
+            downloadProgress
+              ? {
+                  loaded: 0,
+                  total: 0,
+                  percentage: downloadProgress.percentage,
+                  timeRemaining: downloadProgress.timeRemaining,
+                }
+              : null
+          }
+          error={summarizerError?.message || null}
           onStartDownload={startDownload}
+          modelInfo={{
+            name: 'Summarizer Model',
+            chromeVersion: '138+',
+            requiresOriginTrial: false,
+            storageRequirement: '22GB+ free space',
+            vramRequirement: '4GB+ VRAM',
+          }}
         />
       </div>
 

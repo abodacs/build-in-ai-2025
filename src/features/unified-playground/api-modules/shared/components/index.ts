@@ -45,3 +45,12 @@ export type { ContentRewritingSkeletonProps } from './ContentRewritingSkeleton';
 // Inline error display
 export { FieldError } from './FieldError';
 export type { FieldErrorProps } from './FieldError';
+
+// Unified model management
+export { UnifiedModelManager } from './UnifiedModelManager';
+export type {
+  UnifiedModelManagerProps,
+  ModelInfo,
+  DownloadProgress as SharedDownloadProgress,
+  LoadingPhase,
+} from './UnifiedModelManager';

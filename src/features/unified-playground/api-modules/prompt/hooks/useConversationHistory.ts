@@ -177,7 +177,7 @@ export function useConversationHistory(
         setIsLoading(false);
       }
     },
-    [maxContextTokens, systemPrompt],
+    [maxContextTokens, systemPrompt, autoSave],
   );
 
   /**

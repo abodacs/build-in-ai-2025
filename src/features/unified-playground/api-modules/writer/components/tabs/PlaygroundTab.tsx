@@ -7,7 +7,7 @@
  * @module writer/components/tabs/PlaygroundTab
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Wand2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -22,6 +22,7 @@ import {
   APIActionButton,
   Toast,
   useToast,
+  UnifiedModelManager,
 } from '../../../shared/components';
 import { useWriter, useWriterAvailability } from '../../hooks';
 import { DEFAULT_WRITER_CONFIG } from '../../types';
@@ -83,11 +84,15 @@ export function PlaygroundTab() {
 
   // Availability hook
   const {
+    availability,
     isChecking,
     error: availabilityError,
     isSupported,
     requiresDownload,
   } = useWriterAvailability();
+
+  // Derive isReady state for UnifiedModelManager
+  const isReady = availability === 'readily';
 
   // Toast hook
   const { toast, open, showToast, hideToast } = useToast();
@@ -133,14 +138,13 @@ export function PlaygroundTab() {
   /**
    * Handle generate action
    */
-  const handleGenerate = async () => {
+  const handleGenerate = useCallback(async () => {
     console.log('🎯 handleGenerate called!');
     console.log('  → Prompt length:', prompt.length);
     console.log('  → Context length:', context?.length || 0);
     console.log('  → isWriting:', isWriting);
     console.log('  → isLoading:', isLoading);
     console.log('  → isSupported:', isSupported);
-    console.log('  → canGenerate:', canGenerate);
 
     if (!prompt.trim()) {
       console.warn('⚠️ No prompt provided, aborting');
@@ -164,7 +168,7 @@ export function PlaygroundTab() {
       // Error is already handled by the hook
       console.error('❌ Writer generation failed in handleGenerate:', err);
     }
-  };
+  }, [prompt, context, isWriting, isLoading, isSupported, actions]);
 
   /**
    * Handle copy action
@@ -434,6 +438,34 @@ export function PlaygroundTab() {
         console.log('→ Rendering nothing');
         return null;
       })()}
+
+      {/* Model Management */}
+      <div className="space-y-3 pt-6 border-t">
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-slate-900">
+            Model Management
+          </h3>
+          <p className="text-sm text-slate-600">
+            Monitor and manage AI model status
+          </p>
+        </div>
+
+        <UnifiedModelManager
+          apiName="Writer"
+          availability={availability || 'no'}
+          isReady={isReady}
+          isLoading={isLoading}
+          loadingPhase={isLoading ? 'initializing' : null}
+          error={error?.message || availabilityError?.message || null}
+          modelInfo={{
+            name: 'Writer Model',
+            chromeVersion: '138+',
+            requiresOriginTrial: false,
+            storageRequirement: '22GB+ free space',
+            vramRequirement: '4GB+ VRAM',
+          }}
+        />
+      </div>
 
       {/* Code Modal */}
       <CodeModal

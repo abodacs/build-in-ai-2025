@@ -30,8 +30,12 @@ export default defineConfig({
   // Retry on CI only
   retries: process.env.CI ? 2 : 0,
 
-  // Opt out of parallel tests on CI
-  workers: process.env.CI ? 1 : undefined,
+  // Memory-safe: Limit workers to prevent excessive memory usage
+  // On CI: 1 worker for stability, Local: max 2 workers to conserve memory
+  workers: process.env.CI ? 1 : 2,
+
+  // Memory-safe: Stop test run after N failures to prevent resource waste
+  maxFailures: process.env.CI ? 5 : undefined,
 
   // Reporter to use
   reporter: [
@@ -40,6 +44,12 @@ export default defineConfig({
     ['junit', { outputFile: 'playwright-report/results.xml' }],
     ['list'],
   ],
+
+  // Memory-safe: Output directory for test artifacts
+  outputDir: 'test-results',
+
+  // Memory-safe: Only preserve output for failed tests
+  preserveOutput: 'failures-only',
 
   // Shared settings for all projects
   use: {
@@ -81,6 +91,9 @@ export default defineConfig({
           args: [
             '--enable-features=Summarization,Translation,LanguageDetection,AIRewriter,AIWriter',
             '--enable-experimental-web-platform-features',
+            // Memory-safe: Limit memory usage in browser
+            '--disable-dev-shm-usage', // Overcome limited resource problems
+            '--disable-gpu', // Reduce GPU memory usage in headless mode
           ],
         },
       },
@@ -96,6 +109,9 @@ export default defineConfig({
           args: [
             '--enable-features=Summarization,Translation,LanguageDetection,AIRewriter,AIWriter',
             '--enable-experimental-web-platform-features',
+            // Memory-safe: Limit memory usage in browser
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
           ],
         },
       },
@@ -117,6 +133,9 @@ export default defineConfig({
           args: [
             '--enable-features=Summarization,Translation,LanguageDetection,AIRewriter,AIWriter',
             '--enable-experimental-web-platform-features',
+            // Memory-safe: Limit memory usage in browser
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
           ],
         },
       },

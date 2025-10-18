@@ -11,13 +11,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Search, XCircle, AlertCircle } from 'lucide-react';
-import { useLanguageDetection } from '../../hooks';
+import {
+  useLanguageDetection,
+  useLanguageDetectionAvailability,
+} from '../../hooks';
 import {
   DEFAULT_DETECTION_CONFIG,
   getLanguageName,
   getConfidenceColor,
 } from '../../types';
-import { FieldError } from '../../../shared/components';
+import { FieldError, UnifiedModelManager } from '../../../shared/components';
 import { validateTextInput } from '../../../shared/utils/validation';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +34,13 @@ export function LanguageDetectionMain() {
   const { isDetecting, results, error, actions } = useLanguageDetection(
     DEFAULT_DETECTION_CONFIG,
   );
+
+  // Availability hook
+  const {
+    availability,
+    error: availabilityError,
+    isReady,
+  } = useLanguageDetectionAvailability();
 
   /**
    * Validate input text
@@ -171,6 +181,34 @@ export function LanguageDetectionMain() {
           </CardContent>
         </Card>
       )}
+
+      {/* Model Management */}
+      <div className="space-y-3 pt-6 border-t">
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-slate-900">
+            Model Management
+          </h3>
+          <p className="text-sm text-slate-600">
+            Monitor and manage AI model status
+          </p>
+        </div>
+
+        <UnifiedModelManager
+          apiName="Language Detection"
+          availability={availability || 'no'}
+          isReady={isReady}
+          isLoading={isDetecting}
+          loadingPhase={isDetecting ? 'initializing' : null}
+          error={error?.message || availabilityError?.message || null}
+          modelInfo={{
+            name: 'Language Detection Model',
+            chromeVersion: '138+',
+            requiresOriginTrial: false,
+            storageRequirement: '22GB+ free space',
+            vramRequirement: '4GB+ VRAM',
+          }}
+        />
+      </div>
     </div>
   );
 }

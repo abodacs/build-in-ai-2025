@@ -10,12 +10,12 @@
 import { useState, useEffect } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { useProofreader } from '../../hooks';
+import { useProofreader, useProofreaderAvailability } from '../../hooks';
 import { ProofreaderConfig } from '../ProofreaderConfig';
 import { ProofreaderInput } from '../ProofreaderInput';
 import { ProofreaderResults } from '../ProofreaderResults';
 import { InlineCorrectionPopover } from '../InlineCorrectionPopover';
-import { ProofreaderLoadingCard } from '../ProofreaderLoadingCard';
+import { UnifiedModelManager } from '../../../shared/components';
 import { DEFAULT_PROOFREADER_CONFIG } from '../../types';
 import type { ProofreadCorrection } from '../../types';
 import { validateTextInput } from '../../../shared/utils/validation';
@@ -37,6 +37,11 @@ export function ProofreaderMain() {
     message: string;
     helpText?: string;
   } | null>(null);
+
+  // Availability hook for model management
+  const { availability, isReady } = useProofreaderAvailability({
+    checkOnMount: true,
+  });
 
   const {
     isProofreading,
@@ -123,13 +128,22 @@ export function ProofreaderMain() {
         disabled={isProofreading || isLoading}
       />
 
-      {/* Loading State Card - Show during initialization or proofreading */}
-      {loadingPhase && (
-        <ProofreaderLoadingCard
-          isLoading={isLoading || isProofreading}
-          phase={loadingPhase}
-        />
-      )}
+      {/* Unified Model Management */}
+      <UnifiedModelManager
+        apiName="Proofreader"
+        availability={availability || 'no'}
+        isReady={isReady}
+        isLoading={isLoading}
+        loadingPhase={loadingPhase}
+        error={error?.message || null}
+        modelInfo={{
+          name: 'Proofreader Model',
+          chromeVersion: '141-145',
+          requiresOriginTrial: true,
+          storageRequirement: '22GB+ free space',
+          vramRequirement: '4GB+ VRAM',
+        }}
+      />
 
       {/* Input */}
       <ProofreaderInput

@@ -19,8 +19,14 @@ export interface UseProofreaderAvailabilityReturn {
   /** Current availability status */
   availability: AvailabilityStatus | null;
 
-  /** Is API available and ready */
+  /** Is API available and ready (model downloaded) */
   isAvailable: boolean;
+
+  /** Is model ready to use (alias for isAvailable) */
+  isReady: boolean;
+
+  /** Does model require download */
+  requiresDownload: boolean;
 
   /** Is checking availability */
   isChecking: boolean;
@@ -117,11 +123,15 @@ export function useProofreaderAvailability(
 
   // Derived state
   const isAvailable = availability === 'readily';
-  const isDownloading = availability === 'after-download';
+  const isReady = isAvailable; // Alias for UnifiedModelManager compatibility
+  const requiresDownload = availability === 'after-download';
+  const isDownloading = requiresDownload; // Alias for backward compatibility
 
   return {
     availability,
     isAvailable,
+    isReady,
+    requiresDownload,
     isChecking,
     isDownloading,
     error,

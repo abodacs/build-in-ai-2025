@@ -10,14 +10,22 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
 
     // Performance optimizations
-    pool: 'threads',
+    pool: 'forks',
     poolOptions: {
-      threads: {
-        singleThread: false,
-        useAtomics: true,
+      forks: {
+        singleFork: false,
+        // Memory-safe: Limit max forks to prevent excessive memory usage
+        maxForks: 1,
+        minForks: 1,
       },
     },
-    maxConcurrency: 10,
+    maxConcurrency: 5,
+    // Memory-safe: Limit concurrent worker processes
+    maxWorkers: 1,
+    minWorkers: 1,
+
+    // Memory monitoring
+    logHeapUsage: true,
 
     // Timeouts for faster test execution
     testTimeout: 10000, // 10 seconds max per test
@@ -62,9 +70,17 @@ export default defineConfig({
       '**/e2e/**', // Exclude E2E tests from unit test runs
     ],
 
-    // Increase performance by reusing test context
-    // NOTE: Set to true to prevent test interference with coverage
+    // Memory-safe: Isolate tests to prevent memory leaks and state pollution
+    // Set to true to prevent test interference with coverage and ensure clean state
     isolate: true,
+
+    // Memory-safe: Ensure proper cleanup between test files
+    sequence: {
+      shuffle: false, // Deterministic test order for debugging memory issues
+    },
+
+    // Memory-safe: Limit file parallelism to prevent memory spikes
+    fileParallelism: true,
   },
   resolve: {
     alias: {

@@ -7,7 +7,7 @@
  * @module PromptConfig
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Settings, Thermometer, Hash, FileText, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -90,10 +90,16 @@ export function PromptConfig({
 }: PromptConfigProps) {
   const [isOpen, setIsOpen] = useState(!defaultCollapsed);
 
-  // Validation for temperature
+  // Validation for temperature (memoized to prevent infinite loops)
+  // The validation rules array must be stable to avoid re-triggering validation
+  const temperatureRules = useMemo(
+    () => validationRules.temperature(config.temperature || 0.8),
+    [config.temperature],
+  );
+
   const temperatureValidation = useFieldValidation(
     config.temperature || 0.8,
-    validationRules.temperature(config.temperature || 0.8),
+    temperatureRules,
     { debounceMs: 100, skipInitialValidation: true },
   );
 

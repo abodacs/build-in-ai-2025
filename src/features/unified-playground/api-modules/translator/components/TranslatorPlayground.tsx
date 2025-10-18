@@ -16,7 +16,12 @@ import { TranslatorResults } from './TranslatorResults';
 import { LanguagePairSelector } from './LanguagePairSelector';
 import { CodeModal } from './CodeModal';
 import { BatchTranslationCard } from './BatchTranslationCard';
-import { APIActionButton, Toast, useToast } from '../../shared/components';
+import {
+  APIActionButton,
+  Toast,
+  useToast,
+  UnifiedModelManager,
+} from '../../shared/components';
 import { useTranslator, useTranslatorAvailability } from '../hooks';
 import {
   type LanguageCode,
@@ -69,8 +74,16 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
   // Hooks
   // ============================================================================
 
-  const { availability, isChecking, recheck, downloadProgress } =
-    useTranslatorAvailability(sourceLanguage, targetLanguage);
+  const {
+    availability,
+    isChecking,
+    error: availabilityError,
+    recheck,
+    downloadProgress,
+  } = useTranslatorAvailability(sourceLanguage, targetLanguage);
+
+  // Derive isReady state for UnifiedModelManager
+  const isReady = availability === 'readily';
 
   const {
     translate,
@@ -443,6 +456,34 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
           progress={batchProgress}
         />
       )}
+
+      {/* Model Management */}
+      <div className="space-y-3 pt-6 border-t">
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-slate-900">
+            Model Management
+          </h3>
+          <p className="text-sm text-slate-600">
+            Monitor and manage AI model status
+          </p>
+        </div>
+
+        <UnifiedModelManager
+          apiName="Translator"
+          availability={availability || 'no'}
+          isReady={isReady}
+          isLoading={isLoading}
+          loadingPhase={isLoading ? 'initializing' : null}
+          error={error?.message || availabilityError?.message || null}
+          modelInfo={{
+            name: 'Translator Model',
+            chromeVersion: '138+',
+            requiresOriginTrial: false,
+            storageRequirement: '22GB+ free space',
+            vramRequirement: '4GB+ VRAM',
+          }}
+        />
+      </div>
 
       {/* Code Modal */}
       <CodeModal
