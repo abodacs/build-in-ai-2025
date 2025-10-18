@@ -149,12 +149,12 @@ export function RewriterResults({
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <CardTitle className="flex items-center gap-2 text-fluid-base sm:text-fluid-lg">
               <FileOutput className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" />
               Results
               {isStreaming && <StreamingIndicator />}
             </CardTitle>
-            <CardDescription className="text-xs sm:text-sm mt-1">
+            <CardDescription className="text-fluid-xs sm:text-fluid-sm mt-1">
               {diffResult && (
                 <span className="flex items-center gap-2">
                   {lengthChange > 0 && (
@@ -277,13 +277,22 @@ export function RewriterResults({
             }
           >
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="rewritten" className="text-xs sm:text-sm">
+              <TabsTrigger
+                value="rewritten"
+                className="text-fluid-xs sm:text-fluid-sm"
+              >
                 Rewritten
               </TabsTrigger>
-              <TabsTrigger value="original" className="text-xs sm:text-sm">
+              <TabsTrigger
+                value="original"
+                className="text-fluid-xs sm:text-fluid-sm"
+              >
                 Original
               </TabsTrigger>
-              <TabsTrigger value="diff" className="text-xs sm:text-sm">
+              <TabsTrigger
+                value="diff"
+                className="text-fluid-xs sm:text-fluid-sm"
+              >
                 Diff View
               </TabsTrigger>
             </TabsList>
@@ -291,7 +300,7 @@ export function RewriterResults({
             {/* Rewritten View */}
             <TabsContent value="rewritten" className="mt-4">
               <div className="rounded-md border bg-muted/30 p-4">
-                <div className="font-mono text-sm whitespace-pre-wrap break-words">
+                <div className="font-mono text-fluid-sm whitespace-pre-wrap break-words">
                   {content}
                 </div>
               </div>
@@ -300,7 +309,7 @@ export function RewriterResults({
             {/* Original View */}
             <TabsContent value="original" className="mt-4">
               <div className="rounded-md border bg-muted/30 p-4">
-                <div className="font-mono text-sm whitespace-pre-wrap break-words text-muted-foreground">
+                <div className="font-mono text-fluid-sm whitespace-pre-wrap break-words text-muted-foreground">
                   {originalText}
                 </div>
               </div>

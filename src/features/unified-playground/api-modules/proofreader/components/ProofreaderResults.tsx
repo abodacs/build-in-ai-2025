@@ -97,8 +97,10 @@ export function ProofreaderResults({
       <Card className={className}>
         <CardContent className="py-12 text-center">
           <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-primary" />
-          <h3 className="text-lg font-semibold mb-2">No Corrections Needed!</h3>
-          <p className="text-muted-foreground">
+          <h3 className="text-fluid-lg font-semibold mb-2">
+            No Corrections Needed!
+          </h3>
+          <p className="text-fluid-sm text-muted-foreground">
             Your text looks great. No errors or improvements found.
           </p>
         </CardContent>
@@ -112,7 +114,7 @@ export function ProofreaderResults({
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Corrections Found</CardTitle>
+            <CardTitle className="text-fluid-base">Corrections Found</CardTitle>
             <div className="flex items-center touch-gap">
               <Button
                 onClick={onApplyAll}
@@ -170,7 +172,7 @@ export function ProofreaderResults({
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Corrected Text</CardTitle>
+            <CardTitle className="text-fluid-base">Corrected Text</CardTitle>
             <div className="flex items-center touch-gap">
               <Button
                 onClick={handleCopy}
@@ -198,13 +200,14 @@ export function ProofreaderResults({
             value={correctedText}
             readOnly
             className="min-h-[200px] font-mono text-sm"
+            aria-label="Corrected text output"
           />
         </CardContent>
       </Card>
 
       {/* Correction Cards */}
       <div className="space-y-3">
-        <h3 className="text-sm font-medium">Individual Corrections</h3>
+        <h3 className="text-fluid-sm font-medium">Individual Corrections</h3>
         {correctionStates.map((state) => (
           <CorrectionCard
             key={state.index}

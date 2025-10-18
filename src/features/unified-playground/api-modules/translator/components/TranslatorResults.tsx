@@ -126,7 +126,7 @@ export function TranslatorResults({
     <div className="w-full space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">🌍 Translation Results</h3>
+        <h3 className="text-fluid-lg font-semibold">🌍 Translation Results</h3>
         {isStreaming && (
           <Badge variant="secondary" className="gap-1 animate-pulse">
             <Zap className="h-3 w-3" />
@@ -167,7 +167,7 @@ export function TranslatorResults({
         <CardContent className="p-4">
           <div
             className={cn(
-              'min-h-[120px] whitespace-pre-wrap break-words text-sm',
+              'min-h-[120px] whitespace-pre-wrap break-words text-fluid-sm',
               isTargetRTL && 'text-right direction-rtl',
             )}
             dir={isTargetRTL ? 'rtl' : 'ltr'}
