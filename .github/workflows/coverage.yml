@@ -14,6 +14,9 @@ jobs:
     name: Generate Coverage Report
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: chrome-ai-devbench
 
     steps:
       - name: Checkout code
@@ -31,6 +34,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'pnpm'
+          cache-dependency-path: 'chrome-ai-devbench/pnpm-lock.yaml'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

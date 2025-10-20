@@ -14,6 +14,9 @@ jobs:
     name: Lighthouse CI
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: chrome-ai-devbench
 
     steps:
       - name: Checkout code
@@ -29,6 +32,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'pnpm'
+          cache-dependency-path: 'chrome-ai-devbench/pnpm-lock.yaml'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -40,11 +44,11 @@ jobs:
         uses: treosh/lighthouse-ci-action@v11
         with:
           urls: |
-            http://localhost:5173
-            http://localhost:5173/summarizer
+            http://localhost:4173
+            http://localhost:4173/summarizer
           uploadArtifacts: true
           temporaryPublicStorage: true
-          configPath: './lighthouserc.json'
+          configPath: 'chrome-ai-devbench/lighthouserc.json'
 
       - name: Upload Lighthouse results
         uses: actions/upload-artifact@v4
@@ -57,6 +61,9 @@ jobs:
     name: Bundle Size Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: chrome-ai-devbench
 
     steps:
       - name: Checkout code
@@ -72,6 +79,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'pnpm'
+          cache-dependency-path: 'chrome-ai-devbench/pnpm-lock.yaml'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -115,6 +123,9 @@ jobs:
     name: Performance Benchmarks
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: chrome-ai-devbench
 
     steps:
       - name: Checkout code
@@ -130,6 +141,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'pnpm'
+          cache-dependency-path: 'chrome-ai-devbench/pnpm-lock.yaml'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
