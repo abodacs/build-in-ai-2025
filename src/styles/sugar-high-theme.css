@@ -1,11 +1,25 @@
 /**
  * Sugar High Syntax Highlighting Theme
- * Lightweight CSS-based syntax highlighting
+ * Lightweight CSS-based syntax highlighting with improved readability
  */
 
 /* Light Theme (default) */
 .syntax-highlighter .sh__line {
   display: block;
+}
+
+/* Line numbers - better visibility and spacing */
+.syntax-highlighter .line-number {
+  user-select: none;
+  padding-right: 1rem;
+  text-align: right;
+  min-width: 3ch;
+  color: #6e7781;
+  opacity: 0.7;
+}
+
+.syntax-highlighter .line-number:hover {
+  opacity: 1;
 }
 
 .syntax-highlighter .sh__sign {
@@ -45,49 +59,62 @@
   color: #0550ae; /* Blue for JSX literals */
 }
 
-/* Dark Theme */
+/* Dark Theme - High Contrast for Readability */
 [data-code-theme='dark'] .syntax-highlighter .sh__sign,
 .dark .syntax-highlighter .sh__sign {
-  color: #d2a8ff; /* Light purple */
+  color: #fb923c; /* Bright orange for operators/signs */
 }
 
 [data-code-theme='dark'] .syntax-highlighter .sh__string,
 .dark .syntax-highlighter .sh__string {
-  color: #a5d6ff; /* Light blue */
+  color: #22d3ee; /* Bright cyan for strings */
 }
 
 [data-code-theme='dark'] .syntax-highlighter .sh__keyword,
 .dark .syntax-highlighter .sh__keyword {
-  color: #ff7b72; /* Light red */
+  color: #f472b6; /* Bright pink for keywords */
 }
 
 [data-code-theme='dark'] .syntax-highlighter .sh__comment,
 .dark .syntax-highlighter .sh__comment {
-  color: #8b949e; /* Light gray */
+  color: #94a3b8; /* Brighter gray for comments */
   font-style: italic;
 }
 
 [data-code-theme='dark'] .syntax-highlighter .sh__class,
 .dark .syntax-highlighter .sh__class {
-  color: #ffa657; /* Light orange */
+  color: #fbbf24; /* Bright yellow/gold for classes */
 }
 
 [data-code-theme='dark'] .syntax-highlighter .sh__identifier,
 .dark .syntax-highlighter .sh__identifier {
-  color: #e6edf3; /* Very light gray */
+  color: #f8fafc; /* Near-white for identifiers */
 }
 
 [data-code-theme='dark'] .syntax-highlighter .sh__property,
 .dark .syntax-highlighter .sh__property {
-  color: #7ee787; /* Light green */
+  color: #4ade80; /* Bright green for properties */
 }
 
 [data-code-theme='dark'] .syntax-highlighter .sh__entity,
 .dark .syntax-highlighter .sh__entity {
-  color: #d2a8ff; /* Light purple */
+  color: #c084fc; /* Bright purple for entities */
 }
 
 [data-code-theme='dark'] .syntax-highlighter .sh__jsxliterals,
 .dark .syntax-highlighter .sh__jsxliterals {
-  color: #79c0ff; /* Light blue */
+  color: #38bdf8; /* Bright sky blue for JSX */
+}
+
+/* Dark theme - line numbers with better contrast */
+[data-code-theme='dark'] .syntax-highlighter .line-number,
+.dark .syntax-highlighter .line-number {
+  color: #64748b; /* Brighter slate gray */
+  opacity: 0.8;
+}
+
+[data-code-theme='dark'] .syntax-highlighter .line-number:hover,
+.dark .syntax-highlighter .line-number:hover {
+  color: #94a3b8; /* Even brighter on hover */
+  opacity: 1;
 }
