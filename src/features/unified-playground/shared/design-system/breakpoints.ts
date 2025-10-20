@@ -72,13 +72,14 @@ export const mediaQueries = {
     const currentIndex = keys.indexOf(breakpoint);
     const nextBreakpoint = keys[currentIndex + 1];
 
-    if (currentIndex === 0) {
+    if (currentIndex === 0 && nextBreakpoint) {
       return `@media (max-width: calc(${breakpoints[nextBreakpoint]} - 1px))`;
     } else if (currentIndex === keys.length - 1) {
       return `@media (min-width: ${breakpoints[breakpoint]})`;
-    } else {
+    } else if (nextBreakpoint) {
       return `@media (min-width: ${breakpoints[breakpoint]}) and (max-width: calc(${breakpoints[nextBreakpoint]} - 1px))`;
     }
+    return `@media (min-width: ${breakpoints[breakpoint]})`;
   },
 } as const;
 

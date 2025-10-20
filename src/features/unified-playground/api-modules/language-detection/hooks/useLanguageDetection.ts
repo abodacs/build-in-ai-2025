@@ -122,7 +122,7 @@ export function useLanguageDetection(
     setConfig((prev) => ({ ...prev, ...newConfig }));
   }, []);
 
-  const primaryResult = results.length > 0 ? results[0] : null;
+  const primaryResult = results.length > 0 ? (results[0] ?? null) : null;
 
   return {
     isDetecting,

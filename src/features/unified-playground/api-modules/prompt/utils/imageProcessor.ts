@@ -320,11 +320,12 @@ export function formatFileSize(
   ];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   const value = parseFloat((bytes / Math.pow(k, i)).toFixed(decimals));
+  const unit = sizes[i] ?? 'bytes';
 
   return {
     value,
-    unit: sizes[i],
-    formatted: `${value} ${sizes[i]}`,
+    unit,
+    formatted: `${value} ${unit}`,
   };
 }
 
@@ -336,7 +337,7 @@ export function formatFileSize(
 export function parseFileSize(sizeString: string): number {
   const match = sizeString.match(/^([\d.]+)\s*(bytes?|kb|mb|gb)$/i);
 
-  if (!match) {
+  if (!match || !match[1] || !match[2]) {
     throw new Error('Invalid file size format');
   }
 
@@ -456,7 +457,8 @@ export async function hasAlphaChannel(file: File): Promise<boolean> {
 
   // Check if any pixel has alpha < 255
   for (let i = 3; i < data.length; i += 4) {
-    if (data[i] < 255) {
+    const alpha = data[i] ?? 255;
+    if (alpha < 255) {
       return true;
     }
   }
@@ -496,9 +498,9 @@ export async function getDominantColor(
   const pixelCount = data.length / 4;
 
   for (let i = 0; i < data.length; i += 4) {
-    r += data[i];
-    g += data[i + 1];
-    b += data[i + 2];
+    r += data[i] ?? 0;
+    g += data[i + 1] ?? 0;
+    b += data[i + 2] ?? 0;
   }
 
   return {

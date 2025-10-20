@@ -257,6 +257,8 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
 
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
+          if (!item) continue;
+
           const translation = await translate(item.text);
           results.push({
             ...item,

@@ -179,11 +179,13 @@ export function SummarizerPlayground({ className }: SummarizerPlaygroundProps) {
       // 3. We have samples to load
       if (!hasAutoLoaded && !inputText && QUICK_SAMPLES.length > 0) {
         const articleSample = QUICK_SAMPLES[0]; // First sample is "Article"
-        handleSampleSelect(articleSample);
-        sessionStorage.setItem('summarizer-autoload', 'true');
-        console.log(
-          '[SummarizerPlayground] Auto-loaded Article sample for first-time UX',
-        );
+        if (articleSample) {
+          handleSampleSelect(articleSample);
+          sessionStorage.setItem('summarizer-autoload', 'true');
+          console.log(
+            '[SummarizerPlayground] Auto-loaded Article sample for first-time UX',
+          );
+        }
       }
     } catch (error) {
       // sessionStorage may not be available in strict privacy mode

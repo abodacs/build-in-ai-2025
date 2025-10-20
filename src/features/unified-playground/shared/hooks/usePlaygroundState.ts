@@ -520,6 +520,7 @@ export function usePlaygroundState() {
 
       results.forEach((result, index) => {
         const apiName = AI_APIS[index];
+        if (!apiName) return;
 
         if (result.status === 'fulfilled') {
           newCapabilities[apiName] = result.value;
@@ -549,8 +550,8 @@ export function usePlaygroundState() {
           return {
             API: apiName,
             'Global Name': config?.globalName || 'Unknown',
-            Status: cap.status,
-            Error: cap.error || 'None',
+            Status: cap?.status ?? 'unknown',
+            Error: cap?.error || 'None',
           };
         });
 
@@ -609,10 +610,18 @@ export function usePlaygroundState() {
   );
 
   const retryCapabilityCheck = useCallback(async (apiName: string) => {
-    setCapabilities((prev) => ({
-      ...prev,
-      [apiName]: { ...prev[apiName], status: 'loading' },
-    }));
+    setCapabilities((prev) => {
+      const currentCap = prev[apiName];
+      return {
+        ...prev,
+        [apiName]: {
+          name: apiName,
+          status: 'loading',
+          lastChecked: Date.now(),
+          ...currentCap,
+        },
+      };
+    });
 
     try {
       const result = await checkAICapability(apiName);
@@ -631,14 +640,19 @@ export function usePlaygroundState() {
         setErrors((prev) => prev.filter((e) => !e.includes(apiName)));
       }
     } catch (error) {
-      setCapabilities((prev) => ({
-        ...prev,
-        [apiName]: {
-          ...prev[apiName],
-          status: 'error',
-          error: error instanceof Error ? error.message : 'Unknown error',
-        },
-      }));
+      setCapabilities((prev) => {
+        const currentCap = prev[apiName];
+        return {
+          ...prev,
+          [apiName]: {
+            name: apiName,
+            status: 'error',
+            lastChecked: Date.now(),
+            error: error instanceof Error ? error.message : 'Unknown error',
+            ...currentCap,
+          },
+        };
+      });
     }
   }, []);
 

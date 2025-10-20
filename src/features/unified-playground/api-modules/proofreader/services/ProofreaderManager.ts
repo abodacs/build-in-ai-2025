@@ -299,8 +299,9 @@ export class ProofreaderManager extends BaseWritingManager<
     };
 
     for (const correction of corrections) {
-      if (grouped[correction.type]) {
-        grouped[correction.type].push(correction);
+      const typeArray = grouped[correction.type];
+      if (typeArray) {
+        typeArray.push(correction);
       }
     }
 
@@ -320,7 +321,7 @@ export class ProofreaderManager extends BaseWritingManager<
    * Overrides BaseWritingManager.destroy() to use destroyInstance()
    * for consistent cleanup through the service layer.
    */
-  destroy(): void {
+  override destroy(): void {
     try {
       // Abort any ongoing operations
       if (this.abortController) {

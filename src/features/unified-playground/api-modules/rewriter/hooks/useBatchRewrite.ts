@@ -346,6 +346,7 @@ export function useBatchRewrite(
       }
 
       const currentItem = pendingItems[i];
+      if (!currentItem) continue;
 
       // Mark as processing
       setItems((prev) =>

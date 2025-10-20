@@ -644,7 +644,7 @@ export function createErrorBoundary(
       return { error: classifyError(error) };
     }
 
-    componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
       console.error('ErrorBoundary caught an error:', error, errorInfo);
 
       // Log error for telemetry
@@ -659,7 +659,7 @@ export function createErrorBoundary(
       this.setState({ error: null });
     };
 
-    render() {
+    override render() {
       if (this.state.error) {
         const FallbackComponent = fallbackComponent;
         return React.createElement(FallbackComponent, {

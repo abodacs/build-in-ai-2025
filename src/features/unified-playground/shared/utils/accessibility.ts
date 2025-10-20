@@ -72,10 +72,13 @@ export const KEYBOARD_SHORTCUTS = {
  * Calculate relative luminance for WCAG contrast calculation
  */
 function getRelativeLuminance(r: number, g: number, b: number): number {
-  const [rs, gs, bs] = [r, g, b].map((c) => {
+  const rgb = [r, g, b].map((c) => {
     c = c / 255;
     return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
   });
+  const rs = rgb[0] ?? 0;
+  const gs = rgb[1] ?? 0;
+  const bs = rgb[2] ?? 0;
   return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
 }
 
@@ -149,8 +152,10 @@ export function useFocusManagement() {
   const focusPrevious = useCallback(() => {
     if (focusHistory.length > 1) {
       const previousId = focusHistory[focusHistory.length - 2];
-      focusElement(previousId, false);
-      setFocusHistory((prev) => prev.slice(0, -1));
+      if (previousId) {
+        focusElement(previousId, false);
+        setFocusHistory((prev) => prev.slice(0, -1));
+      }
     }
   }, [focusHistory, focusElement]);
 
@@ -417,7 +422,10 @@ export function validateAccessibility(element: HTMLElement): {
   const headings = element.querySelectorAll('h1, h2, h3, h4, h5, h6');
   let previousLevel = 0;
   headings.forEach((heading, index) => {
-    const level = parseInt(heading.tagName[1]);
+    const levelChar = heading.tagName[1];
+    if (!levelChar) return;
+
+    const level = parseInt(levelChar);
     if (index === 0 && level !== 1) {
       issues.push('Page should start with h1 heading');
     }

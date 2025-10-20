@@ -155,13 +155,13 @@ export class HistoryManager<T = any> {
 
     if (this.debug) {
       console.log('[HistoryManager] Undo:', {
-        description: entry.description,
+        description: entry?.description,
         pointer: this.pointer,
         stackSize: this.stack.length,
       });
     }
 
-    return entry;
+    return entry ?? null;
   }
 
   /**
@@ -182,13 +182,13 @@ export class HistoryManager<T = any> {
 
     if (this.debug) {
       console.log('[HistoryManager] Redo:', {
-        description: entry.description,
+        description: entry?.description,
         pointer: this.pointer,
         stackSize: this.stack.length,
       });
     }
 
-    return entry;
+    return entry ?? null;
   }
 
   /**
@@ -212,7 +212,7 @@ export class HistoryManager<T = any> {
     if (this.pointer < 0 || this.pointer >= this.stack.length) {
       return null;
     }
-    return this.stack[this.pointer];
+    return this.stack[this.pointer] ?? null;
   }
 
   /**
@@ -258,7 +258,7 @@ export class HistoryManager<T = any> {
     }
 
     this.pointer = index;
-    return this.stack[this.pointer];
+    return this.stack[this.pointer] ?? null;
   }
 
   /**

@@ -51,7 +51,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const isBottom = entries[0].isIntersecting;
+        const isBottom = entries[0]?.isIntersecting ?? false;
         setIsAtBottom(isBottom);
         setShowScrollButton(!isBottom && messages.length > 0);
       },

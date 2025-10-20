@@ -133,10 +133,13 @@ export class ChunkingEngine {
     // Level 1: Summarize each chunk
     const level1Summaries: string[] = [];
     for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      if (!chunk) continue;
+
       const chunkStartTime = performance.now();
 
       try {
-        const summary = await this.manager.summarize(chunks[i], {}, config);
+        const summary = await this.manager.summarize(chunk, {}, config);
         level1Summaries.push(summary);
 
         const chunkTime = performance.now() - chunkStartTime;
@@ -151,7 +154,7 @@ export class ChunkingEngine {
           `[ChunkingEngine] Processed chunk ${i + 1}/${chunks.length} in ${chunkTime.toFixed(2)}ms`,
         );
       } catch (error) {
-        throw ErrorHandler.handleSummarizationError(error, chunks[i].length);
+        throw ErrorHandler.handleSummarizationError(error, chunk.length);
       }
     }
 
@@ -337,6 +340,8 @@ export class ChunkingEngine {
 
       for (let i = 0; i < segments.length; i++) {
         const segment = segments[i];
+        if (!segment) continue;
+
         const testChunk = currentChunk
           ? currentChunk + separator + segment
           : segment;

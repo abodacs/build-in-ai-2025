@@ -391,6 +391,8 @@ export function useProofreader(
       }
 
       const correction = corrections[index];
+      if (!correction) return;
+
       const currentText = correctedText || originalInput || '';
 
       try {

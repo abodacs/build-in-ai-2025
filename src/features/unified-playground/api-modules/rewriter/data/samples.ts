@@ -423,7 +423,9 @@ export const CONTEXT_EXAMPLES = [
  * Get random context example
  */
 export function getRandomContextExample(): string {
-  return CONTEXT_EXAMPLES[Math.floor(Math.random() * CONTEXT_EXAMPLES.length)];
+  return (
+    CONTEXT_EXAMPLES[Math.floor(Math.random() * CONTEXT_EXAMPLES.length)] ?? ''
+  );
 }
 
 // ============================================================================

@@ -614,15 +614,12 @@ export function UnifiedModelManager({
         {/* Link to Chrome internals */}
         {!showLoadingState && (
           <div className="pt-2 border-t border-slate-200">
-            <a
-              href="chrome://on-device-internals"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-            >
-              View detailed status in Chrome Internals
-              <ExternalLink className="w-3 h-3" />
-            </a>
+            <div className="text-xs text-muted-foreground">
+              View detailed status in{' '}
+              <code className="px-1 py-0.5 bg-muted rounded text-xs">
+                chrome://on-device-internals
+              </code>
+            </div>
           </div>
         )}
       </CardContent>

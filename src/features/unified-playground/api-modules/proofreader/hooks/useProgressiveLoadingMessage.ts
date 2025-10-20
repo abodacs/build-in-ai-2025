@@ -190,13 +190,16 @@ export function useProgressiveLoadingMessage(
     // Find the appropriate message based on elapsed time
     // Start from the end and work backwards to find the highest threshold that's been passed
     for (let i = messages.length - 1; i >= 0; i--) {
-      if (elapsedTime >= messages[i].threshold) {
-        return messages[i].message;
+      const msg = messages[i];
+      if (msg && elapsedTime >= msg.threshold) {
+        return msg.message;
       }
     }
 
     // Fallback to first message (should never happen, but safe)
-    return messages[0].message;
+    return (
+      messages[0]?.message ?? { message: 'Loading...', level: 'info' as const }
+    );
   }, [elapsedTime, messageType]);
 
   // Reset function

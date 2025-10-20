@@ -376,8 +376,11 @@ export class WriterManager extends BaseWritingManager<
     const results: string[] = [];
 
     for (let i = 0; i < prompts.length; i++) {
+      const prompt = prompts[i];
+      if (!prompt) continue;
+
       try {
-        const result = await instance.write(prompts[i], { context });
+        const result = await instance.write(prompt, { context });
         results.push(result);
 
         if (onProgress) {
