@@ -29,6 +29,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { Streamdown } from 'streamdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import {
+  oneDark,
+  oneLight,
+} from 'react-syntax-highlighter/dist/esm/styles/prism';
+import type { Components } from 'react-markdown';
 import type { SummarizerMetrics } from '../types/summarizer.types';
 
 // ============================================================================
@@ -59,6 +66,111 @@ export interface SummarizerResultsProps {
 }
 
 // ============================================================================
+// Markdown Components
+// ============================================================================
+
+/**
+ * Custom markdown components for Streamdown
+ * Provides syntax highlighting for code blocks
+ */
+const createMarkdownComponents = (
+  isDarkMode: boolean,
+): Partial<Components> => ({
+  code: ({ node: _node, inline, className, children, ...props }: any) => {
+    const match = /language-(\w+)/.exec(className || '');
+    const language = match?.[1] ?? '';
+
+    // Support common programming languages
+    const supportedLanguages = [
+      'typescript',
+      'ts',
+      'javascript',
+      'js',
+      'tsx',
+      'jsx',
+      'python',
+      'py',
+      'java',
+      'cpp',
+      'c',
+      'csharp',
+      'cs',
+      'ruby',
+      'go',
+      'rust',
+      'php',
+      'swift',
+      'kotlin',
+      'html',
+      'css',
+      'json',
+      'yaml',
+      'yml',
+      'markdown',
+      'md',
+      'bash',
+      'sh',
+      'sql',
+    ];
+    const normalizedLang = language.toLowerCase();
+    const isSupported = supportedLanguages.includes(normalizedLang);
+
+    if (!inline && isSupported) {
+      const displayLang =
+        normalizedLang === 'ts'
+          ? 'typescript'
+          : normalizedLang === 'js'
+            ? 'javascript'
+            : normalizedLang === 'py'
+              ? 'python'
+              : normalizedLang;
+
+      return (
+        <div className="relative group my-4">
+          <div className="absolute top-2 right-2 text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded z-10">
+            {displayLang}
+          </div>
+          <SyntaxHighlighter
+            language={displayLang}
+            style={isDarkMode ? oneDark : oneLight}
+            customStyle={{
+              margin: 0,
+              borderRadius: '0.375rem',
+              fontSize: '0.875rem',
+              padding: '1rem',
+            }}
+            showLineNumbers
+            {...props}
+          >
+            {String(children).replace(/\n$/, '')}
+          </SyntaxHighlighter>
+        </div>
+      );
+    }
+
+    // Inline code or unsupported language
+    if (!inline) {
+      return (
+        <pre className="bg-gray-800 dark:bg-gray-900 rounded p-4 overflow-x-auto my-4">
+          <code className="text-sm text-gray-100" {...props}>
+            {children}
+          </code>
+        </pre>
+      );
+    }
+
+    return (
+      <code
+        className="bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-sm"
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  },
+});
+
+// ============================================================================
 // SummarizerResults Component
 // ============================================================================
 
@@ -86,6 +198,12 @@ export function SummarizerResults({
 }: SummarizerResultsProps) {
   // State
   const [copied, setCopied] = useState(false);
+
+  // Detect dark mode
+  const isDarkMode = document.documentElement.classList.contains('dark');
+
+  // Get custom markdown components
+  const markdownComponents = createMarkdownComponents(isDarkMode);
 
   /**
    * Copy to clipboard
@@ -202,16 +320,16 @@ export function SummarizerResults({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Summary text */}
+        {/* Summary text with markdown support */}
         <div
           className={cn(
-            'p-4 rounded-lg bg-white border border-slate-200',
-            'prose prose-sm max-w-none',
-            'whitespace-pre-wrap text-slate-800 leading-relaxed tracking-tight',
+            'p-4 rounded-lg bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700',
+            'prose prose-sm dark:prose-invert max-w-none',
+            'text-slate-800 dark:text-gray-100 leading-relaxed tracking-tight',
             isStreaming && 'animate-pulse',
           )}
         >
-          {result}
+          <Streamdown components={markdownComponents}>{result}</Streamdown>
         </div>
 
         {/* Performance metrics */}
