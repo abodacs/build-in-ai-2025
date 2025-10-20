@@ -6,13 +6,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Copy, Edit, RotateCcw, Trash2, MoreVertical } from 'lucide-react';
 import { Streamdown } from 'streamdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
+import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
+import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
 import {
   oneDark,
   oneLight,
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { Message } from '../types';
 import type { Components } from 'react-markdown';
+
+// Register only needed languages for optimal bundle size
+SyntaxHighlighter.registerLanguage('typescript', typescript);
+SyntaxHighlighter.registerLanguage('javascript', javascript);
+SyntaxHighlighter.registerLanguage('json', json);
 
 interface MessageBubbleProps {
   message: Message;
@@ -34,7 +42,7 @@ const createMarkdownComponents = (
     const match = /language-(\w+)/.exec(className || '');
     const language = match?.[1] ?? '';
 
-    // Only support TypeScript and JavaScript
+    // Only support TypeScript, JavaScript, and JSON
     const supportedLanguages = [
       'typescript',
       'ts',
@@ -42,15 +50,16 @@ const createMarkdownComponents = (
       'js',
       'tsx',
       'jsx',
+      'json',
     ];
     const normalizedLang = language.toLowerCase();
     const isSupported = supportedLanguages.includes(normalizedLang);
 
     if (!inline && isSupported) {
       const displayLang =
-        normalizedLang === 'ts'
+        normalizedLang === 'ts' || normalizedLang === 'tsx'
           ? 'typescript'
-          : normalizedLang === 'js'
+          : normalizedLang === 'js' || normalizedLang === 'jsx'
             ? 'javascript'
             : normalizedLang;
 

@@ -22,6 +22,8 @@ import {
 } from '../../types';
 import { FieldError, UnifiedModelManager } from '../../../shared/components';
 import { validateTextInput } from '../../../shared/utils/validation';
+import { ViewCodeButton } from '@/components/shared/ViewCodeButton';
+import { CodeModal } from '../CodeModal';
 import { cn } from '@/lib/utils';
 
 export function LanguageDetectionMain() {
@@ -30,6 +32,7 @@ export function LanguageDetectionMain() {
     message: string;
     helpText?: string;
   } | null>(null);
+  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
 
   const { isDetecting, results, error, actions } = useLanguageDetection(
     DEFAULT_DETECTION_CONFIG,
@@ -88,8 +91,9 @@ export function LanguageDetectionMain() {
 
       {/* Input */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
           <CardTitle className="text-base">Text to Analyze</CardTitle>
+          <ViewCodeButton onClick={() => setIsCodeModalOpen(true)} />
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -209,6 +213,13 @@ export function LanguageDetectionMain() {
           }}
         />
       </div>
+
+      {/* Code Modal */}
+      <CodeModal
+        isOpen={isCodeModalOpen}
+        onClose={() => setIsCodeModalOpen(false)}
+        config={DEFAULT_DETECTION_CONFIG}
+      />
     </div>
   );
 }

@@ -1,10 +1,10 @@
 /**
- * CodeModal Component - Writer API
+ * CodeModal Component - Proofreader API
  *
- * Modal dialog for viewing and copying generated Writer API implementation code.
+ * Modal dialog for viewing and copying generated Proofreader API implementation code.
  * Provides TypeScript and JavaScript code examples based on current configuration.
  *
- * @module writer/components/CodeModal
+ * @module proofreader/components/CodeModal
  */
 
 import { useState, useMemo, useEffect } from 'react';
@@ -34,7 +34,7 @@ import { ThemedCodeBlock } from '@/components/code/ThemedCodeBlock';
 import { CodeModalSkeleton } from '@/components/code/CodeModalSkeleton';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { WriterConfig } from '../types';
+import type { ProofreaderConfig } from '../types';
 
 // ============================================================================
 // Types
@@ -47,8 +47,8 @@ export interface CodeModalProps {
   /** Close handler */
   onClose: () => void;
 
-  /** Current Writer configuration */
-  config: WriterConfig;
+  /** Current Proofreader configuration */
+  config: ProofreaderConfig;
 
   /** Additional CSS classes */
   className?: string;
@@ -61,25 +61,22 @@ export interface CodeModalProps {
 /**
  * Generate TypeScript implementation code
  */
-function generateTypeScriptCode(config: WriterConfig): string {
+function generateTypeScriptCode(config: ProofreaderConfig): string {
   const configStr = JSON.stringify(
     {
-      tone: config.tone || 'neutral',
-      format: config.format || 'plain-text',
-      length: config.length || 'medium',
-      outputLanguage: config.outputLanguage || 'en',
-      ...(config.sharedContext && { sharedContext: config.sharedContext }),
+      expectedInputLanguages: config.expectedInputLanguages || ['en'],
     },
     null,
     2,
   );
 
   return `/**
- * Chrome Built-in AI - Writer API Implementation
+ * Chrome Built-in AI - Proofreader API Implementation
  *
  * Requirements:
- * - Chrome 137+ with Writer API enabled
- * - Enable chrome://flags#writer-api-for-gemini-nano
+ * - Chrome 141+ (Origin Trial until Chrome 145)
+ * - Enable Origin Trial token
+ * - CSS Custom Highlights API for highlighting
  *
  * This is a complete, self-contained implementation.
  * Copy this entire file to use in your project.
@@ -89,57 +86,66 @@ function generateTypeScriptCode(config: WriterConfig): string {
 // Type Definitions
 // ============================================================================
 
-interface Writer {
-  write(prompt: string): Promise<string>;
-  writeStreaming?(prompt: string): ReadableStream<string>;
+type CorrectionType = 'grammar' | 'spelling' | 'punctuation' | 'style' | 'clarity';
+type ProofreaderLanguage = 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ja' | 'ko' | 'zh';
+
+interface ProofreadResult {
+  type: CorrectionType;
+  start: number;
+  end: number;
+  originalText: string;
+  suggestion: string;
+  explanation?: string;
+}
+
+interface Proofreader {
+  proofread(input: string): Promise<ProofreadResult[]>;
   destroy(): void;
 }
 
-interface WriterCreateOptions {
-  tone?: 'formal' | 'neutral' | 'casual';
-  format?: 'plain-text' | 'markdown';
-  length?: 'short' | 'medium' | 'long';
-  outputLanguage?: 'en' | 'es' | 'ja';
-  sharedContext?: string;
+interface ProofreaderCreateOptions {
+  expectedInputLanguages?: ProofreaderLanguage[];
+  signal?: AbortSignal;
+  monitor?: (monitor: EventTarget) => void;
 }
 
-interface WriterAPI {
-  create(options?: WriterCreateOptions): Promise<Writer>;
+interface ProofreaderAPI {
+  create(options?: ProofreaderCreateOptions): Promise<Proofreader>;
   availability(): Promise<'readily' | 'after-download' | 'no'>;
 }
 
 declare global {
   interface Window {
-    Writer: WriterAPI;
+    Proofreader: ProofreaderAPI;
   }
-  const Writer: WriterAPI;
+  const Proofreader: ProofreaderAPI;
 }
 
 // ============================================================================
 // Configuration
 // ============================================================================
 
-const config: WriterCreateOptions = ${configStr};
+const config: ProofreaderCreateOptions = ${configStr};
 
 // ============================================================================
 // Core Functions
 // ============================================================================
 
 /**
- * Check if Chrome AI Writer is available
+ * Check if Chrome AI Proofreader is available
  */
 async function checkAvailability(): Promise<boolean> {
-  if (!('Writer' in window)) {
+  if (!('Proofreader' in window)) {
     throw new Error(
-      'Chrome AI Writer not supported. ' +
-      'Requires Chrome 137+ with chrome://flags#writer-api-for-gemini-nano enabled.'
+      'Chrome AI Proofreader not supported. ' +
+      'Requires Chrome 141+ with Origin Trial enabled.'
     );
   }
 
-  const availability = await window.Writer.availability();
+  const availability = await window.Proofreader.availability();
 
   if (availability === 'no') {
-    throw new Error('Chrome AI not available on this device');
+    throw new Error('Proofreader not available on this device');
   }
 
   if (availability === 'after-download') {
@@ -151,60 +157,82 @@ async function checkAvailability(): Promise<boolean> {
 }
 
 /**
- * Create a new writer instance
- * Note: Requires user activation (must be called from user interaction like button click)
+ * Create a new proofreader instance
+ * Note: Requires user activation (must be called from user interaction)
  */
-async function createWriter(): Promise<Writer> {
-  const writer = await window.Writer.create(config);
-  return writer;
+async function createProofreader(): Promise<Proofreader> {
+  const proofreader = await window.Proofreader.create(config);
+  return proofreader;
 }
 
 /**
- * Generate content (non-streaming)
+ * Proofread text and get corrections
  */
-async function write(prompt: string): Promise<string> {
+async function proofread(text: string): Promise<ProofreadResult[]> {
   await checkAvailability();
-  const writer = await createWriter();
+  const proofreader = await createProofreader();
 
   try {
-    const content = await writer.write(prompt);
-    return content;
+    const corrections = await proofreader.proofread(text);
+    return corrections;
   } finally {
-    writer.destroy();
+    proofreader.destroy();
   }
 }
 
 /**
- * Generate content with streaming (for real-time results)
+ * Apply corrections to text
  */
-async function writeStreaming(
-  prompt: string,
-  onChunk: (chunk: string) => void
-): Promise<string> {
-  await checkAvailability();
-  const writer = await createWriter();
+function applyCorrections(
+  text: string,
+  corrections: ProofreadResult[]
+): string {
+  // Sort corrections by start position (descending) to apply from end to start
+  const sortedCorrections = [...corrections].sort((a, b) => b.start - a.start);
 
-  try {
-    if (!writer.writeStreaming) {
-      throw new Error('Streaming not supported in this version');
-    }
-
-    const stream = writer.writeStreaming(prompt);
-    const reader = stream.getReader();
-    let fullContent = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      fullContent = value;
-      onChunk(value);
-    }
-
-    return fullContent;
-  } finally {
-    writer.destroy();
+  let result = text;
+  for (const correction of sortedCorrections) {
+    result =
+      result.slice(0, correction.start) +
+      correction.suggestion +
+      result.slice(correction.end);
   }
+
+  return result;
+}
+
+// ============================================================================
+// Highlighting Functions (CSS Custom Highlights API)
+// ============================================================================
+
+/**
+ * Create highlights for corrections using CSS Custom Highlights API
+ */
+function createHighlights(
+  text: string,
+  corrections: ProofreadResult[],
+  containerElement: HTMLElement
+): void {
+  if (!CSS.highlights) {
+    console.warn('CSS Custom Highlights API not supported');
+    return;
+  }
+
+  // Clear existing highlights
+  CSS.highlights.clear();
+
+  corrections.forEach((correction, index) => {
+    const range = new Range();
+    const textNode = containerElement.firstChild as Text;
+
+    if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+      range.setStart(textNode, correction.start);
+      range.setEnd(textNode, correction.end);
+
+      const highlight = new Highlight(range);
+      CSS.highlights.set(\`correction-\${index}\`, highlight);
+    }
+  });
 }
 
 // ============================================================================
@@ -212,51 +240,63 @@ async function writeStreaming(
 // ============================================================================
 
 /**
- * Example 1: Basic content generation
+ * Example 1: Basic proofreading
  */
 async function exampleBasic() {
-  const prompt = 'Write a brief introduction to artificial intelligence';
+  const text = 'This is an example sentance with some erors.';
 
   try {
-    const content = await write(prompt);
-    console.log('Generated content:', content);
+    const corrections = await proofread(text);
+    console.log('Corrections found:', corrections);
+    // Output: [{ type: 'spelling', start: 20, end: 28, ... }]
+
+    const correctedText = applyCorrections(text, corrections);
+    console.log('Corrected text:', correctedText);
   } catch (error) {
-    console.error('Content generation failed:', error);
+    console.error('Proofreading failed:', error);
   }
 }
 
 /**
- * Example 2: Streaming content generation with real-time updates
+ * Example 2: With highlights
  */
-async function exampleStreaming() {
-  const prompt = 'Write a detailed guide about machine learning';
+async function exampleWithHighlights() {
+  const textElement = document.getElementById('text-content') as HTMLElement;
+  const text = textElement.textContent || '';
 
   try {
-    const content = await writeStreaming(prompt, (chunk) => {
-      console.log('Streaming chunk:', chunk);
-      // Update UI with partial results in real-time
-    });
-    console.log('Final content:', content);
+    const corrections = await proofread(text);
+    createHighlights(text, corrections, textElement);
   } catch (error) {
-    console.error('Streaming failed:', error);
+    console.error('Proofreading failed:', error);
   }
 }
 
 /**
- * Example 3: HTML Integration (Button click handler)
+ * Example 3: HTML Integration
  */
 function setupHTMLIntegration() {
-  const button = document.getElementById('generate-btn');
-  const input = document.getElementById('prompt-input') as HTMLTextAreaElement;
-  const output = document.getElementById('content-output');
+  const input = document.getElementById('text-input') as HTMLTextAreaElement;
+  const button = document.getElementById('proofread-btn');
+  const output = document.getElementById('corrections-output');
 
   button?.addEventListener('click', async () => {
     if (!input || !output) return;
 
     try {
-      output.textContent = 'Generating...';
-      const content = await write(input.value);
-      output.textContent = content;
+      output.textContent = 'Proofreading...';
+      const corrections = await proofread(input.value);
+
+      output.innerHTML = corrections
+        .map(
+          (c) =>
+            \`<div class="correction">
+              <strong>\${c.type}</strong>:
+              "\${c.originalText}" → "\${c.suggestion}"
+              \${c.explanation ? \`<br><em>\${c.explanation}</em>\` : ''}
+            </div>\`
+        )
+        .join('');
     } catch (error) {
       output.textContent = \`Error: \${error instanceof Error ? error.message : 'Unknown error'}\`;
     }
@@ -268,34 +308,31 @@ function setupHTMLIntegration() {
 // ============================================================================
 
 // exampleBasic();
-// exampleStreaming();
+// exampleWithHighlights();
 // setupHTMLIntegration();
 
-export { write, writeStreaming, checkAvailability };`;
+export { proofread, applyCorrections, createHighlights, checkAvailability };`;
 }
 
 /**
  * Generate JavaScript implementation code
  */
-function generateJavaScriptCode(config: WriterConfig): string {
+function generateJavaScriptCode(config: ProofreaderConfig): string {
   const configStr = JSON.stringify(
     {
-      tone: config.tone || 'neutral',
-      format: config.format || 'plain-text',
-      length: config.length || 'medium',
-      outputLanguage: config.outputLanguage || 'en',
-      ...(config.sharedContext && { sharedContext: config.sharedContext }),
+      expectedInputLanguages: config.expectedInputLanguages || ['en'],
     },
     null,
     2,
   );
 
   return `/**
- * Chrome Built-in AI - Writer API Implementation
+ * Chrome Built-in AI - Proofreader API Implementation
  *
  * Requirements:
- * - Chrome 137+ with Writer API enabled
- * - Enable chrome://flags#writer-api-for-gemini-nano
+ * - Chrome 141+ (Origin Trial until Chrome 145)
+ * - Enable Origin Trial token
+ * - CSS Custom Highlights API for highlighting
  *
  * This is a complete, self-contained implementation.
  * Copy this entire file to use in your project.
@@ -312,20 +349,20 @@ const config = ${configStr};
 // ============================================================================
 
 /**
- * Check if Chrome AI Writer is available
+ * Check if Chrome AI Proofreader is available
  */
 async function checkAvailability() {
-  if (!('Writer' in window)) {
+  if (!('Proofreader' in window)) {
     throw new Error(
-      'Chrome AI Writer not supported. ' +
-      'Requires Chrome 137+ with chrome://flags#writer-api-for-gemini-nano enabled.'
+      'Chrome AI Proofreader not supported. ' +
+      'Requires Chrome 141+ with Origin Trial enabled.'
     );
   }
 
-  const availability = await window.Writer.availability();
+  const availability = await window.Proofreader.availability();
 
   if (availability === 'no') {
-    throw new Error('Chrome AI not available on this device');
+    throw new Error('Proofreader not available on this device');
   }
 
   if (availability === 'after-download') {
@@ -337,57 +374,75 @@ async function checkAvailability() {
 }
 
 /**
- * Create a new writer instance
- * Note: Requires user activation (must be called from user interaction like button click)
+ * Create a new proofreader instance
+ * Note: Requires user activation (must be called from user interaction)
  */
-async function createWriter() {
-  const writer = await window.Writer.create(config);
-  return writer;
+async function createProofreader() {
+  const proofreader = await window.Proofreader.create(config);
+  return proofreader;
 }
 
 /**
- * Generate content (non-streaming)
+ * Proofread text and get corrections
  */
-async function write(prompt) {
+async function proofread(text) {
   await checkAvailability();
-  const writer = await createWriter();
+  const proofreader = await createProofreader();
 
   try {
-    const content = await writer.write(prompt);
-    return content;
+    const corrections = await proofreader.proofread(text);
+    return corrections;
   } finally {
-    writer.destroy();
+    proofreader.destroy();
   }
 }
 
 /**
- * Generate content with streaming (for real-time results)
+ * Apply corrections to text
  */
-async function writeStreaming(prompt, onChunk) {
-  await checkAvailability();
-  const writer = await createWriter();
+function applyCorrections(text, corrections) {
+  // Sort corrections by start position (descending) to apply from end to start
+  const sortedCorrections = [...corrections].sort((a, b) => b.start - a.start);
 
-  try {
-    if (!writer.writeStreaming) {
-      throw new Error('Streaming not supported in this version');
-    }
-
-    const stream = writer.writeStreaming(prompt);
-    const reader = stream.getReader();
-    let fullContent = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      fullContent = value;
-      onChunk(value);
-    }
-
-    return fullContent;
-  } finally {
-    writer.destroy();
+  let result = text;
+  for (const correction of sortedCorrections) {
+    result =
+      result.slice(0, correction.start) +
+      correction.suggestion +
+      result.slice(correction.end);
   }
+
+  return result;
+}
+
+// ============================================================================
+// Highlighting Functions (CSS Custom Highlights API)
+// ============================================================================
+
+/**
+ * Create highlights for corrections using CSS Custom Highlights API
+ */
+function createHighlights(text, corrections, containerElement) {
+  if (!CSS.highlights) {
+    console.warn('CSS Custom Highlights API not supported');
+    return;
+  }
+
+  // Clear existing highlights
+  CSS.highlights.clear();
+
+  corrections.forEach((correction, index) => {
+    const range = new Range();
+    const textNode = containerElement.firstChild;
+
+    if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+      range.setStart(textNode, correction.start);
+      range.setEnd(textNode, correction.end);
+
+      const highlight = new Highlight(range);
+      CSS.highlights.set(\`correction-\${index}\`, highlight);
+    }
+  });
 }
 
 // ============================================================================
@@ -395,51 +450,63 @@ async function writeStreaming(prompt, onChunk) {
 // ============================================================================
 
 /**
- * Example 1: Basic content generation
+ * Example 1: Basic proofreading
  */
 async function exampleBasic() {
-  const prompt = 'Write a brief introduction to artificial intelligence';
+  const text = 'This is an example sentance with some erors.';
 
   try {
-    const content = await write(prompt);
-    console.log('Generated content:', content);
+    const corrections = await proofread(text);
+    console.log('Corrections found:', corrections);
+    // Output: [{ type: 'spelling', start: 20, end: 28, ... }]
+
+    const correctedText = applyCorrections(text, corrections);
+    console.log('Corrected text:', correctedText);
   } catch (error) {
-    console.error('Content generation failed:', error);
+    console.error('Proofreading failed:', error);
   }
 }
 
 /**
- * Example 2: Streaming content generation with real-time updates
+ * Example 2: With highlights
  */
-async function exampleStreaming() {
-  const prompt = 'Write a detailed guide about machine learning';
+async function exampleWithHighlights() {
+  const textElement = document.getElementById('text-content');
+  const text = textElement.textContent || '';
 
   try {
-    const content = await writeStreaming(prompt, (chunk) => {
-      console.log('Streaming chunk:', chunk);
-      // Update UI with partial results in real-time
-    });
-    console.log('Final content:', content);
+    const corrections = await proofread(text);
+    createHighlights(text, corrections, textElement);
   } catch (error) {
-    console.error('Streaming failed:', error);
+    console.error('Proofreading failed:', error);
   }
 }
 
 /**
- * Example 3: HTML Integration (Button click handler)
+ * Example 3: HTML Integration
  */
 function setupHTMLIntegration() {
-  const button = document.getElementById('generate-btn');
-  const input = document.getElementById('prompt-input');
-  const output = document.getElementById('content-output');
+  const input = document.getElementById('text-input');
+  const button = document.getElementById('proofread-btn');
+  const output = document.getElementById('corrections-output');
 
   button?.addEventListener('click', async () => {
     if (!input || !output) return;
 
     try {
-      output.textContent = 'Generating...';
-      const content = await write(input.value);
-      output.textContent = content;
+      output.textContent = 'Proofreading...';
+      const corrections = await proofread(input.value);
+
+      output.innerHTML = corrections
+        .map(
+          (c) =>
+            \`<div class="correction">
+              <strong>\${c.type}</strong>:
+              "\${c.originalText}" → "\${c.suggestion}"
+              \${c.explanation ? \`<br><em>\${c.explanation}</em>\` : ''}
+            </div>\`
+        )
+        .join('');
     } catch (error) {
       output.textContent = \`Error: \${error.message || 'Unknown error'}\`;
     }
@@ -451,10 +518,10 @@ function setupHTMLIntegration() {
 // ============================================================================
 
 // exampleBasic();
-// exampleStreaming();
+// exampleWithHighlights();
 // setupHTMLIntegration();
 
-export { write, writeStreaming, checkAvailability };`;
+export { proofread, applyCorrections, createHighlights, checkAvailability };`;
 }
 
 // ============================================================================
@@ -462,14 +529,14 @@ export { write, writeStreaming, checkAvailability };`;
 // ============================================================================
 
 /**
- * Code generation and export modal for Writer API
+ * Code generation and export modal for Proofreader API
  *
  * @example
  * ```tsx
  * <CodeModal
  *   isOpen={isOpen}
  *   onClose={() => setIsOpen(false)}
- *   config={writerConfig}
+ *   config={proofreaderConfig}
  * />
  * ```
  */
@@ -544,7 +611,7 @@ export function CodeModal({
           <div className="flex items-center gap-2">
             <Code className="w-4 h-4 min-[375px]:w-5 min-[375px]:h-5 text-green-600" />
             <DialogTitle className="text-base min-[375px]:text-lg">
-              Generated Code - Writer API
+              Generated Code - Proofreader API
             </DialogTitle>
           </div>
           <DialogDescription className="text-xs min-[375px]:text-sm">
@@ -617,27 +684,33 @@ export function CodeModal({
                     <CollapsibleContent className="mt-3 space-y-2 text-xs text-amber-800 dark:text-amber-200">
                       <ul className="list-disc list-inside space-y-1">
                         <li>
-                          <strong>Chrome 137+</strong> with Writer API enabled
+                          <strong>Chrome 141-145</strong> (Origin Trial)
                         </li>
                         <li>
-                          Enable flag:{' '}
-                          <code>chrome://flags#writer-api-for-gemini-nano</code>
-                        </li>
-                        <li>Check availability before using the API</li>
-                        <li>
-                          <strong>User activation required</strong>: Call from
-                          user interactions (button clicks, etc.)
+                          Register for Origin Trial and add token to your site
                         </li>
                         <li>
-                          Always clean up instances with <code>destroy()</code>
+                          Supports CSS Custom Highlights API for visual feedback
                         </li>
                         <li>
-                          Handle model download if availability is
-                          &lsquo;after-download&rsquo;
+                          <strong>User activation required:</strong> Call from
+                          user interactions
                         </li>
                         <li>
-                          Consider using streaming for better UX with long
-                          content
+                          Always clean up instances with{' '}
+                          <code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900 rounded text-[10px]">
+                            destroy()
+                          </code>
+                        </li>
+                        <li>
+                          Handle model download if availability is{' '}
+                          <code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900 rounded text-[10px]">
+                            &apos;after-download&apos;
+                          </code>
+                        </li>
+                        <li>
+                          Apply corrections from end to start to maintain
+                          positions
                         </li>
                       </ul>
                     </CollapsibleContent>
@@ -653,17 +726,9 @@ export function CodeModal({
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary">
-                      Tone: {config.tone || 'neutral'}
+                      Languages:{' '}
+                      {config.expectedInputLanguages?.join(', ') || 'en'}
                     </Badge>
-                    <Badge variant="secondary">
-                      Format: {config.format || 'plain-text'}
-                    </Badge>
-                    <Badge variant="secondary">
-                      Length: {config.length || 'medium'}
-                    </Badge>
-                    {config.sharedContext && (
-                      <Badge variant="secondary">Shared Context: Yes</Badge>
-                    )}
                   </div>
                 </AlertDescription>
               </Alert>
@@ -678,13 +743,14 @@ export function CodeModal({
                 {/* TypeScript */}
                 <TabsContent value="typescript" className="mt-4 space-y-3">
                   <div className="text-sm text-slate-600 dark:text-slate-400">
-                    Full TypeScript implementation with types and examples
+                    Full TypeScript implementation with types, highlighting, and
+                    examples
                   </div>
 
                   <ThemedCodeBlock
                     code={typescriptCode}
                     language="typescript"
-                    filename="writer.ts"
+                    filename="proofreader.ts"
                     showCopyButton
                     showDownloadButton
                     showThemeToggle={false}
@@ -696,13 +762,14 @@ export function CodeModal({
                 {/* JavaScript */}
                 <TabsContent value="javascript" className="mt-4 space-y-3">
                   <div className="text-sm text-slate-600 dark:text-slate-400">
-                    Plain JavaScript implementation with examples
+                    Plain JavaScript implementation with highlighting and
+                    examples
                   </div>
 
                   <ThemedCodeBlock
                     code={javascriptCode}
                     language="javascript"
-                    filename="writer.js"
+                    filename="proofreader.js"
                     showCopyButton
                     showDownloadButton
                     showThemeToggle={false}

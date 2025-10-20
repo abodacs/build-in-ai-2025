@@ -12,6 +12,7 @@ export { HighlightedTextEditor } from './HighlightedTextEditor';
 export { InlineCorrectionPopover } from './InlineCorrectionPopover';
 export { ProofreaderLoadingCard } from './ProofreaderLoadingCard';
 export { ProofreaderMain } from './tabs/PlaygroundTab';
+export { CodeModal } from './CodeModal';
 
 export type { ProofreaderConfigProps } from './ProofreaderConfig';
 export type { ProofreaderInputProps } from './ProofreaderInput';

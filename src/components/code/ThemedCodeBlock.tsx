@@ -7,12 +7,22 @@
 
 import { useState } from 'react';
 import { Copy, CheckCircle2, Download } from 'lucide-react';
-import { highlight } from 'sugar-high';
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
+import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
+import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCodeTheme } from '@/providers/CodeThemeProvider';
 import { CodeThemeToggle } from './CodeThemeToggle';
 import { cn } from '@/lib/utils';
+
+// Register only needed languages for optimal bundle size
+SyntaxHighlighter.registerLanguage('typescript', typescript);
+SyntaxHighlighter.registerLanguage('javascript', javascript);
+SyntaxHighlighter.registerLanguage('json', json);
 
 // ============================================================================
 // Types
@@ -23,7 +33,7 @@ export interface ThemedCodeBlockProps {
   code: string;
 
   /** Programming language */
-  language: 'typescript' | 'javascript' | 'json' | 'bash';
+  language: 'typescript' | 'javascript' | 'json';
 
   /** Show copy button */
   showCopyButton?: boolean;
@@ -37,6 +47,9 @@ export interface ThemedCodeBlockProps {
   /** Show language badge */
   showLanguageBadge?: boolean;
 
+  /** Show line numbers */
+  showLineNumbers?: boolean;
+
   /** Filename for download */
   filename?: string;
 
@@ -45,6 +58,9 @@ export interface ThemedCodeBlockProps {
 
   /** Custom header content */
   headerContent?: React.ReactNode;
+
+  /** Force a specific theme (overrides useCodeTheme) */
+  forceTheme?: 'light' | 'dark';
 }
 
 // ============================================================================
@@ -71,9 +87,11 @@ export function ThemedCodeBlock({
   showDownloadButton = false,
   showThemeToggle = true,
   showLanguageBadge = true,
+  showLineNumbers = true,
   filename,
   className,
   headerContent,
+  forceTheme,
 }: ThemedCodeBlockProps) {
   const { resolvedCodeTheme } = useCodeTheme();
   const [copied, setCopied] = useState(false);
@@ -87,8 +105,6 @@ export function ThemedCodeBlock({
         return '.js';
       case 'json':
         return '.json';
-      case 'bash':
-        return '.sh';
       default:
         return '.txt';
     }
@@ -99,7 +115,8 @@ export function ThemedCodeBlock({
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      // Reset after 2.5 seconds (2-3 seconds as per requirements)
+      setTimeout(() => setCopied(false), 2500);
     } catch (error) {
       console.error('Failed to copy:', error);
     }
@@ -120,12 +137,15 @@ export function ThemedCodeBlock({
   };
 
   // Theme-specific classes
-  const isDark = resolvedCodeTheme === 'dark';
+  // Use forceTheme if provided, otherwise use resolvedCodeTheme
+  const isDark = forceTheme
+    ? forceTheme === 'dark'
+    : resolvedCodeTheme === 'dark';
 
   const containerClasses = cn(
     'rounded-lg transition-colors duration-200',
     isDark
-      ? 'bg-slate-900 border border-slate-700'
+      ? 'dark bg-slate-900 border border-slate-700'
       : 'bg-slate-50 border border-slate-200',
     className,
   );
@@ -166,7 +186,12 @@ export function ThemedCodeBlock({
                 variant="ghost"
                 size="sm"
                 onClick={copyCode}
-                className="h-7 px-2 shrink-0"
+                className={cn(
+                  'h-7 px-2 shrink-0',
+                  isDark
+                    ? 'text-slate-300 hover:text-slate-100 hover:bg-slate-800'
+                    : 'text-slate-700 hover:text-slate-900',
+                )}
               >
                 {copied ? (
                   <>
@@ -187,7 +212,12 @@ export function ThemedCodeBlock({
                 variant="ghost"
                 size="sm"
                 onClick={downloadCode}
-                className="h-7 px-2 shrink-0"
+                className={cn(
+                  'h-7 px-2 shrink-0',
+                  isDark
+                    ? 'text-slate-300 hover:text-slate-100 hover:bg-slate-800'
+                    : 'text-slate-700 hover:text-slate-900',
+                )}
               >
                 <Download className="w-3 h-3 mr-1" />
                 <span className="text-xs">Download</span>
@@ -199,21 +229,35 @@ export function ThemedCodeBlock({
 
       {/* Code Content with Syntax Highlighting */}
       <div className="overflow-x-auto">
-        <pre
-          className={cn(
-            'p-4 text-[11px] leading-relaxed overflow-x-auto',
-            isDark ? 'bg-slate-900' : 'bg-slate-50',
-          )}
-          style={{
+        <SyntaxHighlighter
+          language={language}
+          style={isDark ? vscDarkPlus : vs}
+          showLineNumbers={showLineNumbers}
+          customStyle={{
+            margin: 0,
+            padding: '1rem',
+            fontSize: '13px',
+            lineHeight: '2',
+            background: isDark ? '#0f172a' : '#f8fafc',
             fontFamily:
               'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
           }}
+          lineNumberStyle={{
+            minWidth: '3ch',
+            paddingRight: '1rem',
+            color: isDark ? '#64748b' : '#94a3b8',
+            opacity: 0.8,
+            userSelect: 'none',
+          }}
+          codeTagProps={{
+            style: {
+              fontFamily:
+                'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+            },
+          }}
         >
-          <code
-            dangerouslySetInnerHTML={{ __html: highlight(code) }}
-            className="syntax-highlighter"
-          />
-        </pre>
+          {code}
+        </SyntaxHighlighter>
       </div>
     </div>
   );

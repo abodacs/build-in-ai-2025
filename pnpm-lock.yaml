@@ -95,9 +95,6 @@ importers:
       '@types/dom-speech-recognition':
         specifier: ^0.0.6
         version: 0.0.6
-      '@types/dompurify':
-        specifier: ^3.2.0
-        version: 3.2.0
       '@types/react-syntax-highlighter':
         specifier: ^15.5.13
         version: 15.5.13
@@ -155,9 +152,6 @@ importers:
       streamdown:
         specifier: ^1.4.0
         version: 1.4.0(@types/react@19.1.13)(react@19.1.1)
-      sugar-high:
-        specifier: ^0.9.3
-        version: 0.9.3
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
@@ -2395,10 +2389,6 @@ packages:
 
   '@types/dom-speech-recognition@0.0.6':
     resolution: {integrity: sha512-o7pAVq9UQPJL5RDjO1f/fcpfFHdgiMnR4PoIU2N/ZQrYOS3C5rzdOJMsrpqeBCbii2EE9mERXgqspQqPDdPahw==}
-
-  '@types/dompurify@3.2.0':
-    resolution: {integrity: sha512-Fgg31wv9QbLDA0SpTOXO3MaxySc4DKGLi8sna4/Utjo4r3ZRPdCt4UQee8BWr+Q5z21yifghREPJGYaEOEIACg==}
-    deprecated: This is a stub types definition. dompurify provides its own type definitions, so you do not need this installed.
 
   '@types/estree-jsx@1.0.5':
     resolution: {integrity: sha512-52CcUVNFyfb1A2ALocQw/Dd1BQFNmSdkuC3BkZ6iqhdMfQz7JWOFRuJFloOzjk+6WijU56m9oKXFAXc7o3Towg==}
@@ -5207,9 +5197,6 @@ packages:
   stylis@4.3.6:
     resolution: {integrity: sha512-yQ3rwFWRfwNUY7H5vpU0wfdkNSnvnJinhF9830Swlaxl03zsOjCfmX0ugac+3LtK0lYSgwL/KXc8oYL3mG4YFQ==}
 
-  sugar-high@0.9.3:
-    resolution: {integrity: sha512-sjJH8J76D1dRMU3QINnsYr1wfQyXbyEVQQvdgzJvIer6mkgM8ahB9fNrb+FDWzRKsLuITiBOR0ZbbhDZDUbqjg==}
-
   supports-color@10.2.2:
     resolution: {integrity: sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g==}
     engines: {node: '>=18'}
@@ -7784,10 +7771,6 @@ snapshots:
   '@types/dom-chromium-ai@0.0.10': {}
 
   '@types/dom-speech-recognition@0.0.6': {}
-
-  '@types/dompurify@3.2.0':
-    dependencies:
-      dompurify: 3.2.7
 
   '@types/estree-jsx@1.0.5':
     dependencies:
@@ -11325,8 +11308,6 @@ snapshots:
       inline-style-parser: 0.2.4
 
   stylis@4.3.6: {}
-
-  sugar-high@0.9.3: {}
 
   supports-color@10.2.2: {}
 

@@ -30,13 +30,21 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Streamdown } from 'streamdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
+import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
+import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
 import {
   oneDark,
   oneLight,
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { Components } from 'react-markdown';
 import type { SummarizerMetrics } from '../types/summarizer.types';
+
+// Register only needed languages for optimal bundle size
+SyntaxHighlighter.registerLanguage('typescript', typescript);
+SyntaxHighlighter.registerLanguage('javascript', javascript);
+SyntaxHighlighter.registerLanguage('json', json);
 
 // ============================================================================
 // Types
@@ -80,7 +88,7 @@ const createMarkdownComponents = (
     const match = /language-(\w+)/.exec(className || '');
     const language = match?.[1] ?? '';
 
-    // Support common programming languages
+    // Only support TypeScript, JavaScript, and JSON
     const supportedLanguages = [
       'typescript',
       'ts',
@@ -88,42 +96,18 @@ const createMarkdownComponents = (
       'js',
       'tsx',
       'jsx',
-      'python',
-      'py',
-      'java',
-      'cpp',
-      'c',
-      'csharp',
-      'cs',
-      'ruby',
-      'go',
-      'rust',
-      'php',
-      'swift',
-      'kotlin',
-      'html',
-      'css',
       'json',
-      'yaml',
-      'yml',
-      'markdown',
-      'md',
-      'bash',
-      'sh',
-      'sql',
     ];
     const normalizedLang = language.toLowerCase();
     const isSupported = supportedLanguages.includes(normalizedLang);
 
     if (!inline && isSupported) {
       const displayLang =
-        normalizedLang === 'ts'
+        normalizedLang === 'ts' || normalizedLang === 'tsx'
           ? 'typescript'
-          : normalizedLang === 'js'
+          : normalizedLang === 'js' || normalizedLang === 'jsx'
             ? 'javascript'
-            : normalizedLang === 'py'
-              ? 'python'
-              : normalizedLang;
+            : normalizedLang;
 
       return (
         <div className="relative group my-4">

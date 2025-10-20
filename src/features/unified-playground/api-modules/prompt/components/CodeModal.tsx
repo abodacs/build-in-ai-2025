@@ -7,8 +7,14 @@
  * @module CodeModal
  */
 
-import { useState, useMemo } from 'react';
-import { Code, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import {
+  Code,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+} from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -25,6 +31,8 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { ThemedCodeBlock } from '@/components/code/ThemedCodeBlock';
+import { CodeModalSkeleton } from '@/components/code/CodeModalSkeleton';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { PromptConfig } from '../types';
 import { DEFAULT_PROMPT_CONFIG } from '../types';
@@ -517,8 +525,43 @@ export function CodeModal({
 }: CodeModalProps) {
   // State
   const [requirementsOpen, setRequirementsOpen] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Generated code
+  // Generate code with loading simulation and error handling
+  const generateCode = () => {
+    setIsLoading(true);
+    setError(null);
+
+    const timer = setTimeout(() => {
+      try {
+        setIsLoading(false);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Code generation failed. Please try again.',
+        );
+        setIsLoading(false);
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  };
+
+  // Trigger code generation when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      generateCode();
+    }
+  }, [isOpen]);
+
+  // Retry code generation
+  const handleRetry = () => {
+    generateCode();
+  };
+
+  // Generated code (memoized for performance)
   const typescriptCode = useMemo(
     () => generateTypeScriptCode(config),
     [config],
@@ -532,145 +575,200 @@ export function CodeModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         className={cn(
-          'w-[calc(100vw-2rem)] sm:w-[95vw] max-w-4xl xl:max-w-[1400px] h-[85vh] sm:h-[90vh] max-h-[90vh] p-0 gap-0 flex flex-col',
+          'w-[calc(100vw-1rem)] min-[375px]:w-[calc(100vw-2rem)] sm:w-[95vw]',
+          'max-w-4xl xl:max-w-[1400px]',
+          'h-[85vh] sm:h-[90vh] max-h-[90vh]',
+          'p-0 gap-0 flex flex-col overflow-hidden',
           className,
         )}
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+        }}
       >
-        <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
+        <DialogHeader className="px-4 min-[375px]:px-6 pt-4 min-[375px]:pt-6 pb-3 min-[375px]:pb-4 shrink-0">
           <div className="flex items-center gap-2">
-            <Code className="w-5 h-5 text-green-600" />
-            <DialogTitle>Generated Code</DialogTitle>
+            <Code className="w-4 h-4 min-[375px]:w-5 min-[375px]:h-5 text-green-600" />
+            <DialogTitle className="text-base min-[375px]:text-lg">
+              Generated Code
+            </DialogTitle>
           </div>
-          <DialogDescription>
+          <DialogDescription className="text-xs min-[375px]:text-sm">
             Implementation code based on your current configuration. Copy or
             download to integrate into your project.
           </DialogDescription>
         </DialogHeader>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
-          {/* Requirements & Setup - Collapsible */}
-          <Collapsible
-            open={requirementsOpen}
-            onOpenChange={setRequirementsOpen}
-            className="mb-4"
-          >
-            <Alert className="bg-amber-50 border-amber-200">
-              <AlertCircle className="h-4 w-4 text-amber-600" />
-              <AlertDescription>
-                <CollapsibleTrigger className="flex items-center justify-between w-full text-left">
-                  <span className="text-sm font-medium text-amber-900">
-                    Requirements & Setup
-                  </span>
-                  {requirementsOpen ? (
-                    <ChevronUp className="h-4 w-4 text-amber-600" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-amber-600" />
-                  )}
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-3 space-y-2 text-xs text-amber-800">
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>
-                      <strong>Chrome 138+</strong> with Chrome AI Prompt API
-                      enabled
-                    </li>
-                    <li>
-                      Enable flag:{' '}
-                      <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">
-                        chrome://flags#prompt-api-for-gemini-nano-multimodal-input
-                      </code>
-                    </li>
-                    <li>Check availability before using the API</li>
-                    <li>
-                      <strong>User activation required:</strong> Call{' '}
-                      <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">
-                        LanguageModel.create()
-                      </code>{' '}
-                      only from user interactions (button clicks)
-                    </li>
-                    <li>
-                      Always clean up sessions with{' '}
-                      <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">
-                        destroy()
-                      </code>
-                    </li>
-                    <li>
-                      Handle model download if availability is{' '}
-                      <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">
-                        &apos;after-download&apos;
-                      </code>
-                    </li>
-                    <li>Use streaming for better UX with long responses</li>
-                    <li>
-                      For conversations, maintain session across multiple
-                      prompts instead of creating new sessions
-                    </li>
-                  </ul>
-                </CollapsibleContent>
+        <div className="flex-1 overflow-y-auto px-4 min-[375px]:px-6 pb-4 min-[375px]:pb-6 space-y-4">
+          {/* Loading State */}
+          {isLoading && <CodeModalSkeleton />}
+
+          {/* Error State */}
+          {error && !isLoading && (
+            <Alert className="bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800">
+              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+              <AlertDescription className="flex flex-col gap-3">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-red-900 dark:text-red-100">
+                    Code Generation Failed
+                  </p>
+                  <p className="text-xs text-red-800 dark:text-red-200">
+                    {error}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleRetry}
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs"
+                  >
+                    Retry
+                  </Button>
+                  <Button
+                    onClick={onClose}
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 text-xs"
+                  >
+                    Close
+                  </Button>
+                </div>
               </AlertDescription>
             </Alert>
-          </Collapsible>
+          )}
 
-          {/* Configuration Display */}
-          <Alert className="bg-slate-50 mb-4">
-            <AlertDescription className="space-y-2">
-              <div className="text-sm font-medium">Current Configuration:</div>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">
-                  Temperature: {config.temperature?.toFixed(2) || '0.80'}
-                </Badge>
-                <Badge variant="secondary">Top K: {config.topK || 8}</Badge>
-                <Badge variant="secondary">
-                  Max Tokens: {config.maxTokens || 2048}
-                </Badge>
-                <Badge variant="secondary">
-                  Streaming: {config.enableStreaming !== false ? 'Yes' : 'No'}
-                </Badge>
-              </div>
-            </AlertDescription>
-          </Alert>
+          {/* Success State - Show Code */}
+          {!isLoading && !error && (
+            <>
+              {/* Requirements & Setup - Collapsible */}
+              <Collapsible
+                open={requirementsOpen}
+                onOpenChange={setRequirementsOpen}
+              >
+                <Alert className="bg-amber-50 border-amber-200">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <AlertDescription>
+                    <CollapsibleTrigger className="flex items-center justify-between w-full text-left">
+                      <span className="text-sm font-medium text-amber-900">
+                        Requirements & Setup
+                      </span>
+                      {requirementsOpen ? (
+                        <ChevronUp className="h-4 w-4 text-amber-600" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-amber-600" />
+                      )}
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-3 space-y-2 text-xs text-amber-800">
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>
+                          <strong>Chrome 138+</strong> with Chrome AI Prompt API
+                          enabled
+                        </li>
+                        <li>
+                          Enable flag:{' '}
+                          <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">
+                            chrome://flags#prompt-api-for-gemini-nano-multimodal-input
+                          </code>
+                        </li>
+                        <li>Check availability before using the API</li>
+                        <li>
+                          <strong>User activation required:</strong> Call{' '}
+                          <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">
+                            LanguageModel.create()
+                          </code>{' '}
+                          only from user interactions (button clicks)
+                        </li>
+                        <li>
+                          Always clean up sessions with{' '}
+                          <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">
+                            destroy()
+                          </code>
+                        </li>
+                        <li>
+                          Handle model download if availability is{' '}
+                          <code className="px-1 py-0.5 bg-amber-100 rounded text-[10px]">
+                            &apos;after-download&apos;
+                          </code>
+                        </li>
+                        <li>Use streaming for better UX with long responses</li>
+                        <li>
+                          For conversations, maintain session across multiple
+                          prompts instead of creating new sessions
+                        </li>
+                      </ul>
+                    </CollapsibleContent>
+                  </AlertDescription>
+                </Alert>
+              </Collapsible>
 
-          {/* Code Tabs */}
-          <Tabs defaultValue="typescript" className="w-full">
-            <TabsList className="w-full grid grid-cols-2 mb-4">
-              <TabsTrigger value="typescript">TypeScript</TabsTrigger>
-              <TabsTrigger value="javascript">JavaScript</TabsTrigger>
-            </TabsList>
+              {/* Configuration Display */}
+              <Alert className="bg-slate-50 mb-4">
+                <AlertDescription className="space-y-2">
+                  <div className="text-sm font-medium">
+                    Current Configuration:
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary">
+                      Temperature: {config.temperature?.toFixed(2) || '0.80'}
+                    </Badge>
+                    <Badge variant="secondary">Top K: {config.topK || 8}</Badge>
+                    <Badge variant="secondary">
+                      Max Tokens: {config.maxTokens || 2048}
+                    </Badge>
+                    <Badge variant="secondary">
+                      Streaming:{' '}
+                      {config.enableStreaming !== false ? 'Yes' : 'No'}
+                    </Badge>
+                  </div>
+                </AlertDescription>
+              </Alert>
 
-            {/* TypeScript */}
-            <TabsContent value="typescript" className="mt-0 space-y-3">
-              <div className="text-sm text-slate-600">
-                Full TypeScript implementation with types
-              </div>
+              {/* Code Tabs */}
+              <Tabs defaultValue="javascript" className="w-full">
+                <TabsList className="w-full grid grid-cols-2 mb-4">
+                  <TabsTrigger value="typescript">TypeScript</TabsTrigger>
+                  <TabsTrigger value="javascript">JavaScript</TabsTrigger>
+                </TabsList>
 
-              <ThemedCodeBlock
-                code={typescriptCode}
-                language="typescript"
-                filename="prompt-api.ts"
-                showCopyButton
-                showDownloadButton
-                showThemeToggle
-                showLanguageBadge={false}
-              />
-            </TabsContent>
+                {/* TypeScript */}
+                <TabsContent value="typescript" className="mt-0 space-y-3">
+                  <div className="text-sm text-slate-600">
+                    Full TypeScript implementation with types
+                  </div>
 
-            {/* JavaScript */}
-            <TabsContent value="javascript" className="mt-0 space-y-3">
-              <div className="text-sm text-slate-600">
-                Plain JavaScript implementation
-              </div>
+                  <ThemedCodeBlock
+                    code={typescriptCode}
+                    language="typescript"
+                    filename="prompt-api.ts"
+                    showCopyButton
+                    showDownloadButton
+                    showThemeToggle={false}
+                    showLanguageBadge={false}
+                    forceTheme="dark"
+                  />
+                </TabsContent>
 
-              <ThemedCodeBlock
-                code={javascriptCode}
-                language="javascript"
-                filename="prompt-api.js"
-                showCopyButton
-                showDownloadButton
-                showThemeToggle
-                showLanguageBadge={false}
-              />
-            </TabsContent>
-          </Tabs>
+                {/* JavaScript */}
+                <TabsContent value="javascript" className="mt-0 space-y-3">
+                  <div className="text-sm text-slate-600">
+                    Plain JavaScript implementation
+                  </div>
+
+                  <ThemedCodeBlock
+                    code={javascriptCode}
+                    language="javascript"
+                    filename="prompt-api.js"
+                    showCopyButton
+                    showDownloadButton
+                    showThemeToggle={false}
+                    showLanguageBadge={false}
+                    forceTheme="dark"
+                  />
+                </TabsContent>
+              </Tabs>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

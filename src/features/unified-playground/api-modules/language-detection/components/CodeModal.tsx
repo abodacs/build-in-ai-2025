@@ -1,10 +1,10 @@
 /**
- * CodeModal Component - Writer API
+ * CodeModal Component - Language Detection API
  *
- * Modal dialog for viewing and copying generated Writer API implementation code.
+ * Modal dialog for viewing and copying generated Language Detection API implementation code.
  * Provides TypeScript and JavaScript code examples based on current configuration.
  *
- * @module writer/components/CodeModal
+ * @module language-detection/components/CodeModal
  */
 
 import { useState, useMemo, useEffect } from 'react';
@@ -34,7 +34,7 @@ import { ThemedCodeBlock } from '@/components/code/ThemedCodeBlock';
 import { CodeModalSkeleton } from '@/components/code/CodeModalSkeleton';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { WriterConfig } from '../types';
+import type { DetectionConfig } from '../types';
 
 // ============================================================================
 // Types
@@ -47,8 +47,8 @@ export interface CodeModalProps {
   /** Close handler */
   onClose: () => void;
 
-  /** Current Writer configuration */
-  config: WriterConfig;
+  /** Current Language Detection configuration */
+  config: DetectionConfig;
 
   /** Additional CSS classes */
   className?: string;
@@ -61,25 +61,23 @@ export interface CodeModalProps {
 /**
  * Generate TypeScript implementation code
  */
-function generateTypeScriptCode(config: WriterConfig): string {
+function generateTypeScriptCode(config: DetectionConfig): string {
   const configStr = JSON.stringify(
     {
-      tone: config.tone || 'neutral',
-      format: config.format || 'plain-text',
-      length: config.length || 'medium',
-      outputLanguage: config.outputLanguage || 'en',
-      ...(config.sharedContext && { sharedContext: config.sharedContext }),
+      confidenceThreshold: config.confidenceThreshold,
+      maxCandidates: config.maxCandidates,
+      showAllCandidates: config.showAllCandidates,
     },
     null,
     2,
   );
 
   return `/**
- * Chrome Built-in AI - Writer API Implementation
+ * Chrome Built-in AI - Language Detection API Implementation
  *
  * Requirements:
- * - Chrome 137+ with Writer API enabled
- * - Enable chrome://flags#writer-api-for-gemini-nano
+ * - Chrome 138+ with Language Detection API enabled
+ * - Enable chrome://flags#language-detection-api
  *
  * This is a complete, self-contained implementation.
  * Copy this entire file to use in your project.
@@ -89,57 +87,59 @@ function generateTypeScriptCode(config: WriterConfig): string {
 // Type Definitions
 // ============================================================================
 
-interface Writer {
-  write(prompt: string): Promise<string>;
-  writeStreaming?(prompt: string): ReadableStream<string>;
+interface DetectionResult {
+  detectedLanguage: string;
+  confidence: number;
+}
+
+interface LanguageDetector {
+  detect(input: string): Promise<DetectionResult[]>;
   destroy(): void;
 }
 
-interface WriterCreateOptions {
-  tone?: 'formal' | 'neutral' | 'casual';
-  format?: 'plain-text' | 'markdown';
-  length?: 'short' | 'medium' | 'long';
-  outputLanguage?: 'en' | 'es' | 'ja';
-  sharedContext?: string;
+interface LanguageDetectorCreateOptions {
+  signal?: AbortSignal;
+  monitor?: (monitor: EventTarget) => void;
 }
 
-interface WriterAPI {
-  create(options?: WriterCreateOptions): Promise<Writer>;
+interface LanguageDetectorAPI {
+  create(options?: LanguageDetectorCreateOptions): Promise<LanguageDetector>;
   availability(): Promise<'readily' | 'after-download' | 'no'>;
 }
 
 declare global {
   interface Window {
-    Writer: WriterAPI;
+    translation: {
+      LanguageDetector: LanguageDetectorAPI;
+    };
   }
-  const Writer: WriterAPI;
 }
 
 // ============================================================================
 // Configuration
 // ============================================================================
 
-const config: WriterCreateOptions = ${configStr};
+const config = ${configStr};
 
 // ============================================================================
 // Core Functions
 // ============================================================================
 
 /**
- * Check if Chrome AI Writer is available
+ * Check if Chrome AI Language Detector is available
  */
 async function checkAvailability(): Promise<boolean> {
-  if (!('Writer' in window)) {
+  if (!('translation' in window) || !window.translation?.LanguageDetector) {
     throw new Error(
-      'Chrome AI Writer not supported. ' +
-      'Requires Chrome 137+ with chrome://flags#writer-api-for-gemini-nano enabled.'
+      'Chrome AI Language Detector not supported. ' +
+      'Requires Chrome 138+ with chrome://flags#language-detection-api enabled.'
     );
   }
 
-  const availability = await window.Writer.availability();
+  const availability = await window.translation.LanguageDetector.availability();
 
   if (availability === 'no') {
-    throw new Error('Chrome AI not available on this device');
+    throw new Error('Language Detection not available on this device');
   }
 
   if (availability === 'after-download') {
@@ -151,60 +151,46 @@ async function checkAvailability(): Promise<boolean> {
 }
 
 /**
- * Create a new writer instance
- * Note: Requires user activation (must be called from user interaction like button click)
+ * Create a new language detector instance
  */
-async function createWriter(): Promise<Writer> {
-  const writer = await window.Writer.create(config);
-  return writer;
+async function createDetector(): Promise<LanguageDetector> {
+  const detector = await window.translation.LanguageDetector.create();
+  return detector;
 }
 
 /**
- * Generate content (non-streaming)
+ * Detect language from text
+ * Returns filtered results based on configuration
  */
-async function write(prompt: string): Promise<string> {
+async function detectLanguage(text: string): Promise<DetectionResult[]> {
   await checkAvailability();
-  const writer = await createWriter();
+  const detector = await createDetector();
 
   try {
-    const content = await writer.write(prompt);
-    return content;
+    const results = await detector.detect(text);
+
+    // Filter and sort results based on config
+    let filteredResults = results;
+
+    if (!config.showAllCandidates) {
+      filteredResults = results.filter(
+        (r) => r.confidence >= config.confidenceThreshold
+      );
+    }
+
+    // Limit to max candidates
+    return filteredResults.slice(0, config.maxCandidates);
   } finally {
-    writer.destroy();
+    detector.destroy();
   }
 }
 
 /**
- * Generate content with streaming (for real-time results)
+ * Get the top detected language
  */
-async function writeStreaming(
-  prompt: string,
-  onChunk: (chunk: string) => void
-): Promise<string> {
-  await checkAvailability();
-  const writer = await createWriter();
-
-  try {
-    if (!writer.writeStreaming) {
-      throw new Error('Streaming not supported in this version');
-    }
-
-    const stream = writer.writeStreaming(prompt);
-    const reader = stream.getReader();
-    let fullContent = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      fullContent = value;
-      onChunk(value);
-    }
-
-    return fullContent;
-  } finally {
-    writer.destroy();
-  }
+async function detectTopLanguage(text: string): Promise<DetectionResult | null> {
+  const results = await detectLanguage(text);
+  return results.length > 0 ? results[0] : null;
 }
 
 // ============================================================================
@@ -212,51 +198,57 @@ async function writeStreaming(
 // ============================================================================
 
 /**
- * Example 1: Basic content generation
+ * Example 1: Basic language detection
  */
 async function exampleBasic() {
-  const prompt = 'Write a brief introduction to artificial intelligence';
+  const text = 'Hello, how are you today?';
 
   try {
-    const content = await write(prompt);
-    console.log('Generated content:', content);
+    const results = await detectLanguage(text);
+    console.log('Detection results:', results);
+    // Output: [{ detectedLanguage: 'en', confidence: 0.99 }]
   } catch (error) {
-    console.error('Content generation failed:', error);
+    console.error('Detection failed:', error);
   }
 }
 
 /**
- * Example 2: Streaming content generation with real-time updates
+ * Example 2: Get top language only
  */
-async function exampleStreaming() {
-  const prompt = 'Write a detailed guide about machine learning';
+async function exampleTopLanguage() {
+  const text = 'Bonjour, comment allez-vous?';
 
   try {
-    const content = await writeStreaming(prompt, (chunk) => {
-      console.log('Streaming chunk:', chunk);
-      // Update UI with partial results in real-time
-    });
-    console.log('Final content:', content);
+    const topResult = await detectTopLanguage(text);
+    if (topResult) {
+      console.log(\`Detected: \${topResult.detectedLanguage} (\${(topResult.confidence * 100).toFixed(1)}%)\`);
+    }
   } catch (error) {
-    console.error('Streaming failed:', error);
+    console.error('Detection failed:', error);
   }
 }
 
 /**
- * Example 3: HTML Integration (Button click handler)
+ * Example 3: HTML Integration (Text input handler)
  */
 function setupHTMLIntegration() {
-  const button = document.getElementById('generate-btn');
-  const input = document.getElementById('prompt-input') as HTMLTextAreaElement;
-  const output = document.getElementById('content-output');
+  const input = document.getElementById('text-input') as HTMLTextAreaElement;
+  const button = document.getElementById('detect-btn');
+  const output = document.getElementById('results-output');
 
   button?.addEventListener('click', async () => {
     if (!input || !output) return;
 
     try {
-      output.textContent = 'Generating...';
-      const content = await write(input.value);
-      output.textContent = content;
+      output.textContent = 'Detecting...';
+      const results = await detectLanguage(input.value);
+
+      output.innerHTML = results
+        .map(
+          (r) =>
+            \`<div>\${r.detectedLanguage}: \${(r.confidence * 100).toFixed(1)}%</div>\`
+        )
+        .join('');
     } catch (error) {
       output.textContent = \`Error: \${error instanceof Error ? error.message : 'Unknown error'}\`;
     }
@@ -268,34 +260,32 @@ function setupHTMLIntegration() {
 // ============================================================================
 
 // exampleBasic();
-// exampleStreaming();
+// exampleTopLanguage();
 // setupHTMLIntegration();
 
-export { write, writeStreaming, checkAvailability };`;
+export { detectLanguage, detectTopLanguage, checkAvailability };`;
 }
 
 /**
  * Generate JavaScript implementation code
  */
-function generateJavaScriptCode(config: WriterConfig): string {
+function generateJavaScriptCode(config: DetectionConfig): string {
   const configStr = JSON.stringify(
     {
-      tone: config.tone || 'neutral',
-      format: config.format || 'plain-text',
-      length: config.length || 'medium',
-      outputLanguage: config.outputLanguage || 'en',
-      ...(config.sharedContext && { sharedContext: config.sharedContext }),
+      confidenceThreshold: config.confidenceThreshold,
+      maxCandidates: config.maxCandidates,
+      showAllCandidates: config.showAllCandidates,
     },
     null,
     2,
   );
 
   return `/**
- * Chrome Built-in AI - Writer API Implementation
+ * Chrome Built-in AI - Language Detection API Implementation
  *
  * Requirements:
- * - Chrome 137+ with Writer API enabled
- * - Enable chrome://flags#writer-api-for-gemini-nano
+ * - Chrome 138+ with Language Detection API enabled
+ * - Enable chrome://flags#language-detection-api
  *
  * This is a complete, self-contained implementation.
  * Copy this entire file to use in your project.
@@ -312,20 +302,20 @@ const config = ${configStr};
 // ============================================================================
 
 /**
- * Check if Chrome AI Writer is available
+ * Check if Chrome AI Language Detector is available
  */
 async function checkAvailability() {
-  if (!('Writer' in window)) {
+  if (!('translation' in window) || !window.translation?.LanguageDetector) {
     throw new Error(
-      'Chrome AI Writer not supported. ' +
-      'Requires Chrome 137+ with chrome://flags#writer-api-for-gemini-nano enabled.'
+      'Chrome AI Language Detector not supported. ' +
+      'Requires Chrome 138+ with chrome://flags#language-detection-api enabled.'
     );
   }
 
-  const availability = await window.Writer.availability();
+  const availability = await window.translation.LanguageDetector.availability();
 
   if (availability === 'no') {
-    throw new Error('Chrome AI not available on this device');
+    throw new Error('Language Detection not available on this device');
   }
 
   if (availability === 'after-download') {
@@ -337,57 +327,46 @@ async function checkAvailability() {
 }
 
 /**
- * Create a new writer instance
- * Note: Requires user activation (must be called from user interaction like button click)
+ * Create a new language detector instance
  */
-async function createWriter() {
-  const writer = await window.Writer.create(config);
-  return writer;
+async function createDetector() {
+  const detector = await window.translation.LanguageDetector.create();
+  return detector;
 }
 
 /**
- * Generate content (non-streaming)
+ * Detect language from text
+ * Returns filtered results based on configuration
  */
-async function write(prompt) {
+async function detectLanguage(text) {
   await checkAvailability();
-  const writer = await createWriter();
+  const detector = await createDetector();
 
   try {
-    const content = await writer.write(prompt);
-    return content;
+    const results = await detector.detect(text);
+
+    // Filter and sort results based on config
+    let filteredResults = results;
+
+    if (!config.showAllCandidates) {
+      filteredResults = results.filter(
+        (r) => r.confidence >= config.confidenceThreshold
+      );
+    }
+
+    // Limit to max candidates
+    return filteredResults.slice(0, config.maxCandidates);
   } finally {
-    writer.destroy();
+    detector.destroy();
   }
 }
 
 /**
- * Generate content with streaming (for real-time results)
+ * Get the top detected language
  */
-async function writeStreaming(prompt, onChunk) {
-  await checkAvailability();
-  const writer = await createWriter();
-
-  try {
-    if (!writer.writeStreaming) {
-      throw new Error('Streaming not supported in this version');
-    }
-
-    const stream = writer.writeStreaming(prompt);
-    const reader = stream.getReader();
-    let fullContent = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      fullContent = value;
-      onChunk(value);
-    }
-
-    return fullContent;
-  } finally {
-    writer.destroy();
-  }
+async function detectTopLanguage(text) {
+  const results = await detectLanguage(text);
+  return results.length > 0 ? results[0] : null;
 }
 
 // ============================================================================
@@ -395,51 +374,57 @@ async function writeStreaming(prompt, onChunk) {
 // ============================================================================
 
 /**
- * Example 1: Basic content generation
+ * Example 1: Basic language detection
  */
 async function exampleBasic() {
-  const prompt = 'Write a brief introduction to artificial intelligence';
+  const text = 'Hello, how are you today?';
 
   try {
-    const content = await write(prompt);
-    console.log('Generated content:', content);
+    const results = await detectLanguage(text);
+    console.log('Detection results:', results);
+    // Output: [{ detectedLanguage: 'en', confidence: 0.99 }]
   } catch (error) {
-    console.error('Content generation failed:', error);
+    console.error('Detection failed:', error);
   }
 }
 
 /**
- * Example 2: Streaming content generation with real-time updates
+ * Example 2: Get top language only
  */
-async function exampleStreaming() {
-  const prompt = 'Write a detailed guide about machine learning';
+async function exampleTopLanguage() {
+  const text = 'Bonjour, comment allez-vous?';
 
   try {
-    const content = await writeStreaming(prompt, (chunk) => {
-      console.log('Streaming chunk:', chunk);
-      // Update UI with partial results in real-time
-    });
-    console.log('Final content:', content);
+    const topResult = await detectTopLanguage(text);
+    if (topResult) {
+      console.log(\`Detected: \${topResult.detectedLanguage} (\${(topResult.confidence * 100).toFixed(1)}%)\`);
+    }
   } catch (error) {
-    console.error('Streaming failed:', error);
+    console.error('Detection failed:', error);
   }
 }
 
 /**
- * Example 3: HTML Integration (Button click handler)
+ * Example 3: HTML Integration (Text input handler)
  */
 function setupHTMLIntegration() {
-  const button = document.getElementById('generate-btn');
-  const input = document.getElementById('prompt-input');
-  const output = document.getElementById('content-output');
+  const input = document.getElementById('text-input');
+  const button = document.getElementById('detect-btn');
+  const output = document.getElementById('results-output');
 
   button?.addEventListener('click', async () => {
     if (!input || !output) return;
 
     try {
-      output.textContent = 'Generating...';
-      const content = await write(input.value);
-      output.textContent = content;
+      output.textContent = 'Detecting...';
+      const results = await detectLanguage(input.value);
+
+      output.innerHTML = results
+        .map(
+          (r) =>
+            \`<div>\${r.detectedLanguage}: \${(r.confidence * 100).toFixed(1)}%</div>\`
+        )
+        .join('');
     } catch (error) {
       output.textContent = \`Error: \${error.message || 'Unknown error'}\`;
     }
@@ -451,10 +436,10 @@ function setupHTMLIntegration() {
 // ============================================================================
 
 // exampleBasic();
-// exampleStreaming();
+// exampleTopLanguage();
 // setupHTMLIntegration();
 
-export { write, writeStreaming, checkAvailability };`;
+export { detectLanguage, detectTopLanguage, checkAvailability };`;
 }
 
 // ============================================================================
@@ -462,14 +447,14 @@ export { write, writeStreaming, checkAvailability };`;
 // ============================================================================
 
 /**
- * Code generation and export modal for Writer API
+ * Code generation and export modal for Language Detection API
  *
  * @example
  * ```tsx
  * <CodeModal
  *   isOpen={isOpen}
  *   onClose={() => setIsOpen(false)}
- *   config={writerConfig}
+ *   config={detectionConfig}
  * />
  * ```
  */
@@ -544,7 +529,7 @@ export function CodeModal({
           <div className="flex items-center gap-2">
             <Code className="w-4 h-4 min-[375px]:w-5 min-[375px]:h-5 text-green-600" />
             <DialogTitle className="text-base min-[375px]:text-lg">
-              Generated Code - Writer API
+              Generated Code - Language Detection API
             </DialogTitle>
           </div>
           <DialogDescription className="text-xs min-[375px]:text-sm">
@@ -617,27 +602,30 @@ export function CodeModal({
                     <CollapsibleContent className="mt-3 space-y-2 text-xs text-amber-800 dark:text-amber-200">
                       <ul className="list-disc list-inside space-y-1">
                         <li>
-                          <strong>Chrome 137+</strong> with Writer API enabled
+                          <strong>Chrome 138+</strong> with Language Detection
+                          API enabled
                         </li>
                         <li>
                           Enable flag:{' '}
-                          <code>chrome://flags#writer-api-for-gemini-nano</code>
+                          <code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900 rounded text-[10px]">
+                            chrome://flags#language-detection-api
+                          </code>
                         </li>
                         <li>Check availability before using the API</li>
                         <li>
-                          <strong>User activation required</strong>: Call from
-                          user interactions (button clicks, etc.)
+                          Always clean up detector instances with{' '}
+                          <code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900 rounded text-[10px]">
+                            destroy()
+                          </code>
                         </li>
                         <li>
-                          Always clean up instances with <code>destroy()</code>
+                          Handle model download if availability is{' '}
+                          <code className="px-1 py-0.5 bg-amber-100 dark:bg-amber-900 rounded text-[10px]">
+                            &apos;after-download&apos;
+                          </code>
                         </li>
                         <li>
-                          Handle model download if availability is
-                          &lsquo;after-download&rsquo;
-                        </li>
-                        <li>
-                          Consider using streaming for better UX with long
-                          content
+                          Results are sorted by confidence (highest first)
                         </li>
                       </ul>
                     </CollapsibleContent>
@@ -653,17 +641,15 @@ export function CodeModal({
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary">
-                      Tone: {config.tone || 'neutral'}
+                      Threshold: {(config.confidenceThreshold * 100).toFixed(0)}
+                      %
                     </Badge>
                     <Badge variant="secondary">
-                      Format: {config.format || 'plain-text'}
+                      Max Candidates: {config.maxCandidates}
                     </Badge>
                     <Badge variant="secondary">
-                      Length: {config.length || 'medium'}
+                      Show All: {config.showAllCandidates ? 'Yes' : 'No'}
                     </Badge>
-                    {config.sharedContext && (
-                      <Badge variant="secondary">Shared Context: Yes</Badge>
-                    )}
                   </div>
                 </AlertDescription>
               </Alert>
@@ -684,7 +670,7 @@ export function CodeModal({
                   <ThemedCodeBlock
                     code={typescriptCode}
                     language="typescript"
-                    filename="writer.ts"
+                    filename="language-detection.ts"
                     showCopyButton
                     showDownloadButton
                     showThemeToggle={false}
@@ -702,7 +688,7 @@ export function CodeModal({
                   <ThemedCodeBlock
                     code={javascriptCode}
                     language="javascript"
-                    filename="writer.js"
+                    filename="language-detection.js"
                     showCopyButton
                     showDownloadButton
                     showThemeToggle={false}
