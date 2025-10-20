@@ -51,7 +51,7 @@ export class RewriterManager extends BaseWritingManager<
   /**
    * Destroy manager and cleanup resources
    */
-  destroy(): void {
+  override destroy(): void {
     if (this.instance) {
       this.destroyInstance(this.instance);
       this.instance = null;

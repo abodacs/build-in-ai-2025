@@ -90,7 +90,7 @@ export function AdvancedSettings({
   const handleThresholdChange = (value: number[]) => {
     onSettingsChange({
       ...settings,
-      streamingThreshold: value[0],
+      streamingThreshold: value[0] ?? 100,
     });
   };
 

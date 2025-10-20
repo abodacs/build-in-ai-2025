@@ -149,6 +149,7 @@ export function useFileUpload(
 
         for (let i = 0; i < filesToAdd.length; i++) {
           const file = filesToAdd[i];
+          if (!file) continue;
 
           try {
             // Update progress

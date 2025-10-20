@@ -8,6 +8,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
+    css: false, // Disable CSS processing in tests
 
     // Performance optimizations
     pool: 'forks',

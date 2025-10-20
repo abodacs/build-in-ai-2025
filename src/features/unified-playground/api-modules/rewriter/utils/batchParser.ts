@@ -114,7 +114,11 @@ function parseCSV(
     if (lines.length < 2) {
       throw new Error('CSV file must have at least one data row');
     }
-    headers = parseCSVLine(lines[0], options.delimiter!);
+    const firstLine = lines[0];
+    if (!firstLine) {
+      throw new Error('CSV file has no header line');
+    }
+    headers = parseCSVLine(firstLine, options.delimiter!);
     dataLines = lines.slice(1);
   }
 
@@ -156,8 +160,9 @@ function parseCSV(
     texts.push(text.trim());
 
     // Extract context if available
-    if (contextColumnIndex >= 0 && fields[contextColumnIndex]) {
-      contexts.push(fields[contextColumnIndex].trim());
+    const contextField = fields[contextColumnIndex];
+    if (contextColumnIndex >= 0 && contextField) {
+      contexts.push(contextField.trim());
     } else {
       contexts.push('');
     }

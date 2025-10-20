@@ -441,7 +441,7 @@ export function TranslatorConfig({
               onValueChange={(value) =>
                 onAdvancedSettingsChange({
                   ...advancedSettings,
-                  streamingThreshold: value[0],
+                  streamingThreshold: value[0] ?? 100,
                 })
               }
               disabled={disabled}

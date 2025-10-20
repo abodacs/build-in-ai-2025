@@ -106,9 +106,11 @@ export function extractDomain(hostname: string): string {
   const parts = hostname.split('.');
 
   // Handle special cases (co.uk, com.au, etc.)
+  const secondLevelDomain = parts[parts.length - 2];
   if (
     parts.length >= 3 &&
-    ['co', 'com', 'org', 'net'].includes(parts[parts.length - 2])
+    secondLevelDomain &&
+    ['co', 'com', 'org', 'net'].includes(secondLevelDomain)
   ) {
     return parts.slice(-3).join('.');
   }

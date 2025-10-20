@@ -127,6 +127,8 @@ export const testFocusTrap = (container: HTMLElement): boolean => {
   const firstElement = focusableElements[0];
   const lastElement = focusableElements[focusableElements.length - 1];
 
+  if (!firstElement || !lastElement) return false;
+
   // Check if focus cycles properly
   firstElement.focus();
   const isFirstFocused = document.activeElement === firstElement;

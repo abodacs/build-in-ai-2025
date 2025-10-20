@@ -148,9 +148,11 @@ export function mergeSegments(segments: DiffSegment[]): DiffSegment[] {
 
   const merged: DiffSegment[] = [];
   let current = segments[0];
+  if (!current) return [];
 
   for (let i = 1; i < segments.length; i++) {
     const segment = segments[i];
+    if (!segment) continue;
 
     if (segment.type === current.type) {
       // Merge with current

@@ -106,6 +106,22 @@
   }
 }
 
+/* Button cue for first-time UX guidance */
+@keyframes buttonCueGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 10px rgba(147, 51, 234, 0.4),
+      0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 30px rgba(147, 51, 234, 0.6),
+      0 0 40px rgba(147, 51, 234, 0.4),
+      0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+}
+
 @keyframes shimmer {
   0% {
     transform: translateX(-100%);
@@ -304,6 +320,11 @@
 
 .animate-aiGlow {
   animation: aiGlow 2s ease-in-out infinite;
+}
+
+/* Button cue with limited cycles for first-time guidance */
+.animate-buttonCue {
+  animation: buttonCueGlow 2s ease-in-out 3;
 }
 
 .animate-bounce {

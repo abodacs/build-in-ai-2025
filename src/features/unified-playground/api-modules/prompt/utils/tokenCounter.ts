@@ -276,6 +276,8 @@ export function trimMessagesToFit(
   // Add non-system messages from most recent backwards
   for (let i = nonSystemMessages.length - 1; i >= 0; i--) {
     const message = nonSystemMessages[i];
+    if (!message) continue;
+
     const messageTokens = estimateMessageTokens(message);
 
     if (

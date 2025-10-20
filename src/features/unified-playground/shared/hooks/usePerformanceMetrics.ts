@@ -269,6 +269,7 @@ export function usePerformanceMetrics() {
 
       if (navEntries.length > 0) {
         const nav = navEntries[0];
+        if (!nav) return;
 
         setMetrics((prev) => ({
           ...prev,

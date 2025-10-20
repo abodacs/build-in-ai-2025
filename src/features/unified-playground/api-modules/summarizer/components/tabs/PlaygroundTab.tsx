@@ -22,7 +22,7 @@ import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary'
 import { validateTextInput } from '../../../shared/utils/validation';
 
 // Import components
-import { APIActionButton } from '../../../shared/components';
+import { APIActionButton, Toast, useToast } from '../../../shared/components';
 import { Sparkles } from 'lucide-react';
 import { SummarizerConfig } from '../SummarizerConfig';
 import { SummarizerInput } from '../SummarizerInput';
@@ -172,6 +172,10 @@ export function PlaygroundTab({
     message: string;
     helpText?: string;
   } | null>(null);
+  const [showButtonCue, setShowButtonCue] = useState(false);
+
+  // Toast for first-time UX guidance
+  const { toast, open, showToast, hideToast } = useToast();
 
   // Use external input text if provided, otherwise use local state
   const inputText =
@@ -210,6 +214,67 @@ export function PlaygroundTab({
       setInputError(null);
     }
   }, [inputText]);
+
+  /**
+   * Show button cue for auto-loaded content (Endowed Progress Effect)
+   */
+  useEffect(() => {
+    try {
+      const hasAutoLoaded = sessionStorage.getItem('summarizer-autoload');
+      const hasRun = sessionStorage.getItem('summarizer-ran');
+
+      // Show cue if: auto-loaded, hasn't run yet, has valid text, model ready
+      if (hasAutoLoaded && !hasRun && inputText.length >= 100 && isReady) {
+        setShowButtonCue(true);
+      } else {
+        setShowButtonCue(false);
+      }
+    } catch (error) {
+      // sessionStorage may not be available
+      console.warn('[PlaygroundTab] sessionStorage not available:', error);
+      setShowButtonCue(false);
+    }
+  }, [inputText, isReady]);
+
+  /**
+   * Track first run, hide button cue, and show Advanced Options tip (Zeigarnik Effect)
+   */
+  useEffect(() => {
+    try {
+      const hasSeenTip = sessionStorage.getItem('summarizer-tip');
+
+      if (result && showButtonCue) {
+        // Mark as run
+        sessionStorage.setItem('summarizer-ran', 'true');
+        setShowButtonCue(false);
+
+        // Show tip about Advanced Options (once per session)
+        if (!hasSeenTip) {
+          // Delay for better UX - let user see results first
+          const timeoutId = setTimeout(() => {
+            showToast({
+              variant: 'info',
+              message: 'Pro Tip: Advanced Options',
+              description:
+                'For long documents, try different Chunking Strategies in Advanced Options for optimal results.',
+            });
+            try {
+              sessionStorage.setItem('summarizer-tip', 'true');
+            } catch (_e) {
+              // Ignore if sessionStorage unavailable
+              console.warn('[PlaygroundTab] sessionStorage not available:', _e);
+            }
+          }, 2000); // 2 seconds after first summary
+
+          // Cleanup timeout on unmount
+          return () => clearTimeout(timeoutId);
+        }
+      }
+    } catch (error) {
+      // sessionStorage may not be available
+      console.warn('[PlaygroundTab] sessionStorage not available:', error);
+    }
+  }, [result, showButtonCue, showToast]);
 
   /**
    * Can summarize check - allow if model ready OR needs download (lazy download)
@@ -443,6 +508,15 @@ export function PlaygroundTab({
   // Render: Main Playground
   // ============================================================================
 
+  // Check if this is first session (for UX onboarding)
+  let isFirstSession = false;
+  try {
+    isFirstSession = !sessionStorage.getItem('summarizer-ran');
+  } catch (error) {
+    // sessionStorage may not be available in strict privacy mode
+    console.warn('[PlaygroundTab] sessionStorage not available:', error);
+  }
+
   return (
     <div className={cn('space-y-6', className)}>
       {/* Quick Samples */}
@@ -450,6 +524,7 @@ export function PlaygroundTab({
         <QuickSamplesCard
           onSampleSelect={onSampleSelect}
           selectedSampleId={selectedSampleId}
+          defaultCollapsed={!isFirstSession}
         />
       )}
 
@@ -573,6 +648,7 @@ export function PlaygroundTab({
           isProcessing={isLoading || isDownloading}
           showCancel={false}
           showShortcutHint
+          className={cn(showButtonCue && 'animate-buttonCue')}
         />
       </div>
 
@@ -666,6 +742,18 @@ export function PlaygroundTab({
         onClose={() => setIsCodeModalOpen(false)}
         config={config}
       />
+
+      {/* Toast for UX guidance */}
+      {toast && (
+        <Toast
+          variant={toast.variant}
+          message={toast.message}
+          description={toast.description}
+          open={open}
+          onClose={hideToast}
+          duration={5000}
+        />
+      )}
     </div>
   );
 }

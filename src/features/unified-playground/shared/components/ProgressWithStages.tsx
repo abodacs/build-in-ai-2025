@@ -216,7 +216,10 @@ function getCurrentStageIndex(
   let cumulativePercent = 0;
 
   for (let i = 0; i < stages.length; i++) {
-    cumulativePercent += stages[i].percent;
+    const stage = stages[i];
+    if (!stage) continue;
+
+    cumulativePercent += stage.percent;
     if (progress <= cumulativePercent) {
       return i;
     }

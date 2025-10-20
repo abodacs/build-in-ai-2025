@@ -138,9 +138,10 @@ export class StreamingHandler {
       };
     }
 
-    const firstChunkLatency = chunks[0];
-    const lastChunkTime = chunks[chunks.length - 1];
-    const totalTime = lastChunkTime - chunks[0];
+    const firstChunkLatency = chunks[0] ?? 0;
+    const lastChunkTime = chunks[chunks.length - 1] ?? 0;
+    const firstChunk = chunks[0] ?? 0;
+    const totalTime = lastChunkTime - firstChunk;
     const chunksPerSecond =
       totalTime > 0 ? (chunks.length / totalTime) * 1000 : 0;
     const averageChunkSize = totalChars / chunks.length;

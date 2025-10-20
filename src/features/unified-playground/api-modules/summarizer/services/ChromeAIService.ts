@@ -391,7 +391,7 @@ export class ChromeAIService {
     // Extract Chrome version
     let chromeVersion = 0;
     const match = userAgent.match(/Chrome\/(\d+)/);
-    if (match) {
+    if (match?.[1]) {
       chromeVersion = parseInt(match[1], 10);
     }
 

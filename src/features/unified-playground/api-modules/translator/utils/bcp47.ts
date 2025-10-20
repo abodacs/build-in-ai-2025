@@ -55,8 +55,14 @@ export function parseLanguagePairKey(
   const parts = key.split('→');
   if (parts.length !== 2) return null;
 
-  const [source, target] = parts;
-  if (!isValidLanguageCode(source) || !isValidLanguageCode(target)) {
+  const source = parts[0];
+  const target = parts[1];
+  if (
+    !source ||
+    !target ||
+    !isValidLanguageCode(source) ||
+    !isValidLanguageCode(target)
+  ) {
     return null;
   }
 

@@ -61,7 +61,7 @@ function getLineWidth(index: number, totalLines: number): string {
   }
 
   // Cycle through width variations
-  return widths[index % widths.length];
+  return widths[index % widths.length] ?? '95%';
 }
 
 // ============================================================================

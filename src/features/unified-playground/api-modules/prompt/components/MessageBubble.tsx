@@ -32,7 +32,7 @@ const createMarkdownComponents = (
 ): Partial<Components> => ({
   code: ({ node: _node, inline, className, children, ...props }: any) => {
     const match = /language-(\w+)/.exec(className || '');
-    const language = match ? match[1] : '';
+    const language = match?.[1] ?? '';
 
     // Only support TypeScript and JavaScript
     const supportedLanguages = [

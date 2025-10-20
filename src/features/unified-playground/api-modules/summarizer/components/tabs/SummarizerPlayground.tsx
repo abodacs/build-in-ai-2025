@@ -7,7 +7,7 @@
  * @module SummarizerPlayground
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 // Import tab components
 import { PlaygroundTab } from './PlaygroundTab';
@@ -20,6 +20,9 @@ import { useSummarizerAvailability } from '../../hooks/useSummarizerAvailability
 import type { SummarizerCreateOptions } from '../../types/summarizer.types';
 import type { ChunkingStrategy } from '../../types/chunking.types';
 import type { SampleText } from '../../types/api.types';
+
+// Import samples
+import { QUICK_SAMPLES } from '../QuickSamplesCard';
 
 // ============================================================================
 // Types
@@ -157,6 +160,42 @@ export function SummarizerPlayground({ className }: SummarizerPlaygroundProps) {
       handleConfigChange(sample.recommendedConfig);
     }
   };
+
+  // ============================================================================
+  // Auto-load First Sample (Endowed Progress Effect)
+  // ============================================================================
+
+  /**
+   * Auto-load the Article sample on first session visit
+   * Implements the Endowed Progress Effect from UX psychology
+   */
+  useEffect(() => {
+    try {
+      const hasAutoLoaded = sessionStorage.getItem('summarizer-autoload');
+
+      // Only auto-load if:
+      // 1. Haven't auto-loaded this session
+      // 2. No text in input (blank slate)
+      // 3. We have samples to load
+      if (!hasAutoLoaded && !inputText && QUICK_SAMPLES.length > 0) {
+        const articleSample = QUICK_SAMPLES[0]; // First sample is "Article"
+        if (articleSample) {
+          handleSampleSelect(articleSample);
+          sessionStorage.setItem('summarizer-autoload', 'true');
+          console.log(
+            '[SummarizerPlayground] Auto-loaded Article sample for first-time UX',
+          );
+        }
+      }
+    } catch (error) {
+      // sessionStorage may not be available in strict privacy mode
+      console.warn(
+        '[SummarizerPlayground] sessionStorage not available:',
+        error,
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount - intentionally ignoring dependencies
 
   // ============================================================================
   // Render

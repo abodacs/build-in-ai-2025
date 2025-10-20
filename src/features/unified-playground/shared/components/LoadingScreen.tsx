@@ -108,6 +108,7 @@ export function LoadingScreen({
       const animateSteps = () => {
         if (stepIndex < loadingSteps.length) {
           const step = loadingSteps[stepIndex];
+          if (!step) return;
 
           setCurrentStep(stepIndex);
 
