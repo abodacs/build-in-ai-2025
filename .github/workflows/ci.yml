@@ -24,6 +24,9 @@ jobs:
     name: Lint & Format Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: chrome-ai-devbench
 
     steps:
       - name: Checkout code
@@ -39,14 +42,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+          cache-dependency-path: 'chrome-ai-devbench/pnpm-lock.yaml'
 
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
           path: |
-            node_modules
+            chrome-ai-devbench/node_modules
             ~/.cache/pnpm
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('chrome-ai-devbench/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
@@ -69,6 +73,9 @@ jobs:
     name: TypeScript Type Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: chrome-ai-devbench
 
     steps:
       - name: Checkout code
@@ -84,14 +91,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+          cache-dependency-path: 'chrome-ai-devbench/pnpm-lock.yaml'
 
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
           path: |
-            node_modules
+            chrome-ai-devbench/node_modules
             ~/.cache/pnpm
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('chrome-ai-devbench/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
@@ -108,6 +116,9 @@ jobs:
     name: Unit & Integration Tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: chrome-ai-devbench
     strategy:
       matrix:
         shard: [1, 2, 3]
@@ -126,14 +137,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+          cache-dependency-path: 'chrome-ai-devbench/pnpm-lock.yaml'
 
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
           path: |
-            node_modules
+            chrome-ai-devbench/node_modules
             ~/.cache/pnpm
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('chrome-ai-devbench/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
@@ -170,6 +182,9 @@ jobs:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: chrome-ai-devbench
 
     steps:
       - name: Checkout code
@@ -185,14 +200,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+          cache-dependency-path: 'chrome-ai-devbench/pnpm-lock.yaml'
 
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
           path: |
-            node_modules
+            chrome-ai-devbench/node_modules
             ~/.cache/pnpm
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('chrome-ai-devbench/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
@@ -234,6 +250,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [lint, typecheck]
+    defaults:
+      run:
+        working-directory: chrome-ai-devbench
 
     steps:
       - name: Checkout code
@@ -249,14 +268,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+          cache-dependency-path: 'chrome-ai-devbench/pnpm-lock.yaml'
 
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
           path: |
-            node_modules
+            chrome-ai-devbench/node_modules
             ~/.cache/pnpm
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('chrome-ai-devbench/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
@@ -293,6 +313,9 @@ jobs:
     name: Security Audit
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: chrome-ai-devbench
 
     steps:
       - name: Checkout code
@@ -308,14 +331,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+          cache-dependency-path: 'chrome-ai-devbench/pnpm-lock.yaml'
 
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
           path: |
-            node_modules
+            chrome-ai-devbench/node_modules
             ~/.cache/pnpm
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('chrome-ai-devbench/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
@@ -339,6 +363,9 @@ jobs:
     timeout-minutes: 15
     needs: [build, test]
     if: github.event_name == 'pull_request'
+    defaults:
+      run:
+        working-directory: chrome-ai-devbench
 
     steps:
       - name: Checkout code
@@ -354,14 +381,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+          cache-dependency-path: 'chrome-ai-devbench/pnpm-lock.yaml'
 
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
           path: |
-            node_modules
+            chrome-ai-devbench/node_modules
             ~/.cache/pnpm
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('chrome-ai-devbench/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
@@ -376,7 +404,8 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=chrome-ai-devbench
+          command: pages deploy chrome-ai-devbench/dist --project-name=chrome-ai-devbench
+          workingDirectory: .
 
       - name: Comment preview URL
         uses: actions/github-script@v7
@@ -398,6 +427,9 @@ jobs:
     timeout-minutes: 15
     needs: [build, test, security]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    defaults:
+      run:
+        working-directory: chrome-ai-devbench
 
     steps:
       - name: Checkout code
@@ -413,14 +445,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+          cache-dependency-path: 'chrome-ai-devbench/pnpm-lock.yaml'
 
       - name: Cache node_modules
         uses: actions/cache@v4
         with:
           path: |
-            node_modules
+            chrome-ai-devbench/node_modules
             ~/.cache/pnpm
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('chrome-ai-devbench/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
@@ -435,7 +468,8 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=chrome-ai-devbench --branch=main
+          command: pages deploy chrome-ai-devbench/dist --project-name=chrome-ai-devbench --branch=main
+          workingDirectory: .
 
   # ==========================================================================
   # Test Summary
@@ -445,6 +479,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test]
     if: always()
+    defaults:
+      run:
+        working-directory: chrome-ai-devbench
 
     steps:
       - name: Download coverage report
