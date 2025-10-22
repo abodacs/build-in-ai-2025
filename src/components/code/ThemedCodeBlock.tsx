@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { useCodeTheme } from '@/providers/CodeThemeProvider';
 import { CodeThemeToggle } from './CodeThemeToggle';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 // Register only needed languages for optimal bundle size
 SyntaxHighlighter.registerLanguage('typescript', typescript);
@@ -115,10 +116,14 @@ export function ThemedCodeBlock({
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
+      toast.success('Code copied to clipboard', {
+        duration: 2000,
+      });
       // Reset after 2.5 seconds (2-3 seconds as per requirements)
       setTimeout(() => setCopied(false), 2500);
     } catch (error) {
       console.error('Failed to copy:', error);
+      toast.error('Failed to copy code');
     }
   };
 

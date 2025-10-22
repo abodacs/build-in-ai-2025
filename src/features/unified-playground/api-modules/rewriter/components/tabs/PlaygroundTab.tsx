@@ -356,7 +356,7 @@ export function PlaygroundTab() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="text-sm">
-            {availabilityError.message}
+            {availabilityError}
           </AlertDescription>
         </Alert>
       )}
@@ -589,7 +589,7 @@ export function PlaygroundTab() {
           isReady={isReady}
           isLoading={isLoading}
           loadingPhase={isLoading ? 'initializing' : null}
-          error={error?.message || availabilityError?.message || null}
+          error={error?.message || availabilityError || null}
           modelInfo={{
             name: 'Rewriter Model',
             chromeVersion: '138+',

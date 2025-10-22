@@ -42,9 +42,9 @@ export function setupLanguageModelAPIMock() {
   const mockCreate = vi.fn().mockResolvedValue(createMockLanguageModel());
   const mockAvailability = vi
     .fn()
-    .mockResolvedValue('readily' as LanguageModelAvailability);
+    .mockResolvedValue('available' as LanguageModelAvailability);
   const mockCapabilities = vi.fn().mockResolvedValue({
-    available: 'readily' as LanguageModelAvailability,
+    available: 'available' as LanguageModelAvailability,
     defaultTopK: 3,
     maxTopK: 128,
     defaultTemperature: 0.7,

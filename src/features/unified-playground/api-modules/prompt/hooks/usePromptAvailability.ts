@@ -2,52 +2,79 @@
  * usePromptAvailability Hook
  *
  * Hook for checking Chrome AI LanguageModel API availability and capabilities.
+ * Provides state management for availability checking and model download.
  *
  * @module prompt/hooks/usePromptAvailability
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ChromeAIPromptService } from '../services/ChromeAIPromptService';
 import type {
   LanguageModelAvailability,
   AvailabilityCheckResult,
-  LanguageModelCapabilities,
+  DownloadProgress,
 } from '../types';
 
 // ============================================================================
 // Types
 // ============================================================================
 
+export interface SystemRequirements {
+  minChromeVersion: number;
+  requiredFlags: string[];
+  storageRequired: string;
+  ramRequired: string;
+  networkRequired: boolean;
+}
+
+export interface BrowserCapabilities {
+  supported: boolean;
+  availability: LanguageModelAvailability;
+  capabilities: {
+    streaming: boolean;
+    downloadProgress: boolean;
+  };
+}
+
 interface UsePromptAvailabilityReturn {
-  /** Is the API supported in this browser? */
-  isSupported: boolean;
-
   /** Current availability status */
-  availability: LanguageModelAvailability | null;
+  availability: LanguageModelAvailability;
 
-  /** Is the API ready to use? */
-  isReady: boolean;
+  /** System requirements */
+  requirements: SystemRequirements | null;
 
-  /** Does the API require model download? */
-  requiresDownload: boolean;
+  /** Browser capabilities */
+  capabilities: BrowserCapabilities | null;
 
-  /** Is checking availability? */
+  /** Is checking availability */
   isChecking: boolean;
 
-  /** Error message if check failed */
+  /** Is downloading model */
+  isDownloading: boolean;
+
+  /** Download progress */
+  downloadProgress: DownloadProgress | null;
+
+  /** Error if availability check failed */
   error: string | null;
-
-  /** Detailed availability information */
-  details: AvailabilityCheckResult | null;
-
-  /** API capabilities */
-  capabilities: LanguageModelCapabilities | null;
-
-  /** Check availability */
-  checkAvailability: () => Promise<void>;
 
   /** Refresh availability status */
   refresh: () => Promise<void>;
+
+  /** Start model download */
+  startDownload: () => Promise<void>;
+
+  /** Is API supported */
+  isSupported: boolean;
+
+  /** Is model ready to use */
+  isReady: boolean;
+
+  /** Requires download (alias for availability === 'after-download') */
+  requiresDownload: boolean;
+
+  /** Detailed availability information (legacy) */
+  details: AvailabilityCheckResult | null;
 }
 
 // ============================================================================
@@ -58,32 +85,37 @@ interface UsePromptAvailabilityReturn {
  * usePromptAvailability - Check Chrome AI Prompt API availability
  *
  * Checks if the LanguageModel API is supported, available, and ready to use.
- * Also provides detailed information about requirements and capabilities.
+ * Provides model download capabilities with progress tracking.
  */
 export function usePromptAvailability(): UsePromptAvailabilityReturn {
   // State
-  const [isSupported, setIsSupported] = useState(false);
   const [availability, setAvailability] =
-    useState<LanguageModelAvailability | null>(null);
-  const [isChecking, setIsChecking] = useState(false);
+    useState<LanguageModelAvailability>('no');
+  const [requirements, setRequirements] = useState<SystemRequirements | null>(
+    null,
+  );
+  const [capabilities, setCapabilities] = useState<BrowserCapabilities | null>(
+    null,
+  );
+  const [isChecking, setIsChecking] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] =
+    useState<DownloadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [details, setDetails] = useState<AvailabilityCheckResult | null>(null);
-  const [capabilities, setCapabilities] =
-    useState<LanguageModelCapabilities | null>(null);
 
-  // Derived state (memoized to prevent infinite loops in dependent components)
-  // Chrome may return either 'available' or 'readily' depending on version
-  const isReady = useMemo(
-    () => availability === 'available' || availability === 'readily',
-    [availability],
-  );
-  const requiresDownload = useMemo(
-    () => availability === 'after-download',
-    [availability],
-  );
+  // Computed values
+  const isSupported = ChromeAIPromptService.isSupported();
+
+  // Model is ready when:
+  // 1. Availability is 'available' (model downloaded and available)
+  // 2. Not currently downloading
+  // 3. API is supported
+  const isReady = availability === 'available' && !isDownloading && isSupported;
+  const requiresDownload = availability === 'after-download';
 
   console.log(
-    'usePromptAvailability: Derived state - availability:',
+    '[usePromptAvailability] Derived state - availability:',
     availability,
     '| isReady:',
     isReady,
@@ -96,25 +128,46 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
   // ============================================================================
 
   /**
+   * Detect browser capabilities
+   */
+  const detectCapabilities = useCallback(
+    async (currentAvailability: LanguageModelAvailability) => {
+      const caps: BrowserCapabilities = {
+        supported: isSupported,
+        availability: currentAvailability,
+        capabilities: {
+          streaming: true, // Prompt API supports streaming via promptStreaming
+          downloadProgress: true, // Prompt API supports download progress monitoring
+        },
+      };
+      setCapabilities(caps);
+      return caps;
+    },
+    [isSupported],
+  );
+
+  /**
    * Check API availability
    */
   const checkAvailability = useCallback(async () => {
-    console.log('usePromptAvailability: checkAvailability() called');
+    console.log('[usePromptAvailability] checkAvailability() called');
+    setIsChecking(true);
+    setError(null);
+
     try {
-      setIsChecking(true);
-      setError(null);
-
       // Check if API is supported
-      console.log('usePromptAvailability: Checking if API is supported...');
-      const supported = ChromeAIPromptService.isSupported();
-      console.log('usePromptAvailability: API supported =', supported);
-      setIsSupported(supported);
-
-      if (!supported) {
+      if (!isSupported) {
         console.log(
-          'usePromptAvailability: API not supported, setting availability to "no"',
+          '[usePromptAvailability] API not supported, setting availability to "no"',
         );
         setAvailability('no');
+        setRequirements({
+          minChromeVersion: 138,
+          requiredFlags: ['prompt-api-for-gemini-nano-multimodal-input'],
+          storageRequired: '~22GB',
+          ramRequired: '4GB+',
+          networkRequired: true,
+        });
         setDetails({
           availability: 'no',
           isSupported: false,
@@ -128,38 +181,53 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
           },
           error: 'LanguageModel API is not supported in this browser',
         });
+        await detectCapabilities('no');
         return;
       }
 
       // Check availability status
-      console.log('usePromptAvailability: Checking availability status...');
+      console.log('[usePromptAvailability] Checking availability status...');
       const availabilityStatus =
         await ChromeAIPromptService.checkAvailability();
       console.log(
-        'usePromptAvailability: Availability status =',
+        '[usePromptAvailability] Availability status =',
         availabilityStatus,
       );
-      console.log(
-        'usePromptAvailability: Is ready? (status === "available" or "readily") =',
-        availabilityStatus === 'available' || availabilityStatus === 'readily',
-      );
       setAvailability(availabilityStatus);
+      setRequirements({
+        minChromeVersion: 138,
+        requiredFlags: ['prompt-api-for-gemini-nano-multimodal-input'],
+        storageRequired: '~22GB',
+        ramRequired: '4GB+',
+        networkRequired: availabilityStatus === 'after-download',
+      });
 
       // Get detailed information
       const detailedInfo =
         await ChromeAIPromptService.checkDetailedAvailability();
       setDetails(detailedInfo);
 
-      // Get capabilities if available
-      if (availabilityStatus !== 'no') {
-        const caps = await ChromeAIPromptService.getCapabilities();
-        setCapabilities(caps);
+      // Detect capabilities
+      await detectCapabilities(availabilityStatus);
+
+      // Check system requirements
+      const sysReqs = await ChromeAIPromptService.checkSystemRequirements();
+
+      // Validate system requirements
+      if (!sysReqs.browser.supported) {
+        setError(
+          `LanguageModel API requires Chrome ${sysReqs.browser.requiredVersion}+ (current version: ${sysReqs.browser.version})`,
+        );
       }
 
-      console.log('usePromptAvailability: Check complete');
+      if (!sysReqs.online) {
+        setError('Internet connection required for model download');
+      }
+
+      console.log('[usePromptAvailability] Check complete');
     } catch (err) {
       console.error(
-        'usePromptAvailability: Error during availability check:',
+        '[usePromptAvailability] Error during availability check:',
         err,
       );
       const errorMessage =
@@ -169,14 +237,70 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
     } finally {
       setIsChecking(false);
     }
-  }, []);
+  }, [isSupported, detectCapabilities]);
 
   /**
-   * Refresh availability (alias for checkAvailability)
+   * Refresh availability status
    */
   const refresh = useCallback(async () => {
     await checkAvailability();
   }, [checkAvailability]);
+
+  /**
+   * Start model download
+   */
+  const startDownload = useCallback(async () => {
+    console.log('[usePromptAvailability] startDownload called', {
+      availability,
+    });
+
+    if (availability !== 'after-download') {
+      console.warn(
+        '[usePromptAvailability] Model download not needed. Current availability:',
+        availability,
+      );
+      return;
+    }
+
+    console.log('[usePromptAvailability] Starting download...');
+    setIsDownloading(true);
+    setDownloadProgress(null);
+    setError(null);
+
+    try {
+      await ChromeAIPromptService.downloadModel((progress) => {
+        console.log('[usePromptAvailability] Progress update:', progress);
+        setDownloadProgress(progress);
+      });
+
+      console.log(
+        '[usePromptAvailability] Download complete, waiting for Chrome to register model...',
+      );
+
+      // Give Chrome a moment to register the downloaded model
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      console.log('[usePromptAvailability] Refreshing availability...');
+
+      // Download complete - refresh availability
+      await checkAvailability();
+
+      console.log('[usePromptAvailability] Availability refreshed:', {
+        availability,
+      });
+    } catch (err) {
+      console.error('[usePromptAvailability] Download error:', err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Model download failed: Unknown error';
+      setError(errorMessage);
+    } finally {
+      setIsDownloading(false);
+      setDownloadProgress(null);
+      console.log('[usePromptAvailability] Download cleanup complete');
+    }
+  }, [availability, checkAvailability]);
 
   // ============================================================================
   // Auto-check on Mount
@@ -184,7 +308,7 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
 
   useEffect(() => {
     console.log(
-      'usePromptAvailability: Auto-check useEffect triggered on mount',
+      '[usePromptAvailability] Auto-check useEffect triggered on mount',
     );
     checkAvailability();
   }, [checkAvailability]);
@@ -194,7 +318,7 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
   // ============================================================================
 
   console.log(
-    'usePromptAvailability: availability=',
+    '[usePromptAvailability] availability=',
     availability,
     'isSupported=',
     isSupported,
@@ -202,16 +326,19 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
     isReady,
   );
   return {
-    isSupported,
     availability,
+    requirements,
+    capabilities,
+    isChecking,
+    isDownloading,
+    downloadProgress,
+    error,
+    refresh,
+    startDownload,
+    isSupported,
     isReady,
     requiresDownload,
-    isChecking,
-    error,
     details,
-    capabilities,
-    checkAvailability,
-    refresh,
   };
 }
 

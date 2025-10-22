@@ -22,9 +22,9 @@ describe('ChromeAILanguageDetectionService', () => {
     // Mock LanguageDetector API
     mockLanguageDetectorAPI = {
       create: vi.fn().mockResolvedValue(mockDetector),
-      availability: vi.fn().mockResolvedValue('readily'), // ✅ CRITICAL FIX: Use availability() not capabilities()
+      availability: vi.fn().mockResolvedValue('available'), // ✅ CRITICAL FIX: Use availability() not capabilities()
       capabilities: vi.fn().mockResolvedValue({
-        available: 'readily',
+        available: 'available',
         defaultTopK: 3,
         defaultThreshold: 0.5,
       }),
@@ -43,7 +43,7 @@ describe('ChromeAILanguageDetectionService', () => {
   describe('checkAvailability', () => {
     it('should return readily when API is available', async () => {
       const result = await ChromeAILanguageDetectionService.checkAvailability();
-      expect(result).toBe('readily');
+      expect(result).toBe('available');
     });
 
     it('should return no when LanguageDetector is not defined', async () => {

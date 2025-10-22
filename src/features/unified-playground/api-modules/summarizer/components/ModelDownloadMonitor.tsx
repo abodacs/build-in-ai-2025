@@ -42,7 +42,7 @@ export interface ModelDownloadMonitorProps {
   downloadError?: string | null;
 
   /** Model availability status */
-  availability?: 'readily' | 'after-download' | 'no';
+  availability?: 'available' | 'after-download' | 'no';
 
   /** Is model ready */
   isReady?: boolean;
@@ -78,7 +78,7 @@ function getStatusBadge(
     );
   }
 
-  if (isReady && availability === 'readily') {
+  if (isReady && availability === 'available') {
     return (
       <Badge className="bg-green-500 text-white">
         <CheckCircle2 className="w-3 h-3 mr-1" />
@@ -99,7 +99,7 @@ function getStatusBadge(
   return (
     <Badge variant="outline" className="border-red-500 text-red-700">
       <AlertCircle className="w-3 h-3 mr-1" />
-      Not Available
+      Not Supported
     </Badge>
   );
 }

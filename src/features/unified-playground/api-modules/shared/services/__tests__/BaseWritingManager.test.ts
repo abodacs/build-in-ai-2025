@@ -57,7 +57,7 @@ class TestWritingManager extends BaseWritingManager<
     });
 
   public mockCheckAvailabilityFn: () => Promise<AvailabilityStatus> =
-    async () => 'readily';
+    async () => 'available';
 
   getAPIName(): string {
     return 'TestAPI';
@@ -478,14 +478,14 @@ describe('BaseWritingManager', () => {
 
     it('should call checkAvailability for detailed check', async () => {
       const availabilitySpy = vi.fn(
-        async () => 'readily' as AvailabilityStatus,
+        async () => 'available' as AvailabilityStatus,
       );
       manager.mockCheckAvailabilityFn = availabilitySpy;
 
       const result = await manager.checkDetailedAvailability();
 
       expect(availabilitySpy).toHaveBeenCalled();
-      expect(result.availability).toBe('readily');
+      expect(result.availability).toBe('available');
       expect(result.isSupported).toBe(true);
       expect(result.requiresDownload).toBe(false);
     });

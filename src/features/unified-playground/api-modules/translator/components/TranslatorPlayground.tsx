@@ -78,12 +78,11 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
     availability,
     isChecking,
     error: availabilityError,
+    isReady,
+    requiresDownload: _requiresDownload, // Available but not currently used in UI
     recheck,
     downloadProgress,
   } = useTranslatorAvailability(sourceLanguage, targetLanguage);
-
-  // Derive isReady state for UnifiedModelManager
-  const isReady = availability === 'readily';
 
   const {
     translate,

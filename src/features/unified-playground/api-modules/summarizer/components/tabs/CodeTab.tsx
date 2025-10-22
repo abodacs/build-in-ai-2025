@@ -84,7 +84,7 @@ interface SummarizerCreateOptions {
 
 interface SummarizerAPI {
   create(options?: SummarizerCreateOptions): Promise<Summarizer>;
-  availability(): Promise<'readily' | 'after-download' | 'no'>;
+  availability(): Promise<'available' | 'after-download' | 'no'>;
 }
 
 declare global {
@@ -126,7 +126,7 @@ async function checkAvailability(): Promise<boolean> {
     // Model will download automatically on first create() call
   }
 
-  return availability === 'readily';
+  return availability === 'available';
 }
 
 /**
@@ -316,7 +316,7 @@ async function checkAvailability() {
     // Model will download automatically on first create() call
   }
 
-  return availability === 'readily';
+  return availability === 'available';
 }
 
 /**

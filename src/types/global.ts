@@ -38,7 +38,7 @@ export interface LanguageDetector {
 }
 
 // Base Types (compatible with @types/dom-chromium-ai)
-export type AvailabilityStatus = 'readily' | 'after-download' | 'no';
+export type AvailabilityStatus = 'available' | 'after-download' | 'no';
 
 // Legacy aliases for backward compatibility
 export type AICapabilityAvailability = AvailabilityStatus;
@@ -106,11 +106,7 @@ export function isRewriterSupported(): boolean {
 }
 
 export function isWriterSupported(): boolean {
-  return (
-    typeof globalThis !== 'undefined' &&
-    typeof (globalThis as unknown as { Writer?: unknown }).Writer !==
-      'undefined'
-  );
+  return 'Writer' in window;
 }
 
 export function isLanguageModelSupported(): boolean {

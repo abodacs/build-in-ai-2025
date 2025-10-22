@@ -100,9 +100,9 @@ export interface SummarizeOptions {
  * Availability states from Chrome AI API
  * - 'no': API not available on this device/browser
  * - 'after-download': API available but requires model download
- * - 'readily': API immediately available (model already downloaded)
+ * - 'available': API immediately available (model already downloaded)
  */
-export type SummarizerAvailability = 'no' | 'after-download' | 'readily';
+export type SummarizerAvailability = 'no' | 'after-download' | 'available';
 
 /**
  * Playground API compatibility (window.Summarizer uses different values)

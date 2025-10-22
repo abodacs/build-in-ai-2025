@@ -22,9 +22,9 @@ beforeEach(() => {
   (window as any).LanguageDetector = {
     // ✅ FIX: Use window not globalThis
     create: vi.fn().mockResolvedValue(mockDetector),
-    availability: vi.fn().mockResolvedValue('readily'), // ✅ FIX: Add availability()
+    availability: vi.fn().mockResolvedValue('available'), // ✅ FIX: Add availability()
     capabilities: vi.fn().mockResolvedValue({
-      available: 'readily',
+      available: 'available',
       defaultTopK: 3,
       defaultThreshold: 0.5,
     }),

@@ -34,7 +34,7 @@ describe('Happy Path Integration Tests', () => {
 
     mockSummarizerClass = {
       create: vi.fn().mockResolvedValue(mockSummarizer),
-      availability: vi.fn().mockResolvedValue('readily'),
+      availability: vi.fn().mockResolvedValue('available'),
     };
 
     (global.self as any).Summarizer = mockSummarizerClass;

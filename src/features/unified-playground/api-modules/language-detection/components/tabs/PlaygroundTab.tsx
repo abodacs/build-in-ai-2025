@@ -203,7 +203,7 @@ export function LanguageDetectionMain() {
           isReady={isReady}
           isLoading={isDetecting}
           loadingPhase={isDetecting ? 'initializing' : null}
-          error={error?.message || availabilityError?.message || null}
+          error={error?.message || availabilityError || null}
           modelInfo={{
             name: 'Language Detection Model',
             chromeVersion: '138+',

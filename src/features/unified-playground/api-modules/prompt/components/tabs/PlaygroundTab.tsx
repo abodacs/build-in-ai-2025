@@ -296,9 +296,9 @@ export const PlaygroundTab: React.FC = () => {
       <div className="space-y-4">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Prompt API Not Available</AlertTitle>
+          <AlertTitle>Prompt API Not Supported</AlertTitle>
           <AlertDescription>
-            The Chrome AI Prompt API is not available in your browser.
+            The Chrome AI Prompt API is not supported in your browser.
           </AlertDescription>
         </Alert>
 
@@ -643,7 +643,7 @@ export const PlaygroundTab: React.FC = () => {
           apiName="Prompt"
           availability={
             availability.isReady
-              ? 'readily'
+              ? 'available'
               : availability.requiresDownload
                 ? 'after-download'
                 : 'no'

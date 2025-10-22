@@ -71,7 +71,7 @@ export interface TranslatorAvailability {
 /**
  * Availability status values
  */
-export type AvailabilityStatus = 'no' | 'after-download' | 'readily';
+export type AvailabilityStatus = 'no' | 'after-download' | 'available';
 
 /**
  * Download progress event
@@ -563,6 +563,8 @@ export interface UseTranslatorAvailabilityReturn {
   availability: AvailabilityStatus | null;
   isChecking: boolean;
   error: Error | null;
+  isReady: boolean;
+  requiresDownload: boolean;
   recheck: () => void;
   downloadProgress: number | null; // 0-100 percentage, null if not downloading
 }

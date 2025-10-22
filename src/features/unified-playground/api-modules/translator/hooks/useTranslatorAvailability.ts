@@ -80,7 +80,7 @@ function setCachedAvailability(
  * ```tsx
  * const { availability, isChecking, error } = useTranslatorAvailability('en', 'es');
  *
- * if (availability === 'readily') {
+ * if (availability === 'available') {
  *   // Ready to translate
  * } else if (availability === 'after-download') {
  *   // Model needs to be downloaded first
@@ -201,10 +201,16 @@ export function useTranslatorAvailability(
     checkAvailability();
   }, [checkAvailability]);
 
+  // Derived state - is API ready to use
+  const isReady = availability === 'available';
+  const requiresDownload = availability === 'after-download';
+
   return {
     availability,
     isChecking,
     error,
+    isReady,
+    requiresDownload,
     recheck,
     downloadProgress,
   };

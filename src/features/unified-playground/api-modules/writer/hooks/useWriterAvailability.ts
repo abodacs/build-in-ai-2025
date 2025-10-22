@@ -8,37 +8,78 @@
  * - Availability status checking
  * - Browser support detection
  * - Download requirement detection
- * - Automatic retries
+ * - System requirements validation
+ * - Browser capabilities detection
+ * - Model download with progress tracking
  * - Error handling
  *
  * @module writer/hooks/useWriterAvailability
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { WriterChromeAIService } from '../services';
-import type { WriterAvailabilityState } from '../types';
+import { useState, useEffect, useCallback } from 'react';
+import { WriterChromeAIService, WriterErrorHandler } from '../services';
+import type { DownloadProgress } from '../../shared/types';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-/**
- * Availability hook actions
- */
-export interface UseWriterAvailabilityActions {
-  /** Check availability */
-  checkAvailability: () => Promise<void>;
+export interface SystemRequirements {
+  chromeVersion: string;
+  storageRequired: string;
+  vramRequired: string;
+  networkRequired: boolean;
+}
 
-  /** Refresh availability status */
-  refresh: () => Promise<void>;
+export interface BrowserCapabilities {
+  supported: boolean;
+  version: 'window' | 'none';
+  availability: 'no' | 'after-download' | 'available';
+  capabilities: {
+    streaming: boolean;
+    downloadProgress: boolean;
+  };
 }
 
 /**
  * Hook return type
  */
-export interface UseWriterAvailabilityReturn extends WriterAvailabilityState {
-  /** Actions */
-  actions: UseWriterAvailabilityActions;
+export interface UseWriterAvailabilityReturn {
+  /** Availability status */
+  availability: 'no' | 'after-download' | 'available';
+
+  /** System requirements */
+  requirements: SystemRequirements | null;
+
+  /** Browser capabilities */
+  capabilities: BrowserCapabilities | null;
+
+  /** Is checking availability */
+  isChecking: boolean;
+
+  /** Is downloading model */
+  isDownloading: boolean;
+
+  /** Download progress */
+  downloadProgress: DownloadProgress | null;
+
+  /** Error if availability check failed */
+  error: string | null;
+
+  /** Refresh availability status */
+  refresh: () => Promise<void>;
+
+  /** Start model download */
+  startDownload: () => Promise<void>;
+
+  /** Is API supported */
+  isSupported: boolean;
+
+  /** Is model ready to use */
+  isReady: boolean;
+
+  /** Requires download (alias for availability === 'after-download') */
+  requiresDownload: boolean;
 }
 
 // ============================================================================
@@ -49,9 +90,8 @@ export interface UseWriterAvailabilityReturn extends WriterAvailabilityState {
  * Hook for Writer API availability checking
  *
  * Automatically checks availability on mount and provides
- * actions to refresh the status.
+ * model download capabilities with progress tracking.
  *
- * @param autoCheck - Whether to check on mount (default: true)
  * @returns Availability state and actions
  *
  * @example
@@ -59,137 +99,211 @@ export interface UseWriterAvailabilityReturn extends WriterAvailabilityState {
  * function WriterAvailabilityCheck() {
  *   const {
  *     availability,
- *     isChecking,
- *     error,
- *     isSupported,
- *     requiresDownload,
- *     actions,
+ *     isReady,
+ *     isDownloading,
+ *     downloadProgress,
+ *     startDownload,
  *   } = useWriterAvailability();
  *
- *   if (isChecking) {
- *     return <div>Checking availability...</div>;
+ *   if (!isReady) {
+ *     return <ModelDownloadButton onDownload={startDownload} />;
  *   }
  *
- *   if (error) {
- *     return <div>Error: {error.message}</div>;
- *   }
- *
- *   if (!isSupported) {
- *     return (
- *       <div>
- *         Writer API not supported. Requires Chrome 137+.
- *       </div>
- *     );
- *   }
- *
- *   if (requiresDownload) {
- *     return (
- *       <div>
- *         Model download required. Click Generate to start download.
- *       </div>
- *     );
- *   }
- *
- *   return <div>Writer API is ready to use!</div>;
+ *   return <Writer />;
  * }
  * ```
  */
-export function useWriterAvailability(
-  autoCheck = true,
-): UseWriterAvailabilityReturn {
+export function useWriterAvailability(): UseWriterAvailabilityReturn {
   // State
   const [availability, setAvailability] = useState<
-    'no' | 'after-download' | 'readily' | null
-  >(null);
-  const [isChecking, setIsChecking] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [isSupported, setIsSupported] = useState(false);
-  const [requiresDownload, setRequiresDownload] = useState(false);
+    'no' | 'after-download' | 'available'
+  >('no');
+  const [requirements, setRequirements] = useState<SystemRequirements | null>(
+    null,
+  );
+  const [capabilities, setCapabilities] = useState<BrowserCapabilities | null>(
+    null,
+  );
+  const [isChecking, setIsChecking] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] =
+    useState<DownloadProgress | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Refs
-  const isMountedRef = useRef(true);
-  const hasCheckedRef = useRef(false);
+  // Computed values
+  const isSupported = WriterChromeAIService.isSupported();
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
+  // Model is ready when:
+  // 1. Availability is 'available' (model downloaded and available)
+  // 2. Not currently downloading
+  // 3. API is supported
+  const isReady = availability === 'available' && !isDownloading && isSupported;
+
+  /**
+   * Detect browser capabilities
+   */
+  const detectCapabilities = useCallback(
+    async (currentAvailability: 'no' | 'after-download' | 'available') => {
+      const caps: BrowserCapabilities = {
+        supported: isSupported,
+        version: isSupported ? 'window' : 'none',
+        availability: currentAvailability,
+        capabilities: {
+          streaming: true, // Writer supports streaming via writeStreaming
+          downloadProgress: true, // Writer supports download progress monitoring
+        },
+      };
+      setCapabilities(caps);
+      return caps;
+    },
+    [isSupported],
+  );
 
   /**
    * Check availability
    */
   const checkAvailability = useCallback(async () => {
-    if (!isMountedRef.current) return;
-
     setIsChecking(true);
     setError(null);
 
     try {
       // Check if API is supported
-      const supported = WriterChromeAIService.isSupported();
-      setIsSupported(supported);
-
-      if (!supported) {
+      if (!isSupported) {
         setAvailability('no');
-        setRequiresDownload(false);
-        setIsChecking(false);
+        setRequirements({
+          chromeVersion: 'Chrome 137+',
+          storageRequired: '22+ GB free storage',
+          vramRequired: '4+ GB VRAM',
+          networkRequired: true,
+        });
+        await detectCapabilities('no');
         return;
       }
 
-      // Check detailed availability
-      const result = await WriterChromeAIService.checkDetailedAvailability();
+      // Check availability
+      const status = await WriterChromeAIService.checkAvailability();
+      setAvailability(status);
+      setRequirements({
+        chromeVersion: 'Chrome 137+',
+        storageRequired: '22 GB free storage',
+        vramRequired: '4 GB VRAM',
+        networkRequired: status === 'after-download',
+      });
 
-      if (isMountedRef.current) {
-        setAvailability(result.availability);
-        setRequiresDownload(result.requiresDownload);
-        setIsChecking(false);
-        hasCheckedRef.current = true;
+      // Detect capabilities
+      await detectCapabilities(status);
+
+      // Check system requirements
+      const sysReqs = await WriterChromeAIService.checkSystemRequirements();
+
+      // Validate system requirements
+      if (!sysReqs.browser.supported) {
+        setError(
+          `Writer API requires Chrome ${sysReqs.browser.requiredVersion}+ (current version: ${sysReqs.browser.version})`,
+        );
+      }
+
+      if (!sysReqs.online) {
+        setError('Internet connection required for model download');
       }
     } catch (err) {
-      if (isMountedRef.current) {
-        const error =
-          err instanceof Error
-            ? err
-            : new Error('Failed to check availability');
-        setError(error);
-        setAvailability('no');
-        setIsSupported(false);
-        setRequiresDownload(false);
-        setIsChecking(false);
-      }
+      const handledError = WriterErrorHandler.handleError(err);
+      setError(handledError.message);
+      setAvailability('no');
+    } finally {
+      setIsChecking(false);
     }
-  }, []);
+  }, [isSupported, detectCapabilities]);
 
   /**
    * Refresh availability status
    */
   const refresh = useCallback(async () => {
-    hasCheckedRef.current = false;
     await checkAvailability();
   }, [checkAvailability]);
 
-  // Auto-check on mount
-  useEffect(() => {
-    if (autoCheck && !hasCheckedRef.current) {
-      checkAvailability();
+  /**
+   * Start model download
+   */
+  const startDownload = useCallback(async () => {
+    console.log('[useWriterAvailability] startDownload called', {
+      availability,
+    });
+
+    if (availability !== 'after-download') {
+      console.warn(
+        '[useWriterAvailability] Model download not needed. Current availability:',
+        availability,
+      );
+      return;
     }
-  }, [autoCheck, checkAvailability]);
+
+    console.log('[useWriterAvailability] Starting download...');
+    setIsDownloading(true);
+    setDownloadProgress(null);
+    setError(null);
+
+    let currentProgress = 0;
+
+    try {
+      await WriterChromeAIService.downloadModel((progress) => {
+        console.log('[useWriterAvailability] Progress update:', progress);
+        currentProgress = progress.loaded;
+        setDownloadProgress(progress);
+      });
+
+      console.log(
+        '[useWriterAvailability] Download complete, waiting for Chrome to register model...',
+      );
+
+      // Give Chrome a moment to register the downloaded model
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      console.log('[useWriterAvailability] Refreshing availability...');
+
+      // Download complete - refresh availability
+      await checkAvailability();
+
+      console.log('[useWriterAvailability] Availability refreshed:', {
+        availability,
+      });
+    } catch (err) {
+      console.error('[useWriterAvailability] Download error:', err);
+      const handledError = WriterErrorHandler.handleDownloadError(
+        err,
+        currentProgress,
+      );
+      setError(handledError.message);
+    } finally {
+      setIsDownloading(false);
+      setDownloadProgress(null);
+      console.log('[useWriterAvailability] Download cleanup complete');
+    }
+  }, [availability, checkAvailability]);
+
+  /**
+   * Initial availability check on mount
+   */
+  useEffect(() => {
+    checkAvailability();
+  }, [checkAvailability]);
+
+  // Derived property - requires download
+  const requiresDownload = availability === 'after-download';
 
   return {
-    // State
     availability,
+    requirements,
+    capabilities,
     isChecking,
+    isDownloading,
+    downloadProgress,
     error,
+    refresh,
+    startDownload,
     isSupported,
+    isReady,
     requiresDownload,
-
-    // Actions
-    actions: {
-      checkAvailability,
-      refresh,
-    },
   };
 }
 

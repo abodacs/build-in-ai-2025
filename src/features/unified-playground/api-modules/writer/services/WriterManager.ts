@@ -93,13 +93,9 @@ export class WriterManager extends BaseWritingManager<
       tone: config.tone,
       format: config.format,
       length: config.length,
+      outputLanguage: config.outputLanguage, // Required for optimal output quality and safety attestation
       sharedContext: config.sharedContext || undefined,
     };
-
-    // Only include outputLanguage if explicitly set (Chrome API may not support this)
-    if (config.outputLanguage) {
-      options.outputLanguage = config.outputLanguage;
-    }
 
     return options;
   }
@@ -422,13 +418,9 @@ export class WriterManager extends BaseWritingManager<
       tone: options.tone || 'neutral',
       format: options.format || 'plain-text',
       length: options.length || 'medium',
+      outputLanguage: options.outputLanguage || 'en',
       sharedContext: '',
     };
-
-    // Only include outputLanguage if provided
-    if (options.outputLanguage) {
-      config.outputLanguage = options.outputLanguage;
-    }
 
     return config;
   }

@@ -143,7 +143,7 @@ export interface Proofreader {
  */
 export interface ProofreaderAPI {
   create(options?: ProofreaderCreateOptions): Promise<Proofreader>;
-  availability(): Promise<'no' | 'after-download' | 'readily'>;
+  availability(): Promise<'no' | 'after-download' | 'available'>;
 }
 
 // ============================================================================

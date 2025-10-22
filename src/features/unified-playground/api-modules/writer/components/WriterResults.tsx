@@ -18,6 +18,104 @@ import {
 import { cn } from '@/lib/utils';
 import type { PerformanceMetrics } from '../../shared/types';
 import { useState } from 'react';
+import { Streamdown } from 'streamdown';
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
+import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
+import python from 'react-syntax-highlighter/dist/esm/languages/prism/python';
+import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
+import bash from 'react-syntax-highlighter/dist/esm/languages/prism/bash';
+import {
+  oneDark,
+  oneLight,
+} from 'react-syntax-highlighter/dist/esm/styles/prism';
+import type { Components } from 'react-markdown';
+
+// Register common languages for syntax highlighting
+SyntaxHighlighter.registerLanguage('typescript', typescript);
+SyntaxHighlighter.registerLanguage('javascript', javascript);
+SyntaxHighlighter.registerLanguage('python', python);
+SyntaxHighlighter.registerLanguage('json', json);
+SyntaxHighlighter.registerLanguage('bash', bash);
+
+// ============================================================================
+// Markdown Components
+// ============================================================================
+
+/**
+ * Custom markdown components for Streamdown
+ * Provides syntax highlighting for code blocks
+ */
+const createMarkdownComponents = (
+  isDarkMode: boolean,
+): Partial<Components> => ({
+  code: ({ node: _node, inline, className, children, ...props }: any) => {
+    const match = /language-(\w+)/.exec(className || '');
+    const language = match?.[1] ?? '';
+
+    // Supported languages for syntax highlighting
+    const supportedLanguages = [
+      'typescript',
+      'ts',
+      'javascript',
+      'js',
+      'tsx',
+      'jsx',
+      'python',
+      'py',
+      'json',
+      'bash',
+      'sh',
+    ];
+    const normalizedLang = language.toLowerCase();
+    const isSupported = supportedLanguages.includes(normalizedLang);
+
+    if (!inline && isSupported) {
+      const displayLang =
+        normalizedLang === 'ts' || normalizedLang === 'tsx'
+          ? 'typescript'
+          : normalizedLang === 'js' || normalizedLang === 'jsx'
+            ? 'javascript'
+            : normalizedLang === 'py'
+              ? 'python'
+              : normalizedLang === 'sh'
+                ? 'bash'
+                : normalizedLang;
+
+      return (
+        <div className="relative group my-4">
+          <div className="absolute top-2 right-2 text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded z-10">
+            {displayLang}
+          </div>
+          <SyntaxHighlighter
+            language={displayLang}
+            style={isDarkMode ? oneDark : oneLight}
+            customStyle={{
+              margin: 0,
+              borderRadius: '0.375rem',
+              fontSize: '0.875rem',
+              padding: '1rem',
+            }}
+            showLineNumbers
+            {...props}
+          >
+            {String(children).replace(/\n$/, '')}
+          </SyntaxHighlighter>
+        </div>
+      );
+    }
+
+    // Inline code
+    return (
+      <code
+        className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-sm font-mono"
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  },
+});
 
 // ============================================================================
 // Types
@@ -88,6 +186,10 @@ export function WriterResults({
 }: WriterResultsProps) {
   const [copied, setCopied] = useState(false);
 
+  // Detect dark mode for syntax highlighting
+  const isDarkMode = document.documentElement.classList.contains('dark');
+  const markdownComponents = createMarkdownComponents(isDarkMode);
+
   const handleCopy = async () => {
     if (onCopy) {
       onCopy();
@@ -129,9 +231,7 @@ export function WriterResults({
               'overflow-auto max-h-[500px]',
             )}
           >
-            <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
-              {content}
-            </div>
+            <Streamdown components={markdownComponents}>{content}</Streamdown>
           </div>
         )}
 

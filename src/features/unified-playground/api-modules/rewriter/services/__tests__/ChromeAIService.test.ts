@@ -31,7 +31,7 @@ const mockRewriterInstance: Rewriter = {
 };
 
 const mockRewriterAPI: RewriterAPI = {
-  availability: vi.fn().mockResolvedValue('readily'),
+  availability: vi.fn().mockResolvedValue('available'),
   create: vi.fn().mockResolvedValue(mockRewriterInstance),
 };
 
@@ -51,7 +51,7 @@ beforeEach(() => {
   );
   mockRewriterInstance.destroy = vi.fn();
 
-  mockRewriterAPI.availability = vi.fn().mockResolvedValue('readily');
+  mockRewriterAPI.availability = vi.fn().mockResolvedValue('available');
   mockRewriterAPI.create = vi.fn().mockResolvedValue(mockRewriterInstance);
 
   // Set up window.Rewriter - check if it exists first
@@ -133,10 +133,10 @@ describe('ChromeAIRewriterService', () => {
 
   describe('checkAvailability', () => {
     it('returns "readily" when API is ready', async () => {
-      mockRewriterAPI.availability = vi.fn().mockResolvedValue('readily');
+      mockRewriterAPI.availability = vi.fn().mockResolvedValue('available');
 
       const status = await ChromeAIRewriterService.checkAvailability();
-      expect(status).toBe('readily');
+      expect(status).toBe('available');
     });
 
     it('returns "after-download" when model download required', async () => {

@@ -49,7 +49,7 @@ describe('Performance Tests', () => {
         await new Promise((resolve) => setTimeout(resolve, delay));
         return mockSummarizer;
       }),
-      availability: vi.fn().mockResolvedValue('readily'),
+      availability: vi.fn().mockResolvedValue('available'),
     };
 
     (global.self as any).Summarizer = mockSummarizerClass;

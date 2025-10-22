@@ -93,7 +93,7 @@ export function QuickTemplates({
     : selectedCategory
       ? TEMPLATE_CATEGORIES.find((c) => c.id === selectedCategory)?.templates ||
         []
-      : [];
+      : TEMPLATE_CATEGORIES.flatMap((c) => c.templates);
 
   const handleSelectTemplate = (template: WriterTemplate) => {
     // Apply template
@@ -247,14 +247,18 @@ export function QuickTemplates({
                   </Button>
                 ))
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-12 px-4">
+                  <Sparkles className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
                   {searchQuery ? (
-                    <div className="space-y-2">
-                      <p className="text-sm">
-                        No templates found for &quot;{searchQuery}&quot;
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-foreground">
+                        No templates found
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        No templates match &quot;{searchQuery}&quot;
                       </p>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => setSearchQuery('')}
                         className="text-xs"
@@ -263,9 +267,15 @@ export function QuickTemplates({
                       </Button>
                     </div>
                   ) : (
-                    <p className="text-sm">
-                      Select a category or search for templates
-                    </p>
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-foreground">
+                        Get Started with Templates
+                      </p>
+                      <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+                        Select a category above or use the search bar to find
+                        the perfect template for your content needs
+                      </p>
+                    </div>
                   )}
                 </div>
               )}

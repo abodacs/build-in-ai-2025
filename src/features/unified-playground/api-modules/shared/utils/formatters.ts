@@ -321,12 +321,12 @@ export function formatConfig(config: Record<string, any>): string {
  * @returns Human-readable status
  */
 export function formatAvailabilityStatus(
-  status: 'no' | 'after-download' | 'readily',
+  status: 'no' | 'after-download' | 'available',
 ): string {
   const statusMap = {
-    no: 'Not Available',
+    no: 'Not Supported',
     'after-download': 'Available After Download',
-    readily: 'Ready to Use',
+    available: 'Ready to Use',
   };
 
   return statusMap[status] || status;

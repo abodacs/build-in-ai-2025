@@ -103,10 +103,10 @@ export function useSummarizerAvailability(): UseSummarizerAvailabilityReturn {
   const isSupported = ChromeAIService.isSupported();
 
   // Model is ready when:
-  // 1. Availability is 'readily' (model downloaded and available)
+  // 1. Availability is 'available' (model downloaded and available)
   // 2. Not currently downloading
   // 3. API is supported
-  const isReady = availability === 'readily' && !isDownloading && isSupported;
+  const isReady = availability === 'available' && !isDownloading && isSupported;
 
   /**
    * Check availability
@@ -197,7 +197,7 @@ export function useSummarizerAvailability(): UseSummarizerAvailabilityReturn {
       );
 
       // Give Chrome a moment to register the downloaded model
-      // Chrome needs time to process and mark the model as 'readily' available
+      // Chrome needs time to process and mark the model as 'available' available
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       console.log('[useSummarizerAvailability] Refreshing availability...');

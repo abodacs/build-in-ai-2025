@@ -126,13 +126,13 @@ describe('TranslatorManager', () => {
 
     it('checks availability returns readily', async () => {
       // Arrange
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       // Act
       const result = await manager.checkAvailability('en', 'es');
 
       // Assert
-      expect(result).toBe('readily');
+      expect(result).toBe('available');
       expect(mockAPI.availability).toHaveBeenCalledWith({
         sourceLanguage: 'en',
         targetLanguage: 'es',

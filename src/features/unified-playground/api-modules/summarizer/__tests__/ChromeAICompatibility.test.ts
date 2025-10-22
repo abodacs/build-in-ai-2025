@@ -234,13 +234,13 @@ describe('ChromeAICompatibility', () => {
       it('should handle official API "readily" status', async () => {
         // Arrange
         (global.self as any).Summarizer = mockSelfSummarizer;
-        mockSelfSummarizer.availability.mockResolvedValue('readily');
+        mockSelfSummarizer.availability.mockResolvedValue('available');
 
         // Act
         const availability = await ChromeAICompatibility.checkAvailability();
 
         // Assert
-        expect(availability).toBe('readily');
+        expect(availability).toBe('available');
       });
 
       it('should handle official API "after-download" status', async () => {
@@ -276,7 +276,7 @@ describe('ChromeAICompatibility', () => {
         const availability = await ChromeAICompatibility.checkAvailability();
 
         // Assert
-        expect(availability).toBe('readily');
+        expect(availability).toBe('available');
       });
 
       it('should normalize playground "downloadable" to "after-download"', async () => {
@@ -389,7 +389,7 @@ describe('ChromeAICompatibility', () => {
       it('should detect streaming support when available', async () => {
         // Arrange
         (global.self as any).Summarizer = mockSelfSummarizer;
-        mockSelfSummarizer.availability.mockResolvedValue('readily');
+        mockSelfSummarizer.availability.mockResolvedValue('available');
         mockSelfSummarizer.create.mockResolvedValue({
           summarizeStreaming: vi.fn(),
           destroy: vi.fn(),
@@ -406,7 +406,7 @@ describe('ChromeAICompatibility', () => {
       it('should detect no streaming when not available', async () => {
         // Arrange
         (global.self as any).Summarizer = mockSelfSummarizer;
-        mockSelfSummarizer.availability.mockResolvedValue('readily');
+        mockSelfSummarizer.availability.mockResolvedValue('available');
         mockSelfSummarizer.create.mockResolvedValue({
           summarize: vi.fn(),
           destroy: vi.fn(),
@@ -422,7 +422,7 @@ describe('ChromeAICompatibility', () => {
       it('should assume download progress is supported', async () => {
         // Arrange
         (global.self as any).Summarizer = mockSelfSummarizer;
-        mockSelfSummarizer.availability.mockResolvedValue('readily');
+        mockSelfSummarizer.availability.mockResolvedValue('available');
         mockSelfSummarizer.create.mockResolvedValue({});
 
         // Act
@@ -435,7 +435,7 @@ describe('ChromeAICompatibility', () => {
       it('should assume context support is available', async () => {
         // Arrange
         (global.self as any).Summarizer = mockSelfSummarizer;
-        mockSelfSummarizer.availability.mockResolvedValue('readily');
+        mockSelfSummarizer.availability.mockResolvedValue('available');
         mockSelfSummarizer.create.mockResolvedValue({});
 
         // Act
@@ -448,7 +448,7 @@ describe('ChromeAICompatibility', () => {
       it('should cache capability results', async () => {
         // Arrange
         (global.self as any).Summarizer = mockSelfSummarizer;
-        mockSelfSummarizer.availability.mockResolvedValue('readily');
+        mockSelfSummarizer.availability.mockResolvedValue('available');
         mockSelfSummarizer.create.mockResolvedValue({
           summarizeStreaming: vi.fn(),
           destroy: vi.fn(),
@@ -466,7 +466,7 @@ describe('ChromeAICompatibility', () => {
       it('should re-detect capabilities after cache clear', async () => {
         // Arrange
         (global.self as any).Summarizer = mockSelfSummarizer;
-        mockSelfSummarizer.availability.mockResolvedValue('readily');
+        mockSelfSummarizer.availability.mockResolvedValue('available');
         mockSelfSummarizer.create.mockResolvedValue({});
 
         // Act
@@ -481,7 +481,7 @@ describe('ChromeAICompatibility', () => {
       it('should handle streaming check errors gracefully', async () => {
         // Arrange
         (global.self as any).Summarizer = mockSelfSummarizer;
-        mockSelfSummarizer.availability.mockResolvedValue('readily');
+        mockSelfSummarizer.availability.mockResolvedValue('available');
         mockSelfSummarizer.create.mockRejectedValue(new Error('Create error'));
         const consoleSpy = vi
           .spyOn(console, 'warn')
@@ -751,7 +751,7 @@ describe('ChromeAICompatibility', () => {
         const result = ChromeAICompatibility.getAPIVersionString();
 
         // Assert
-        expect(result).toBe('Not Available');
+        expect(result).toBe('Not Supported');
       });
     });
 
@@ -804,7 +804,7 @@ describe('ChromeAICompatibility', () => {
         // Assert
         expect(info).toEqual({
           version: 'none',
-          versionString: 'Not Available',
+          versionString: 'Not Supported',
           supported: false,
           apiAvailable: false,
           isOfficial: false,
@@ -837,7 +837,7 @@ describe('ChromeAICompatibility', () => {
       it('should clear capabilities cache', async () => {
         // Arrange
         (global.self as any).Summarizer = mockSelfSummarizer;
-        mockSelfSummarizer.availability.mockResolvedValue('readily');
+        mockSelfSummarizer.availability.mockResolvedValue('available');
         mockSelfSummarizer.create.mockResolvedValue({});
         await ChromeAICompatibility.detectCapabilities();
 
@@ -872,7 +872,7 @@ describe('ChromeAICompatibility', () => {
       it('should clear cache and re-detect capabilities', async () => {
         // Arrange
         (global.self as any).Summarizer = mockSelfSummarizer;
-        mockSelfSummarizer.availability.mockResolvedValue('readily');
+        mockSelfSummarizer.availability.mockResolvedValue('available');
         mockSelfSummarizer.create.mockResolvedValue({});
         await ChromeAICompatibility.detectCapabilities();
 
@@ -981,7 +981,7 @@ describe('ChromeAICompatibility', () => {
     it('should handle concurrent capability detection', async () => {
       // Arrange
       (global.self as any).Summarizer = mockSelfSummarizer;
-      mockSelfSummarizer.availability.mockResolvedValue('readily');
+      mockSelfSummarizer.availability.mockResolvedValue('available');
       mockSelfSummarizer.create.mockResolvedValue({});
 
       // Act

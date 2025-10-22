@@ -16,9 +16,9 @@
  *
  * - 'no': API not available
  * - 'after-download': Available after downloading model
- * - 'readily': Immediately available
+ * - 'available': Immediately available
  */
-export type AvailabilityStatus = 'no' | 'after-download' | 'readily';
+export type AvailabilityStatus = 'no' | 'after-download' | 'available';
 
 /**
  * Download progress information for model downloads

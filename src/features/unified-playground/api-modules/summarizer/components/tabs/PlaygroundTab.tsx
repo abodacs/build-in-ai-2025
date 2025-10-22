@@ -53,7 +53,7 @@ export interface PlaygroundTabProps {
   onConfigChange: (config: SummarizerCreateOptions) => void;
 
   /** Availability status */
-  availability: 'readily' | 'after-download' | 'no';
+  availability: 'available' | 'after-download' | 'no';
 
   /** Is model ready */
   isReady: boolean;
@@ -358,10 +358,10 @@ export function PlaygroundTab({
    * Uses handlersRef to access latest handleSummarize
    */
   useEffect(() => {
-    // Check if availability just changed from 'after-download' to 'readily'
+    // Check if availability just changed from 'after-download' to 'available'
     if (
       previousAvailability.current === 'after-download' &&
-      availability === 'readily' &&
+      availability === 'available' &&
       pendingSummarization &&
       inputText.length >= 100
     ) {
@@ -455,9 +455,9 @@ export function PlaygroundTab({
       <div className={cn('space-y-4', className)}>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Summarizer API Not Available</AlertTitle>
+          <AlertTitle>Summarizer API Not Supported</AlertTitle>
           <AlertDescription>
-            The Chrome AI Summarizer is not available in your browser.
+            The Chrome AI Summarizer is not supported in your browser.
           </AlertDescription>
         </Alert>
 

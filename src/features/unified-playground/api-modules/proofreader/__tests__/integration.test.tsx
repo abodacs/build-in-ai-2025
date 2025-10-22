@@ -18,7 +18,7 @@ beforeEach(() => {
   // Setup Chrome AI mock
   (globalThis as any).Proofreader = {
     create: vi.fn().mockResolvedValue(mockProofreader),
-    availability: vi.fn().mockResolvedValue('readily'),
+    availability: vi.fn().mockResolvedValue('available'),
   };
 
   mockProofread.mockResolvedValue({

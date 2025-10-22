@@ -87,7 +87,7 @@ export async function runAiTask<T>(
   try {
     if (!isAiAvailable()) {
       throw new Error(
-        'Chrome AI APIs not available. Please use Chrome 138+ with AI features enabled.',
+        'Chrome AI APIs not available. Please use Chrome 137+ with AI features enabled.',
       );
     }
 
@@ -179,14 +179,17 @@ export async function generateText(
 ): Promise<AiResponse<string>> {
   return runAiTask('generateText', async () => {
     if (!isWriterSupported()) {
-      throw new Error('Writer API not available');
+      throw new Error(
+        'Writer API not supported. Requires Chrome 137+ with chrome://flags#writer-api-for-gemini-nano enabled.',
+      );
     }
 
-    const writerClass = (globalThis as TODO_TYPE).Writer;
+    const writerClass = (window as any).Writer;
     const writer = await writerClass.create({
       tone: options.tone || 'neutral',
       format: options.format || 'plain-text',
       length: options.length || 'medium',
+      outputLanguage: 'en',
     });
 
     try {
