@@ -133,11 +133,11 @@ describe('PromptManager', () => {
 
   describe('Availability Checking', () => {
     it('checks API availability (static method)', async () => {
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       const result = await PromptManager.checkAvailability();
 
-      expect(result).toBe('readily');
+      expect(result).toBe('available');
     });
 
     it('checks if API is supported (static method)', () => {

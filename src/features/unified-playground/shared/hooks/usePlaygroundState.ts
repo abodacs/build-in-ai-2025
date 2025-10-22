@@ -153,13 +153,13 @@ const API_CONFIG: Record<
  * @returns Normalized status: "available" or "unavailable"
  *
  * @example
- * normalizeAvailability('readily') // Returns: 'available'
+ * normalizeAvailability('available') // Returns: 'available'
  * normalizeAvailability('after-download') // Returns: 'available'
  * normalizeAvailability('no') // Returns: 'unavailable'
  */
 function normalizeAvailability(rawStatus: string): 'available' | 'unavailable' {
   if (
-    rawStatus === 'readily' ||
+    rawStatus === 'available' ||
     rawStatus === 'available' ||
     rawStatus === 'after-download'
   ) {

@@ -56,7 +56,7 @@ beforeEach(() => {
     mockRewriterInstance,
   );
   vi.mocked(ChromeAIRewriterService.checkAvailability).mockResolvedValue(
-    'readily',
+    'available',
   );
   vi.mocked(ChromeAIRewriterService.rewrite).mockResolvedValue(
     'Rewritten text',
@@ -470,7 +470,7 @@ describe('RewriterManager', () => {
       const status = await manager.checkAvailability();
 
       expect(ChromeAIRewriterService.checkAvailability).toHaveBeenCalled();
-      expect(status).toBe('readily');
+      expect(status).toBe('available');
     });
   });
 

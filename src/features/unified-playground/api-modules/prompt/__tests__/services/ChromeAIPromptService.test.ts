@@ -46,11 +46,11 @@ describe('ChromeAIPromptService', () => {
 
   describe('checkAvailability', () => {
     it('returns readily when model is available', async () => {
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       const result = await ChromeAIPromptService.checkAvailability();
 
-      expect(result).toBe('readily');
+      expect(result).toBe('available');
       expect(mockAPI.availability).toHaveBeenCalled();
     });
 

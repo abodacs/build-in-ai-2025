@@ -44,7 +44,7 @@ describe('ProofreaderManager', () => {
     // Setup default mocks
     vi.mocked(ChromeAIProofreaderService.isSupported).mockReturnValue(true);
     vi.mocked(ChromeAIProofreaderService.checkAvailability).mockResolvedValue(
-      'readily',
+      'available',
     );
     vi.mocked(ChromeAIProofreaderService.createInstance).mockResolvedValue(
       mockProofreader,

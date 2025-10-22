@@ -9,6 +9,7 @@ export type { UseWriterActions, UseWriterReturn } from './useWriter';
 
 export { useWriterAvailability } from './useWriterAvailability';
 export type {
-  UseWriterAvailabilityActions,
   UseWriterAvailabilityReturn,
+  SystemRequirements,
+  BrowserCapabilities,
 } from './useWriterAvailability';

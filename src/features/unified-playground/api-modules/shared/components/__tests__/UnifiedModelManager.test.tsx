@@ -77,9 +77,9 @@ describe('UnifiedModelManager', () => {
   // ==========================================================================
 
   describe('Status Badges', () => {
-    it('should show "Not Available" badge when availability is "no"', () => {
+    it('should show "Not Supported" badge when availability is "no"', () => {
       render(<UnifiedModelManager {...defaultProps} availability="no" />);
-      expect(screen.getByText('Not Available')).toBeInTheDocument();
+      expect(screen.getByText('Not Supported')).toBeInTheDocument();
     });
 
     it('should show "Needs Download" badge when availability is "after-download"', () => {
@@ -579,7 +579,7 @@ describe('UnifiedModelManager', () => {
         <UnifiedModelManager {...defaultProps} availability={'no' as any} />,
       );
 
-      expect(screen.getByText('Not Available')).toBeInTheDocument();
+      expect(screen.getByText('Not Supported')).toBeInTheDocument();
     });
 
     it('should handle model info without optional fields', () => {

@@ -449,7 +449,7 @@ export function WritingConfigPanel<
                       sharedContext: e.target.value,
                     })
                   }
-                  placeholder="e.g., 'Business communication for a tech company', 'Casual blog for millennials'"
+                  placeholder="Enter consistent context to guide all AI generations (e.g., 'casual tone for tech blog')"
                   rows={2}
                   className="resize-none text-sm"
                   disabled={disabled}

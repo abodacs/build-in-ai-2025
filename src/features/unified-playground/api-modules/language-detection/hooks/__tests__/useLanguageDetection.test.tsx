@@ -12,7 +12,7 @@ import { useLanguageDetection } from '../useLanguageDetection';
 // Mock ChromeAILanguageDetectionService
 vi.mock('../../services', () => ({
   ChromeAILanguageDetectionService: {
-    checkAvailability: vi.fn().mockResolvedValue('readily'),
+    checkAvailability: vi.fn().mockResolvedValue('available'),
     createInstance: vi.fn().mockResolvedValue({
       detect: vi.fn().mockResolvedValue([
         { detectedLanguage: 'en', confidence: 0.95 },

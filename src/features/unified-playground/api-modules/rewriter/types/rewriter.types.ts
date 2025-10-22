@@ -111,7 +111,7 @@ export interface Rewriter {
  */
 export interface RewriterAPI {
   create(options?: RewriterCreateOptions): Promise<Rewriter>;
-  availability(): Promise<'no' | 'after-download' | 'readily'>;
+  availability(): Promise<'no' | 'after-download' | 'available'>;
 }
 
 // ============================================================================

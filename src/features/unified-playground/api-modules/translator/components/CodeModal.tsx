@@ -125,7 +125,7 @@ interface Translator {
   destroy(): void;
 }
 
-type AvailabilityStatus = 'no' | 'after-download' | 'readily';
+type AvailabilityStatus = 'no' | 'after-download' | 'available';
 
 declare global {
   interface Window {

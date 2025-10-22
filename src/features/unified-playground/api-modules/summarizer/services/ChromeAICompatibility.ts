@@ -122,11 +122,11 @@ export class ChromeAICompatibility {
   private static normalizeAvailability(
     rawAvailability: unknown,
   ): SummarizerAvailability {
-    // Official API returns: 'no', 'after-download', 'readily'
+    // Official API returns: 'no', 'after-download', 'available'
     if (
       rawAvailability === 'no' ||
       rawAvailability === 'after-download' ||
-      rawAvailability === 'readily'
+      rawAvailability === 'available'
     ) {
       return rawAvailability as SummarizerAvailability;
     }
@@ -136,7 +136,7 @@ export class ChromeAICompatibility {
 
     switch (playgroundAvailability) {
       case 'available':
-        return 'readily';
+        return 'available';
 
       case 'downloadable':
         return 'after-download';
@@ -190,7 +190,7 @@ export class ChromeAICompatibility {
 
     // Only check capabilities if model is ready
     // Skip if model needs download to avoid "user activation required" errors
-    const canCheckCapabilities = availability === 'readily';
+    const canCheckCapabilities = availability === 'available';
 
     // Check if streaming is supported (only if model is ready)
     const streamingSupported = canCheckCapabilities
@@ -414,7 +414,7 @@ export class ChromeAICompatibility {
 
       case 'none':
       default:
-        return 'Not Available';
+        return 'Not Supported';
     }
   }
 

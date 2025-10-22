@@ -19,7 +19,7 @@ describe('TranslatorConfig', () => {
     onTargetLanguageChange: vi.fn(),
     onContextChange: vi.fn(),
     onSwapLanguages: vi.fn(),
-    availability: 'readily' as const,
+    availability: 'available' as const,
     isCheckingAvailability: false,
     advancedSettings: {
       streamingThreshold: 1000,

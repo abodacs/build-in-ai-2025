@@ -52,7 +52,7 @@ export interface DownloadErrorEvent extends Event {
 /**
  * Summarizer availability states
  */
-export type SummarizerAvailability = 'no' | 'after-download' | 'readily';
+export type SummarizerAvailability = 'no' | 'after-download' | 'available';
 
 /**
  * Summarizer create options
@@ -94,7 +94,7 @@ export interface ChromeSummarizerAPI {
 /**
  * Translator availability states
  */
-export type TranslatorAvailability = 'no' | 'after-download' | 'readily';
+export type TranslatorAvailability = 'no' | 'after-download' | 'available';
 
 /**
  * Translator create options

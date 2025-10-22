@@ -36,7 +36,7 @@ beforeEach(() => {
 
   // Default mocks - API is supported and readily available
   mockChromeAIService.isSupported.mockReturnValue(true);
-  mockChromeAIService.checkAvailability.mockResolvedValue('readily');
+  mockChromeAIService.checkAvailability.mockResolvedValue('available');
 });
 
 afterEach(() => {
@@ -76,13 +76,13 @@ describe('useRewriterAvailability', () => {
 
   describe('Availability Status - Readily Available', () => {
     it('sets availability to readily when API is ready', async () => {
-      mockChromeAIService.checkAvailability.mockResolvedValue('readily');
+      mockChromeAIService.checkAvailability.mockResolvedValue('available');
 
       const { result } = renderHook(() => useRewriterAvailability());
 
       await waitFor(() => {
         expect(result.current.isChecking).toBe(false);
-        expect(result.current.availability).toBe('readily');
+        expect(result.current.availability).toBe('available');
         expect(result.current.isReady).toBe(true);
         expect(result.current.requiresDownload).toBe(false);
       });
@@ -90,7 +90,7 @@ describe('useRewriterAvailability', () => {
 
     it('sets isSupported to true when API is readily available', async () => {
       mockChromeAIService.isSupported.mockReturnValue(true);
-      mockChromeAIService.checkAvailability.mockResolvedValue('readily');
+      mockChromeAIService.checkAvailability.mockResolvedValue('available');
 
       const { result } = renderHook(() => useRewriterAvailability());
 
@@ -213,7 +213,7 @@ describe('useRewriterAvailability', () => {
     });
 
     it('rechecks availability when recheckAvailability is called', async () => {
-      mockChromeAIService.checkAvailability.mockResolvedValue('readily');
+      mockChromeAIService.checkAvailability.mockResolvedValue('available');
 
       const { result } = renderHook(() => useRewriterAvailability());
 
@@ -244,7 +244,7 @@ describe('useRewriterAvailability', () => {
       });
 
       // Change to readily available
-      mockChromeAIService.checkAvailability.mockResolvedValue('readily');
+      mockChromeAIService.checkAvailability.mockResolvedValue('available');
 
       // Recheck
       await waitFor(async () => {
@@ -253,7 +253,7 @@ describe('useRewriterAvailability', () => {
 
       // Should now be readily available
       await waitFor(() => {
-        expect(result.current.availability).toBe('readily');
+        expect(result.current.availability).toBe('available');
         expect(result.current.requiresDownload).toBe(false);
         expect(result.current.isReady).toBe(true);
       });
@@ -267,7 +267,7 @@ describe('useRewriterAvailability', () => {
       });
 
       mockChromeAIService.checkAvailability
-        .mockResolvedValueOnce('readily') // Initial check
+        .mockResolvedValueOnce('available') // Initial check
         .mockReturnValueOnce(availabilityPromise); // Recheck - controlled timing
 
       const { result } = renderHook(() => useRewriterAvailability());
@@ -286,7 +286,7 @@ describe('useRewriterAvailability', () => {
       });
 
       // Complete recheck
-      resolveAvailability!('readily');
+      resolveAvailability!('available');
 
       // isChecking should be false after recheck
       await waitFor(() => {
@@ -307,7 +307,7 @@ describe('useRewriterAvailability', () => {
       });
 
       // Second check succeeds
-      mockChromeAIService.checkAvailability.mockResolvedValue('readily');
+      mockChromeAIService.checkAvailability.mockResolvedValue('available');
 
       await waitFor(async () => {
         await result.current.recheckAvailability();
@@ -316,7 +316,7 @@ describe('useRewriterAvailability', () => {
       // Error should be cleared
       await waitFor(() => {
         expect(result.current.error).toBeNull();
-        expect(result.current.availability).toBe('readily');
+        expect(result.current.availability).toBe('available');
       });
     });
   });
@@ -329,11 +329,11 @@ describe('useRewriterAvailability', () => {
     it('sets isReady true only when readily available', async () => {
       const scenarios: Array<
         [
-          availability: 'readily' | 'after-download' | 'no',
+          availability: 'available' | 'after-download' | 'no',
           expectedReady: boolean,
         ]
       > = [
-        ['readily', true],
+        ['available', true],
         ['after-download', false],
         ['no', false],
       ];
@@ -354,11 +354,11 @@ describe('useRewriterAvailability', () => {
     it('sets requiresDownload true only when after-download', async () => {
       const scenarios: Array<
         [
-          availability: 'readily' | 'after-download' | 'no',
+          availability: 'available' | 'after-download' | 'no',
           expectedDownload: boolean,
         ]
       > = [
-        ['readily', false],
+        ['available', false],
         ['after-download', true],
         ['no', false],
       ];
@@ -378,9 +378,12 @@ describe('useRewriterAvailability', () => {
 
     it('isSupported reflects browser support regardless of availability', async () => {
       const scenarios: Array<
-        [supported: boolean, availability: 'readily' | 'after-download' | 'no']
+        [
+          supported: boolean,
+          availability: 'available' | 'after-download' | 'no',
+        ]
       > = [
-        [true, 'readily'],
+        [true, 'available'],
         [true, 'after-download'],
         [true, 'no'],
         [false, 'no'],
@@ -423,7 +426,7 @@ describe('useRewriterAvailability', () => {
       unmount();
 
       // Resolve availability check after unmount
-      resolveAvailability!('readily');
+      resolveAvailability!('available');
 
       // Wait a bit
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -441,7 +444,7 @@ describe('useRewriterAvailability', () => {
 
   describe('Edge Cases', () => {
     it('handles rapid recheck calls gracefully', async () => {
-      mockChromeAIService.checkAvailability.mockResolvedValue('readily');
+      mockChromeAIService.checkAvailability.mockResolvedValue('available');
 
       const { result } = renderHook(() => useRewriterAvailability());
 
@@ -460,7 +463,7 @@ describe('useRewriterAvailability', () => {
 
       await waitFor(() => {
         expect(result.current.isChecking).toBe(false);
-        expect(result.current.availability).toBe('readily');
+        expect(result.current.availability).toBe('available');
       });
     });
 

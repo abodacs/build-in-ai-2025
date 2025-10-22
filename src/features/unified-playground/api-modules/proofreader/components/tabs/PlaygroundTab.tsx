@@ -39,9 +39,7 @@ export function ProofreaderMain() {
   } | null>(null);
 
   // Availability hook for model management
-  const { availability, isReady } = useProofreaderAvailability({
-    checkOnMount: true,
-  });
+  const { availability, isReady } = useProofreaderAvailability();
 
   const {
     isProofreading,

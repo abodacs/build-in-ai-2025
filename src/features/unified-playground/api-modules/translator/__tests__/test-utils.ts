@@ -56,7 +56,7 @@ export function createMockStream(
 export function createMockTranslatorAPI() {
   return {
     create: vi.fn().mockResolvedValue(createMockTranslator()),
-    availability: vi.fn().mockResolvedValue('readily' as AvailabilityStatus),
+    availability: vi.fn().mockResolvedValue('available' as AvailabilityStatus),
   };
 }
 

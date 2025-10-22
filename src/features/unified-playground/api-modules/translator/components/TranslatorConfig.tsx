@@ -97,7 +97,7 @@ export function TranslatorConfig({
     }
 
     switch (status) {
-      case 'readily':
+      case 'available':
         return 'Translation API is ready. You can translate immediately.';
       case 'after-download':
         return 'Translation model needs to be downloaded first. This will happen automatically on first use.';
@@ -134,7 +134,7 @@ export function TranslatorConfig({
     }
 
     switch (availability) {
-      case 'readily':
+      case 'available':
         return {
           variant: 'default' as const,
           text: 'Ready to translate',

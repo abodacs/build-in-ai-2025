@@ -17,7 +17,7 @@ const mockWriter = {
 
 global.Writer = {
   create: vi.fn(async () => mockWriter),
-  availability: vi.fn(async () => 'readily'),
+  availability: vi.fn(async () => 'available'),
 } as any;
 
 describe('WriterManager', () => {

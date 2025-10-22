@@ -99,7 +99,7 @@ describe('Prompt API Integration', () => {
     it('checks availability, creates instance, and executes', async () => {
       // Check availability
       const availability = await ChromeAIPromptService.checkAvailability();
-      expect(availability).toBe('readily');
+      expect(availability).toBe('available');
 
       // Create instance
       const instance = await ChromeAIPromptService.createInstance({

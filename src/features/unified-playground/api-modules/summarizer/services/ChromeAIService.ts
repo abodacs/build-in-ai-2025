@@ -115,7 +115,7 @@ export class ChromeAIService {
 
       // Playground API might return 'available' or 'downloadable'
       if (availabilityStr === 'available') {
-        availability = 'readily';
+        availability = 'available';
       } else if (availabilityStr === 'downloadable') {
         availability = 'after-download';
       } else if (availabilityStr === 'downloading') {
@@ -124,7 +124,7 @@ export class ChromeAIService {
       } else if (availabilityStr === 'not-available') {
         availability = 'no';
       } else {
-        // Official API: 'no', 'after-download', 'readily'
+        // Official API: 'no', 'after-download', 'available'
         availability = rawAvailability;
       }
 
@@ -172,10 +172,13 @@ export class ChromeAIService {
     }
 
     // Check availability first
-    const availability = await SummarizerAPI.availability();
+    const rawAvailability = await SummarizerAPI.availability();
+    // Normalize 'readily' to 'available' for consistency
+    const availability =
+      (rawAvailability as any) === 'readily' ? 'available' : rawAvailability;
     console.log('[ChromeAIService] Current availability:', availability);
 
-    if (availability === 'readily') {
+    if (availability === 'available') {
       console.log(
         '[ChromeAIService] Model already available, no download needed',
       );

@@ -167,13 +167,13 @@ describe('ChromeAIService', () => {
       it('should return "readily" when API is immediately available', async () => {
         // Arrange
         (global.self as any).Summarizer = mockSummarizer;
-        mockSummarizer.availability.mockResolvedValue('readily');
+        mockSummarizer.availability.mockResolvedValue('available');
 
         // Act
         const result = await ChromeAIService.checkAvailability();
 
         // Assert
-        expect(result.availability).toBe('readily');
+        expect(result.availability).toBe('available');
         expect(result.requirements.networkRequired).toBe(false);
         expect(mockSummarizer.availability).toHaveBeenCalledOnce();
       });
@@ -200,7 +200,7 @@ describe('ChromeAIService', () => {
         const result = await ChromeAIService.checkAvailability();
 
         // Assert
-        expect(result.availability).toBe('readily');
+        expect(result.availability).toBe('available');
       });
 
       it('should normalize playground "downloadable" to "after-download"', async () => {
@@ -701,7 +701,7 @@ describe('ChromeAIService', () => {
     it('should handle concurrent availability checks', async () => {
       // Arrange
       (global.self as any).Summarizer = mockSummarizer;
-      mockSummarizer.availability.mockResolvedValue('readily');
+      mockSummarizer.availability.mockResolvedValue('available');
 
       // Act
       const results = await Promise.all([
@@ -713,7 +713,7 @@ describe('ChromeAIService', () => {
       // Assert
       expect(results).toHaveLength(3);
       results.forEach((result) => {
-        expect(result.availability).toBe('readily');
+        expect(result.availability).toBe('available');
       });
     });
   });

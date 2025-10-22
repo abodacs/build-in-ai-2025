@@ -89,14 +89,12 @@ export function PlaygroundTab() {
     error: availabilityError,
     isSupported,
     requiresDownload,
+    isReady,
   } = useWriterAvailability();
-
-  // Derive isReady state for UnifiedModelManager
-  const isReady = availability === 'readily';
 
   // Toast hook
   const { toast, open, showToast, hideToast } = useToast();
-
+  console.log('🔔 Toast state: availability', { availability });
   /**
    * Validate prompt input
    */
@@ -127,6 +125,11 @@ export function PlaygroundTab() {
    */
   const handleSelectTemplate = (template: WriterTemplate) => {
     setPrompt(template.prompt);
+
+    // Set context if template has one
+    if (template.context !== undefined) {
+      setContext(template.context);
+    }
 
     // Scroll to input
     document.getElementById('writer-prompt')?.scrollIntoView({
@@ -323,7 +326,7 @@ export function PlaygroundTab() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="text-sm">
-            {availabilityError.message}
+            {availabilityError}
           </AlertDescription>
         </Alert>
       )}
@@ -456,7 +459,7 @@ export function PlaygroundTab() {
           isReady={isReady}
           isLoading={isLoading}
           loadingPhase={isLoading ? 'initializing' : null}
-          error={error?.message || availabilityError?.message || null}
+          error={error?.message || availabilityError || null}
           modelInfo={{
             name: 'Writer Model',
             chromeVersion: '138+',

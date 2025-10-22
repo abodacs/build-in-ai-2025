@@ -40,7 +40,7 @@ describe('Integration Tests', () => {
 
     mockSummarizerClass = {
       create: vi.fn().mockResolvedValue(mockSummarizer),
-      availability: vi.fn().mockResolvedValue('readily'),
+      availability: vi.fn().mockResolvedValue('available'),
     };
 
     (global.self as any).Summarizer = mockSummarizerClass;
@@ -418,12 +418,12 @@ describe('Integration Tests', () => {
       const availability = await mockSummarizerClass.availability();
 
       // Act - Different paths based on availability
-      if (availability === 'readily') {
+      if (availability === 'available') {
         const summary = await manager.summarize(text, {}, { type: 'tldr' });
         expect(summary).toBeTruthy();
       } else {
         // Fallback behavior
-        expect(availability).not.toBe('readily');
+        expect(availability).not.toBe('available');
       }
 
       // Assert

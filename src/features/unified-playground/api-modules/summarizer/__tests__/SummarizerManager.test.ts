@@ -35,7 +35,7 @@ describe('SummarizerManager', () => {
     // Create mock Summarizer API class
     mockSummarizerClass = {
       create: vi.fn().mockResolvedValue(mockSummarizer),
-      availability: vi.fn().mockResolvedValue('readily'),
+      availability: vi.fn().mockResolvedValue('available'),
     };
 
     // Mock global API

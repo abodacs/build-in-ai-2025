@@ -59,7 +59,7 @@ describe('usePromptAvailability', () => {
 
   describe('API Support Detection', () => {
     it('detects when API is supported', async () => {
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       const { result } = renderHook(() => usePromptAvailability());
 
@@ -68,7 +68,7 @@ describe('usePromptAvailability', () => {
       });
 
       expect(result.current.isSupported).toBe(true);
-      expect(result.current.availability).toBe('readily');
+      expect(result.current.availability).toBe('available');
     });
 
     it('detects when API is not supported', async () => {
@@ -105,7 +105,7 @@ describe('usePromptAvailability', () => {
 
   describe('Readiness', () => {
     it('reports ready when availability is readily', async () => {
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       const { result } = renderHook(() => usePromptAvailability());
 
@@ -142,7 +142,7 @@ describe('usePromptAvailability', () => {
   describe('Capability Detection', () => {
     it('retrieves API capabilities', async () => {
       mockAPI.capabilities.mockResolvedValue({
-        available: 'readily',
+        available: 'available',
         defaultTopK: 3,
         maxTopK: 128,
         defaultTemperature: 0.7,
@@ -206,7 +206,7 @@ describe('usePromptAvailability', () => {
 
     it('recovers from errors on refresh', async () => {
       mockAPI.availability.mockRejectedValueOnce(new Error('First error'));
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       const { result } = renderHook(() => usePromptAvailability());
 
@@ -219,7 +219,7 @@ describe('usePromptAvailability', () => {
 
       await waitFor(() => {
         expect(result.current.error).toBeNull();
-        expect(result.current.availability).toBe('readily');
+        expect(result.current.availability).toBe('available');
       });
     });
   });
@@ -240,7 +240,7 @@ describe('usePromptAvailability', () => {
     });
 
     it('allows manual availability check', async () => {
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       const { result } = renderHook(() => usePromptAvailability());
 
@@ -250,7 +250,7 @@ describe('usePromptAvailability', () => {
 
       const availability = await result.current.checkAvailability();
 
-      expect(availability).toBe('readily');
+      expect(availability).toBe('available');
     });
 
     it('provides refresh function', async () => {
@@ -264,7 +264,7 @@ describe('usePromptAvailability', () => {
     });
 
     it('re-checks availability on refresh', async () => {
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       const { result } = renderHook(() => usePromptAvailability());
 
@@ -288,7 +288,7 @@ describe('usePromptAvailability', () => {
 
   describe('Lifecycle', () => {
     it('checks availability on mount', async () => {
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       renderHook(() => usePromptAvailability());
 
@@ -298,7 +298,7 @@ describe('usePromptAvailability', () => {
     });
 
     it('does not check twice on mount', async () => {
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       renderHook(() => usePromptAvailability());
 
@@ -310,7 +310,9 @@ describe('usePromptAvailability', () => {
     it('handles unmount gracefully', async () => {
       mockAPI.availability.mockImplementation(
         () =>
-          new Promise((resolve) => setTimeout(() => resolve('readily'), 1000)),
+          new Promise((resolve) =>
+            setTimeout(() => resolve('available'), 1000),
+          ),
       );
 
       const { unmount } = renderHook(() => usePromptAvailability());
@@ -328,7 +330,7 @@ describe('usePromptAvailability', () => {
 
   describe('Details and Metadata', () => {
     it('provides detailed availability information', async () => {
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       const { result } = renderHook(() => usePromptAvailability());
 
@@ -341,7 +343,7 @@ describe('usePromptAvailability', () => {
     });
 
     it('indicates browser support correctly', async () => {
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       const { result } = renderHook(() => usePromptAvailability());
 
@@ -367,7 +369,7 @@ describe('usePromptAvailability', () => {
 
   describe('Edge Cases', () => {
     it('handles concurrent refresh calls', async () => {
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       const { result } = renderHook(() => usePromptAvailability());
 
@@ -391,7 +393,7 @@ describe('usePromptAvailability', () => {
     it('handles slow API responses', async () => {
       mockAPI.availability.mockImplementation(
         () =>
-          new Promise((resolve) => setTimeout(() => resolve('readily'), 100)),
+          new Promise((resolve) => setTimeout(() => resolve('available'), 100)),
       );
 
       const { result } = renderHook(() => usePromptAvailability());
@@ -405,12 +407,12 @@ describe('usePromptAvailability', () => {
         { timeout: 200 },
       );
 
-      expect(result.current.availability).toBe('readily');
+      expect(result.current.availability).toBe('available');
     });
 
     it('handles API changes during check', async () => {
       mockAPI.availability.mockResolvedValueOnce('after-download');
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       const { result } = renderHook(() => usePromptAvailability());
 
@@ -421,7 +423,7 @@ describe('usePromptAvailability', () => {
       result.current.refresh();
 
       await waitFor(() => {
-        expect(result.current.availability).toBe('readily');
+        expect(result.current.availability).toBe('available');
       });
     });
   });

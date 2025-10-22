@@ -36,7 +36,7 @@ describe('useTranslatorAvailability', () => {
   describe('Happy Path', () => {
     it('checks availability on mount', async () => {
       // Arrange
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       // Act
       const { result } = renderHook(() =>
@@ -49,14 +49,14 @@ describe('useTranslatorAvailability', () => {
           sourceLanguage: 'en',
           targetLanguage: 'es',
         });
-        expect(result.current.availability).toBe('readily');
+        expect(result.current.availability).toBe('available');
         expect(result.current.isChecking).toBe(false);
       });
     });
 
     it('returns readily status for available pair', async () => {
       // Arrange
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       // Act
       const { result } = renderHook(() =>
@@ -65,7 +65,7 @@ describe('useTranslatorAvailability', () => {
 
       // Assert
       await waitFor(() => {
-        expect(result.current.availability).toBe('readily');
+        expect(result.current.availability).toBe('available');
       });
     });
 
@@ -101,7 +101,7 @@ describe('useTranslatorAvailability', () => {
 
     it('provides recheck function', async () => {
       // Arrange
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       // Act
       const { result } = renderHook(() =>
@@ -116,7 +116,7 @@ describe('useTranslatorAvailability', () => {
 
     it('caches availability result in sessionStorage', async () => {
       // Arrange
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       // Act
       const { result } = renderHook(() =>
@@ -125,7 +125,7 @@ describe('useTranslatorAvailability', () => {
 
       // Assert
       await waitFor(() => {
-        expect(result.current.availability).toBe('readily');
+        expect(result.current.availability).toBe('available');
       });
 
       // Check sessionStorage has cached value
@@ -134,7 +134,7 @@ describe('useTranslatorAvailability', () => {
       );
       expect(cachedValue).toBeTruthy();
       const parsed = JSON.parse(cachedValue!);
-      expect(parsed.status).toBe('readily');
+      expect(parsed.status).toBe('available');
     });
   });
 
@@ -145,7 +145,7 @@ describe('useTranslatorAvailability', () => {
   describe('Edge Cases', () => {
     it('uses cached result on second mount', async () => {
       // Arrange
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       // First mount
       const { unmount } = renderHook(() =>
@@ -164,14 +164,14 @@ describe('useTranslatorAvailability', () => {
       );
 
       // Assert - Should have cached value immediately without calling API again
-      expect(result.current.availability).toBe('readily');
+      expect(result.current.availability).toBe('available');
       // May call API in background, but result should be from cache
     });
 
     it('recheck forces new availability check skipping cache', async () => {
       // Arrange
       mockAPI.availability
-        .mockResolvedValueOnce('readily')
+        .mockResolvedValueOnce('available')
         .mockResolvedValueOnce('after-download');
 
       // Act
@@ -180,7 +180,7 @@ describe('useTranslatorAvailability', () => {
       );
 
       await waitFor(() => {
-        expect(result.current.availability).toBe('readily');
+        expect(result.current.availability).toBe('available');
       });
 
       // Act - Recheck
@@ -210,7 +210,7 @@ describe('useTranslatorAvailability', () => {
 
     it('updates when language pair changes', async () => {
       // Arrange
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       // Act
       const { result, rerender } = renderHook(
@@ -219,7 +219,7 @@ describe('useTranslatorAvailability', () => {
       );
 
       await waitFor(() => {
-        expect(result.current.availability).toBe('readily');
+        expect(result.current.availability).toBe('available');
       });
 
       // Change languages

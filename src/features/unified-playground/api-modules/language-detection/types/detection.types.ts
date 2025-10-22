@@ -53,7 +53,7 @@ export interface LanguageDetector {
  */
 export interface LanguageDetectorAPI {
   create(options?: LanguageDetectorCreateOptions): Promise<LanguageDetector>;
-  availability(): Promise<'no' | 'after-download' | 'readily'>;
+  availability(): Promise<'no' | 'after-download' | 'available'>;
 }
 
 // ============================================================================

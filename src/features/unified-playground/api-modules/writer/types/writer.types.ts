@@ -109,7 +109,7 @@ declare global {
   interface Window {
     Writer: {
       create(options?: WriterCreateOptions): Promise<Writer>;
-      availability(): Promise<'no' | 'after-download' | 'readily'>;
+      availability(): Promise<'no' | 'after-download' | 'available'>;
     };
   }
   const Writer: Window['Writer'];
@@ -126,7 +126,7 @@ export interface WriterConfig extends BaseWritingConfig {
   tone: WriterTone;
   format: WriterFormat;
   length: WriterLength;
-  outputLanguage?: WriterLanguage; // Optional - only use if Chrome API supports it
+  outputLanguage: WriterLanguage; // Required for optimal output quality and safety attestation
   sharedContext?: string;
 }
 
@@ -137,7 +137,7 @@ export const DEFAULT_WRITER_CONFIG: WriterConfig = {
   tone: 'neutral',
   format: 'plain-text',
   length: 'medium',
-  // outputLanguage: Not set by default - Chrome API may not support this parameter
+  outputLanguage: 'en',
   sharedContext: '',
 };
 
@@ -236,7 +236,7 @@ export interface WriterState {
  */
 export interface WriterAvailabilityState {
   /** Availability status */
-  availability: 'no' | 'after-download' | 'readily' | null;
+  availability: 'no' | 'after-download' | 'available' | null;
 
   /** Is checking availability */
   isChecking: boolean;
@@ -273,6 +273,9 @@ export interface WriterTemplate {
 
   /** Prompt template */
   prompt: string;
+
+  /** Write-specific context (for this particular generation) */
+  context?: string;
 
   /** Recommended configuration */
   config?: Partial<WriterConfig>;

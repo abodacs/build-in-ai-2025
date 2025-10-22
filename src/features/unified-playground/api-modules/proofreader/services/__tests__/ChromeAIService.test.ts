@@ -28,7 +28,7 @@ describe('ChromeAIProofreaderService', () => {
     (window as any).Proofreader = mockAPI;
 
     // Default mock responses
-    mockAPI.availability.mockResolvedValue('readily');
+    mockAPI.availability.mockResolvedValue('available');
     mockAPI.create.mockResolvedValue(mockProofreader);
   });
 
@@ -60,11 +60,11 @@ describe('ChromeAIProofreaderService', () => {
 
   describe('checkAvailability', () => {
     it('should return readily when API is available', async () => {
-      mockAPI.availability.mockResolvedValue('readily');
+      mockAPI.availability.mockResolvedValue('available');
 
       const result = await ChromeAIProofreaderService.checkAvailability();
 
-      expect(result).toBe('readily');
+      expect(result).toBe('available');
       expect(mockAPI.availability).toHaveBeenCalledOnce();
     });
 

@@ -105,7 +105,7 @@ interface WriterCreateOptions {
 
 interface WriterAPI {
   create(options?: WriterCreateOptions): Promise<Writer>;
-  availability(): Promise<'readily' | 'after-download' | 'no'>;
+  availability(): Promise<'available' | 'after-download' | 'no'>;
 }
 
 declare global {
@@ -131,8 +131,7 @@ const config: WriterCreateOptions = ${configStr};
 async function checkAvailability(): Promise<boolean> {
   if (!('Writer' in window)) {
     throw new Error(
-      'Chrome AI Writer not supported. ' +
-      'Requires Chrome 137+ with chrome://flags#writer-api-for-gemini-nano enabled.'
+      'Writer API not supported. Requires Chrome 137+ with chrome://flags#writer-api-for-gemini-nano enabled.'
     );
   }
 
@@ -147,7 +146,7 @@ async function checkAvailability(): Promise<boolean> {
     // Model will download automatically on first create() call
   }
 
-  return availability === 'readily';
+  return availability === 'available';
 }
 
 /**
@@ -317,8 +316,7 @@ const config = ${configStr};
 async function checkAvailability() {
   if (!('Writer' in window)) {
     throw new Error(
-      'Chrome AI Writer not supported. ' +
-      'Requires Chrome 137+ with chrome://flags#writer-api-for-gemini-nano enabled.'
+      'Writer API not supported. Requires Chrome 137+ with chrome://flags#writer-api-for-gemini-nano enabled.'
     );
   }
 
@@ -333,7 +331,7 @@ async function checkAvailability() {
     // Model will download automatically on first create() call
   }
 
-  return availability === 'readily';
+  return availability === 'available';
 }
 
 /**
