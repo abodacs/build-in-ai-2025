@@ -54,3 +54,10 @@ export type {
   DownloadProgress as SharedDownloadProgress,
   LoadingPhase,
 } from './UnifiedModelManager';
+
+// Model download progress
+export { ModelDownloadProgress } from './ModelDownloadProgress';
+export type {
+  ModelDownloadProgressProps,
+  DownloadProgress as ModelDownloadProgressData,
+} from './ModelDownloadProgress';

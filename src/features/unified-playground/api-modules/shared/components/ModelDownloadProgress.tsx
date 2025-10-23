@@ -1,8 +1,10 @@
 /**
  * Model Download Progress Component
  *
- * Displays progress when downloading the AI model for the first time
+ * Shared component for displaying AI model download progress
  * Shows download size, progress bar, and estimated time remaining
+ *
+ * @module shared/components/ModelDownloadProgress
  */
 
 import { useEffect, useState } from 'react';
@@ -17,23 +19,18 @@ import { cn } from '@/lib/utils';
 // Types
 // ============================================================================
 
-export interface DownloadProgressEvent {
+export interface DownloadProgress {
   loaded: number;
   total: number;
+  percentage: number;
 }
 
 export interface ModelDownloadProgressProps {
   /** Whether download is in progress */
   isDownloading: boolean;
 
-  /** Download progress (0-100) */
-  progress: number;
-
-  /** Downloaded bytes */
-  loaded?: number;
-
-  /** Total bytes */
-  total?: number;
+  /** Download progress */
+  progress: DownloadProgress | null;
 
   /** Error message */
   error?: string;
@@ -91,9 +88,7 @@ function estimateTimeRemaining(
  * ```tsx
  * <ModelDownloadProgress
  *   isDownloading={isDownloading}
- *   progress={progress}
- *   loaded={loaded}
- *   total={total}
+ *   progress={downloadProgress}
  *   onCancel={() => controller.abort()}
  * />
  * ```
@@ -101,8 +96,6 @@ function estimateTimeRemaining(
 export function ModelDownloadProgress({
   isDownloading,
   progress,
-  loaded = 0,
-  total = 0,
   error,
   onCancel,
   onRetry,
@@ -113,13 +106,20 @@ export function ModelDownloadProgress({
 
   // Update ETA
   useEffect(() => {
-    if (isDownloading && loaded > 0 && total > 0) {
+    if (
+      isDownloading &&
+      progress &&
+      progress.loaded > 0 &&
+      progress.total > 0
+    ) {
       const interval = setInterval(() => {
-        setEta(estimateTimeRemaining(loaded, total, startTime));
+        setEta(
+          estimateTimeRemaining(progress.loaded, progress.total, startTime),
+        );
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [isDownloading, loaded, total, startTime]);
+  }, [isDownloading, progress, startTime]);
 
   // Don't render if not downloading and no error
   if (!isDownloading && !error) {
@@ -150,6 +150,10 @@ export function ModelDownloadProgress({
   }
 
   // Downloading state
+  const percentage = progress?.percentage || 0;
+  const loaded = progress?.loaded || 0;
+  const total = progress?.total || 0;
+
   return (
     <Card className={cn('p-6 border-blue-200 bg-blue-50/50', className)}>
       <div className="space-y-4">
@@ -182,9 +186,9 @@ export function ModelDownloadProgress({
 
         {/* Progress Bar */}
         <div className="space-y-2">
-          <Progress value={progress} className="h-2" />
+          <Progress value={percentage} className="h-2" />
           <div className="flex items-center justify-between text-xs text-blue-700">
-            <span className="font-medium">{Math.round(progress)}%</span>
+            <span className="font-medium">{Math.round(percentage)}%</span>
             {total > 0 && (
               <span>
                 {formatBytes(loaded)} / {formatBytes(total)}
@@ -196,9 +200,10 @@ export function ModelDownloadProgress({
 
         {/* Info */}
         <div className="text-xs text-blue-600 space-y-1">
-          <p>• Model size: ~1-2 GB (varies by device)</p>
+          <p>• Model size: ~22 GB (Gemini Nano)</p>
           <p>• Downloaded once and cached for future use</p>
           <p>• All processing happens locally on your device</p>
+          <p>• No data is sent to external servers</p>
         </div>
       </div>
     </Card>
