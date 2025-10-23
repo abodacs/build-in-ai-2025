@@ -328,6 +328,7 @@ export function PlaygroundTab({
     isDownloading,
     isReady,
     config,
+    DEFAULT_SUMMARY_CONTEXT,
     streamingMode,
     inputText,
     startDownload,

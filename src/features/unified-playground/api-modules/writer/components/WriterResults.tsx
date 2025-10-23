@@ -49,7 +49,17 @@ SyntaxHighlighter.registerLanguage('bash', bash);
 const createMarkdownComponents = (
   isDarkMode: boolean,
 ): Partial<Components> => ({
-  code: ({ node: _node, inline, className, children, ...props }: any) => {
+  code: ({
+    inline,
+    className,
+    children,
+    ref: _ref,
+    ...props
+  }: React.ClassAttributes<HTMLElement> &
+    React.HTMLAttributes<HTMLElement> & {
+      inline?: boolean;
+      node?: unknown;
+    }) => {
     const match = /language-(\w+)/.exec(className || '');
     const language = match?.[1] ?? '';
 
@@ -89,7 +99,8 @@ const createMarkdownComponents = (
           </div>
           <SyntaxHighlighter
             language={displayLang}
-            style={isDarkMode ? oneDark : oneLight}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            style={isDarkMode ? (oneDark as any) : (oneLight as any)}
             customStyle={{
               margin: 0,
               borderRadius: '0.375rem',
@@ -97,7 +108,7 @@ const createMarkdownComponents = (
               padding: '1rem',
             }}
             showLineNumbers
-            {...props}
+            {...(props as React.HTMLAttributes<HTMLElement>)}
           >
             {String(children).replace(/\n$/, '')}
           </SyntaxHighlighter>

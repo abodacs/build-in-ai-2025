@@ -65,7 +65,7 @@ function isHighlightsAPISupported(): boolean {
   return (
     typeof window !== 'undefined' &&
     'CSS' in window &&
-    'highlights' in (CSS as any)
+    'highlights' in (CSS as unknown as { highlights?: Map<string, unknown> })
   );
 }
 
@@ -175,9 +175,11 @@ export function HighlightedTextEditor({
     const textContent = getTextContent(element);
 
     // Clear existing highlights
-    if ((CSS as any).highlights) {
-      const highlights = (CSS as any).highlights as Map<string, any>;
-      highlights.clear();
+    const cssWithHighlights = CSS as unknown as {
+      highlights?: Map<string, unknown>;
+    };
+    if (cssWithHighlights.highlights) {
+      cssWithHighlights.highlights.clear();
     }
 
     // No corrections to highlight
@@ -205,7 +207,10 @@ export function HighlightedTextEditor({
     correctionsByType.forEach((typeCorrections, type) => {
       try {
         // Create Highlight instance
-        const highlight = new (window as any).Highlight();
+        const windowWithHighlight = window as unknown as {
+          Highlight: new () => { add: (range: Range) => void };
+        };
+        const highlight = new windowWithHighlight.Highlight();
 
         typeCorrections.forEach((correction) => {
           // Validate indices
@@ -229,7 +234,10 @@ export function HighlightedTextEditor({
 
         // Register highlight with CSS
         const highlightName = `proofreader-${type}`;
-        (CSS as any).highlights.set(highlightName, highlight);
+        const cssWithHighlights = CSS as unknown as {
+          highlights?: Map<string, unknown>;
+        };
+        cssWithHighlights.highlights?.set(highlightName, highlight);
       } catch (error) {
         console.error(`Failed to create highlight for ${type}:`, error);
       }
@@ -348,8 +356,11 @@ export function HighlightedTextEditor({
    */
   useEffect(() => {
     return () => {
-      if (highlightsSupported && (CSS as any).highlights) {
-        (CSS as any).highlights.clear();
+      if (highlightsSupported) {
+        const cssWithHighlights = CSS as unknown as {
+          highlights?: Map<string, unknown>;
+        };
+        cssWithHighlights.highlights?.clear();
       }
     };
   }, [highlightsSupported]);

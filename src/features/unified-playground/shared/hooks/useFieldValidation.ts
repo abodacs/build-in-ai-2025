@@ -23,7 +23,7 @@ import { useState, useEffect, useCallback } from 'react';
 /**
  * Validation rule interface
  */
-export interface ValidationRule<T = any> {
+export interface ValidationRule<T = unknown> {
   /** Validation function */
   validate: (value: T) => boolean;
 
@@ -121,7 +121,7 @@ export interface UseFieldValidationOptions {
  * ]); // This will cause validation on EVERY render!
  * ```
  */
-export function useFieldValidation<T = any>(
+export function useFieldValidation<T = unknown>(
   value: T,
   rules: ValidationRule<T>[],
   options: UseFieldValidationOptions = {},
