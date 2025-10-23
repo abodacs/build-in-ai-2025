@@ -37,8 +37,8 @@ import { FileUploadZone } from '../FileUploadZone';
 import { ChatInterface } from '../ChatInterface';
 import { ConversationHistory } from '../ConversationHistory';
 import { ImagePreview } from '../ImagePreview';
-import { StreamingIndicator } from '../StreamingIndicator';
-import { ModelDownloadProgress } from '../ModelDownloadProgress';
+import { StreamingIndicator } from '../../../shared/components/StreamingIndicator';
+import { ModelDownloadProgress } from '../../../shared/components/ModelDownloadProgress';
 import { UnifiedModelManager } from '../../../shared/components';
 import { CodeModal } from '../CodeModal';
 import { DEFAULT_PROMPT_CONFIG } from '../../types';
@@ -539,14 +539,7 @@ export const PlaygroundTab: React.FC = () => {
 
         {/* Streaming Status Indicator */}
         {prompt.isStreaming && streamingMode && (
-          <StreamingIndicator
-            isStreaming={prompt.isStreaming}
-            content={prompt.currentResponse}
-            showContent={false}
-            variant="card"
-            label="Streaming Response"
-            showElapsedTime
-          />
+          <StreamingIndicator text="Streaming Response..." variant="default" />
         )}
       </div>
 

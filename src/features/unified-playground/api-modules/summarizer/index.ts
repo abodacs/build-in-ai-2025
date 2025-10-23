@@ -40,11 +40,13 @@ export type { ModelDownloadMonitorProps } from './components/ModelDownloadMonito
 export { StreamingPerformanceMonitor } from './components/StreamingPerformanceMonitor';
 export type { StreamingPerformanceMonitorProps } from './components/StreamingPerformanceMonitor';
 
-export { ModelDownloadProgress } from './components/ModelDownloadProgress';
-export type { ModelDownloadProgressProps } from './components/ModelDownloadProgress';
+// Re-export shared ModelDownloadProgress for backwards compatibility
+export { ModelDownloadProgress } from '../shared/components/ModelDownloadProgress';
+export type { ModelDownloadProgressProps } from '../shared/components/ModelDownloadProgress';
 
-export { StreamingIndicator } from './components/StreamingIndicator';
-export type { StreamingIndicatorProps } from './components/StreamingIndicator';
+// Re-export shared StreamingIndicator for backwards compatibility
+export { StreamingIndicator } from '../shared/components/StreamingIndicator';
+export type { StreamingIndicatorProps } from '../shared/components/StreamingIndicator';
 
 // Tab Components
 export { SummarizerPlayground } from './components/tabs/SummarizerPlayground';
@@ -52,9 +54,6 @@ export type { SummarizerPlaygroundProps } from './components/tabs/SummarizerPlay
 
 export { PlaygroundTab } from './components/tabs/PlaygroundTab';
 export type { PlaygroundTabProps } from './components/tabs/PlaygroundTab';
-
-export { CodeTab } from './components/tabs/CodeTab';
-export type { CodeTabProps } from './components/tabs/CodeTab';
 
 // ============================================================================
 // Hooks
@@ -208,11 +207,10 @@ import { ChunkingStrategySelector } from './components/ChunkingStrategySelector'
 import { URLExtractionCard } from './components/URLExtractionCard';
 import { ModelDownloadMonitor } from './components/ModelDownloadMonitor';
 import { StreamingPerformanceMonitor } from './components/StreamingPerformanceMonitor';
-import { ModelDownloadProgress } from './components/ModelDownloadProgress';
-import { StreamingIndicator } from './components/StreamingIndicator';
+import { ModelDownloadProgress } from '../shared/components/ModelDownloadProgress';
+import { StreamingIndicator } from '../shared/components/StreamingIndicator';
 import { SummarizerPlayground } from './components/tabs/SummarizerPlayground';
 import { PlaygroundTab } from './components/tabs/PlaygroundTab';
-import { CodeTab } from './components/tabs/CodeTab';
 import { useSummarizer } from './hooks/useSummarizer';
 import { useSummarizerAvailability } from './hooks/useSummarizerAvailability';
 import { useModelDownload } from './hooks/useModelDownload';
@@ -239,7 +237,6 @@ export default {
   StreamingIndicator,
   SummarizerPlayground,
   PlaygroundTab,
-  CodeTab,
 
   // Hooks
   useSummarizer,

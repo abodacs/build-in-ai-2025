@@ -28,7 +28,7 @@ import { SummarizerConfig } from '../SummarizerConfig';
 import { SummarizerInput } from '../SummarizerInput';
 import { SummarizerResults } from '../SummarizerResults';
 import { ResultsSkeleton } from '../ResultsSkeleton';
-import { StreamingIndicator } from '../StreamingIndicator';
+import { StreamingIndicator } from '../../../shared/components/StreamingIndicator';
 import { UnifiedModelManager } from '../../../shared/components';
 import { QuickSamplesCard } from '../QuickSamplesCard';
 import { ChunkingStrategySelector } from '../ChunkingStrategySelector';
@@ -655,8 +655,8 @@ export function PlaygroundTab({
       {/* Streaming Status Indicator */}
       {isStreaming && (
         <StreamingIndicator
-          isActive={isStreaming}
-          charactersReceived={result?.length || 0}
+          text={`Streaming... (${result?.length || 0} characters received)`}
+          variant="default"
         />
       )}
 
