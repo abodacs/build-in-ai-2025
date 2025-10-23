@@ -190,9 +190,6 @@ export function useFieldValidation<T = any>(
       validate();
     }, debounceMs);
 
-    // Set validating state immediately
-    setValidationState((prev) => ({ ...prev, isValidating: true }));
-
     return () => clearTimeout(timer);
   }, [value, validate, debounceMs]);
 

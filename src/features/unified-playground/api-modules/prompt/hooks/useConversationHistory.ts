@@ -6,7 +6,7 @@
  * @module prompt/hooks/useConversationHistory
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { SessionManager } from '../services/SessionManager';
 import type {
   Conversation,
@@ -99,19 +99,32 @@ export function useConversationHistory(
     useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [allConversations, setAllConversations] = useState<Conversation[]>([]);
-  const [contextWindow, setContextWindow] = useState<ContextWindow>({
-    maxTokens: maxContextTokens,
-    tokensUsed: 0,
-    tokensRemaining: maxContextTokens,
-    percentageUsed: 0,
-    nearLimit: false,
-    warningMessage: null,
-  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Derived state
+  // Derived state - calculated during render using useMemo
   const messageCount = messages.length;
+
+  /**
+   * Calculate context window information based on current messages
+   * Uses useMemo to compute during render instead of in useEffect
+   */
+  const contextWindow = useMemo<ContextWindow>(() => {
+    if (messages.length === 0) {
+      return {
+        maxTokens: maxContextTokens,
+        tokensUsed: 0,
+        tokensRemaining: maxContextTokens,
+        percentageUsed: 0,
+        nearLimit: false,
+        warningMessage: null,
+      };
+    }
+
+    const tokenUsage = estimateConversationTokens(messages, systemPrompt);
+    return calculateContextWindow(tokenUsage.totalTokens, maxContextTokens);
+  }, [messages, maxContextTokens, systemPrompt]);
+
   const isNearContextLimit = contextWindow.nearLimit;
 
   // ============================================================================
@@ -418,27 +431,9 @@ export function useConversationHistory(
   // ============================================================================
 
   /**
-   * Update context window information
+   * Context window is now calculated as a memoized value above (see line 112)
+   * This section is kept for organizational consistency
    */
-  useEffect(() => {
-    if (messages.length > 0) {
-      const tokenUsage = estimateConversationTokens(messages, systemPrompt);
-      const window = calculateContextWindow(
-        tokenUsage.totalTokens,
-        maxContextTokens,
-      );
-      setContextWindow(window);
-    } else {
-      setContextWindow({
-        maxTokens: maxContextTokens,
-        tokensUsed: 0,
-        tokensRemaining: maxContextTokens,
-        percentageUsed: 0,
-        nearLimit: false,
-        warningMessage: null,
-      });
-    }
-  }, [messages, maxContextTokens, systemPrompt]);
 
   // ============================================================================
   // Export/Import

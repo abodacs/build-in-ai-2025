@@ -17,6 +17,8 @@ interface BatchTranslationCardProps {
   onTranslate: (items: BatchItem[]) => Promise<void>;
   isTranslating?: boolean;
   progress?: number;
+  results?: Array<{ id: string; original: string; translated: string }>;
+  onExport?: () => void;
 }
 
 /**
@@ -33,6 +35,8 @@ export function BatchTranslationCard({
   onTranslate,
   isTranslating = false,
   progress = 0,
+  results = [],
+  onExport,
 }: BatchTranslationCardProps) {
   const [items, setItems] = useState<Array<{ id: string; text: string }>>([
     { id: '1', text: '' },
@@ -144,13 +148,53 @@ export function BatchTranslationCard({
           <Button
             variant="outline"
             className="gap-2"
-            disabled
+            disabled={results.length === 0 || isTranslating}
+            onClick={onExport}
             data-testid="export-batch-results"
           >
             <Download className="h-4 w-4" />
-            Export
+            Export {results.length > 0 && `(${results.length})`}
           </Button>
         </div>
+
+        {/* Results Display */}
+        {results.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-medium">Translation Results</h4>
+              <span className="text-xs text-muted-foreground">
+                {results.length} items
+              </span>
+            </div>
+            <div className="max-h-64 overflow-y-auto border rounded-md">
+              <div className="divide-y">
+                {results.map((result, index) => (
+                  <div
+                    key={result.id}
+                    className="p-3 hover:bg-muted/50 transition-colors"
+                    data-testid={`batch-result-${index}`}
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-start gap-2">
+                        <span className="text-xs text-muted-foreground font-mono min-w-[2rem]">
+                          #{index + 1}
+                        </span>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm text-muted-foreground">
+                            {result.original}
+                          </p>
+                          <p className="text-sm font-medium">
+                            {result.translated}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Info */}
         <p className="text-xs text-muted-foreground text-center">

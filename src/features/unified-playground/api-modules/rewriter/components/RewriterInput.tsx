@@ -136,7 +136,7 @@ export function RewriterInput({
             disabled={disabled}
             placeholder={placeholder}
             className={cn(
-              'min-h-[200px] resize-y font-mono text-sm',
+              'min-h-[200px] resize-y font-mono text-base md:text-sm',
               !isValid && value.length > 0 && 'border-destructive',
               error && 'border-red-400 dark:border-red-500',
               disabled && 'opacity-60 cursor-not-allowed',
@@ -185,7 +185,7 @@ export function RewriterInput({
               disabled={disabled}
               rows={2}
               className={cn(
-                'resize-none text-sm',
+                'resize-none text-base md:text-sm',
                 'focus-visible:ring-2 focus-visible:ring-blue-500/50',
                 'transition-all duration-200',
               )}

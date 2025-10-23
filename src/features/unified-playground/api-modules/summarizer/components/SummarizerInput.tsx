@@ -247,7 +247,7 @@ export function SummarizerInput({
             aria-invalid={!!error}
             aria-describedby={error ? 'summarizer-input-error' : undefined}
             className={cn(
-              'min-h-[180px] sm:min-h-[240px] resize-y text-sm leading-relaxed',
+              'min-h-[180px] sm:min-h-[240px] resize-y text-base md:text-sm leading-relaxed',
               'transition-all duration-200',
               isFocused && 'ring-2 ring-purple-500 ring-offset-2',
               !isValid && value && showValidation && 'border-amber-400',

@@ -162,7 +162,7 @@ export function WriterInput({
             aria-describedby={error ? 'writer-prompt-error' : undefined}
             className={cn(
               'min-h-[120px] sm:min-h-[150px] md:min-h-[180px]',
-              'resize-y text-sm sm:text-base',
+              'resize-y text-base md:text-sm',
               'focus-visible:ring-2 focus-visible:ring-purple-500',
               'transition-all duration-200',
               error && 'border-red-400 dark:border-red-500',
@@ -208,7 +208,7 @@ export function WriterInput({
               disabled={disabled}
               rows={2}
               className={cn(
-                'resize-none text-sm',
+                'resize-none text-base md:text-sm',
                 'focus-visible:ring-2 focus-visible:ring-purple-500/50',
                 'transition-all duration-200',
               )}

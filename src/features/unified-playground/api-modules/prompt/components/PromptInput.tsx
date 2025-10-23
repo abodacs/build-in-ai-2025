@@ -81,7 +81,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
               ? 'prompt-input-error prompt-input-info prompt-input-shortcuts'
               : 'prompt-input-info prompt-input-shortcuts'
           }
-          className="w-full p-3 resize-none rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px] max-h-[50vh] overflow-y-auto"
+          className="w-full p-3 resize-none rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px] max-h-[50vh] overflow-y-auto text-base md:text-sm"
           rows={3}
         />
 

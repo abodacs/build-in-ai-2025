@@ -7,7 +7,7 @@
  * @module prompt/hooks/usePrompt
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { PromptManager } from '../services/PromptManager';
 import { SessionManager } from '../services/SessionManager';
 import { MultimodalHandler } from '../services/MultimodalHandler';
@@ -116,10 +116,6 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
   const [metrics, setMetrics] = useState<PromptMetrics[]>([]);
   const [averageExecutionTime, setAverageExecutionTime] = useState(0);
   const [successRate, setSuccessRate] = useState(0);
-
-  // Token tracking
-  const [estimatedTokens, setEstimatedTokens] = useState(0);
-  const [contextWindowUsage, setContextWindowUsage] = useState(0);
 
   // ============================================================================
   // Initialization
@@ -588,33 +584,28 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
   // ============================================================================
 
   /**
-   * Update token estimates
-   * Note: This function is defined with useCallback but the effect below
-   * only depends on the actual data (messages, config.maxTokens), not the function itself.
-   * This prevents the infinite loop where the function recreates itself when messages change.
+   * Calculate estimated tokens based on message content
+   * Uses useMemo to compute during render instead of in useEffect
    */
-  const updateTokenEstimates = useCallback(() => {
+  const estimatedTokens = useMemo(() => {
     // This would use actual token counting if available
     // For now, we'll estimate based on message length
     const totalChars = messages.reduce(
       (sum, msg) => sum + msg.content.length,
       0,
     );
-    const estimated = Math.ceil(totalChars / 4);
-    setEstimatedTokens(estimated);
+    return Math.ceil(totalChars / 4);
+  }, [messages]);
 
+  /**
+   * Calculate context window usage percentage
+   * Uses useMemo to compute during render instead of in useEffect
+   */
+  const contextWindowUsage = useMemo(() => {
     const maxTokens = config.maxTokens || 4096;
-    const usage = (estimated / maxTokens) * 100;
-    setContextWindowUsage(Math.min(usage, 100));
-  }, [messages, config.maxTokens]);
-
-  // Update token estimates when messages or maxTokens change
-  // Note: We don't include updateTokenEstimates in deps because it already depends on messages
-  // Including it would cause unnecessary re-runs when the function reference changes
-  useEffect(() => {
-    updateTokenEstimates();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, config.maxTokens]);
+    const usage = (estimatedTokens / maxTokens) * 100;
+    return Math.min(usage, 100);
+  }, [estimatedTokens, config.maxTokens]);
 
   // ============================================================================
   // Cleanup
