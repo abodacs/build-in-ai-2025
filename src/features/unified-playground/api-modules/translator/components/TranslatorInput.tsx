@@ -180,7 +180,7 @@ export function TranslatorInput({
           aria-describedby={
             error ? 'translator-input-error input-stats' : 'input-stats'
           }
-          className={`min-h-[120px] resize-none font-mono text-sm ${error ? 'border-red-400 dark:border-red-500' : ''}`}
+          className={`min-h-[120px] resize-none font-mono text-base md:text-sm ${error ? 'border-red-400 dark:border-red-500' : ''}`}
           data-testid="translator-input"
           maxLength={maxLength}
           aria-label="Text to translate"

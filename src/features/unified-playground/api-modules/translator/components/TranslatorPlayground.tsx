@@ -28,6 +28,7 @@ import {
   type AdvancedSettings,
   type BatchItem,
   DEFAULT_ADVANCED_SETTINGS,
+  POPULAR_LANGUAGE_PAIRS,
 } from '../types';
 
 // ============================================================================
@@ -56,8 +57,12 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
   // State Management
   // ============================================================================
 
-  const [sourceLanguage, setSourceLanguage] = useState<LanguageCode>('en');
-  const [targetLanguage, setTargetLanguage] = useState<LanguageCode>('es');
+  const [sourceLanguage, setSourceLanguage] = useState<LanguageCode>(
+    POPULAR_LANGUAGE_PAIRS[0]?.source || 'en',
+  );
+  const [targetLanguage, setTargetLanguage] = useState<LanguageCode>(
+    POPULAR_LANGUAGE_PAIRS[0]?.target || 'es',
+  );
   const [context, setContext] = useState('');
   const [inputText, setInputText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
@@ -69,6 +74,9 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
   const [showBatchTranslation, setShowBatchTranslation] = useState(false);
   const [isBatchTranslating, setIsBatchTranslating] = useState(false);
   const [batchProgress, setBatchProgress] = useState(0);
+  const [batchResults, setBatchResults] = useState<
+    Array<{ id: string; original: string; translated: string }>
+  >([]);
 
   // ============================================================================
   // Hooks
@@ -249,35 +257,96 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
     async (items: BatchItem[]) => {
       setIsBatchTranslating(true);
       setBatchProgress(0);
+      setBatchResults([]); // Clear previous results
 
       try {
         const total = items.length;
-        const results = [];
+        const results: Array<{
+          id: string;
+          original: string;
+          translated: string;
+        }> = [];
 
         for (let i = 0; i < items.length; i++) {
           const item = items[i];
           if (!item) continue;
 
           const translation = await translate(item.text);
-          results.push({
-            ...item,
-            translation: translation || '',
-          });
+          const result = {
+            id: item.id,
+            original: item.text,
+            translated: translation || '',
+          };
+          results.push(result);
 
           // Update progress
           setBatchProgress(((i + 1) / total) * 100);
         }
 
+        // Store results for display and export
+        setBatchResults(results);
         console.log('Batch translation complete:', results);
+
+        showToast({
+          variant: 'success',
+          message: 'Batch translation complete',
+          description: `Successfully translated ${results.length} items`,
+        });
       } catch (error) {
         console.error('Batch translation error:', error);
+        showToast({
+          variant: 'error',
+          message: 'Batch translation failed',
+          description:
+            error instanceof Error ? error.message : 'Unknown error occurred',
+        });
       } finally {
         setIsBatchTranslating(false);
         setBatchProgress(0);
       }
     },
-    [translate],
+    [translate, showToast],
   );
+
+  /**
+   * Handle batch results export
+   */
+  const handleBatchExport = useCallback(() => {
+    if (batchResults.length === 0) return;
+
+    try {
+      const data = {
+        sourceLanguage,
+        targetLanguage,
+        timestamp: new Date().toISOString(),
+        results: batchResults,
+      };
+
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `batch-translation-${sourceLanguage}-${targetLanguage}-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showToast({
+        variant: 'success',
+        message: 'Batch results exported',
+        description: `${batchResults.length} translations saved to JSON file`,
+      });
+    } catch (err) {
+      console.error('Failed to export batch results:', err);
+      showToast({
+        variant: 'error',
+        message: 'Failed to export results',
+        description: 'Please try again',
+      });
+    }
+  }, [batchResults, sourceLanguage, targetLanguage, showToast]);
 
   // Check if can translate
   const canTranslate =
@@ -455,6 +524,8 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
           onTranslate={handleBatchTranslate}
           isTranslating={isBatchTranslating}
           progress={batchProgress}
+          results={batchResults}
+          onExport={handleBatchExport}
         />
       )}
 
