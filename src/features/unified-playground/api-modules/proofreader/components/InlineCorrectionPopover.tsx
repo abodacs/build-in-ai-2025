@@ -34,6 +34,9 @@ export interface InlineCorrectionPopoverProps {
   /** Apply correction handler */
   onApply: (index: number) => void;
 
+  /** Original text (for extracting the original substring) */
+  originalText?: string;
+
   /** Ignore correction handler */
   onIgnore: (index: number) => void;
 
@@ -50,13 +53,17 @@ function getCorrectionBadgeVariant(
 ): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (type) {
     case 'grammar':
-    case 'spelling':
-      return 'destructive';
-    case 'punctuation':
       return 'default';
-    case 'style':
-    case 'clarity':
+    case 'spelling':
       return 'secondary';
+    case 'punctuation':
+      return 'destructive';
+    case 'capitalization':
+      return 'default';
+    case 'preposition':
+      return 'secondary';
+    case 'missing-words':
+      return 'destructive';
     default:
       return 'outline';
   }
@@ -77,6 +84,7 @@ export function InlineCorrectionPopover({
   onApply,
   onIgnore,
   anchorEl,
+  originalText,
 }: InlineCorrectionPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -167,9 +175,11 @@ export function InlineCorrectionPopover({
       {/* Header */}
       <div className="proofreader-popover-header">
         <div className="flex items-center gap-2">
-          <Badge variant={getCorrectionBadgeVariant(correction.type)}>
-            {correction.type}
-          </Badge>
+          {correction.type && (
+            <Badge variant={getCorrectionBadgeVariant(correction.type)}>
+              {correction.type}
+            </Badge>
+          )}
           <span className="text-xs text-muted-foreground">#{index + 1}</span>
         </div>
         <button
@@ -187,7 +197,8 @@ export function InlineCorrectionPopover({
         <div className="proofreader-popover-section">
           <div className="proofreader-popover-label">Original:</div>
           <div className="proofreader-popover-text proofreader-popover-text-original">
-            {correction.original}
+            {originalText?.slice(correction.startIndex, correction.endIndex) ||
+              ''}
           </div>
         </div>
 
@@ -195,7 +206,7 @@ export function InlineCorrectionPopover({
         <div className="proofreader-popover-section">
           <div className="proofreader-popover-label">Suggestion:</div>
           <div className="proofreader-popover-text proofreader-popover-text-suggestion">
-            {correction.suggestion}
+            {correction.correction}
           </div>
         </div>
 
@@ -205,16 +216,6 @@ export function InlineCorrectionPopover({
             <div className="proofreader-popover-label">Why:</div>
             <div className="proofreader-popover-explanation">
               {correction.explanation}
-            </div>
-          </div>
-        )}
-
-        {/* Confidence */}
-        {correction.confidence !== undefined && (
-          <div className="proofreader-popover-section">
-            <div className="proofreader-popover-label">Confidence:</div>
-            <div className="text-sm">
-              {(correction.confidence * 100).toFixed(0)}%
             </div>
           </div>
         )}

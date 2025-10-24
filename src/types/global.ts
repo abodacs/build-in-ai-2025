@@ -118,11 +118,7 @@ export function isLanguageModelSupported(): boolean {
 }
 
 export function isProofreaderSupported(): boolean {
-  return (
-    typeof globalThis !== 'undefined' &&
-    typeof (globalThis as unknown as { Proofreader?: unknown }).Proofreader !==
-      'undefined'
-  );
+  return 'Proofreader' in window;
 }
 
 export function isTranslatorSupported(): boolean {

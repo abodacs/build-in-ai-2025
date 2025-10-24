@@ -73,12 +73,20 @@ export class ProofreaderManager extends BaseWritingManager<
 
   /**
    * Convert configuration to API options
+   *
+   * NOTE: Only pass supported options to Proofreader.create()
+   * According to the Chrome AI Proofreader explainer, the following options
+   * are NOT supported and will cause the API to fail:
+   * - includeCorrectionTypes
+   * - includeCorrectionExplanations
+   * - correctionExplanationLanguage
    */
   protected configToOptions(
     config: ProofreaderConfig,
   ): ProofreaderCreateOptions {
     return {
       expectedInputLanguages: config.expectedInputLanguages,
+      outputLanguage: config.outputLanguage,
     };
   }
 
@@ -212,10 +220,11 @@ export class ProofreaderManager extends BaseWritingManager<
       // Apply correction
       const before = text.slice(0, correction.startIndex);
       const after = text.slice(correction.endIndex);
-      const corrected = before + correction.suggestion + after;
+      const corrected = before + correction.correction + after;
 
+      const original = text.slice(correction.startIndex, correction.endIndex);
       console.log(
-        `[ProofreaderManager] Applied correction: "${correction.original}" → "${correction.suggestion}"`,
+        `[ProofreaderManager] Applied correction: "${original}" → "${correction.correction}"`,
       );
 
       return corrected;
@@ -278,7 +287,9 @@ export class ProofreaderManager extends BaseWritingManager<
       return corrections;
     }
 
-    return corrections.filter((correction) => types.includes(correction.type));
+    return corrections.filter(
+      (correction) => correction.type && types.includes(correction.type),
+    );
   }
 
   /**
@@ -299,9 +310,11 @@ export class ProofreaderManager extends BaseWritingManager<
     };
 
     for (const correction of corrections) {
-      const typeArray = grouped[correction.type];
-      if (typeArray) {
-        typeArray.push(correction);
+      if (correction.type) {
+        const typeArray = grouped[correction.type];
+        if (typeArray) {
+          typeArray.push(correction);
+        }
       }
     }
 

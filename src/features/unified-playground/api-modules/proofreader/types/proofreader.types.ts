@@ -33,16 +33,22 @@ export interface ConfigOption<T = string> {
 
 /**
  * Correction types supported by the Proofreader API
+ * Based on official Chrome AI Proofreader specification
  */
 export type CorrectionType =
-  | 'grammar'
   | 'spelling'
   | 'punctuation'
-  | 'style'
-  | 'clarity';
+  | 'capitalization'
+  | 'preposition'
+  | 'missing-words'
+  | 'grammar';
 
 /**
  * Expected input languages for proofreading
+ *
+ * NOTE: Currently only English ('en') is supported by the Chrome AI Proofreader model.
+ * Other languages listed here are for future compatibility but will result in
+ * "unavailable" status if used.
  */
 export type ProofreaderLanguage =
   | 'en'
@@ -63,10 +69,23 @@ export type ProofreaderLanguage =
  * Options for creating Proofreader instance
  *
  * Maps to Chrome AI Proofreader.create() options
+ * Based on official specification
  */
 export interface ProofreaderCreateOptions {
   /** Expected input languages (improves accuracy) */
   expectedInputLanguages?: ProofreaderLanguage[];
+
+  /** Output language code (required for optimal quality and safety) */
+  outputLanguage?: ProofreaderLanguage;
+
+  /** Include error type labels in corrections */
+  includeCorrectionTypes?: boolean;
+
+  /** Include plain-language explanations in corrections */
+  includeCorrectionExplanations?: boolean;
+
+  /** Language for correction explanations */
+  correctionExplanationLanguage?: string;
 
   /** Abort signal for cancellation */
   signal?: AbortSignal;
@@ -88,28 +107,23 @@ export interface ProofreadOptions {
 
 /**
  * Individual correction suggested by the Proofreader
+ * Based on official Chrome AI Proofreader specification
  */
 export interface ProofreadCorrection {
-  /** Original text with error */
-  original: string;
-
-  /** Suggested correction */
-  suggestion: string;
-
-  /** Type of error/correction */
-  type: CorrectionType;
-
-  /** Explanation of why this correction is suggested */
-  explanation: string;
-
   /** Start position in original text */
   startIndex: number;
 
   /** End position in original text */
   endIndex: number;
 
-  /** Optional confidence score (0.0-1.0) */
-  confidence?: number;
+  /** The suggested replacement text */
+  correction: string;
+
+  /** Type of error/correction (optional, when includeCorrectionTypes is enabled) */
+  type?: CorrectionType;
+
+  /** Explanation of why this correction is suggested (optional, when includeCorrectionExplanations is enabled) */
+  explanation?: string;
 }
 
 /**
@@ -122,6 +136,7 @@ export interface ProofreadResult {
 
 /**
  * Chrome AI Proofreader instance
+ * Based on official specification
  */
 export interface Proofreader {
   /**
@@ -133,9 +148,54 @@ export interface Proofreader {
   ): Promise<ProofreadResult>;
 
   /**
-   * Destroy the instance
+   * Proofread text with streaming explanations
+   * Provides corrections progressively for better perceived responsiveness
+   */
+  proofreadStreaming(input: string, options?: ProofreadOptions): ReadableStream;
+
+  /**
+   * Destroy the instance and unload model from memory
    */
   destroy(): void;
+
+  /**
+   * Expected input languages
+   */
+  readonly expectedInputLanguages: ProofreaderLanguage[];
+
+  /**
+   * Language for correction explanations
+   */
+  readonly correctionExplanationLanguage: string;
+
+  /**
+   * Whether correction explanations are included
+   */
+  readonly includeCorrectionExplanations: boolean;
+
+  /**
+   * Whether correction types are included
+   */
+  readonly includeCorrectionTypes: boolean;
+}
+
+/**
+ * Proofreader availability states
+ * Based on Chrome AI Proofreader enum
+ */
+export type ProofreaderAvailability =
+  | 'unavailable'
+  | 'downloadable'
+  | 'downloading'
+  | 'available';
+
+/**
+ * Options for checking Proofreader availability
+ * Allows checking if specific languages are supported
+ */
+export interface ProofreaderAvailabilityOptions {
+  /** Expected input languages to check availability for */
+  expectedInputLanguages?: ProofreaderLanguage[];
 }
 
 /**
@@ -143,7 +203,9 @@ export interface Proofreader {
  */
 export interface ProofreaderAPI {
   create(options?: ProofreaderCreateOptions): Promise<Proofreader>;
-  availability(): Promise<'no' | 'after-download' | 'available'>;
+  availability(
+    options?: ProofreaderAvailabilityOptions,
+  ): Promise<ProofreaderAvailability>;
 }
 
 // ============================================================================
@@ -156,6 +218,18 @@ export interface ProofreaderAPI {
 export interface ProofreaderConfig {
   /** Expected input languages */
   expectedInputLanguages: ProofreaderLanguage[];
+
+  /** Output language code (required for optimal quality and safety) */
+  outputLanguage: ProofreaderLanguage;
+
+  /** Include error type labels in corrections */
+  includeCorrectionTypes: boolean;
+
+  /** Include plain-language explanations in corrections */
+  includeCorrectionExplanations: boolean;
+
+  /** Language for correction explanations */
+  correctionExplanationLanguage: string;
 
   /** Auto-apply corrections */
   autoApply: boolean;
@@ -175,6 +249,10 @@ export interface ProofreaderConfig {
  */
 export const DEFAULT_PROOFREADER_CONFIG: ProofreaderConfig = {
   expectedInputLanguages: ['en'],
+  outputLanguage: 'en',
+  includeCorrectionTypes: true,
+  includeCorrectionExplanations: true,
+  correctionExplanationLanguage: 'en',
   autoApply: false,
   correctionTypeFilter: [],
   correctionMode: 'standard',
@@ -187,61 +265,64 @@ export const DEFAULT_PROOFREADER_CONFIG: ProofreaderConfig = {
 
 /**
  * Language options for UI
+ *
+ * NOTE: Currently only English is supported by the Chrome AI Proofreader model.
+ * Other languages are listed for future compatibility.
  */
 export const PROOFREADER_LANGUAGE_OPTIONS: ConfigOption<ProofreaderLanguage>[] =
   [
     {
       value: 'en',
       label: 'English',
-      description: 'English proofreading',
+      description: 'Currently supported',
       icon: '🇺🇸',
     },
     {
       value: 'es',
       label: 'Spanish',
-      description: 'Spanish proofreading',
+      description: 'Not yet supported',
       icon: '🇪🇸',
     },
     {
       value: 'fr',
       label: 'French',
-      description: 'French proofreading',
+      description: 'Not yet supported',
       icon: '🇫🇷',
     },
     {
       value: 'de',
       label: 'German',
-      description: 'German proofreading',
+      description: 'Not yet supported',
       icon: '🇩🇪',
     },
     {
       value: 'it',
       label: 'Italian',
-      description: 'Italian proofreading',
+      description: 'Not yet supported',
       icon: '🇮🇹',
     },
     {
       value: 'pt',
       label: 'Portuguese',
-      description: 'Portuguese proofreading',
+      description: 'Not yet supported',
       icon: '🇵🇹',
     },
     {
       value: 'ja',
       label: 'Japanese',
-      description: 'Japanese proofreading',
+      description: 'Not yet supported',
       icon: '🇯🇵',
     },
     {
       value: 'ko',
       label: 'Korean',
-      description: 'Korean proofreading',
+      description: 'Not yet supported',
       icon: '🇰🇷',
     },
     {
       value: 'zh',
       label: 'Chinese',
-      description: 'Chinese proofreading',
+      description: 'Not yet supported',
       icon: '🇨🇳',
     },
   ];
@@ -269,16 +350,22 @@ export const CORRECTION_TYPE_OPTIONS: ConfigOption<CorrectionType>[] = [
     icon: '❗',
   },
   {
-    value: 'style',
-    label: 'Style',
-    description: 'Writing style improvements',
-    icon: '🎨',
+    value: 'capitalization',
+    label: 'Capitalization',
+    description: 'Incorrect capitalization',
+    icon: '🔤',
   },
   {
-    value: 'clarity',
-    label: 'Clarity',
-    description: 'Suggestions for clearer expression',
-    icon: '💡',
+    value: 'preposition',
+    label: 'Preposition',
+    description: 'Incorrect preposition usage',
+    icon: '🔗',
+  },
+  {
+    value: 'missing-words',
+    label: 'Missing Words',
+    description: 'Missing words in sentence',
+    icon: '➕',
   },
 ];
 
@@ -324,8 +411,9 @@ export interface CorrectionStats {
     grammar: number;
     spelling: number;
     punctuation: number;
-    style: number;
-    clarity: number;
+    capitalization: number;
+    preposition: number;
+    'missing-words': number;
   };
 
   /** Applied corrections count */
@@ -359,7 +447,14 @@ export interface CorrectionState {
 export function isValidCorrectionType(value: unknown): value is CorrectionType {
   return (
     typeof value === 'string' &&
-    ['grammar', 'spelling', 'punctuation', 'style', 'clarity'].includes(value)
+    [
+      'grammar',
+      'spelling',
+      'punctuation',
+      'capitalization',
+      'preposition',
+      'missing-words',
+    ].includes(value)
   );
 }
 
@@ -432,15 +527,17 @@ export function getProofreaderAPI(): ProofreaderAPI | null {
 export function getCorrectionTypeColor(type: CorrectionType): string {
   switch (type) {
     case 'grammar':
-      return 'red';
-    case 'spelling':
-      return 'orange';
-    case 'punctuation':
-      return 'yellow';
-    case 'style':
       return 'blue';
-    case 'clarity':
+    case 'spelling':
       return 'purple';
+    case 'punctuation':
+      return 'red';
+    case 'capitalization':
+      return 'lime';
+    case 'preposition':
+      return 'orange';
+    case 'missing-words':
+      return 'pink';
     default:
       return 'gray';
   }
@@ -459,15 +556,18 @@ export function calculateCorrectionStats(
       grammar: 0,
       spelling: 0,
       punctuation: 0,
-      style: 0,
-      clarity: 0,
+      capitalization: 0,
+      preposition: 0,
+      'missing-words': 0,
     },
     applied: 0,
     ignored: 0,
   };
 
   corrections.forEach((correction) => {
-    stats.byType[correction.type]++;
+    if (correction.type) {
+      stats.byType[correction.type]++;
+    }
   });
 
   if (states) {

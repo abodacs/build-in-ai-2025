@@ -75,6 +75,7 @@ function generateTypeScriptCode(config: ProofreaderConfig): string {
  *
  * Requirements:
  * - Chrome 141+ (Origin Trial until Chrome 145)
+ * - Enable chrome://flags#proofreader-api-for-gemini-nano
  * - Enable Origin Trial token
  * - CSS Custom Highlights API for highlighting
  *
@@ -86,15 +87,14 @@ function generateTypeScriptCode(config: ProofreaderConfig): string {
 // Type Definitions
 // ============================================================================
 
-type CorrectionType = 'grammar' | 'spelling' | 'punctuation' | 'style' | 'clarity';
+type CorrectionType = 'spelling' | 'punctuation' | 'capitalization' | 'preposition' | 'missing-words' | 'grammar';
 type ProofreaderLanguage = 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ja' | 'ko' | 'zh';
 
 interface ProofreadResult {
-  type: CorrectionType;
-  start: number;
-  end: number;
-  originalText: string;
-  suggestion: string;
+  type?: CorrectionType;
+  startIndex: number;
+  endIndex: number;
+  correction: string;
   explanation?: string;
 }
 
@@ -188,14 +188,14 @@ function applyCorrections(
   corrections: ProofreadResult[]
 ): string {
   // Sort corrections by start position (descending) to apply from end to start
-  const sortedCorrections = [...corrections].sort((a, b) => b.start - a.start);
+  const sortedCorrections = [...corrections].sort((a, b) => b.startIndex - a.startIndex);
 
   let result = text;
   for (const correction of sortedCorrections) {
     result =
-      result.slice(0, correction.start) +
-      correction.suggestion +
-      result.slice(correction.end);
+      result.slice(0, correction.startIndex) +
+      correction.correction +
+      result.slice(correction.endIndex);
   }
 
   return result;
@@ -292,7 +292,7 @@ function setupHTMLIntegration() {
           (c) =>
             \`<div class="correction">
               <strong>\${c.type}</strong>:
-              "\${c.originalText}" → "\${c.suggestion}"
+              "\${text.slice(c.startIndex, c.endIndex)}" → "\${c.correction}"
               \${c.explanation ? \`<br><em>\${c.explanation}</em>\` : ''}
             </div>\`
         )
@@ -331,6 +331,7 @@ function generateJavaScriptCode(config: ProofreaderConfig): string {
  *
  * Requirements:
  * - Chrome 141+ (Origin Trial until Chrome 145)
+ * - Enable chrome://flags#proofreader-api-for-gemini-nano
  * - Enable Origin Trial token
  * - CSS Custom Highlights API for highlighting
  *
@@ -402,14 +403,14 @@ async function proofread(text) {
  */
 function applyCorrections(text, corrections) {
   // Sort corrections by start position (descending) to apply from end to start
-  const sortedCorrections = [...corrections].sort((a, b) => b.start - a.start);
+  const sortedCorrections = [...corrections].sort((a, b) => b.startIndex - a.startIndex);
 
   let result = text;
   for (const correction of sortedCorrections) {
     result =
-      result.slice(0, correction.start) +
-      correction.suggestion +
-      result.slice(correction.end);
+      result.slice(0, correction.startIndex) +
+      correction.correction +
+      result.slice(correction.endIndex);
   }
 
   return result;
@@ -502,7 +503,7 @@ function setupHTMLIntegration() {
           (c) =>
             \`<div class="correction">
               <strong>\${c.type}</strong>:
-              "\${c.originalText}" → "\${c.suggestion}"
+              "\${text.slice(c.startIndex, c.endIndex)}" → "\${c.correction}"
               \${c.explanation ? \`<br><em>\${c.explanation}</em>\` : ''}
             </div>\`
         )

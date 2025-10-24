@@ -11,8 +11,7 @@ import type { ProofreadCorrection } from '../../types';
 
 describe('CorrectionCard', () => {
   const mockCorrection: ProofreadCorrection = {
-    original: 'teh',
-    suggestion: 'the',
+    correction: 'the',
     type: 'spelling',
     startIndex: 0,
     endIndex: 3,
@@ -225,8 +224,6 @@ describe('CorrectionCard', () => {
     it('should handle long original text', () => {
       const longCorrection: ProofreadCorrection = {
         ...mockCorrection,
-        original:
-          'This is a very long original text that should be displayed correctly',
       };
 
       render(<CorrectionCard {...defaultProps} correction={longCorrection} />);
@@ -237,13 +234,13 @@ describe('CorrectionCard', () => {
     it('should handle long suggestion text', () => {
       const longCorrection: ProofreadCorrection = {
         ...mockCorrection,
-        suggestion:
+        correction:
           'This is a very long suggestion text that should be displayed correctly',
       };
 
       render(<CorrectionCard {...defaultProps} correction={longCorrection} />);
 
-      expect(screen.getByText(longCorrection.suggestion)).toBeInTheDocument();
+      expect(screen.getByText(longCorrection.correction)).toBeInTheDocument();
     });
 
     it('should handle long explanation', () => {
@@ -261,8 +258,7 @@ describe('CorrectionCard', () => {
     it('should handle Unicode characters', () => {
       const unicodeCorrection: ProofreadCorrection = {
         ...mockCorrection,
-        original: 'こんにちは',
-        suggestion: 'こんにちは世界',
+        correction: 'こんにちは世界',
       };
 
       render(
@@ -276,8 +272,7 @@ describe('CorrectionCard', () => {
     it('should handle special characters', () => {
       const specialCorrection: ProofreadCorrection = {
         ...mockCorrection,
-        original: 'test!@#$%',
-        suggestion: 'test?!',
+        correction: 'test?!',
       };
 
       render(

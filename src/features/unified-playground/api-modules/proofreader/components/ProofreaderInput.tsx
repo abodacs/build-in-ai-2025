@@ -9,10 +9,10 @@
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, XCircle, Loader2, Undo2, Redo2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Undo2, Redo2 } from 'lucide-react';
 import { HighlightedTextEditor } from './HighlightedTextEditor';
 import type { ProofreadCorrection } from '../types';
-import { FieldError } from '../../shared/components';
+import { FieldError, APIActionButton } from '../../shared/components';
 
 // ============================================================================
 // Types
@@ -191,23 +191,21 @@ export function ProofreaderInput({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            onClick={onProofread}
-            disabled={!canProofread || disabled}
-            className="flex-1"
-          >
-            {isProofreading || loadingPhase ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {getButtonText()}
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Proofread Text
-              </>
-            )}
-          </Button>
+          <div className="flex-1">
+            <APIActionButton
+              variant="rewrite"
+              icon={CheckCircle2}
+              text="Proofread Text"
+              processingText={getButtonText()}
+              onClick={onProofread}
+              disabled={!canProofread || disabled}
+              isProcessing={isProofreading || !!loadingPhase}
+              showCancel={false}
+              showShortcutHint={false}
+              fullWidth={true}
+              size="default"
+            />
+          </div>
           <Button
             onClick={onClear}
             disabled={characterCount === 0 || disabled || isProofreading}

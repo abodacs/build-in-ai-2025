@@ -13,13 +13,19 @@
  * ============================================================================ */
 
 /**
- * Grammar errors - Critical (red underline)
+ * Grammar errors - Critical (blue underline)
  */
 ::highlight(proofreader-grammar) {
   text-decoration: wavy underline;
-  text-decoration-color: rgb(239, 68, 68); /* red-500 */
+  text-decoration-color: light-dark(
+    rgb(59, 130, 246),
+    rgb(96, 165, 250)
+  ); /* blue-500 / blue-400 */
   text-decoration-thickness: 2px;
-  background-color: rgba(239, 68, 68, 0.1);
+  background-color: light-dark(
+    rgba(59, 130, 246, 0.1),
+    rgba(96, 165, 250, 0.12)
+  );
 }
 
 /**
@@ -39,9 +45,29 @@
 }
 
 /**
- * Punctuation errors - Important (orange underline)
+ * Punctuation errors - Important (red underline)
  */
 ::highlight(proofreader-punctuation) {
+  text-decoration: wavy underline;
+  text-decoration-color: rgb(239, 68, 68); /* red-500 */
+  text-decoration-thickness: 2px;
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/**
+ * Capitalization errors - Important (lime green underline)
+ */
+::highlight(proofreader-capitalization) {
+  text-decoration: wavy underline;
+  text-decoration-color: rgb(132, 204, 22); /* lime-500 */
+  text-decoration-thickness: 2px;
+  background-color: rgba(132, 204, 22, 0.1);
+}
+
+/**
+ * Preposition errors - Important (orange underline)
+ */
+::highlight(proofreader-preposition) {
   text-decoration: wavy underline;
   text-decoration-color: rgb(249, 115, 22); /* orange-500 */
   text-decoration-thickness: 2px;
@@ -49,23 +75,13 @@
 }
 
 /**
- * Style suggestions - Moderate (blue underline)
+ * Missing words - Important (deep pink underline)
  */
-::highlight(proofreader-style) {
+::highlight(proofreader-missing-words) {
   text-decoration: wavy underline;
-  text-decoration-color: rgb(59, 130, 246); /* blue-500 */
-  text-decoration-thickness: 1.5px;
-  background-color: rgba(59, 130, 246, 0.08);
-}
-
-/**
- * Clarity improvements - Moderate (green/teal underline)
- */
-::highlight(proofreader-clarity) {
-  text-decoration: wavy underline;
-  text-decoration-color: rgb(16, 185, 129); /* green-500 */
-  text-decoration-thickness: 1.5px;
-  background-color: rgba(16, 185, 129, 0.08);
+  text-decoration-color: rgb(236, 72, 153); /* pink-500 */
+  text-decoration-thickness: 2px;
+  background-color: rgba(236, 72, 153, 0.1);
 }
 
 /**
@@ -301,15 +317,23 @@
 }
 
 .proofreader-legend-color-punctuation {
+  background-color: rgb(239, 68, 68);
+}
+
+.proofreader-legend-color-capitalization {
+  background-color: rgb(132, 204, 22);
+}
+
+.proofreader-legend-color-preposition {
   background-color: rgb(249, 115, 22);
 }
 
-.proofreader-legend-color-style {
-  background-color: rgb(59, 130, 246);
+.proofreader-legend-color-missing-words {
+  background-color: rgb(236, 72, 153);
 }
 
-.proofreader-legend-color-clarity {
-  background-color: rgb(16, 185, 129);
+.proofreader-legend-color-grammar {
+  background-color: rgb(59, 130, 246);
 }
 
 /* ============================================================================
@@ -317,24 +341,24 @@
  * ============================================================================ */
 
 @media (prefers-color-scheme: dark) {
-  ::highlight(proofreader-grammar) {
+  ::highlight(proofreader-punctuation) {
     text-decoration-color: rgb(248, 113, 113); /* red-400 */
     background-color: rgba(248, 113, 113, 0.12);
   }
 
-  ::highlight(proofreader-punctuation) {
+  ::highlight(proofreader-capitalization) {
+    text-decoration-color: rgb(163, 230, 53); /* lime-400 */
+    background-color: rgba(163, 230, 53, 0.12);
+  }
+
+  ::highlight(proofreader-preposition) {
     text-decoration-color: rgb(251, 146, 60); /* orange-400 */
     background-color: rgba(251, 146, 60, 0.12);
   }
 
-  ::highlight(proofreader-style) {
-    text-decoration-color: rgb(96, 165, 250); /* blue-400 */
-    background-color: rgba(96, 165, 250, 0.1);
-  }
-
-  ::highlight(proofreader-clarity) {
-    text-decoration-color: rgb(52, 211, 153); /* green-400 */
-    background-color: rgba(52, 211, 153, 0.1);
+  ::highlight(proofreader-missing-words) {
+    text-decoration-color: rgb(244, 114, 182); /* pink-400 */
+    background-color: rgba(244, 114, 182, 0.12);
   }
 }
 
@@ -349,8 +373,9 @@
   ::highlight(proofreader-grammar),
   ::highlight(proofreader-spelling),
   ::highlight(proofreader-punctuation),
-  ::highlight(proofreader-style),
-  ::highlight(proofreader-clarity),
+  ::highlight(proofreader-capitalization),
+  ::highlight(proofreader-preposition),
+  ::highlight(proofreader-missing-words),
   ::highlight(proofreader-other) {
     text-decoration-thickness: 3px;
     background-color: transparent;

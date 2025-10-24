@@ -155,6 +155,9 @@ export interface UseProofreaderReturn {
   /** Can redo */
   canRedo: boolean;
 
+  /** Has active proofreader instance */
+  hasInstance: boolean;
+
   /** Actions */
   actions: {
     /** Proofread text */
@@ -311,11 +314,11 @@ export function useProofreader(
       try {
         console.log('🔨 Waiting for Proofreader instance...');
 
-        // Await instance creation with timeout
+        // Await instance creation with timeout (6 minutes to allow for 22GB model download)
         await withTimeout(
           instancePromise,
-          180000,
-          'Proofreader instance creation timed out after 3 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure 22GB+ free space and unmetered connection.',
+          360000,
+          'Proofreader instance creation timed out after 6 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure 22GB+ free space and unmetered connection.',
         );
         console.log('✅ Proofreader instance obtained');
         setIsLoading(false);
@@ -635,6 +638,7 @@ export function useProofreader(
     metrics,
     canUndo,
     canRedo,
+    hasInstance: managerRef.current?.hasInstance?.() ?? false,
     actions: {
       proofread,
       applyCorrectionAtIndex,

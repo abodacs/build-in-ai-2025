@@ -15,9 +15,12 @@ import { ProofreaderConfig } from '../ProofreaderConfig';
 import { ProofreaderInput } from '../ProofreaderInput';
 import { ProofreaderResults } from '../ProofreaderResults';
 import { InlineCorrectionPopover } from '../InlineCorrectionPopover';
+import { CorrectionLegend } from '../CorrectionLegend';
+import { QuickSamples } from '../QuickSamples';
 import { UnifiedModelManager } from '../../../shared/components';
 import { DEFAULT_PROOFREADER_CONFIG } from '../../types';
 import type { ProofreadCorrection } from '../../types';
+import type { ProofreaderTemplate } from '../../data/samples';
 import { validateTextInput } from '../../../shared/utils/validation';
 
 // ============================================================================
@@ -109,6 +112,14 @@ export function ProofreaderMain() {
     setSelectedCorrection(null);
   };
 
+  // Handle template selection
+  const handleTemplateSelect = (template: ProofreaderTemplate) => {
+    setInputText(template.exampleInput);
+    if (template.config) {
+      actions.updateConfig(template.config);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Error Alert */}
@@ -119,28 +130,18 @@ export function ProofreaderMain() {
         </Alert>
       )}
 
+      {/* Quick Samples */}
+      <QuickSamples
+        onTemplateSelect={handleTemplateSelect}
+        currentInput={inputText}
+        disabled={isProofreading || isLoading}
+      />
+
       {/* Config */}
       <ProofreaderConfig
         config={config}
         onChange={actions.updateConfig}
         disabled={isProofreading || isLoading}
-      />
-
-      {/* Unified Model Management */}
-      <UnifiedModelManager
-        apiName="Proofreader"
-        availability={availability || 'no'}
-        isReady={isReady}
-        isLoading={isLoading}
-        loadingPhase={loadingPhase}
-        error={error?.message || null}
-        modelInfo={{
-          name: 'Proofreader Model',
-          chromeVersion: '141-145',
-          requiresOriginTrial: true,
-          storageRequirement: '22GB+ free space',
-          vramRequirement: '4GB+ VRAM',
-        }}
       />
 
       {/* Input */}
@@ -163,6 +164,9 @@ export function ProofreaderMain() {
         error={inputError?.message}
         errorHelpText={inputError?.helpText}
       />
+
+      {/* Correction Type Legend */}
+      {corrections.length > 0 && <CorrectionLegend className="mt-2" />}
 
       {/* Inline Correction Popover */}
       {selectedCorrection && (
@@ -190,6 +194,34 @@ export function ProofreaderMain() {
           disabled={isProofreading || isLoading}
         />
       )}
+
+      {/* Model Management */}
+      <div className="space-y-3 pt-6 border-t">
+        <div className="space-y-1">
+          <h3 className="text-base font-semibold text-slate-900">
+            Model Management
+          </h3>
+          <p className="text-sm text-slate-600">
+            Monitor and manage AI model status
+          </p>
+        </div>
+
+        <UnifiedModelManager
+          apiName="Proofreader"
+          availability={availability || 'no'}
+          isReady={isReady}
+          isLoading={isLoading}
+          loadingPhase={loadingPhase}
+          error={error?.message || null}
+          modelInfo={{
+            name: 'Proofreader Model',
+            chromeVersion: '141-145',
+            requiresOriginTrial: true,
+            storageRequirement: '22GB+ free space',
+            vramRequirement: '4GB+ VRAM',
+          }}
+        />
+      </div>
     </div>
   );
 }
