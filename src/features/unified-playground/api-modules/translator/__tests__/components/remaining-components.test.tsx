@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider } from '@/providers/ThemeProvider';
 import { CodeThemeProvider } from '@/providers/CodeThemeProvider';
@@ -308,7 +308,7 @@ describe('CodeModal', () => {
     expect(screen.getByText(/generated code/i)).toBeInTheDocument();
   });
 
-  it('shows copy button', () => {
+  it('shows copy button', async () => {
     render(
       <ThemeProvider>
         <CodeThemeProvider>
@@ -316,8 +316,15 @@ describe('CodeModal', () => {
         </CodeThemeProvider>
       </ThemeProvider>,
     );
-    expect(
-      screen.getAllByRole('button', { name: /copy/i }).length,
-    ).toBeGreaterThan(0);
+
+    // Wait for loading to complete (200ms delay in component)
+    await waitFor(
+      () => {
+        expect(
+          screen.getAllByRole('button', { name: /copy/i }).length,
+        ).toBeGreaterThan(0);
+      },
+      { timeout: 1000 },
+    );
   });
 });

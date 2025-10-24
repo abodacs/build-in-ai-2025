@@ -45,8 +45,8 @@ describe('TranslatorConfig', () => {
     });
 
     it('shows availability status', () => {
-      render(<TranslatorConfig {...defaultProps} availability="readily" />);
-      expect(screen.getByText(/ready/i)).toBeInTheDocument();
+      render(<TranslatorConfig {...defaultProps} availability="available" />);
+      expect(screen.getByText(/ready to translate/i)).toBeInTheDocument();
     });
 
     it('renders swap button', () => {
