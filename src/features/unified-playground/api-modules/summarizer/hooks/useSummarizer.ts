@@ -196,8 +196,15 @@ export function useSummarizer(
     chunkingStrategy,
   } = options;
 
+  // Ensure outputLanguage is always set to prevent Chrome API warnings
+  const configWithDefaults: SummarizerCreateOptions = {
+    outputLanguage: 'en', // Default to English if not specified
+    ...initialConfig,
+  };
+
   // State
-  const [config, setConfig] = useState<SummarizerCreateOptions>(initialConfig);
+  const [config, setConfig] =
+    useState<SummarizerCreateOptions>(configWithDefaults);
   const [result, setResult] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
