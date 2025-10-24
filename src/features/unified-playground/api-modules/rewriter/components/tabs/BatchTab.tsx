@@ -386,7 +386,7 @@ export function BatchTab() {
       )}
 
       {/* Results */}
-      {hasResults && (
+      {hasResults && status !== 'idle' && (
         <BatchRewriteResults
           items={items}
           onExport={handleExportResults}

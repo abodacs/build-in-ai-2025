@@ -441,7 +441,17 @@ export function BatchRewriteResults({
                       <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription className="text-xs">
-                          <strong>Error:</strong> {item.error.message}
+                          <div className="space-y-1">
+                            <p>
+                              <strong>Error:</strong>{' '}
+                              {item.error.message ||
+                                'An error occurred processing this item'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Try using the retry button to process this item
+                              again.
+                            </p>
+                          </div>
                         </AlertDescription>
                       </Alert>
                     )}
