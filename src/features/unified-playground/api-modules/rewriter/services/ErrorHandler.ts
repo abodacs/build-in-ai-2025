@@ -242,6 +242,62 @@ export class RewriterErrorHandler {
   static formatForLogging(error: RewriterError): string {
     return `[Rewriter Error] ${error.type}: ${error.message} | Recoverable: ${error.recoverable}`;
   }
+
+  /**
+   * Handle runtime errors (null access, type errors, etc.)
+   * Provides user-friendly messages for unexpected JavaScript errors
+   */
+  static handleRuntimeError(error: unknown): RewriterError {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const lowerMessage = errorMessage.toLowerCase();
+
+    // Detect common runtime errors
+    if (
+      lowerMessage.includes('cannot read propert') ||
+      lowerMessage.includes('null') ||
+      lowerMessage.includes('undefined')
+    ) {
+      return {
+        type: 'InvalidStateError',
+        message: 'An error occurred processing this item',
+        recoverable: true,
+        suggestion:
+          'Please try again. If the problem continues, check that your input is properly formatted.',
+      };
+    }
+
+    if (
+      lowerMessage.includes('type error') ||
+      lowerMessage.includes('is not a function')
+    ) {
+      return {
+        type: 'InvalidStateError',
+        message: 'An unexpected error occurred',
+        recoverable: true,
+        suggestion:
+          'Try refreshing the page and trying again. If this persists, please report the issue.',
+      };
+    }
+
+    // Fall back to generic error handling
+    return this.handleError(error);
+  }
+
+  /**
+   * Handle batch processing errors with better context
+   */
+  static handleBatchError(error: unknown, itemIndex?: number): RewriterError {
+    const baseError = this.handleRuntimeError(error);
+
+    if (itemIndex !== undefined) {
+      return {
+        ...baseError,
+        message: `Item ${itemIndex + 1}: ${baseError.message}`,
+      };
+    }
+
+    return baseError;
+  }
 }
 
 // ============================================================================

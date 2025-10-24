@@ -9,6 +9,7 @@
 
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { RewriterManager } from '../services/RewriterManager';
+import { RewriterErrorHandler } from '../services/ErrorHandler';
 import { DEFAULT_REWRITER_CONFIG } from '../types/rewriter.types';
 import type {
   BatchRewriteItem,
@@ -271,16 +272,32 @@ export function useBatchRewrite(
       const itemStartTime = Date.now();
 
       try {
+        // Validate item has text
+        if (!item?.originalText) {
+          throw new Error('Item has no text to process');
+        }
+
         // Create manager if not exists
         if (!managerRef.current) {
           managerRef.current = new RewriterManager();
         }
+
+        // Update manager configuration before rewrite
+        if (!config) {
+          throw new Error('Configuration is not set');
+        }
+        managerRef.current.updateConfig(config);
 
         // Rewrite the text
         const result = await managerRef.current.rewrite(
           item.originalText,
           item.context,
         );
+
+        // Validate result
+        if (result === null || result === undefined) {
+          throw new Error('Rewrite operation returned no result');
+        }
 
         const itemEndTime = Date.now();
         const processingTime = itemEndTime - itemStartTime;
@@ -297,14 +314,17 @@ export function useBatchRewrite(
           },
         };
       } catch (error) {
+        // Use ErrorHandler to create user-friendly error message
+        const handledError = RewriterErrorHandler.handleRuntimeError(error);
+
         return {
           ...item,
           status: 'failed',
-          error: error instanceof Error ? error : new Error(String(error)),
+          error: new Error(handledError.message),
         };
       }
     },
-    [],
+    [config],
   );
 
   /**

@@ -11,6 +11,7 @@ import { useState, useMemo } from 'react';
 import {
   FileOutput,
   Copy,
+  Check,
   Download,
   RotateCcw,
   X,
@@ -122,6 +123,9 @@ export function RewriterResults({
   const [activeTab, setActiveTab] = useState<'original' | 'rewritten' | 'diff'>(
     'rewritten',
   );
+  const [recentlyCopied, setRecentlyCopied] = useState<
+    'rewritten' | 'original' | null
+  >(null);
 
   // Calculate diff
   const diffResult = useMemo(() => {
@@ -133,6 +137,24 @@ export function RewriterResults({
 
   console.log('Diff Result::::content', content); // Debug log
   console.log('Diff Result::::originalText', originalText); // Debug log
+
+  /**
+   * Handle copy rewritten with visual feedback
+   */
+  const handleCopyRewritten = async () => {
+    setRecentlyCopied('rewritten');
+    await onCopyRewritten?.();
+    setTimeout(() => setRecentlyCopied(null), 2000);
+  };
+
+  /**
+   * Handle copy original with visual feedback
+   */
+  const handleCopyOriginal = async () => {
+    setRecentlyCopied('original');
+    await onCopyOriginal?.();
+    setTimeout(() => setRecentlyCopied(null), 2000);
+  };
 
   // Don't show anything if no content yet
   if (!content && !isRewriting) {
@@ -194,12 +216,26 @@ export function RewriterResults({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onCopyRewritten}
-                  className="h-10 lg:h-8 px-2 sm:px-3 tap-fast"
-                  title="Copy rewritten text"
+                  onClick={handleCopyRewritten}
+                  disabled={recentlyCopied === 'rewritten'}
+                  className={cn(
+                    'h-10 lg:h-8 px-2 sm:px-3 tap-fast transition-all',
+                    recentlyCopied === 'rewritten' && 'text-green-600',
+                  )}
+                  title={
+                    recentlyCopied === 'rewritten'
+                      ? 'Copied!'
+                      : 'Copy rewritten text'
+                  }
                 >
-                  <Copy className="w-4 h-4" />
-                  <span className="hidden sm:inline ml-1.5 text-xs">Copy</span>
+                  {recentlyCopied === 'rewritten' ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                  <span className="hidden sm:inline ml-1.5 text-xs">
+                    {recentlyCopied === 'rewritten' ? 'Copied!' : 'Copy'}
+                  </span>
                 </Button>
               )}
 
@@ -207,13 +243,25 @@ export function RewriterResults({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onCopyOriginal}
-                  className="h-10 lg:h-8 px-2 sm:px-3 tap-fast"
-                  title="Copy original text"
+                  onClick={handleCopyOriginal}
+                  disabled={recentlyCopied === 'original'}
+                  className={cn(
+                    'h-10 lg:h-8 px-2 sm:px-3 tap-fast transition-all',
+                    recentlyCopied === 'original' && 'text-green-600',
+                  )}
+                  title={
+                    recentlyCopied === 'original'
+                      ? 'Copied!'
+                      : 'Copy original text'
+                  }
                 >
-                  <Copy className="w-4 h-4 text-muted-foreground" />
-                  <span className="hidden sm:inline ml-1.5 text-xs text-muted-foreground">
-                    Original
+                  {recentlyCopied === 'original' ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Copy className="w-4 h-4 text-muted-foreground" />
+                  )}
+                  <span className="hidden sm:inline ml-1.5 text-xs">
+                    {recentlyCopied === 'original' ? 'Copied!' : 'Original'}
                   </span>
                 </Button>
               )}
@@ -269,7 +317,7 @@ export function RewriterResults({
         )}
 
         {/* Tabs for different views */}
-        {hasContent && originalText && (
+        {hasContent && originalText && !isStreaming && (
           <Tabs
             value={activeTab}
             onValueChange={(v) =>
