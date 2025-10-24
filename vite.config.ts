@@ -2,11 +2,16 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import viteCompression from 'vite-plugin-compression';
+import removeConsole from 'vite-plugin-remove-console';
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    // Remove console statements in production (except error and warn)
+    removeConsole({
+      external: ['error', 'warn'], // Keep console.error and console.warn for production monitoring
+    }),
     // Gzip compression
     viteCompression({
       verbose: true,

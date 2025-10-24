@@ -109,9 +109,7 @@ interface LanguageDetectorAPI {
 
 declare global {
   interface Window {
-    translation: {
-      LanguageDetector: LanguageDetectorAPI;
-    };
+    LanguageDetector: LanguageDetectorAPI;
   }
 }
 
@@ -129,14 +127,14 @@ const config = ${configStr};
  * Check if Chrome AI Language Detector is available
  */
 async function checkAvailability(): Promise<boolean> {
-  if (!('translation' in window) || !window.translation?.LanguageDetector) {
+  if (!('LanguageDetector' in window)) {
     throw new Error(
       'Chrome AI Language Detector not supported. ' +
       'Requires Chrome 138+ with chrome://flags#language-detection-api enabled.'
     );
   }
 
-  const availability = await window.translation.LanguageDetector.availability();
+  const availability = await window.LanguageDetector.availability();
 
   if (availability === 'no') {
     throw new Error('Language Detection not available on this device');
@@ -154,7 +152,7 @@ async function checkAvailability(): Promise<boolean> {
  * Create a new language detector instance
  */
 async function createDetector(): Promise<LanguageDetector> {
-  const detector = await window.translation.LanguageDetector.create();
+  const detector = await window.LanguageDetector.create();
   return detector;
 }
 
@@ -305,14 +303,14 @@ const config = ${configStr};
  * Check if Chrome AI Language Detector is available
  */
 async function checkAvailability() {
-  if (!('translation' in window) || !window.translation?.LanguageDetector) {
+  if (!('LanguageDetector' in window)) {
     throw new Error(
       'Chrome AI Language Detector not supported. ' +
       'Requires Chrome 138+ with chrome://flags#language-detection-api enabled.'
     );
   }
 
-  const availability = await window.translation.LanguageDetector.availability();
+  const availability = await window.LanguageDetector.availability();
 
   if (availability === 'no') {
     throw new Error('Language Detection not available on this device');
@@ -330,7 +328,7 @@ async function checkAvailability() {
  * Create a new language detector instance
  */
 async function createDetector() {
-  const detector = await window.translation.LanguageDetector.create();
+  const detector = await window.LanguageDetector.create();
   return detector;
 }
 
@@ -512,7 +510,7 @@ export function CodeModal({
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose} modal>
       <DialogContent
         className={cn(
           'w-[calc(100vw-1rem)] min-[375px]:w-[calc(100vw-2rem)] sm:w-[95vw]',
@@ -521,9 +519,6 @@ export function CodeModal({
           'p-0 gap-0 flex flex-col overflow-hidden',
           className,
         )}
-        onOpenAutoFocus={(e) => {
-          e.preventDefault();
-        }}
       >
         <DialogHeader className="px-4 min-[375px]:px-6 pt-4 min-[375px]:pt-6 pb-3 min-[375px]:pb-4 shrink-0">
           <div className="flex items-center gap-2">

@@ -540,7 +540,7 @@ export function CodeModal({
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose} modal>
       <DialogContent
         className={cn(
           // Responsive widths - works down to 320px
@@ -554,11 +554,6 @@ export function CodeModal({
           'overflow-hidden',
           className,
         )}
-        // Enable focus trap for accessibility
-        onOpenAutoFocus={(e) => {
-          // Focus on close button by default
-          e.preventDefault();
-        }}
       >
         <DialogHeader className="px-4 min-[375px]:px-6 pt-4 min-[375px]:pt-6 pb-3 min-[375px]:pb-4 shrink-0">
           <div className="flex items-center gap-2">

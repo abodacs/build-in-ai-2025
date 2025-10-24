@@ -28,6 +28,8 @@ import {
 import { validateTextInput } from '../../../shared/utils/validation';
 import { ViewCodeButton } from '@/components/shared/ViewCodeButton';
 import { CodeModal } from '../CodeModal';
+import { QuickSamples } from '../QuickSamples';
+import type { LanguageDetectionSample } from '../../data/samples';
 import { cn } from '@/lib/utils';
 
 export function LanguageDetectionMain() {
@@ -84,6 +86,11 @@ export function LanguageDetectionMain() {
     actions.reset();
   };
 
+  const handleSampleSelect = (sample: LanguageDetectionSample) => {
+    setInputText(sample.text);
+    actions.reset();
+  };
+
   return (
     <div className="space-y-6">
       {error && (
@@ -92,6 +99,13 @@ export function LanguageDetectionMain() {
           <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       )}
+
+      {/* Quick Samples */}
+      <QuickSamples
+        onSampleSelect={handleSampleSelect}
+        currentInput={inputText}
+        disabled={isDetecting}
+      />
 
       {/* Input */}
       <Card>
