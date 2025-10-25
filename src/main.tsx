@@ -29,6 +29,16 @@ const checkAISupport = () => {
 
 checkAISupport();
 
+// Remove loading skeleton when React mounts (smooth fade-out)
+const removeSkeleton = () => {
+  const skeleton = document.getElementById('loading-skeleton');
+  if (skeleton) {
+    skeleton.classList.add('fade-out');
+    setTimeout(() => skeleton.remove(), 300); // Match fade-out animation duration
+  }
+};
+
+// Start React
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider defaultTheme="system" storageKey="theme">
@@ -40,3 +50,8 @@ createRoot(document.getElementById('root')!).render(
     </ThemeProvider>
   </StrictMode>,
 );
+
+// Remove skeleton after React first paint
+requestAnimationFrame(() => {
+  requestAnimationFrame(removeSkeleton);
+});

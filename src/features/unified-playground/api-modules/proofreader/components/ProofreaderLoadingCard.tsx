@@ -7,9 +7,13 @@
  * @module proofreader/components/ProofreaderLoadingCard
  */
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 import {
   Loader2,
   AlertCircle,
@@ -17,7 +21,8 @@ import {
   HardDrive,
   Wifi,
   Info,
-  ExternalLink,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useProgressiveLoadingMessage } from '../hooks/useProgressiveLoadingMessage';
@@ -35,6 +40,15 @@ export interface ProofreaderLoadingCardProps {
 
   /** Optional custom title */
   title?: string;
+
+  /** Download progress (if available) */
+  downloadProgress?: {
+    loaded: number;
+    total: number;
+    percentage: number;
+    speed?: number;
+    timeRemaining?: number;
+  } | null;
 
   /** Additional CSS classes */
   className?: string;
@@ -61,22 +75,63 @@ export function ProofreaderLoadingCard({
   isLoading,
   phase,
   title,
+  downloadProgress,
   className,
 }: ProofreaderLoadingCardProps) {
   const { currentMessage, elapsedTime } = useProgressiveLoadingMessage(
     isLoading,
     phase === 'initializing' ? 'proofreader-init' : 'proofreading',
   );
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
 
   if (!isLoading) {
     return null;
   }
+
+  // Handle copying URL to clipboard
+  const handleCopyUrl = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      toast({
+        title: 'URL Copied!',
+        description:
+          "Paste it in your browser's address bar to check download status",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (_err) {
+      console.error('Failed to copy URL:', _err);
+      toast({
+        title: 'Copy Failed',
+        description: `Please copy manually: ${url}`,
+        variant: 'destructive',
+      });
+    }
+  };
 
   // Format elapsed time as MM:SS
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Format bytes to human-readable size
+  const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+  };
+
+  // Format seconds to human-readable duration
+  const formatDuration = (seconds: number): string => {
+    if (seconds < 60) return `${seconds}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
   };
 
   // Get level-specific styles
@@ -167,20 +222,73 @@ export function ProofreaderLoadingCard({
                 </p>
               )}
 
-              {currentMessage.actionLink && (
-                <a
-                  href={currentMessage.actionLink.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline mt-2"
-                >
-                  {currentMessage.actionLink.text}
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+              {currentMessage.copyableUrl && (
+                <div className="mt-2 space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {currentMessage.copyableUrl.text}:
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 px-2 py-1 bg-muted rounded text-xs font-mono">
+                      {currentMessage.copyableUrl.url}
+                    </code>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        handleCopyUrl(currentMessage.copyableUrl!.url)
+                      }
+                      className="h-7 px-2 flex-shrink-0"
+                    >
+                      {copied ? (
+                        <Check className="w-3 h-3 text-green-600" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground italic">
+                    Copy and paste this URL in your browser&apos;s address bar
+                  </p>
+                </div>
               )}
             </div>
           </div>
         </div>
+
+        {/* Download Progress Display (if available) */}
+        {downloadProgress && phase === 'initializing' && elapsedTime >= 10 && (
+          <div className="space-y-2 p-3 bg-primary/5 rounded-lg border border-primary/10">
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-medium text-foreground">
+                Model Download Progress
+              </span>
+              <span className="font-mono text-primary font-semibold">
+                {downloadProgress.percentage.toFixed(1)}%
+              </span>
+            </div>
+            <Progress value={downloadProgress.percentage} className="h-2" />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span className="font-mono">
+                {formatBytes(downloadProgress.loaded)} /{' '}
+                {formatBytes(downloadProgress.total)}
+              </span>
+              {downloadProgress.speed && (
+                <span className="font-mono text-primary">
+                  {formatBytes(downloadProgress.speed)}/s
+                </span>
+              )}
+            </div>
+            {downloadProgress.timeRemaining &&
+              downloadProgress.timeRemaining > 0 && (
+                <p className="text-xs text-center text-muted-foreground pt-1">
+                  Estimated time remaining:{' '}
+                  <span className="font-medium">
+                    {formatDuration(downloadProgress.timeRemaining)}
+                  </span>
+                </p>
+              )}
+          </div>
+        )}
 
         {/* First-time requirements (only show during initialization after 10s) */}
         {phase === 'initializing' && elapsedTime >= 10 && (

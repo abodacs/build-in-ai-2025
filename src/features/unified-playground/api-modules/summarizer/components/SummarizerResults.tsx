@@ -29,7 +29,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { Streamdown } from 'streamdown';
+import ReactMarkdown from 'react-markdown';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
 import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
@@ -78,7 +78,7 @@ export interface SummarizerResultsProps {
 // ============================================================================
 
 /**
- * Custom markdown components for Streamdown
+ * Custom markdown components for ReactMarkdown
  * Provides syntax highlighting for code blocks
  */
 const createMarkdownComponents = (
@@ -324,7 +324,9 @@ export function SummarizerResults({
             isStreaming && 'animate-pulse',
           )}
         >
-          <Streamdown components={markdownComponents}>{result}</Streamdown>
+          <ReactMarkdown components={markdownComponents}>
+            {result}
+          </ReactMarkdown>
         </div>
 
         {/* Performance metrics */}

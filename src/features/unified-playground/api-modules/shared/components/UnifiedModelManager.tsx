@@ -25,7 +25,6 @@ import {
   Loader2,
   Clock,
   Wifi,
-  ExternalLink,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -404,16 +403,15 @@ export function UnifiedModelManager({
                   </p>
                 )}
 
-                {currentMessage.actionLink && (
-                  <a
-                    href={currentMessage.actionLink.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline mt-2"
-                  >
-                    {currentMessage.actionLink.text}
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
+                {currentMessage.copyableUrl && (
+                  <div className="mt-2 space-y-1">
+                    <code className="block px-2 py-1 bg-muted rounded text-xs font-mono">
+                      {currentMessage.copyableUrl.url}
+                    </code>
+                    <p className="text-xs text-muted-foreground italic">
+                      Copy and paste this URL in your browser&apos;s address bar
+                    </p>
+                  </div>
                 )}
               </div>
             </div>

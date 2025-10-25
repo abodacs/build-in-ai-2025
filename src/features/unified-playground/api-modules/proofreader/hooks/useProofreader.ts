@@ -30,7 +30,7 @@ import type {
   ProofreadCorrection,
   CorrectionState,
 } from '../types';
-import type { PerformanceMetrics } from '../../shared/types';
+import type { PerformanceMetrics, DownloadProgress } from '../../shared/types';
 
 // ============================================================================
 // Utilities
@@ -155,6 +155,12 @@ export interface UseProofreaderReturn {
   /** Can redo */
   canRedo: boolean;
 
+  /** Has active proofreader instance */
+  hasInstance: boolean;
+
+  /** Download progress (when downloading model) */
+  downloadProgress: DownloadProgress | null;
+
   /** Actions */
   actions: {
     /** Proofread text */
@@ -189,6 +195,9 @@ export interface UseProofreaderReturn {
 
     /** Update configuration */
     updateConfig: (config: Partial<ProofreaderConfig>) => void;
+
+    /** Download model (for standalone download) */
+    downloadModel: () => Promise<void>;
   };
 }
 
@@ -244,6 +253,8 @@ export function useProofreader(
   const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  const [downloadProgress, setDownloadProgress] =
+    useState<DownloadProgress | null>(null);
 
   // Refs
   const managerRef = useRef<ProofreaderManager>(new ProofreaderManager());
@@ -306,18 +317,39 @@ export function useProofreader(
       // Start instance creation synchronously
       const activeConfig = configRef.current;
       console.log('⚡ Starting instance creation...');
-      const instancePromise = managerRef.current.getInstance(activeConfig);
+
+      // Check if instance already exists
+      const hasInstance = managerRef.current.hasInstance();
+      let instancePromise: Promise<void>;
+
+      if (hasInstance) {
+        // Instance exists, just get it
+        console.log('✓ Using existing instance');
+        instancePromise = managerRef.current
+          .getInstance(activeConfig)
+          .then(() => {});
+      } else {
+        // No instance, use monitorDownload to track progress
+        console.log(
+          '⬇ No instance, initiating download with progress tracking',
+        );
+        instancePromise = managerRef.current.monitorDownload((progress) => {
+          console.log('📥 Download progress:', progress);
+          setDownloadProgress(progress);
+        }, signal);
+      }
 
       try {
         console.log('🔨 Waiting for Proofreader instance...');
 
-        // Await instance creation with timeout
+        // Await instance creation with timeout (6 minutes to allow for 22GB model download)
         await withTimeout(
           instancePromise,
-          180000,
-          'Proofreader instance creation timed out after 3 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure 22GB+ free space and unmetered connection.',
+          360000,
+          'Proofreader instance creation timed out after 6 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure 22GB+ free space and unmetered connection.',
         );
         console.log('✅ Proofreader instance obtained');
+        setDownloadProgress(null); // Clear download progress
         setIsLoading(false);
         setLoadingPhase('proofreading'); // Switch to proofreading phase
 
@@ -529,6 +561,7 @@ export function useProofreader(
     setMetrics(null);
     setCanUndo(false);
     setCanRedo(false);
+    setDownloadProgress(null); // Clear download progress
 
     performanceTrackerRef.current.reset();
     historyManagerRef.current.clear();
@@ -539,6 +572,52 @@ export function useProofreader(
    */
   const updateConfig = useCallback((newConfig: Partial<ProofreaderConfig>) => {
     setConfig((prev) => ({ ...prev, ...newConfig }));
+  }, []);
+
+  /**
+   * Download model (standalone download without proofreading)
+   */
+  const downloadModel = useCallback(async () => {
+    setError(null);
+    setIsLoading(true);
+    setLoadingPhase('initializing');
+
+    // Create abort controller
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
+    try {
+      console.log('[useProofreader] Starting standalone model download...');
+
+      // Use monitorDownload to track progress
+      await managerRef.current.monitorDownload((progress) => {
+        console.log('📥 Download progress:', progress);
+        setDownloadProgress(progress);
+      }, signal);
+
+      console.log('✅ Model download complete!');
+      setDownloadProgress(null);
+      setIsLoading(false);
+      setLoadingPhase(null);
+    } catch (err: unknown) {
+      console.error('❌ Model download failed:', err);
+
+      const proofreaderError = ProofreaderErrorHandler.handleProofreadError(
+        err,
+        0,
+      );
+      const error = new Error(
+        ProofreaderErrorHandler.getUserMessage(proofreaderError),
+      );
+      setError(error);
+      setIsLoading(false);
+      setLoadingPhase(null);
+      setDownloadProgress(null);
+
+      console.error(ProofreaderErrorHandler.formatForLogging(proofreaderError));
+    } finally {
+      abortControllerRef.current = null;
+    }
   }, []);
 
   /**
@@ -635,6 +714,8 @@ export function useProofreader(
     metrics,
     canUndo,
     canRedo,
+    hasInstance: managerRef.current?.hasInstance?.() ?? false,
+    downloadProgress,
     actions: {
       proofread,
       applyCorrectionAtIndex,
@@ -646,6 +727,7 @@ export function useProofreader(
       cancel,
       reset,
       updateConfig,
+      downloadModel,
     },
   };
 }

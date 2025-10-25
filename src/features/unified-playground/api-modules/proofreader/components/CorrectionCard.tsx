@@ -38,6 +38,9 @@ export interface CorrectionCardProps {
   /** Ignore handler */
   onIgnore: () => void;
 
+  /** Original text (for extracting the original substring) */
+  originalText?: string;
+
   /** Is disabled */
   disabled?: boolean;
 
@@ -54,13 +57,17 @@ function getCorrectionBadgeVariant(
 ): 'default' | 'secondary' | 'destructive' | 'outline' {
   switch (type) {
     case 'grammar':
-    case 'spelling':
-      return 'destructive';
-    case 'punctuation':
       return 'default';
-    case 'style':
-    case 'clarity':
+    case 'spelling':
       return 'secondary';
+    case 'punctuation':
+      return 'destructive';
+    case 'capitalization':
+      return 'default';
+    case 'preposition':
+      return 'secondary';
+    case 'missing-words':
+      return 'destructive';
     default:
       return 'outline';
   }
@@ -80,6 +87,7 @@ export function CorrectionCard({
   onApply,
   onIgnore,
   disabled = false,
+  originalText,
   className = '',
 }: CorrectionCardProps) {
   const isPending = state === 'pending';
@@ -92,9 +100,11 @@ export function CorrectionCard({
           {/* Header */}
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
-              <Badge variant={getCorrectionBadgeVariant(correction.type)}>
-                {correction.type}
-              </Badge>
+              {correction.type && (
+                <Badge variant={getCorrectionBadgeVariant(correction.type)}>
+                  {correction.type}
+                </Badge>
+              )}
               <span className="text-xs text-muted-foreground">
                 #{index + 1}
               </span>
@@ -114,7 +124,10 @@ export function CorrectionCard({
                 Original:
               </div>
               <div className="p-2 bg-destructive/10 rounded text-sm line-through">
-                {correction.original}
+                {originalText?.slice(
+                  correction.startIndex,
+                  correction.endIndex,
+                ) || ''}
               </div>
             </div>
 
@@ -123,25 +136,27 @@ export function CorrectionCard({
                 Suggestion:
               </div>
               <div className="p-2 bg-primary/10 rounded text-sm font-medium">
-                {correction.suggestion}
+                {correction.correction}
               </div>
             </div>
           </div>
 
           {/* Explanation */}
-          <div className="flex items-start gap-2 text-sm">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Why this correction is suggested</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <p className="text-muted-foreground">{correction.explanation}</p>
-          </div>
+          {correction.explanation && (
+            <div className="flex items-start gap-2 text-sm">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Why this correction is suggested</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <p className="text-muted-foreground">{correction.explanation}</p>
+            </div>
+          )}
 
           {/* Actions */}
           {isPending && (

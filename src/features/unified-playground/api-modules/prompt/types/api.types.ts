@@ -128,11 +128,7 @@ export interface ExpectedInput {
  * - 'after-download': API available but requires model download
  * - 'available': API immediately available (model already downloaded)
  */
-export type LanguageModelAvailability =
-  | 'no'
-  | 'after-download'
-  | 'available'
-  | 'available';
+export type LanguageModelAvailability = 'no' | 'after-download' | 'available';
 
 // ============================================================================
 // Error Types

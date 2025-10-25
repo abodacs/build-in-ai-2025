@@ -8,10 +8,11 @@
  */
 
 import type {
-  SummarizerAvailability,
   DownloadProgress,
   AvailabilityCheckResult,
 } from '../types/summarizer.types';
+import { normalizeAvailability } from '../../shared/utils/normalizeAvailability';
+import type { AvailabilityStatus } from '../../shared/types';
 
 // ============================================================================
 // Chrome AI Service Class
@@ -107,26 +108,10 @@ export class ChromeAIService {
       // Check availability
       const rawAvailability = await SummarizerAPI.availability();
 
-      // Normalize different API responses
-      let availability: SummarizerAvailability;
-
-      // Convert to string for comparison (handles both API variations)
-      const availabilityStr = String(rawAvailability);
-
-      // Playground API might return 'available' or 'downloadable'
-      if (availabilityStr === 'available') {
-        availability = 'available';
-      } else if (availabilityStr === 'downloadable') {
-        availability = 'after-download';
-      } else if (availabilityStr === 'downloading') {
-        // Model is currently downloading
-        availability = 'after-download';
-      } else if (availabilityStr === 'not-available') {
-        availability = 'no';
-      } else {
-        // Official API: 'no', 'after-download', 'available'
-        availability = rawAvailability;
-      }
+      // Normalize Chrome API status to internal AvailabilityStatus
+      const availability: AvailabilityStatus = normalizeAvailability(
+        rawAvailability as any,
+      );
 
       return {
         availability,
@@ -173,12 +158,13 @@ export class ChromeAIService {
 
     // Check availability first
     const rawAvailability = await SummarizerAPI.availability();
-    // Normalize 'readily' to 'available' for consistency
-    const availability =
-      (rawAvailability as any) === 'readily' ? 'available' : rawAvailability;
-    console.log('[ChromeAIService] Current availability:', availability);
+    console.log('[ChromeAIService] Current availability:', rawAvailability);
 
-    if (availability === 'available') {
+    // Check if model is already available (handles both 'available' and legacy 'readily')
+    if (
+      rawAvailability === 'available' ||
+      (rawAvailability as any) === 'readily'
+    ) {
       console.log(
         '[ChromeAIService] Model already available, no download needed',
       );
@@ -192,7 +178,7 @@ export class ChromeAIService {
       return;
     }
 
-    if (availability === 'no') {
+    if (rawAvailability === 'unavailable') {
       throw new Error('Summarizer API not available on this device');
     }
 

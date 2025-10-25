@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Search, XCircle, AlertCircle } from 'lucide-react';
+import { Search, XCircle, AlertCircle } from 'lucide-react';
 import {
   useLanguageDetection,
   useLanguageDetectionAvailability,
@@ -20,10 +20,16 @@ import {
   getLanguageName,
   getConfidenceColor,
 } from '../../types';
-import { FieldError, UnifiedModelManager } from '../../../shared/components';
+import {
+  FieldError,
+  UnifiedModelManager,
+  APIActionButton,
+} from '../../../shared/components';
 import { validateTextInput } from '../../../shared/utils/validation';
 import { ViewCodeButton } from '@/components/shared/ViewCodeButton';
 import { CodeModal } from '../CodeModal';
+import { QuickSamples } from '../QuickSamples';
+import type { LanguageDetectionSample } from '../../data/samples';
 import { cn } from '@/lib/utils';
 
 export function LanguageDetectionMain() {
@@ -80,6 +86,11 @@ export function LanguageDetectionMain() {
     actions.reset();
   };
 
+  const handleSampleSelect = (sample: LanguageDetectionSample) => {
+    setInputText(sample.text);
+    actions.reset();
+  };
+
   return (
     <div className="space-y-6">
       {error && (
@@ -88,6 +99,13 @@ export function LanguageDetectionMain() {
           <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       )}
+
+      {/* Quick Samples */}
+      <QuickSamples
+        onSampleSelect={handleSampleSelect}
+        currentInput={inputText}
+        disabled={isDetecting}
+      />
 
       {/* Input */}
       <Card>
@@ -121,23 +139,21 @@ export function LanguageDetectionMain() {
             )}
           </div>
           <div className="flex gap-2">
-            <Button
-              onClick={handleDetect}
-              disabled={!inputText.trim() || isDetecting}
-              className="flex-1"
-            >
-              {isDetecting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Detecting...
-                </>
-              ) : (
-                <>
-                  <Search className="mr-2 h-4 w-4" />
-                  Detect Language
-                </>
-              )}
-            </Button>
+            <div className="flex-1">
+              <APIActionButton
+                variant="translate"
+                icon={Search}
+                text="Detect Language"
+                processingText="Detecting..."
+                onClick={handleDetect}
+                disabled={!inputText.trim() || isDetecting}
+                isProcessing={isDetecting}
+                showCancel={false}
+                showShortcutHint={false}
+                fullWidth={true}
+                size="default"
+              />
+            </div>
             <Button
               onClick={handleClear}
               disabled={!inputText || isDetecting}

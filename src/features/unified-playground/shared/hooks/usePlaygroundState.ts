@@ -153,15 +153,17 @@ const API_CONFIG: Record<
  * @returns Normalized status: "available" or "unavailable"
  *
  * @example
+ * normalizeAvailability('readily') // Returns: 'available'
  * normalizeAvailability('available') // Returns: 'available'
  * normalizeAvailability('after-download') // Returns: 'available'
  * normalizeAvailability('no') // Returns: 'unavailable'
  */
 function normalizeAvailability(rawStatus: string): 'available' | 'unavailable' {
   if (
+    rawStatus === 'readily' ||
     rawStatus === 'available' ||
-    rawStatus === 'available' ||
-    rawStatus === 'after-download'
+    rawStatus === 'after-download' ||
+    rawStatus === 'downloadable'
   ) {
     return 'available';
   }
@@ -223,6 +225,8 @@ async function checkAPIAvailability(
           'Chrome AI APIs not available. Requires Chrome 138+ with flags enabled.',
       };
     }
+
+    console.log('hereherehereherehere', apiName);
 
     // Get API configuration
     const config = API_CONFIG[apiName];
@@ -351,6 +355,42 @@ async function checkAPIAvailability(
                 : rawStatus === 'after-download'
                   ? 'Model download required'
                   : 'Translator model not available',
+          };
+        }
+        // Special handling for Proofreader
+        if (apiName === 'proofreader') {
+          const globalAPI = (globalThis as TODO_TYPE)[config.globalName];
+          debugLog(
+            apiName,
+            'loading',
+            'Calling Proofreader.availability({correctionExplanationLanguage: "en"})...',
+          );
+
+          const rawStatus = await globalAPI.availability({
+            correctionExplanationLanguage: 'en',
+          });
+          debugLog(apiName, 'Raw Availability Response', rawStatus);
+
+          const status = normalizeAvailability(rawStatus);
+          debugLog(apiName, 'Normalized Status', status);
+
+          const duration = Date.now() - startTime;
+          debugLog(apiName, 'Check Duration', `${duration}ms`);
+
+          if (DEBUG_API_DETECTION) {
+            console.groupEnd();
+          }
+
+          return {
+            name: apiName,
+            status,
+            lastChecked: Date.now(),
+            error:
+              status === 'available'
+                ? undefined
+                : rawStatus === 'after-download' || rawStatus === 'downloadable'
+                  ? 'Model download required'
+                  : 'Proofreader model not available',
           };
         }
 
@@ -514,6 +554,7 @@ export function usePlaygroundState() {
         checkAICapability(apiName),
       );
       const results = await Promise.allSettled(capabilityChecks);
+      console.log('capabilityChecks:::results', results);
 
       const newCapabilities: Record<string, AICapability> = {};
       const newErrors: string[] = [];

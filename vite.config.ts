@@ -2,11 +2,16 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import viteCompression from 'vite-plugin-compression';
+import removeConsole from 'vite-plugin-remove-console';
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    // Remove console statements in production (except error and warn)
+    removeConsole({
+      external: ['error', 'warn'], // Keep console.error and console.warn for production monitoring
+    }),
     // Gzip compression
     viteCompression({
       verbose: true,
@@ -54,11 +59,54 @@ export default defineConfig({
         preset: 'recommended',
         moduleSideEffects: 'no-external',
       },
-      // Let Vite handle automatic code splitting
-      // Manual chunking was causing TDZ errors with minification
+      // PERFORMANCE OPTIMIZED: Manual chunking to reduce initial bundle size
       output: {
-        // Memory-safe: Limit chunk size to prevent large bundles
-        manualChunks: undefined, // Let Vite handle chunking automatically
+        // Split vendors and syntax highlighting for optimal loading
+        manualChunks: (id) => {
+          // React core (highest priority)
+          if (
+            id.includes('node_modules/react/') ||
+            id.includes('node_modules/react-dom/') ||
+            id.includes('node_modules/react-router')
+          ) {
+            return 'vendor-react';
+          }
+
+          // UI component library
+          if (
+            id.includes('node_modules/@radix-ui/') ||
+            id.includes('node_modules/lucide-react')
+          ) {
+            return 'vendor-ui';
+          }
+
+          // Syntax highlighting (lazy-loaded)
+          if (
+            id.includes('react-syntax-highlighter') ||
+            id.includes('react-markdown')
+          ) {
+            return 'vendor-syntax';
+          }
+
+          // Utility libraries
+          if (
+            id.includes('node_modules/dompurify') ||
+            id.includes('node_modules/zod') ||
+            id.includes('node_modules/zustand')
+          ) {
+            return 'vendor-utils';
+          }
+
+          // Charts library (heavy, lazy-load)
+          if (id.includes('node_modules/recharts')) {
+            return 'vendor-charts';
+          }
+
+          // All other node_modules
+          if (id.includes('node_modules/')) {
+            return 'vendor-other';
+          }
+        },
         chunkFileNames: 'assets/[name]-[hash].js',
         // Memory-safe: Limit asset size for better memory management
         assetFileNames: 'assets/[name]-[hash].[ext]',

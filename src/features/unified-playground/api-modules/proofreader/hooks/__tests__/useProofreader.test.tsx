@@ -19,8 +19,7 @@ vi.mock('../../services', () => ({
     proofread: vi.fn().mockResolvedValue({
       corrections: [
         {
-          original: 'teh',
-          suggestion: 'the',
+          correction: 'the',
           type: 'spelling',
           startIndex: 0,
           endIndex: 3,
@@ -30,7 +29,7 @@ vi.mock('../../services', () => ({
     applyCorrectionAtIndex: vi.fn().mockImplementation((text, correction) => {
       return (
         text.slice(0, correction.startIndex) +
-        correction.suggestion +
+        correction.correction +
         text.slice(correction.endIndex)
       );
     }),
@@ -42,7 +41,7 @@ vi.mock('../../services', () => ({
       for (const correction of sorted) {
         result =
           result.slice(0, correction.startIndex) +
-          correction.suggestion +
+          correction.correction +
           result.slice(correction.endIndex);
       }
       return result;
@@ -342,8 +341,7 @@ describe('useProofreader', () => {
             endIndex: 3,
           },
           {
-            original: 'quik',
-            suggestion: 'quick',
+            correction: 'quick',
             type: 'spelling',
             startIndex: 4,
             endIndex: 8,
@@ -390,8 +388,7 @@ describe('useProofreader', () => {
             endIndex: 3,
           },
           {
-            original: 'bad grammar',
-            suggestion: 'good grammar',
+            correction: 'good grammar',
             type: 'grammar',
             startIndex: 10,
             endIndex: 21,

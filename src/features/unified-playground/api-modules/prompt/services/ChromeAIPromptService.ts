@@ -17,6 +17,7 @@ import type {
   LanguageModelCapabilities,
   DownloadProgress,
 } from '../types';
+import { normalizeAvailability } from '../../shared/utils/normalizeAvailability';
 
 // ============================================================================
 // Helper Functions
@@ -140,8 +141,8 @@ export class ChromeAIPromptService {
       const api = this.getAPI();
       const status = await api.availability();
 
-      // Normalize 'readily' to 'available' for consistency
-      return (status as any) === 'readily' ? 'available' : status;
+      // Normalize Chrome API status to internal AvailabilityStatus
+      return normalizeAvailability(status);
     } catch {
       // Silently return 'no' on error - UI will handle messaging
       return 'no';
@@ -711,11 +712,12 @@ export class ChromeAIPromptService {
 
     // Check availability first
     const rawAvailability = await api.availability();
-    // Normalize 'readily' to 'available' for consistency
-    const availability =
-      (rawAvailability as any) === 'readily' ? 'available' : rawAvailability;
 
-    if (availability === 'available') {
+    // Check if model is already available (handles both 'available' and legacy 'readily')
+    if (
+      rawAvailability === 'available' ||
+      (rawAvailability as any) === 'readily'
+    ) {
       // Model is already ready, just complete immediately
       onProgress({
         loaded: 22 * 1024 * 1024 * 1024, // 22GB
@@ -726,7 +728,9 @@ export class ChromeAIPromptService {
       return;
     }
 
-    if (availability === 'no') {
+    // Check if unavailable (handle both Chrome API and internal values)
+    const availStr = String(rawAvailability);
+    if (availStr === 'unavailable' || availStr === 'no') {
       throw new Error('LanguageModel API not available on this device');
     }
 

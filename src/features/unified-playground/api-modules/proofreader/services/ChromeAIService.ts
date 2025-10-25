@@ -21,6 +21,7 @@ import type {
   ProofreadResult,
 } from '../types';
 import type { AvailabilityStatus, DownloadProgress } from '../../shared/types';
+import { normalizeAvailability } from '../../shared/utils/normalizeAvailability';
 
 // ============================================================================
 // Chrome AI Service
@@ -32,15 +33,16 @@ import type { AvailabilityStatus, DownloadProgress } from '../../shared/types';
  * Provides low-level access to Chrome's Proofreader API
  */
 export class ChromeAIProofreaderService {
+  // Download tracking properties
+  private static downloadStartTime: number | null = null;
+  private static downloadedBytes: number = 0;
+  private static downloadSpeed: number = 0; // bytes per second
+
   /**
    * Check if Proofreader API is supported in current browser
    */
   static isSupported(): boolean {
-    return (
-      typeof window !== 'undefined' &&
-      'Proofreader' in window &&
-      (window as any).Proofreader !== undefined
-    );
+    return typeof window !== 'undefined' && 'Proofreader' in window;
   }
 
   /**
@@ -51,7 +53,7 @@ export class ChromeAIProofreaderService {
     if (!this.isSupported()) {
       throw new Error(
         'Proofreader API is not supported in this browser. ' +
-          'Chrome 141-145 required with Origin Trial enabled. ' +
+          'Chrome 141-145 required with chrome://flags#proofreader-api-for-gemini-nano enabled and Origin Trial enabled. ' +
           'Visit chrome://on-device-internals to check status.',
       );
     }
@@ -62,6 +64,15 @@ export class ChromeAIProofreaderService {
   /**
    * Check Proofreader API availability
    *
+   * Maps Chrome AI availability status to standard AvailabilityStatus
+   *
+   * Chrome API values:
+   * - "unavailable" → "no"
+   * - "downloadable" → "after-download"
+   * - "downloading" → "after-download"
+   * - "available" → "available"
+   * - "readily" (legacy) → "available"
+   *
    * @returns Availability status
    */
   static async checkAvailability(): Promise<AvailabilityStatus> {
@@ -71,10 +82,15 @@ export class ChromeAIProofreaderService {
       }
 
       const api = this.getAPI();
-      const status = await api.availability();
 
-      // Normalize 'readily' to 'available' for consistency
-      return (status as any) === 'readily' ? 'available' : status;
+      // Check current availability status
+      const status = await api.availability({
+        correctionExplanationLanguage: 'en',
+      });
+      console.log('[ChromeAIProofreaderService] Availability status:', status);
+
+      // Normalize Chrome API status to internal AvailabilityStatus
+      return normalizeAvailability(status);
     } catch (error: unknown) {
       console.error(
         '[ChromeAIProofreaderService] Availability check failed:',
@@ -122,7 +138,23 @@ export class ChromeAIProofreaderService {
   }
 
   /**
+   * Format bytes to human-readable size
+   */
+  private static formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+  }
+
+  /**
    * Create Proofreader instance
+   *
+   * Handles downloadable state by attaching a monitor to track download progress.
+   * According to Chrome AI documentation:
+   * - If availability() returns "downloadable", listen for download progress
+   * - User activation is required to trigger download
    *
    * @param options - Creation options
    * @returns Proofreader instance
@@ -139,9 +171,17 @@ export class ChromeAIProofreaderService {
       const api = this.getAPI();
 
       // Check availability first
-      const availability = await api.availability();
+      const rawAvailability = await api.availability({
+        correctionExplanationLanguage:
+          options.correctionExplanationLanguage || 'en',
+      });
 
-      if (availability === 'no') {
+      console.log(
+        '[ChromeAIProofreaderService] Raw availability:',
+        rawAvailability,
+      );
+
+      if (rawAvailability === 'unavailable') {
         throw new Error(
           'Proofreader API is not available. ' +
             'This could be due to: \n' +
@@ -153,7 +193,71 @@ export class ChromeAIProofreaderService {
         );
       }
 
-      // Create instance
+      // If downloadable or downloading, add monitor to track download progress
+      if (
+        rawAvailability === 'downloadable' ||
+        rawAvailability === 'downloading'
+      ) {
+        console.log(
+          '[ChromeAIProofreaderService] Model needs to be downloaded. Attaching monitor...',
+        );
+
+        // Check for user activation (required to trigger download)
+        if (
+          typeof navigator !== 'undefined' &&
+          'userActivation' in navigator &&
+          !(navigator as Navigator & { userActivation?: { isActive: boolean } })
+            .userActivation?.isActive
+        ) {
+          console.warn(
+            '[ChromeAIProofreaderService] User activation required for model download',
+          );
+          throw new Error(
+            'Model download requires user interaction (e.g., button click). Please try again after clicking a button.',
+          );
+        }
+
+        // Add monitor if not already provided
+        if (!options.monitor) {
+          options = {
+            ...options,
+            monitor(m: EventTarget) {
+              console.log(
+                '[ChromeAIProofreaderService] Download monitor attached',
+              );
+
+              m.addEventListener('downloadprogress', (e: Event) => {
+                const customEvent = e as { loaded?: number; total?: number };
+                const loaded = customEvent.loaded || 0;
+                const total = customEvent.total || 22 * 1024 * 1024 * 1024;
+                const percentage = ((loaded / total) * 100).toFixed(1);
+
+                console.log(
+                  `[ChromeAIProofreaderService] Download progress: ${percentage}% (${ChromeAIProofreaderService.formatBytes(loaded)} / ${ChromeAIProofreaderService.formatBytes(total)})`,
+                );
+              });
+
+              m.addEventListener('downloadcomplete', () => {
+                console.log('[ChromeAIProofreaderService] Download complete!');
+              });
+
+              m.addEventListener('downloaderror', (e: Event) => {
+                const errorEvent = e as { detail?: { message?: string } };
+                console.error(
+                  '[ChromeAIProofreaderService] Download error:',
+                  errorEvent.detail?.message || 'Unknown error',
+                );
+              });
+            },
+          };
+        }
+      }
+
+      // Create instance (will trigger download if needed)
+      console.log(
+        '[ChromeAIProofreaderService] Creating Proofreader instance...',
+        options,
+      );
       const instance = await api.create(options);
 
       console.log(
@@ -276,23 +380,33 @@ export class ChromeAIProofreaderService {
     const api = this.getAPI();
 
     // Check availability first
-    const rawAvailability = await api.availability();
-    // Normalize 'readily' to 'available' for consistency
-    const availability =
-      (rawAvailability as any) === 'readily' ? 'available' : rawAvailability;
+    const rawAvailability = await api.availability({
+      correctionExplanationLanguage: 'en',
+    });
+    console.log(
+      '[ChromeAIProofreaderService] Raw availability:',
+      rawAvailability,
+    );
 
-    if (availability === 'available') {
+    // Check if model is already available (handles both 'available' and legacy 'readily')
+    if (
+      rawAvailability === 'available' ||
+      (rawAvailability as any) === 'readily'
+    ) {
+      console.log(
+        '[ChromeAIProofreaderService] Model already available, no download needed',
+      );
       // Model is already ready, just complete immediately
       onProgress({
-        loaded: 22 * 1024 * 1024,
-        total: 22 * 1024 * 1024,
+        loaded: 22 * 1024 * 1024 * 1024,
+        total: 22 * 1024 * 1024 * 1024,
         percentage: 100,
         timeRemaining: 0,
       });
       return;
     }
 
-    if (availability === 'no') {
+    if (rawAvailability === 'unavailable') {
       throw new Error('Proofreader API not available on this device');
     }
 
@@ -303,37 +417,58 @@ export class ChromeAIProofreaderService {
       !(navigator as Navigator & { userActivation?: { isActive: boolean } })
         .userActivation?.isActive
     ) {
+      console.warn(
+        '[ChromeAIProofreaderService] User activation required for model download',
+      );
       throw new Error(
         'Model download requires user interaction (e.g., button click)',
       );
     }
 
+    console.log('[ChromeAIProofreaderService] Starting model download...');
+
     return new Promise((resolve, reject) => {
-      const downloadStartTime = Date.now();
-      let downloadedBytes = 0;
+      this.downloadStartTime = Date.now();
+      this.downloadedBytes = 0;
 
       // Create Proofreader instance with monitor to track download
       const options: ProofreaderCreateOptions = {
+        expectedInputLanguages: ['en'],
+        correctionExplanationLanguage: 'en',
         monitor(m: EventTarget) {
+          console.log('[ChromeAIProofreaderService] Monitor callback invoked');
+          // Download progress event
           m.addEventListener('downloadprogress', (e: Event) => {
             const customEvent = e as { loaded?: number; total?: number };
+            console.log('[ChromeAIProofreaderService] Download progress:', {
+              loaded: customEvent.loaded,
+              total: customEvent.total,
+            });
+
             const loaded = customEvent.loaded || 0;
-            const total = customEvent.total || 22 * 1024 * 1024; // Default 22MB
+            const total = customEvent.total || 22 * 1024 * 1024 * 1024; // Default 22GB
 
-            downloadedBytes = loaded;
+            // Calculate download speed
+            const elapsed =
+              Date.now() -
+              (ChromeAIProofreaderService.downloadStartTime || Date.now());
+            if (elapsed > 0) {
+              ChromeAIProofreaderService.downloadSpeed =
+                (loaded / elapsed) * 1000; // bytes per second
+            }
 
-            // Calculate download speed and time remaining
-            const elapsed = Date.now() - downloadStartTime;
-            const downloadSpeed = elapsed > 0 ? (loaded / elapsed) * 1000 : 0;
-            const remaining = total - loaded;
-            const timeRemaining =
-              downloadSpeed > 0 ? Math.round(remaining / downloadSpeed) : 0;
+            // Update downloaded bytes
+            ChromeAIProofreaderService.downloadedBytes = loaded;
 
             const progress: DownloadProgress = {
               loaded,
               total,
               percentage: (loaded / total) * 100,
-              timeRemaining,
+              speed: ChromeAIProofreaderService.downloadSpeed,
+              timeRemaining: ChromeAIProofreaderService.calculateTimeRemaining(
+                loaded,
+                total,
+              ),
             };
 
             onProgress(progress);
@@ -341,15 +476,49 @@ export class ChromeAIProofreaderService {
         },
       };
 
-      api
-        .create(options)
+      console.log(
+        '[ChromeAIProofreaderService] Calling Proofreader.create with options:',
+        {
+          expectedInputLanguages: options.expectedInputLanguages,
+          includeCorrectionTypes: options.includeCorrectionTypes,
+          includeCorrectionExplanations: options.includeCorrectionExplanations,
+          correctionExplanationLanguage: options.correctionExplanationLanguage,
+          hasMonitor: !!options.monitor,
+        },
+      );
+
+      // Create a timeout promise that rejects after 5 minutes (300 seconds)
+      // Model download is ~22GB and can take several minutes on slower connections
+      const DOWNLOAD_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(
+            new Error(
+              'Model download timed out after 5 minutes. Please check your internet connection and try again. If the download started, it may still be running in the background - try refreshing the page in a few minutes.',
+            ),
+          );
+        }, DOWNLOAD_TIMEOUT);
+      });
+
+      // Race between create and timeout
+      Promise.race([api.create(options), timeoutPromise])
         .then((proofreader: unknown) => {
+          console.log(
+            '[ChromeAIProofreaderService] Proofreader created successfully',
+          );
+          console.log(
+            '[ChromeAIProofreaderService] Final downloaded bytes:',
+            ChromeAIProofreaderService.downloadedBytes,
+          );
+
           // Use setTimeout to ensure the final progress update is processed
           setTimeout(() => {
             // Download complete - model is ready
             onProgress({
-              loaded: downloadedBytes || 22 * 1024 * 1024,
-              total: 22 * 1024 * 1024,
+              loaded:
+                ChromeAIProofreaderService.downloadedBytes ||
+                22 * 1024 * 1024 * 1024,
+              total: 22 * 1024 * 1024 * 1024,
               percentage: 100,
               timeRemaining: 0,
             });
@@ -360,14 +529,24 @@ export class ChromeAIProofreaderService {
               typeof proofreader === 'object' &&
               'destroy' in proofreader
             ) {
+              console.log(
+                '[ChromeAIProofreaderService] Destroying proofreader instance',
+              );
               (proofreader as { destroy: () => void }).destroy();
             }
 
+            console.log('[ChromeAIProofreaderService] Resolving promise');
             resolve();
           }, 100);
         })
         .catch((error: unknown) => {
+          console.error('[ChromeAIProofreaderService] Download failed:', error);
           if (error instanceof Error) {
+            console.error('[ChromeAIProofreaderService] Error details:', {
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+            });
             reject(
               new Error(
                 `Model download failed: ${error.message || 'Unknown error'}`,
@@ -378,6 +557,24 @@ export class ChromeAIProofreaderService {
           }
         });
     });
+  }
+
+  /**
+   * Calculate estimated time remaining for download
+   *
+   * @param loaded - Bytes downloaded
+   * @param total - Total bytes
+   * @returns Estimated seconds remaining
+   */
+  private static calculateTimeRemaining(loaded: number, total: number): number {
+    if (loaded === 0 || this.downloadSpeed === 0) {
+      return 0;
+    }
+
+    const remaining = total - loaded;
+    const timeRemaining = remaining / this.downloadSpeed; // seconds
+
+    return Math.round(timeRemaining);
   }
 
   /**
@@ -435,7 +632,7 @@ export class ChromeAIProofreaderService {
     if (error instanceof Error) {
       // API not supported
       if (error.message.includes('not supported')) {
-        return 'Proofreader API is not supported in this browser. Chrome 141-145 required.';
+        return 'Proofreader API is not supported in this browser. Chrome 141-145 required with chrome://flags#proofreader-api-for-gemini-nano enabled.';
       }
 
       // API not available

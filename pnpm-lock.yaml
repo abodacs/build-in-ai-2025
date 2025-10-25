@@ -300,6 +300,9 @@ importers:
       vite-plugin-compression2:
         specifier: ^2.2.1
         version: 2.2.1(rollup@4.52.2)
+      vite-plugin-remove-console:
+        specifier: ^2.2.0
+        version: 2.2.0
       vitest:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@20.19.17)(@vitest/ui@2.1.9)(jsdom@26.1.0)(lightningcss@1.30.1)(terser@5.44.0)
@@ -5503,6 +5506,9 @@ packages:
     resolution: {integrity: sha512-5QJKBDc+gNYVqL/skgFAP81Yuzo9R+EAf19d+EtsMF/i8kFUpNi3J/H01QD3Oo8zBQn+NzoCIFkpPLynoOzaJg==}
     peerDependencies:
       vite: '>=2.0.0'
+
+  vite-plugin-remove-console@2.2.0:
+    resolution: {integrity: sha512-qgjh5pz75MdE9Kzs8J0kBwaCfifHV0ezRbB9rpGsIOxam+ilcGV7WOk91vFJXquzRmiKrFh3Hxlh0JJWAmXTbQ==}
 
   vite@5.4.20:
     resolution: {integrity: sha512-j3lYzGC3P+B5Yfy/pfKNgVEg4+UtcIJcVRt2cDjIOmhLourAqPqf8P7acgxeiSgUB7E3p2P8/3gNIgDLpwzs4g==}
@@ -11660,6 +11666,8 @@ snapshots:
       vite: 6.3.6(@types/node@20.19.17)(jiti@2.6.0)(lightningcss@1.30.1)(terser@5.44.0)(yaml@2.8.1)
     transitivePeerDependencies:
       - supports-color
+
+  vite-plugin-remove-console@2.2.0: {}
 
   vite@5.4.20(@types/node@20.19.17)(lightningcss@1.30.1)(terser@5.44.0):
     dependencies:

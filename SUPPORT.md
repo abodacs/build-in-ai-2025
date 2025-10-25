@@ -65,6 +65,7 @@ Start with these resources:
    - [Translation API](chrome://flags/#translation-api)
    - [Writer API](chrome://flags/#writer-api-for-gemini-nano)
    - [Rewriter API](chrome://flags/#rewriter-api-for-gemini-nano)
+   - [Proofreader API](chrome://flags/#proofreader-api-for-gemini-nano)
    - [Language Detection API](chrome://flags/#language-detection-api)
 
    **Multilingual Flags (Chrome 141+, optional - for Spanish/Japanese support):**

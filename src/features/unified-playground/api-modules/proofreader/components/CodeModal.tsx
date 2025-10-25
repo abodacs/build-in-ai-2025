@@ -65,6 +65,8 @@ function generateTypeScriptCode(config: ProofreaderConfig): string {
   const configStr = JSON.stringify(
     {
       expectedInputLanguages: config.expectedInputLanguages || ['en'],
+      correctionExplanationLanguage:
+        config.correctionExplanationLanguage || 'en',
     },
     null,
     2,
@@ -75,6 +77,7 @@ function generateTypeScriptCode(config: ProofreaderConfig): string {
  *
  * Requirements:
  * - Chrome 141+ (Origin Trial until Chrome 145)
+ * - Enable chrome://flags#proofreader-api-for-gemini-nano
  * - Enable Origin Trial token
  * - CSS Custom Highlights API for highlighting
  *
@@ -86,15 +89,14 @@ function generateTypeScriptCode(config: ProofreaderConfig): string {
 // Type Definitions
 // ============================================================================
 
-type CorrectionType = 'grammar' | 'spelling' | 'punctuation' | 'style' | 'clarity';
+type CorrectionType = 'spelling' | 'punctuation' | 'capitalization' | 'preposition' | 'missing-words' | 'grammar';
 type ProofreaderLanguage = 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ja' | 'ko' | 'zh';
 
 interface ProofreadResult {
-  type: CorrectionType;
-  start: number;
-  end: number;
-  originalText: string;
-  suggestion: string;
+  type?: CorrectionType;
+  startIndex: number;
+  endIndex: number;
+  correction: string;
   explanation?: string;
 }
 
@@ -105,6 +107,7 @@ interface Proofreader {
 
 interface ProofreaderCreateOptions {
   expectedInputLanguages?: ProofreaderLanguage[];
+  correctionExplanationLanguage?: string;
   signal?: AbortSignal;
   monitor?: (monitor: EventTarget) => void;
 }
@@ -142,7 +145,7 @@ async function checkAvailability(): Promise<boolean> {
     );
   }
 
-  const availability = await window.Proofreader.availability();
+  const availability = await window.Proofreader.availability(config);
 
   if (availability === 'no') {
     throw new Error('Proofreader not available on this device');
@@ -188,14 +191,14 @@ function applyCorrections(
   corrections: ProofreadResult[]
 ): string {
   // Sort corrections by start position (descending) to apply from end to start
-  const sortedCorrections = [...corrections].sort((a, b) => b.start - a.start);
+  const sortedCorrections = [...corrections].sort((a, b) => b.startIndex - a.startIndex);
 
   let result = text;
   for (const correction of sortedCorrections) {
     result =
-      result.slice(0, correction.start) +
-      correction.suggestion +
-      result.slice(correction.end);
+      result.slice(0, correction.startIndex) +
+      correction.correction +
+      result.slice(correction.endIndex);
   }
 
   return result;
@@ -292,7 +295,7 @@ function setupHTMLIntegration() {
           (c) =>
             \`<div class="correction">
               <strong>\${c.type}</strong>:
-              "\${c.originalText}" → "\${c.suggestion}"
+              "\${text.slice(c.startIndex, c.endIndex)}" → "\${c.correction}"
               \${c.explanation ? \`<br><em>\${c.explanation}</em>\` : ''}
             </div>\`
         )
@@ -321,6 +324,8 @@ function generateJavaScriptCode(config: ProofreaderConfig): string {
   const configStr = JSON.stringify(
     {
       expectedInputLanguages: config.expectedInputLanguages || ['en'],
+      correctionExplanationLanguage:
+        config.correctionExplanationLanguage || 'en',
     },
     null,
     2,
@@ -331,6 +336,7 @@ function generateJavaScriptCode(config: ProofreaderConfig): string {
  *
  * Requirements:
  * - Chrome 141+ (Origin Trial until Chrome 145)
+ * - Enable chrome://flags#proofreader-api-for-gemini-nano
  * - Enable Origin Trial token
  * - CSS Custom Highlights API for highlighting
  *
@@ -359,7 +365,7 @@ async function checkAvailability() {
     );
   }
 
-  const availability = await window.Proofreader.availability();
+  const availability = await window.Proofreader.availability(config);
 
   if (availability === 'no') {
     throw new Error('Proofreader not available on this device');
@@ -402,14 +408,14 @@ async function proofread(text) {
  */
 function applyCorrections(text, corrections) {
   // Sort corrections by start position (descending) to apply from end to start
-  const sortedCorrections = [...corrections].sort((a, b) => b.start - a.start);
+  const sortedCorrections = [...corrections].sort((a, b) => b.startIndex - a.startIndex);
 
   let result = text;
   for (const correction of sortedCorrections) {
     result =
-      result.slice(0, correction.start) +
-      correction.suggestion +
-      result.slice(correction.end);
+      result.slice(0, correction.startIndex) +
+      correction.correction +
+      result.slice(correction.endIndex);
   }
 
   return result;
@@ -502,7 +508,7 @@ function setupHTMLIntegration() {
           (c) =>
             \`<div class="correction">
               <strong>\${c.type}</strong>:
-              "\${c.originalText}" → "\${c.suggestion}"
+              "\${text.slice(c.startIndex, c.endIndex)}" → "\${c.correction}"
               \${c.explanation ? \`<br><em>\${c.explanation}</em>\` : ''}
             </div>\`
         )
@@ -594,7 +600,7 @@ export function CodeModal({
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose} modal>
       <DialogContent
         className={cn(
           'w-[calc(100vw-1rem)] min-[375px]:w-[calc(100vw-2rem)] sm:w-[95vw]',
@@ -603,9 +609,6 @@ export function CodeModal({
           'p-0 gap-0 flex flex-col overflow-hidden',
           className,
         )}
-        onOpenAutoFocus={(e) => {
-          e.preventDefault();
-        }}
       >
         <DialogHeader className="px-4 min-[375px]:px-6 pt-4 min-[375px]:pt-6 pb-3 min-[375px]:pb-4 shrink-0">
           <div className="flex items-center gap-2">

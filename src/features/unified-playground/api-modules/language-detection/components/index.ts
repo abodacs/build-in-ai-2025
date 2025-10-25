@@ -6,3 +6,4 @@
 
 export { LanguageDetectionMain } from './tabs/PlaygroundTab';
 export { CodeModal } from './CodeModal';
+export { QuickSamples } from './QuickSamples';

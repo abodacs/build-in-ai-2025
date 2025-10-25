@@ -29,8 +29,8 @@ export interface LoadingMessage {
   /** Message severity/urgency level */
   level: 'info' | 'warning' | 'urgent';
 
-  /** Optional action link */
-  actionLink?: {
+  /** Optional copyable URL (for chrome:// URLs that can't be linked) */
+  copyableUrl?: {
     text: string;
     url: string;
   };
@@ -96,9 +96,9 @@ const PROOFREADER_MESSAGES: { threshold: number; message: LoadingMessage }[] = [
       message: 'Still Downloading Model...',
       subtitle: 'Download may take several minutes on slower connections',
       helpText:
-        'This is normal for first-time setup. You can check download status at chrome://on-device-internals',
+        'This is normal for first-time setup. You can check download status in Chrome internals.',
       level: 'warning',
-      actionLink: {
+      copyableUrl: {
         text: 'Check Download Status',
         url: 'chrome://on-device-internals',
       },
@@ -111,10 +111,10 @@ const PROOFREADER_MESSAGES: { threshold: number; message: LoadingMessage }[] = [
       message: 'Download Taking Longer Than Expected',
       subtitle: 'If stuck, verify system requirements',
       helpText:
-        'Ensure: 22GB+ free disk space, 4GB+ VRAM, unmetered connection, Origin Trial enabled. Check chrome://on-device-internals for errors.',
+        'Ensure: 22GB+ free disk space, 4GB+ VRAM, unmetered connection, Origin Trial enabled.',
       level: 'urgent',
-      actionLink: {
-        text: 'Troubleshooting Guide',
+      copyableUrl: {
+        text: 'Open Chrome Internals',
         url: 'chrome://on-device-internals',
       },
     },

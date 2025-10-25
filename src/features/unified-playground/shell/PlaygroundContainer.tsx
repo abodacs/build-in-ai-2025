@@ -3,7 +3,7 @@
  * Enterprise-grade component with proper architecture patterns, security, and performance
  */
 
-import { useEffect, Suspense } from 'react';
+import { useEffect, Suspense, useMemo } from 'react';
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
 import { LoadingSpinner } from '../shared/components/LoadingScreen';
 import { Header } from '@/components/layout/header/Header';
@@ -129,6 +129,35 @@ export function PlaygroundContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only measure on mount/unmount
 
+  // Memoize performance warning card to prevent excessive re-renders
+  const performanceWarningCard = useMemo(() => {
+    if (!showPerformanceMetrics || optimizationSuggestions.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="mb-6 animate-fadeInDown">
+        <Card className="border-yellow-500/20 bg-yellow-500/5 p-4">
+          <div className="flex items-start gap-3">
+            <Activity className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-yellow-700 mb-2">
+                Performance Optimization
+              </h3>
+              <ul className="space-y-1 text-sm text-yellow-700/80">
+                {optimizationSuggestions
+                  .slice(0, 3)
+                  .map((suggestion, index) => (
+                    <li key={index}>• {suggestion}</li>
+                  ))}
+              </ul>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }, [showPerformanceMetrics, optimizationSuggestions]);
+
   // ============================================================================
   // Render
   // ============================================================================
@@ -146,28 +175,8 @@ export function PlaygroundContainer({
 
         {/* Main Content */}
         <main className="container mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-screen-2xl">
-          {/* Performance Insights */}
-          {showPerformanceMetrics && optimizationSuggestions.length > 0 && (
-            <div className="mb-6 animate-fadeInDown">
-              <Card className="border-yellow-500/20 bg-yellow-500/5 p-4">
-                <div className="flex items-start gap-3">
-                  <Activity className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-yellow-700 mb-2">
-                      Performance Optimization
-                    </h3>
-                    <ul className="space-y-1 text-sm text-yellow-700/80">
-                      {optimizationSuggestions
-                        .slice(0, 3)
-                        .map((suggestion, index) => (
-                          <li key={index}>• {suggestion}</li>
-                        ))}
-                    </ul>
-                  </div>
-                </div>
-              </Card>
-            </div>
-          )}
+          {/* Performance Insights - Memoized */}
+          {performanceWarningCard}
 
           <Suspense fallback={<PlaygroundSuspenseFallback />}>
             <div className="animate-fadeInUp">

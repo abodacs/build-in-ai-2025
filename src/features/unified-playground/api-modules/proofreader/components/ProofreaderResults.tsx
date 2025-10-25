@@ -158,11 +158,20 @@ export function ProofreaderResults({
                 Punctuation: {stats.byType.punctuation}
               </Badge>
             )}
-            {stats.byType.style > 0 && (
-              <Badge variant="secondary">Style: {stats.byType.style}</Badge>
+            {stats.byType.capitalization > 0 && (
+              <Badge variant="secondary">
+                Capitalization: {stats.byType.capitalization}
+              </Badge>
             )}
-            {stats.byType.clarity > 0 && (
-              <Badge variant="secondary">Clarity: {stats.byType.clarity}</Badge>
+            {stats.byType.preposition > 0 && (
+              <Badge variant="secondary">
+                Preposition: {stats.byType.preposition}
+              </Badge>
+            )}
+            {stats.byType['missing-words'] > 0 && (
+              <Badge variant="secondary">
+                Missing Words: {stats.byType['missing-words']}
+              </Badge>
             )}
           </div>
         </CardContent>
