@@ -51,8 +51,13 @@ export interface DownloadErrorEvent extends Event {
 
 /**
  * Summarizer availability states
+ * Based on official Chrome AI specification
  */
-export type SummarizerAvailability = 'no' | 'after-download' | 'available';
+export type SummarizerAvailability =
+  | 'unavailable'
+  | 'downloadable'
+  | 'downloading'
+  | 'available';
 
 /**
  * Summarizer create options
@@ -93,8 +98,13 @@ export interface ChromeSummarizerAPI {
 
 /**
  * Rewriter availability states
+ * Based on official Chrome AI specification
  */
-export type RewriterAvailability = 'no' | 'after-download' | 'readily';
+export type RewriterAvailability =
+  | 'unavailable'
+  | 'downloadable'
+  | 'downloading'
+  | 'available';
 
 /**
  * Rewriter create options
@@ -242,8 +252,13 @@ export interface ChromeProofreaderAPI {
 
 /**
  * Language Detector availability states
+ * Based on official Chrome AI specification
  */
-export type LanguageDetectorAvailability = 'no' | 'readily';
+export type LanguageDetectorAvailability =
+  | 'unavailable'
+  | 'downloadable'
+  | 'downloading'
+  | 'available';
 
 /**
  * Language detection result
@@ -275,8 +290,13 @@ export interface ChromeLanguageDetectorAPI {
 
 /**
  * Translator availability states
+ * Based on official Chrome AI specification
  */
-export type TranslatorAvailability = 'no' | 'after-download' | 'available';
+export type TranslatorAvailability =
+  | 'unavailable'
+  | 'downloadable'
+  | 'downloading'
+  | 'available';
 
 /**
  * Translator create options

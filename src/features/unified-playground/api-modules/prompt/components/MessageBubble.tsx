@@ -1,11 +1,19 @@
 /**
  * MessageBubble Component
  * Individual message display with markdown support
+ * PERFORMANCE OPTIMIZED: Memoized to prevent unnecessary re-renders
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+  memo,
+} from 'react';
 import { Copy, Edit, RotateCcw, Trash2, MoreVertical } from 'lucide-react';
-import { Streamdown } from 'streamdown';
+import ReactMarkdown from 'react-markdown';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
 import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
@@ -119,7 +127,7 @@ const createMarkdownComponents = (
   },
 });
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({
+const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
   message,
   onCopy,
   onEdit,
@@ -128,7 +136,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   isStreaming = false,
 }) => {
   const isUser = message.role === 'user';
-  const isDarkMode = document.documentElement.classList.contains('dark');
+
+  // Memoize dark mode check to avoid querying DOM on every render
+  const isDarkMode = useMemo(
+    () => document.documentElement.classList.contains('dark'),
+    [], // Only check once per mount - theme changes trigger full page re-render anyway
+  );
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
@@ -151,48 +165,52 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     };
   }, [isMenuOpen]);
 
-  const handleCopy = () => {
+  // Memoize event handlers to prevent child re-renders
+  const handleCopy = useCallback(() => {
     if (onCopy) {
       onCopy(message.content);
     } else {
       navigator.clipboard.writeText(message.content);
     }
     setIsMenuOpen(false);
-  };
+  }, [onCopy, message.content]);
 
-  const handleEdit = () => {
+  const handleEdit = useCallback(() => {
     setIsEditing(true);
     setIsMenuOpen(false);
-  };
+  }, []);
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = useCallback(() => {
     if (onEdit && editContent.trim() !== message.content) {
       onEdit(message.id, editContent);
     }
     setIsEditing(false);
-  };
+  }, [onEdit, message.id, message.content, editContent]);
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = useCallback(() => {
     setEditContent(message.content);
     setIsEditing(false);
-  };
+  }, [message.content]);
 
-  const handleRegenerate = () => {
+  const handleRegenerate = useCallback(() => {
     if (onRegenerate) {
       onRegenerate(message.id);
     }
     setIsMenuOpen(false);
-  };
+  }, [onRegenerate, message.id]);
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     if (onDelete) {
       onDelete(message.id);
     }
     setIsMenuOpen(false);
-  };
+  }, [onDelete, message.id]);
 
-  // Get custom markdown components
-  const markdownComponents = createMarkdownComponents(isDarkMode);
+  // Memoize markdown components to prevent recreation on every render
+  const markdownComponents = useMemo(
+    () => createMarkdownComponents(isDarkMode),
+    [isDarkMode],
+  );
 
   return (
     <div
@@ -310,9 +328,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             ) : (
               // Assistant messages: render markdown with syntax highlighting
               <div className="prose prose-sm dark:prose-invert max-w-none">
-                <Streamdown components={markdownComponents}>
+                <ReactMarkdown components={markdownComponents}>
                   {message.content}
-                </Streamdown>
+                </ReactMarkdown>
               </div>
             )}
           </div>
@@ -356,5 +374,41 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     </div>
   );
 };
+
+// Memoize component with custom comparison function
+// Only re-render if message content, role, or streaming state changes
+export const MessageBubble = memo(
+  MessageBubbleComponent,
+  (prevProps, nextProps) => {
+    // If streaming state changed, re-render
+    if (prevProps.isStreaming !== nextProps.isStreaming) {
+      return false;
+    }
+
+    // If message content or metadata changed, re-render
+    if (
+      prevProps.message.content !== nextProps.message.content ||
+      prevProps.message.role !== nextProps.message.role ||
+      prevProps.message.id !== nextProps.message.id
+    ) {
+      return false;
+    }
+
+    // If callbacks changed identity (rare), re-render
+    if (
+      prevProps.onCopy !== nextProps.onCopy ||
+      prevProps.onEdit !== nextProps.onEdit ||
+      prevProps.onRegenerate !== nextProps.onRegenerate ||
+      prevProps.onDelete !== nextProps.onDelete
+    ) {
+      return false;
+    }
+
+    // Props are equal, skip re-render
+    return true;
+  },
+);
+
+MessageBubble.displayName = 'MessageBubble';
 
 export default MessageBubble;

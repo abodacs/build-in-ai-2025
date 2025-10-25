@@ -358,17 +358,16 @@ async function checkAPIAvailability(
           };
         }
         // Special handling for Proofreader
-        if (apiName === 'Proofreader') {
+        if (apiName === 'proofreader') {
           const globalAPI = (globalThis as TODO_TYPE)[config.globalName];
           debugLog(
             apiName,
             'loading',
-            'Calling Proofreader.availability({expectedInputLanguages: "en"})...',
+            'Calling Proofreader.availability({correctionExplanationLanguage: "en"})...',
           );
 
           const rawStatus = await globalAPI.availability({
-            expectedInputLanguages: ['en'],
-            outputLanguage: 'en',
+            correctionExplanationLanguage: 'en',
           });
           debugLog(apiName, 'Raw Availability Response', rawStatus);
 
@@ -389,9 +388,9 @@ async function checkAPIAvailability(
             error:
               status === 'available'
                 ? undefined
-                : rawStatus === 'after-download'
+                : rawStatus === 'after-download' || rawStatus === 'downloadable'
                   ? 'Model download required'
-                  : 'Translator model not available',
+                  : 'Proofreader model not available',
           };
         }
 

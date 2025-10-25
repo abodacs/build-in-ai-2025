@@ -222,11 +222,12 @@ export function usePerformanceMetrics() {
       const currentTime = performance.now();
       const elapsed = currentTime - frameStartTimeRef.current;
 
-      // Throttle to every 2 seconds to reduce updates
-      if (elapsed >= 2000) {
+      // PERFORMANCE OPTIMIZED: Throttle to every 5 seconds (was 2s)
+      // Reduces state updates by 60%, minimizing component re-renders
+      if (elapsed >= 5000) {
         const now = Date.now();
         // Only update if enough time has passed since last update (debounce)
-        if (now - lastFrameRateUpdateRef.current >= 2000) {
+        if (now - lastFrameRateUpdateRef.current >= 5000) {
           const fps = Math.round((frameCountRef.current * 1000) / elapsed);
           setMetrics((prev) => ({ ...prev, frameRate: fps }));
           lastFrameRateUpdateRef.current = now;

@@ -12,6 +12,7 @@ import type {
   AvailabilityCheckResult,
   DownloadProgress,
 } from '../../shared/types';
+import { normalizeAvailability } from '../../shared/utils/normalizeAvailability';
 
 // ============================================================================
 // Chrome AI Service
@@ -82,8 +83,8 @@ export class WriterChromeAIService {
 
     try {
       const availability = await WriterAPI.availability();
-      // Normalize 'readily' to 'available' for consistency
-      return (availability as any) === 'readily' ? 'available' : availability;
+      // Normalize Chrome API status to internal AvailabilityStatus
+      return normalizeAvailability(availability);
     } catch (error) {
       console.error('Writer availability check failed:', error);
       throw new Error(
@@ -287,11 +288,12 @@ export class WriterChromeAIService {
 
     // Check availability first
     const rawAvailability = await WriterAPI.availability();
-    // Normalize 'readily' to 'available' for consistency
-    const availability =
-      (rawAvailability as any) === 'readily' ? 'available' : rawAvailability;
 
-    if (availability === 'available') {
+    // Check if model is already available (handles both 'available' and legacy 'readily')
+    if (
+      rawAvailability === 'available' ||
+      (rawAvailability as any) === 'readily'
+    ) {
       // Model is already ready, just complete immediately
       onProgress({
         loaded: 22 * 1024 * 1024,
@@ -302,7 +304,9 @@ export class WriterChromeAIService {
       return;
     }
 
-    if (availability === 'no') {
+    // Check if unavailable (handle both Chrome API and internal values)
+    const availStr = String(rawAvailability);
+    if (availStr === 'unavailable' || availStr === 'no') {
       throw new Error('Writer API not available on this device');
     }
 

@@ -13,3 +13,6 @@ export { default as textValidation } from './textValidation';
 // Formatting utilities
 export * from './formatters';
 export { default as formatters } from './formatters';
+
+// Availability normalization utilities
+export * from './normalizeAvailability';

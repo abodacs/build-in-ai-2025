@@ -65,6 +65,8 @@ function generateTypeScriptCode(config: ProofreaderConfig): string {
   const configStr = JSON.stringify(
     {
       expectedInputLanguages: config.expectedInputLanguages || ['en'],
+      correctionExplanationLanguage:
+        config.correctionExplanationLanguage || 'en',
     },
     null,
     2,
@@ -105,6 +107,7 @@ interface Proofreader {
 
 interface ProofreaderCreateOptions {
   expectedInputLanguages?: ProofreaderLanguage[];
+  correctionExplanationLanguage?: string;
   signal?: AbortSignal;
   monitor?: (monitor: EventTarget) => void;
 }
@@ -142,7 +145,7 @@ async function checkAvailability(): Promise<boolean> {
     );
   }
 
-  const availability = await window.Proofreader.availability();
+  const availability = await window.Proofreader.availability(config);
 
   if (availability === 'no') {
     throw new Error('Proofreader not available on this device');
@@ -321,6 +324,8 @@ function generateJavaScriptCode(config: ProofreaderConfig): string {
   const configStr = JSON.stringify(
     {
       expectedInputLanguages: config.expectedInputLanguages || ['en'],
+      correctionExplanationLanguage:
+        config.correctionExplanationLanguage || 'en',
     },
     null,
     2,
@@ -360,7 +365,7 @@ async function checkAvailability() {
     );
   }
 
-  const availability = await window.Proofreader.availability();
+  const availability = await window.Proofreader.availability(config);
 
   if (availability === 'no') {
     throw new Error('Proofreader not available on this device');

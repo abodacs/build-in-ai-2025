@@ -21,6 +21,7 @@ import type {
   ProofreadResult,
 } from '../types';
 import type { AvailabilityStatus, DownloadProgress } from '../../shared/types';
+import { normalizeAvailability } from '../../shared/utils/normalizeAvailability';
 
 // ============================================================================
 // Chrome AI Service
@@ -63,13 +64,14 @@ export class ChromeAIProofreaderService {
   /**
    * Check Proofreader API availability
    *
-   * Maps Proofreader-specific availability enum to standard AvailabilityStatus
+   * Maps Chrome AI availability status to standard AvailabilityStatus
    *
-   * Proofreader enum values:
+   * Chrome API values:
    * - "unavailable" → "no"
    * - "downloadable" → "after-download"
    * - "downloading" → "after-download"
    * - "available" → "available"
+   * - "readily" (legacy) → "available"
    *
    * @returns Availability status
    */
@@ -82,20 +84,13 @@ export class ChromeAIProofreaderService {
       const api = this.getAPI();
 
       // Check current availability status
-      const status = await api.availability();
+      const status = await api.availability({
+        correctionExplanationLanguage: 'en',
+      });
       console.log('[ChromeAIProofreaderService] Availability status:', status);
 
-      // Map Proofreader enum to standard AvailabilityStatus
-      switch (status) {
-        case 'available':
-          return 'available';
-        case 'downloadable':
-        case 'downloading':
-          return 'after-download';
-        case 'unavailable':
-        default:
-          return 'no';
-      }
+      // Normalize Chrome API status to internal AvailabilityStatus
+      return normalizeAvailability(status);
     } catch (error: unknown) {
       console.error(
         '[ChromeAIProofreaderService] Availability check failed:',
@@ -176,14 +171,17 @@ export class ChromeAIProofreaderService {
       const api = this.getAPI();
 
       // Check availability first
-      const rawAvailability = await api.availability();
-      // Normalize 'readily' to 'available' for consistency
-      const availability =
-        (rawAvailability as any) === 'readily' ? 'available' : rawAvailability;
+      const rawAvailability = await api.availability({
+        correctionExplanationLanguage:
+          options.correctionExplanationLanguage || 'en',
+      });
 
-      console.log('[ChromeAIProofreaderService] Availability:', availability);
+      console.log(
+        '[ChromeAIProofreaderService] Raw availability:',
+        rawAvailability,
+      );
 
-      if (availability === 'unavailable') {
+      if (rawAvailability === 'unavailable') {
         throw new Error(
           'Proofreader API is not available. ' +
             'This could be due to: \n' +
@@ -196,7 +194,10 @@ export class ChromeAIProofreaderService {
       }
 
       // If downloadable or downloading, add monitor to track download progress
-      if (availability === 'downloadable' || availability === 'downloading') {
+      if (
+        rawAvailability === 'downloadable' ||
+        rawAvailability === 'downloading'
+      ) {
         console.log(
           '[ChromeAIProofreaderService] Model needs to be downloaded. Attaching monitor...',
         );
@@ -255,6 +256,7 @@ export class ChromeAIProofreaderService {
       // Create instance (will trigger download if needed)
       console.log(
         '[ChromeAIProofreaderService] Creating Proofreader instance...',
+        options,
       );
       const instance = await api.create(options);
 
@@ -378,17 +380,19 @@ export class ChromeAIProofreaderService {
     const api = this.getAPI();
 
     // Check availability first
-    const rawAvailability = await api.availability();
+    const rawAvailability = await api.availability({
+      correctionExplanationLanguage: 'en',
+    });
     console.log(
       '[ChromeAIProofreaderService] Raw availability:',
       rawAvailability,
     );
 
-    // Normalize 'readily' to 'available' for consistency
-    const availability =
-      (rawAvailability as any) === 'readily' ? 'available' : rawAvailability;
-
-    if (availability === 'available') {
+    // Check if model is already available (handles both 'available' and legacy 'readily')
+    if (
+      rawAvailability === 'available' ||
+      (rawAvailability as any) === 'readily'
+    ) {
       console.log(
         '[ChromeAIProofreaderService] Model already available, no download needed',
       );
@@ -402,7 +406,7 @@ export class ChromeAIProofreaderService {
       return;
     }
 
-    if (availability === 'unavailable') {
+    if (rawAvailability === 'unavailable') {
       throw new Error('Proofreader API not available on this device');
     }
 
@@ -428,11 +432,9 @@ export class ChromeAIProofreaderService {
       this.downloadedBytes = 0;
 
       // Create Proofreader instance with monitor to track download
-      // Only include supported options: expectedInputLanguages, outputLanguage, and monitor
-      // Note: includeCorrectionTypes and includeCorrectionExplanations are NOT supported per explainer
       const options: ProofreaderCreateOptions = {
         expectedInputLanguages: ['en'],
-        outputLanguage: 'en',
+        correctionExplanationLanguage: 'en',
         monitor(m: EventTarget) {
           console.log('[ChromeAIProofreaderService] Monitor callback invoked');
           // Download progress event
@@ -478,7 +480,9 @@ export class ChromeAIProofreaderService {
         '[ChromeAIProofreaderService] Calling Proofreader.create with options:',
         {
           expectedInputLanguages: options.expectedInputLanguages,
-          outputLanguage: options.outputLanguage,
+          includeCorrectionTypes: options.includeCorrectionTypes,
+          includeCorrectionExplanations: options.includeCorrectionExplanations,
+          correctionExplanationLanguage: options.correctionExplanationLanguage,
           hasMonitor: !!options.monitor,
         },
       );

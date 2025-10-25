@@ -1,6 +1,7 @@
 /**
  * ChatInterface Component
  * Displays conversation messages with auto-scroll, stop button, and scroll controls
+ * PERFORMANCE OPTIMIZED: RAF-based throttling for smooth 60fps scrolling
  */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
@@ -31,18 +32,37 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [showScrollButton, setShowScrollButton] = useState(false);
   const lastMessageCountRef = useRef(messages.length);
 
-  // Scroll to bottom handler with configurable behavior
+  // RAF throttling refs for performance
+  const scrollPendingRef = useRef(false);
+  const rafIdRef = useRef<number | null>(null);
+
+  // Scroll to bottom handler with RAF-based throttling for 60fps performance
   const scrollToBottom = useCallback(
     (behavior: 'auto' | 'smooth' = 'smooth') => {
-      if (bottomRef.current) {
-        // Use requestAnimationFrame to ensure DOM has updated
-        requestAnimationFrame(() => {
-          bottomRef.current?.scrollIntoView({ behavior });
-        });
-      }
+      if (!bottomRef.current) return;
+
+      // If scroll is already pending, skip (throttle to one scroll per frame)
+      if (scrollPendingRef.current) return;
+
+      scrollPendingRef.current = true;
+
+      // Use RAF to batch scroll updates with browser repaint cycle
+      rafIdRef.current = requestAnimationFrame(() => {
+        bottomRef.current?.scrollIntoView({ behavior });
+        scrollPendingRef.current = false;
+      });
     },
     [],
   );
+
+  // Cleanup RAF on unmount
+  useEffect(() => {
+    return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+    };
+  }, []);
 
   // Intersection Observer to detect if user is at bottom
   useEffect(() => {
@@ -78,6 +98,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   }, []);
 
   // Auto-scroll on new messages (only if user is at bottom)
+  // OPTIMIZED: Reduced dependency array to minimize effect runs
   useEffect(() => {
     if (!autoScroll) return;
 
@@ -92,19 +113,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       lastMessageCountRef.current = currentMessageCount;
     } else if (isStreaming && streamingContent) {
       // Streaming in progress - check actual scroll position for accuracy
-      // This prevents scroll from happening if user scrolled up during streaming
+      // RAF throttling ensures this doesn't run more than 60fps
       if (checkIsAtBottom()) {
-        scrollToBottom('auto'); // Use 'auto' for smoother streaming experience
+        scrollToBottom('auto'); // Use 'auto' for instant scroll during streaming
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     messages.length,
-    streamingContent,
+    streamingContent, // Only watch content changes, not all deps
     isStreaming,
-    autoScroll,
     isAtBottom,
-    scrollToBottom,
-    checkIsAtBottom,
   ]);
 
   if (messages.length === 0 && !isStreaming) {

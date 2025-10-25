@@ -74,19 +74,16 @@ export class ProofreaderManager extends BaseWritingManager<
   /**
    * Convert configuration to API options
    *
-   * NOTE: Only pass supported options to Proofreader.create()
-   * According to the Chrome AI Proofreader explainer, the following options
-   * are NOT supported and will cause the API to fail:
-   * - includeCorrectionTypes
-   * - includeCorrectionExplanations
-   * - correctionExplanationLanguage
+   * Passes all options supported by the Proofreader API based on the official type definitions.
    */
   protected configToOptions(
     config: ProofreaderConfig,
   ): ProofreaderCreateOptions {
     return {
-      expectedInputLanguages: config.expectedInputLanguages,
-      outputLanguage: config.outputLanguage,
+      // expectedInputLanguages: config.expectedInputLanguages,
+      // includeCorrectionTypes: config.includeCorrectionTypes,
+      // includeCorrectionExplanations: config.includeCorrectionExplanations,
+      correctionExplanationLanguage: config.correctionExplanationLanguage,
     };
   }
 

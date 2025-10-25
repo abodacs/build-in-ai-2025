@@ -18,7 +18,7 @@ import {
 import { cn } from '@/lib/utils';
 import type { PerformanceMetrics } from '../../shared/types';
 import { useState } from 'react';
-import { Streamdown } from 'streamdown';
+import ReactMarkdown from 'react-markdown';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
 import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
@@ -43,7 +43,7 @@ SyntaxHighlighter.registerLanguage('bash', bash);
 // ============================================================================
 
 /**
- * Custom markdown components for Streamdown
+ * Custom markdown components for ReactMarkdown
  * Provides syntax highlighting for code blocks
  */
 const createMarkdownComponents = (
@@ -242,7 +242,9 @@ export function WriterResults({
               'overflow-auto max-h-[500px]',
             )}
           >
-            <Streamdown components={markdownComponents}>{content}</Streamdown>
+            <ReactMarkdown components={markdownComponents}>
+              {content}
+            </ReactMarkdown>
           </div>
         )}
 

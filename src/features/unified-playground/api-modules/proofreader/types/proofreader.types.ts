@@ -75,9 +75,6 @@ export interface ProofreaderCreateOptions {
   /** Expected input languages (improves accuracy) */
   expectedInputLanguages?: ProofreaderLanguage[];
 
-  /** Output language code (required for optimal quality and safety) */
-  outputLanguage?: ProofreaderLanguage;
-
   /** Include error type labels in corrections */
   includeCorrectionTypes?: boolean;
 
@@ -191,11 +188,20 @@ export type ProofreaderAvailability =
 
 /**
  * Options for checking Proofreader availability
- * Allows checking if specific languages are supported
+ * Based on ProofreaderCreateCoreOptions from the official API
  */
 export interface ProofreaderAvailabilityOptions {
   /** Expected input languages to check availability for */
   expectedInputLanguages?: ProofreaderLanguage[];
+
+  /** Include error type labels in corrections */
+  includeCorrectionTypes?: boolean;
+
+  /** Include plain-language explanations in corrections */
+  includeCorrectionExplanations?: boolean;
+
+  /** Language for correction explanations */
+  correctionExplanationLanguage?: string;
 }
 
 /**
@@ -218,9 +224,6 @@ export interface ProofreaderAPI {
 export interface ProofreaderConfig {
   /** Expected input languages */
   expectedInputLanguages: ProofreaderLanguage[];
-
-  /** Output language code (required for optimal quality and safety) */
-  outputLanguage: ProofreaderLanguage;
 
   /** Include error type labels in corrections */
   includeCorrectionTypes: boolean;
@@ -249,7 +252,6 @@ export interface ProofreaderConfig {
  */
 export const DEFAULT_PROOFREADER_CONFIG: ProofreaderConfig = {
   expectedInputLanguages: ['en'],
-  outputLanguage: 'en',
   includeCorrectionTypes: true,
   includeCorrectionExplanations: true,
   correctionExplanationLanguage: 'en',

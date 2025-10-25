@@ -11,6 +11,7 @@ import type {
   DetectionResult,
 } from '../types';
 import type { AvailabilityStatus, DownloadProgress } from '../../shared/types';
+import { normalizeAvailability } from '../../shared/utils/normalizeAvailability';
 
 export class ChromeAILanguageDetectionService {
   // ============================================================================
@@ -46,8 +47,8 @@ export class ChromeAILanguageDetectionService {
       if (!this.isSupported()) return 'no';
       const api = this.getAPI();
       const status = await api.availability();
-      // Normalize 'readily' to 'available' for consistency
-      return (status as any) === 'readily' ? 'available' : status;
+      // Normalize Chrome API status to internal AvailabilityStatus
+      return normalizeAvailability(status);
     } catch (error) {
       console.error(
         '[ChromeAILanguageDetectionService] Availability check failed:',
@@ -140,11 +141,11 @@ export class ChromeAILanguageDetectionService {
       rawAvailability,
     );
 
-    // Normalize 'readily' to 'available' for consistency
-    const availability =
-      (rawAvailability as any) === 'readily' ? 'available' : rawAvailability;
-
-    if (availability === 'available') {
+    // Check if model is already available (handles both 'available' and legacy 'readily')
+    if (
+      rawAvailability === 'available' ||
+      (rawAvailability as any) === 'readily'
+    ) {
       console.log(
         '[ChromeAILanguageDetectionService] Model already available, no download needed',
       );
@@ -159,7 +160,9 @@ export class ChromeAILanguageDetectionService {
       return;
     }
 
-    if (availability === 'no') {
+    // Check if unavailable (handle both Chrome API and internal values)
+    const availStr = String(rawAvailability);
+    if (availStr === 'unavailable' || availStr === 'no') {
       throw new Error('LanguageDetector API not available on this device');
     }
 

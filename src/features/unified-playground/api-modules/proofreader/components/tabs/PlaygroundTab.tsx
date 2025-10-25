@@ -7,7 +7,7 @@
  * @module proofreader/components/tabs/PlaygroundTab
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { useProofreader, useProofreaderAvailability } from '../../hooks';
@@ -55,6 +55,7 @@ export function ProofreaderMain() {
     config,
     canUndo,
     canRedo,
+    downloadProgress,
     actions,
   } = useProofreader(DEFAULT_PROOFREADER_CONFIG);
 
@@ -119,6 +120,15 @@ export function ProofreaderMain() {
       actions.updateConfig(template.config);
     }
   };
+
+  // Handle model download
+  const handleStartDownload = useCallback(async () => {
+    try {
+      await actions.downloadModel();
+    } catch (error) {
+      console.error('[Proofreader] Failed to download model:', error);
+    }
+  }, [actions]);
 
   return (
     <div className="space-y-6">
@@ -211,8 +221,16 @@ export function ProofreaderMain() {
           availability={availability || 'no'}
           isReady={isReady}
           isLoading={isLoading}
-          loadingPhase={loadingPhase}
+          loadingPhase={
+            isLoading && downloadProgress
+              ? 'downloading'
+              : isLoading
+                ? 'initializing'
+                : loadingPhase
+          }
+          downloadProgress={downloadProgress}
           error={error?.message || null}
+          onStartDownload={handleStartDownload}
           modelInfo={{
             name: 'Proofreader Model',
             chromeVersion: '141-145',
