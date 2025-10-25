@@ -188,10 +188,13 @@ function DesktopAPISelector({
 
 /**
  * API Module Content
+ * Renders all available playground components and toggles visibility
+ * This prevents unmounting/remounting on tab changes (no flickering!)
  */
 function APIModuleContent({ apiId }: { apiId: string }) {
   const module = getAPIModule(apiId);
 
+  // Handle invalid module
   if (!module) {
     return (
       <Alert className="border-destructive/20 bg-destructive/5">
@@ -204,6 +207,7 @@ function APIModuleContent({ apiId }: { apiId: string }) {
     );
   }
 
+  // Handle unavailable module
   if (!module.available) {
     return (
       <Card>
@@ -226,28 +230,39 @@ function APIModuleContent({ apiId }: { apiId: string }) {
     );
   }
 
-  const PlaygroundComponent = module.PlaygroundComponent;
-
+  // Render ALL available playground components, hide inactive ones
+  // This prevents unmounting and preserves all component state
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <Sparkles className="h-6 w-6 text-primary" />
-              {module.name}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              {module.description}
-            </p>
-          </div>
-          <Badge variant="secondary">{module.category}</Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <PlaygroundComponent />
-      </CardContent>
-    </Card>
+    <>
+      {Object.values(API_MODULES)
+        .filter((m) => m.available)
+        .map((m) => {
+          const isActive = m.id === apiId;
+          const PlaygroundComponent = m.PlaygroundComponent;
+
+          return (
+            <Card key={m.id} className={!isActive ? 'hidden' : ''}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-2xl flex items-center gap-2">
+                      <Sparkles className="h-6 w-6 text-primary" />
+                      {m.name}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {m.description}
+                    </p>
+                  </div>
+                  <Badge variant="secondary">{m.category}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <PlaygroundComponent />
+              </CardContent>
+            </Card>
+          );
+        })}
+    </>
   );
 }
 

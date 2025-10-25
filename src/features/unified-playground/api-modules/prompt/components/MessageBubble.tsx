@@ -362,12 +362,36 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
           )}
         </div>
 
-        {/* Streaming Indicator */}
+        {/* Streaming Indicator - Optimized with transform for better performance */}
         {isStreaming && (
           <div className="flex items-center space-x-1 text-xs">
-            <span className="animate-bounce">●</span>
-            <span className="animate-bounce delay-100">●</span>
-            <span className="animate-bounce delay-200">●</span>
+            <span
+              className="inline-block"
+              style={{
+                animation: 'streamingDot 1.4s ease-in-out infinite',
+                willChange: 'transform',
+              }}
+            >
+              ●
+            </span>
+            <span
+              className="inline-block"
+              style={{
+                animation: 'streamingDot 1.4s ease-in-out 0.2s infinite',
+                willChange: 'transform',
+              }}
+            >
+              ●
+            </span>
+            <span
+              className="inline-block"
+              style={{
+                animation: 'streamingDot 1.4s ease-in-out 0.4s infinite',
+                willChange: 'transform',
+              }}
+            >
+              ●
+            </span>
           </div>
         )}
       </div>

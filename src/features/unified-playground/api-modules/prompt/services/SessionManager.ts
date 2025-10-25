@@ -501,7 +501,52 @@ export class SessionManager {
   // ============================================================================
 
   /**
-   * Save to localStorage
+   * Strip large image data from conversations before storage
+   * Keeps metadata but removes base64 URLs to prevent quota issues
+   * @param conversations - Conversations to process
+   * @returns Conversations with stripped image data
+   */
+  private stripImageDataForStorage(conversations: Conversation[]): any {
+    return conversations.map((conv) => ({
+      ...conv,
+      messages: conv.messages.map((msg) => ({
+        ...msg,
+        attachments: msg.attachments?.map((att) => {
+          // Create new object without url and previewUrl fields
+          const { url: _url, previewUrl: _previewUrl, ...metadata } = att;
+          return metadata; // Keep only: id, type, name, size, mimeType, dimensions
+        }),
+      })),
+    }));
+  }
+
+  /**
+   * Prune old conversations when quota exceeded
+   * Keeps only the most recent conversations
+   */
+  private pruneOldConversations(): void {
+    const MAX_CONVERSATIONS_ON_QUOTA_ERROR = 3;
+
+    if (this.conversations.length > MAX_CONVERSATIONS_ON_QUOTA_ERROR) {
+      // Sort by last updated, keep newest
+      this.conversations.sort(
+        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime(),
+      );
+
+      // Keep only recent ones
+      this.conversations = this.conversations.slice(
+        0,
+        MAX_CONVERSATIONS_ON_QUOTA_ERROR,
+      );
+
+      console.warn(
+        `Pruned to ${MAX_CONVERSATIONS_ON_QUOTA_ERROR} most recent conversations due to storage constraints`,
+      );
+    }
+  }
+
+  /**
+   * Save to localStorage with quota error handling
    */
   private saveToStorage(): void {
     if (!this.storageEnabled) {
@@ -509,8 +554,13 @@ export class SessionManager {
     }
 
     try {
+      // Strip image data to prevent quota issues (saves ~100x space)
+      const strippedConversations = this.stripImageDataForStorage(
+        this.conversations,
+      );
+
       const data: SessionStorageData = {
-        conversations: this.conversations,
+        conversations: strippedConversations,
         activeConversationId: this.activeConversation?.id,
         preferences: {} as PromptConfig, // Would be set separately
         lastUpdated: new Date(),
@@ -523,8 +573,52 @@ export class SessionManager {
         `${STORAGE_KEY_PREFIX}-data`,
         JSON.stringify(transformed),
       );
-    } catch (error) {
-      console.error('Failed to save to localStorage:', error);
+    } catch (error: any) {
+      // Handle quota exceeded error gracefully
+      if (
+        error?.name === 'QuotaExceededError' ||
+        error?.message?.includes('quota')
+      ) {
+        console.warn(
+          'localStorage quota exceeded. Attempting to prune old conversations...',
+        );
+
+        // Try to free up space by removing old conversations
+        this.pruneOldConversations();
+
+        // Retry save with pruned data
+        try {
+          const strippedConversations = this.stripImageDataForStorage(
+            this.conversations,
+          );
+
+          const data: SessionStorageData = {
+            conversations: strippedConversations,
+            activeConversationId: this.activeConversation?.id,
+            preferences: {} as PromptConfig,
+            lastUpdated: new Date(),
+          };
+
+          const transformed = this.transformDatesForStorage(data);
+
+          localStorage.setItem(
+            `${STORAGE_KEY_PREFIX}-data`,
+            JSON.stringify(transformed),
+          );
+
+          console.log('Successfully saved after pruning old conversations');
+        } catch (retryError) {
+          console.error(
+            'Failed to save even after pruning. localStorage may be full:',
+            retryError,
+          );
+          // Last resort: disable auto-save for this session
+          this.storageEnabled = false;
+          console.warn('Auto-save disabled for this session to prevent errors');
+        }
+      } else {
+        console.error('Failed to save to localStorage:', error);
+      }
     }
   }
 

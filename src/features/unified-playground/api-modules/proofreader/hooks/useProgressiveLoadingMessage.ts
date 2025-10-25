@@ -55,71 +55,76 @@ export interface UseProgressiveLoadingMessageReturn {
 // ============================================================================
 
 /**
- * Progressive loading messages for Proofreader initialization
+ * Generate progressive loading messages for any API
+ * @param apiName - Name of the API (e.g., 'Prompt', 'Proofreader', 'Rewriter')
+ * @returns Array of time-based loading messages
  */
-const PROOFREADER_MESSAGES: { threshold: number; message: LoadingMessage }[] = [
-  // 0-10 seconds: Initial optimistic message
-  {
-    threshold: 0,
-    message: {
-      message: 'Initializing Proofreader...',
-      subtitle: 'Setting up the proofreading engine',
-      level: 'info',
-    },
-  },
-  // 10-30 seconds: Let them know it might take a while
-  {
-    threshold: 10,
-    message: {
-      message: 'Downloading AI Model...',
-      subtitle: 'This may take up to 3 minutes on first use',
-      helpText:
-        'The Proofreader API requires a large language model (~22GB). Download happens once.',
-      level: 'info',
-    },
-  },
-  // 30-60 seconds: Provide more context
-  {
-    threshold: 30,
-    message: {
-      message: 'Model Download in Progress...',
-      subtitle: 'Large download detected. Please ensure stable connection.',
-      helpText:
-        'Requirements: Unmetered Wi-Fi connection, 22GB+ free storage, Chrome 141-145 (Origin Trial)',
-      level: 'warning',
-    },
-  },
-  // 60-120 seconds: Escalate with troubleshooting
-  {
-    threshold: 60,
-    message: {
-      message: 'Still Downloading Model...',
-      subtitle: 'Download may take several minutes on slower connections',
-      helpText:
-        'This is normal for first-time setup. You can check download status in Chrome internals.',
-      level: 'warning',
-      copyableUrl: {
-        text: 'Check Download Status',
-        url: 'chrome://on-device-internals',
+function getProgressiveMessages(
+  apiName: string,
+): { threshold: number; message: LoadingMessage }[] {
+  return [
+    // 0-10 seconds: Initial optimistic message
+    {
+      threshold: 0,
+      message: {
+        message: `Initializing ${apiName}...`,
+        subtitle: `Setting up the ${apiName.toLowerCase()} engine`,
+        level: 'info',
       },
     },
-  },
-  // 120+ seconds: Troubleshooting guidance
-  {
-    threshold: 120,
-    message: {
-      message: 'Download Taking Longer Than Expected',
-      subtitle: 'If stuck, verify system requirements',
-      helpText:
-        'Ensure: 22GB+ free disk space, 4GB+ VRAM, unmetered connection, Origin Trial enabled.',
-      level: 'urgent',
-      copyableUrl: {
-        text: 'Open Chrome Internals',
-        url: 'chrome://on-device-internals',
+    // 10-30 seconds: Let them know it might take a while
+    {
+      threshold: 10,
+      message: {
+        message: 'Downloading AI Model...',
+        subtitle: 'This may take up to 3 minutes on first use',
+        helpText: `The ${apiName} API requires a large language model (~22GB). Download happens once.`,
+        level: 'info',
       },
     },
-  },
-];
+    // 30-60 seconds: Provide more context
+    {
+      threshold: 30,
+      message: {
+        message: 'Model Download in Progress...',
+        subtitle: 'Large download detected. Please ensure stable connection.',
+        helpText:
+          'Requirements: Unmetered Wi-Fi connection, 22GB+ free storage, Chrome 138+',
+        level: 'warning',
+      },
+    },
+    // 60-120 seconds: Escalate with troubleshooting
+    {
+      threshold: 60,
+      message: {
+        message: 'Still Downloading Model...',
+        subtitle: 'Download may take several minutes on slower connections',
+        helpText:
+          'This is normal for first-time setup. You can check download status in Chrome internals.',
+        level: 'warning',
+        copyableUrl: {
+          text: 'Check Download Status',
+          url: 'chrome://on-device-internals',
+        },
+      },
+    },
+    // 120+ seconds: Troubleshooting guidance
+    {
+      threshold: 120,
+      message: {
+        message: 'Download Taking Longer Than Expected',
+        subtitle: 'If stuck, verify system requirements',
+        helpText:
+          'Ensure: 22GB+ free disk space, 4GB+ VRAM, unmetered connection.',
+        level: 'urgent',
+        copyableUrl: {
+          text: 'Open Chrome Internals',
+          url: 'chrome://on-device-internals',
+        },
+      },
+    },
+  ];
+}
 
 // ============================================================================
 // Hook
@@ -131,14 +136,16 @@ const PROOFREADER_MESSAGES: { threshold: number; message: LoadingMessage }[] = [
  * Returns increasingly detailed/urgent messages as time passes.
  *
  * @param isActive - Whether loading is currently active
- * @param messageType - Type of loading operation ('proofreader-init' | 'proofreading')
+ * @param apiName - Name of the API (e.g., 'Prompt', 'Proofreader', 'Rewriter')
+ * @param messageType - Type of loading operation ('init' | 'processing')
  * @returns Loading message state and controls
  *
  * @example
  * ```tsx
  * const { currentMessage, elapsedTime } = useProgressiveLoadingMessage(
  *   isLoading,
- *   'proofreader-init'
+ *   'Prompt',
+ *   'init'
  * );
  *
  * return (
@@ -152,7 +159,8 @@ const PROOFREADER_MESSAGES: { threshold: number; message: LoadingMessage }[] = [
  */
 export function useProgressiveLoadingMessage(
   isActive: boolean,
-  messageType: 'proofreader-init' | 'proofreading' = 'proofreader-init',
+  apiName: string = 'Proofreader',
+  messageType: 'init' | 'processing' = 'init',
 ): UseProgressiveLoadingMessageReturn {
   const [elapsedTime, setElapsedTime] = useState(0);
 
@@ -175,17 +183,17 @@ export function useProgressiveLoadingMessage(
 
   // Get current message based on elapsed time
   const getCurrentMessage = useCallback((): LoadingMessage => {
-    // For regular proofreading (not initialization), return simple message
-    if (messageType === 'proofreading') {
+    // For regular processing (not initialization), return simple message
+    if (messageType === 'processing') {
       return {
-        message: 'Proofreading Text...',
-        subtitle: 'Analyzing text for corrections',
+        message: `Processing with ${apiName}...`,
+        subtitle: `Analyzing text with ${apiName}`,
         level: 'info',
       };
     }
 
     // For initialization, use progressive messages
-    const messages = PROOFREADER_MESSAGES;
+    const messages = getProgressiveMessages(apiName);
 
     // Find the appropriate message based on elapsed time
     // Start from the end and work backwards to find the highest threshold that's been passed
@@ -200,7 +208,7 @@ export function useProgressiveLoadingMessage(
     return (
       messages[0]?.message ?? { message: 'Loading...', level: 'info' as const }
     );
-  }, [elapsedTime, messageType]);
+  }, [elapsedTime, apiName, messageType]);
 
   // Reset function
   const reset = useCallback(() => {

@@ -150,6 +150,29 @@ export class ChromeAIPromptService {
   }
 
   /**
+   * Check if multimodal input (images) is supported
+   * @returns Promise resolving to availability status
+   */
+  static async checkMultimodalAvailability(): Promise<LanguageModelAvailability> {
+    try {
+      if (!this.isSupported()) {
+        return 'no';
+      }
+
+      const api = this.getAPI();
+      const status = await api.availability({
+        expectedInputs: [{ type: 'image' }],
+      });
+
+      // Normalize Chrome API status to internal AvailabilityStatus
+      return normalizeAvailability(status);
+    } catch (error) {
+      console.warn('Multimodal availability check failed:', error);
+      return 'no';
+    }
+  }
+
+  /**
    * Check detailed availability information
    * @returns Promise resolving to detailed availability info
    */

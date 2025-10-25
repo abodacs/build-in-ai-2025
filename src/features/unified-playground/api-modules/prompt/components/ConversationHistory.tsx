@@ -3,7 +3,7 @@
  * Sidebar displaying conversation history with search, export, and management
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { AlertCircle, Paperclip, Download, Trash2, X } from 'lucide-react';
 import type { Message } from '../types';
 
@@ -19,7 +19,7 @@ interface ConversationHistoryProps {
   onToggle?: () => void;
 }
 
-export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
+const ConversationHistoryComponent: React.FC<ConversationHistoryProps> = ({
   messages,
   tokenCount,
   maxTokens,
@@ -97,11 +97,11 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
         </div>
       </div>
 
-      {/* Token Usage Meter */}
+      {/* Context Window Usage Meter */}
       <div className="p-4 border-b bg-white dark:bg-gray-800">
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">Token Usage</span>
+            <span className="font-medium">Context Window</span>
             <span
               className={`font-mono ${
                 isAtLimit
@@ -288,5 +288,43 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
     </div>
   );
 };
+
+// Memoize component with custom comparison
+// Only re-render if messages, tokenCount, or maxTokens change
+export const ConversationHistory = memo(
+  ConversationHistoryComponent,
+  (prevProps, nextProps) => {
+    // Re-render if messages array changed
+    if (
+      prevProps.messages !== nextProps.messages ||
+      prevProps.messages.length !== nextProps.messages.length
+    ) {
+      return false;
+    }
+
+    // Re-render if token counts changed
+    if (
+      prevProps.tokenCount !== nextProps.tokenCount ||
+      prevProps.maxTokens !== nextProps.maxTokens
+    ) {
+      return false;
+    }
+
+    // Re-render if callbacks changed (rare, but important)
+    if (
+      prevProps.onClear !== nextProps.onClear ||
+      prevProps.onExport !== nextProps.onExport ||
+      prevProps.onRemoveMessage !== nextProps.onRemoveMessage ||
+      prevProps.onMessageClick !== nextProps.onMessageClick
+    ) {
+      return false;
+    }
+
+    // Props are equal, skip re-render
+    return true;
+  },
+);
+
+ConversationHistory.displayName = 'ConversationHistory';
 
 export default ConversationHistory;

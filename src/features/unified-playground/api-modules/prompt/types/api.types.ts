@@ -244,20 +244,29 @@ export interface LanguageModel {
   countPromptTokens?(text: string): Promise<number>;
 
   /**
-   * Get maximum number of tokens the model supports
-   * @returns Maximum tokens
+   * Input quota (context window size) in tokens
+   * Represents the total available context window for the model
+   * For Gemini Nano: typically 6144 tokens
+   * This includes system prompt, conversation history, and new input
+   * @returns Total input token budget
+   */
+  inputQuota?: number;
+
+  /**
+   * Get maximum number of tokens the model supports for output
+   * @returns Maximum output tokens per response
    */
   maxTokens?: number;
 
   /**
    * Get number of tokens used so far in current session
-   * @returns Tokens used
+   * @returns Tokens used (including system prompt and history)
    */
   tokensSoFar?: number;
 
   /**
    * Get number of tokens available for next prompt
-   * @returns Tokens left
+   * @returns Tokens left in context window
    */
   tokensLeft?: number;
 
@@ -281,9 +290,12 @@ export interface LanguageModel {
 export interface LanguageModelAPI {
   /**
    * Check if the LanguageModel API is available
+   * @param options - Optional availability check options (e.g., for multimodal)
    * @returns Promise resolving to availability status
    */
-  availability(): Promise<LanguageModelAvailability>;
+  availability(options?: {
+    expectedInputs?: ExpectedInput[];
+  }): Promise<LanguageModelAvailability>;
 
   /**
    * Create a new LanguageModel instance

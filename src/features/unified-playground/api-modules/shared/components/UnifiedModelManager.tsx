@@ -236,13 +236,12 @@ export function UnifiedModelManager({
   const [isClearing, setIsClearing] = useState(false);
 
   // Progressive loading messages (escalate over time)
-  const messageType =
-    loadingPhase === 'initializing' || loadingPhase === 'downloading'
-      ? 'proofreader-init'
-      : 'proofreading';
   const { currentMessage, elapsedTime } = useProgressiveLoadingMessage(
     isLoading || false,
-    messageType,
+    apiName,
+    loadingPhase === 'initializing' || loadingPhase === 'downloading'
+      ? 'init'
+      : 'processing',
   );
 
   /**
