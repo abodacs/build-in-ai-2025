@@ -239,22 +239,22 @@ export class PromptManager {
       console.log('PromptManager: state =', this.state);
 
       // Log context window and token information
-      if (this.instance.inputQuota) {
+      if (this.instance?.inputQuota) {
         console.log(
           `PromptManager: Context window = ${this.instance.inputQuota} tokens`,
         );
       }
-      if (this.instance.maxTokens) {
+      if (this.instance?.maxTokens) {
         console.log(
           `PromptManager: Max output tokens = ${this.instance.maxTokens}`,
         );
       }
-      if (this.instance.tokensSoFar !== undefined) {
+      if (this.instance?.tokensSoFar !== undefined) {
         console.log(
           `PromptManager: Tokens used so far = ${this.instance.tokensSoFar}`,
         );
       }
-      if (this.instance.tokensLeft !== undefined) {
+      if (this.instance?.tokensLeft !== undefined) {
         console.log(`PromptManager: Tokens left = ${this.instance.tokensLeft}`);
       }
     } catch (error) {

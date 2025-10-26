@@ -124,6 +124,7 @@ export function LanguageDetectionMain() {
                 inputError && 'border-red-400 dark:border-red-500',
               )}
               disabled={isDetecting}
+              aria-label="Text to analyze for language detection"
               aria-invalid={!!inputError}
               aria-describedby={
                 inputError ? 'language-detection-error' : undefined

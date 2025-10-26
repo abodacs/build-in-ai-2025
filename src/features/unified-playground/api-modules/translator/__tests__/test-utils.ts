@@ -65,6 +65,9 @@ export function createMockTranslatorAPI() {
  * Note: Directly assigns to globalThis.Translator which is already mocked in setup.ts
  */
 export function setupTranslatorAPIMock() {
+  // Clear any existing mocks first
+  vi.clearAllMocks();
+
   const mockAPI = createMockTranslatorAPI();
 
   // Directly override the already-defined Translator object
@@ -79,6 +82,9 @@ export function setupTranslatorAPIMock() {
  * Cleans up global Translator API mock
  */
 export function cleanupTranslatorAPIMock() {
+  // Clear all mocks
+  vi.clearAllMocks();
+
   // Reset to default mocks
   (globalThis as any).Translator.create = vi.fn();
   (globalThis as any).Translator.availability = vi.fn();

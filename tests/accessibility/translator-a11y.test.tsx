@@ -6,37 +6,82 @@
  * @module tests/accessibility/translator-a11y
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { screen, waitFor } from '@testing-library/react';
+import { render } from '@/tests/test-utils/TestProviders';
 import userEvent from '@testing-library/user-event';
 import { axe } from 'vitest-axe';
 import {
   axeConfig,
   getFocusableElements,
   testInteractiveElement,
+  mockGetComputedStyle,
 } from './setup';
 import { TranslatorPlayground } from '@/features/unified-playground/api-modules/translator/components/TranslatorPlayground';
+
+// Helper to wait for component to load
+const waitForComponentLoad = async () => {
+  await waitFor(
+    () => {
+      expect(
+        screen.queryByText(/Checking Chrome AI availability/i),
+      ).not.toBeInTheDocument();
+    },
+    { timeout: 3000 },
+  );
+};
 
 describe('Translator - Accessibility Tests', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
+
+    // Mock getComputedStyle
+    mockGetComputedStyle();
+
+    // Mock Chrome AI Translator API
+    (global as any).ai = {
+      translator: {
+        availability: vi.fn().mockResolvedValue('available'),
+        create: vi.fn().mockResolvedValue({
+          translate: vi.fn().mockResolvedValue('Translated text'),
+          destroy: vi.fn(),
+        }),
+      },
+    };
+
+    (global as any).Translator = {
+      availability: vi.fn().mockResolvedValue('available'),
+      create: vi.fn().mockResolvedValue({
+        translate: vi.fn().mockResolvedValue('Translated text'),
+        destroy: vi.fn(),
+      }),
+    };
+
+    // Mock Writer API
+    (global as any).WriterAPI = {
+      availability: vi.fn().mockResolvedValue('available'),
+      create: vi.fn(),
+    };
   });
 
   describe('WCAG 2.1 AA Compliance', () => {
     it('should have no axe violations', async () => {
       const { container } = render(<TranslatorPlayground />);
+      await waitForComponentLoad();
       const results = await axe(container, axeConfig);
       expect(results).toHaveNoViolations();
     });
 
-    it('should have proper heading hierarchy', () => {
+    it('should have proper heading hierarchy', async () => {
       render(<TranslatorPlayground />);
+      await waitForComponentLoad();
       const headings = screen.getAllByRole('heading');
       expect(headings.length).toBeGreaterThan(0);
     });
 
-    it('should have accessible language selection', () => {
+    it('should have accessible language selection', async () => {
       render(<TranslatorPlayground />);
+      await waitForComponentLoad();
 
       // Language selectors should be accessible
       const selects = screen.getAllByRole('combobox');
@@ -52,6 +97,7 @@ describe('Translator - Accessibility Tests', () => {
     it('should allow keyboard navigation through language selectors', async () => {
       const user = userEvent.setup();
       render(<TranslatorPlayground />);
+      await waitForComponentLoad();
 
       const selects = screen.getAllByRole('combobox');
 

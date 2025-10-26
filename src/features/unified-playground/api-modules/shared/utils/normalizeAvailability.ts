@@ -105,7 +105,7 @@ export function normalizeAvailability(
 export function isAvailable(
   status: ExtendedChromeAvailability | AvailabilityStatus | string,
 ): boolean {
-  return status === 'available' || status === 'readily';
+  return status === 'available' || (status as any) === 'readily';
 }
 
 /**

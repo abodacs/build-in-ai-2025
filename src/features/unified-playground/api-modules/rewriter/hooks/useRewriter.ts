@@ -279,11 +279,11 @@ export function useRewriter(initialConfig: RewriterConfig): UseRewriterReturn {
       const instancePromise = managerRef.current.getInstance(activeConfig);
 
       try {
-        // Await instance creation with timeout for model downloads
+        // Await instance creation with timeout for model downloads (20 minutes to allow for slow connections)
         await withTimeout(
           instancePromise,
-          180000,
-          'Rewriter instance creation timed out after 3 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure 22GB+ free space and unmetered connection.',
+          1200000,
+          'Rewriter instance creation timed out after 20 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure 22GB+ free space and unmetered connection.',
         );
         setIsLoading(false);
 
@@ -390,14 +390,14 @@ export function useRewriter(initialConfig: RewriterConfig): UseRewriterReturn {
       try {
         console.log('🔨 Waiting for Rewriter instance...');
 
-        // Await instance creation first (with timeout to prevent indefinite hanging)
+        // Await instance creation first (with 20-minute timeout to allow for model downloads on slow connections)
         // This must happen BEFORE retry logic since retries are only for streaming errors,
         // not instance creation errors
-        console.log('⏱️ Awaiting instance with timeout...');
+        console.log('⏱️ Awaiting instance with 20-minute timeout...');
         await withTimeout(
           instancePromise,
-          180000,
-          'Rewriter instance creation timed out after 3 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure 22GB+ free space and unmetered connection.',
+          1200000,
+          'Rewriter instance creation timed out after 20 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure 22GB+ free space and unmetered connection.',
         );
         console.log('✅ Rewriter instance obtained');
         setIsLoading(false);

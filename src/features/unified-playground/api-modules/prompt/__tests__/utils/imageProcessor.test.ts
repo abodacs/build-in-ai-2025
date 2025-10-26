@@ -20,22 +20,26 @@ import {
   mockImage,
   mockCanvas,
   mockFileReader,
+  mockURL,
 } from '../test-utils';
 
 describe('imageProcessor', () => {
   let imageMock: ReturnType<typeof mockImage>;
   let canvasMock: ReturnType<typeof mockCanvas>;
   let fileReaderMock: ReturnType<typeof mockFileReader>;
+  let urlMock: ReturnType<typeof mockURL>;
 
   beforeEach(() => {
     imageMock = mockImage();
     canvasMock = mockCanvas();
     fileReaderMock = mockFileReader();
+    urlMock = mockURL();
   });
 
   afterEach(() => {
     imageMock.restore();
     fileReaderMock.restore();
+    urlMock.restore();
   });
 
   // ==========================================================================
@@ -271,10 +275,7 @@ describe('imageProcessor', () => {
 
   describe('fitDimensions', () => {
     it('fits dimensions maintaining aspect ratio', () => {
-      const result = fitDimensions(
-        { width: 1920, height: 1080 },
-        { width: 800, height: 600 },
-      );
+      const result = fitDimensions(1920, 1080, 800, 600);
 
       expect(result.width).toBeLessThanOrEqual(800);
       expect(result.height).toBeLessThanOrEqual(600);
@@ -282,70 +283,49 @@ describe('imageProcessor', () => {
     });
 
     it('scales down wide images', () => {
-      const result = fitDimensions(
-        { width: 2000, height: 1000 },
-        { width: 800, height: 800 },
-      );
+      const result = fitDimensions(2000, 1000, 800, 800);
 
       expect(result.width).toBe(800);
       expect(result.height).toBe(400);
     });
 
     it('scales down tall images', () => {
-      const result = fitDimensions(
-        { width: 1000, height: 2000 },
-        { width: 800, height: 800 },
-      );
+      const result = fitDimensions(1000, 2000, 800, 800);
 
       expect(result.width).toBe(400);
       expect(result.height).toBe(800);
     });
 
     it('does not upscale smaller images', () => {
-      const result = fitDimensions(
-        { width: 400, height: 300 },
-        { width: 800, height: 600 },
-      );
+      const result = fitDimensions(400, 300, 800, 600);
 
       expect(result.width).toBe(400);
       expect(result.height).toBe(300);
     });
 
     it('handles square images', () => {
-      const result = fitDimensions(
-        { width: 1000, height: 1000 },
-        { width: 500, height: 500 },
-      );
+      const result = fitDimensions(1000, 1000, 500, 500);
 
       expect(result.width).toBe(500);
       expect(result.height).toBe(500);
     });
 
     it('handles very wide images', () => {
-      const result = fitDimensions(
-        { width: 3000, height: 500 },
-        { width: 1000, height: 1000 },
-      );
+      const result = fitDimensions(3000, 500, 1000, 1000);
 
       expect(result.width).toBe(1000);
       expect(result.height).toBeCloseTo(167, 0);
     });
 
     it('handles very tall images', () => {
-      const result = fitDimensions(
-        { width: 500, height: 3000 },
-        { width: 1000, height: 1000 },
-      );
+      const result = fitDimensions(500, 3000, 1000, 1000);
 
       expect(result.width).toBeCloseTo(167, 0);
       expect(result.height).toBe(1000);
     });
 
     it('handles exact fit', () => {
-      const result = fitDimensions(
-        { width: 800, height: 600 },
-        { width: 800, height: 600 },
-      );
+      const result = fitDimensions(800, 600, 800, 600);
 
       expect(result.width).toBe(800);
       expect(result.height).toBe(600);
@@ -358,44 +338,46 @@ describe('imageProcessor', () => {
 
   describe('formatFileSize', () => {
     it('formats bytes', () => {
-      expect(formatFileSize(500)).toBe('500 B');
-      expect(formatFileSize(1000)).toBe('1000 B');
+      expect(formatFileSize(500).formatted).toBe('500 bytes');
+      expect(formatFileSize(1000).formatted).toBe('1000 bytes');
     });
 
     it('formats kilobytes', () => {
-      expect(formatFileSize(1024)).toBe('1.00 KB');
-      expect(formatFileSize(1536)).toBe('1.50 KB');
-      expect(formatFileSize(10 * 1024)).toBe('10.00 KB');
+      expect(formatFileSize(1024).formatted).toBe('1.00 KB');
+      expect(formatFileSize(1536).formatted).toBe('1.50 KB');
+      expect(formatFileSize(10 * 1024).formatted).toBe('10.00 KB');
     });
 
     it('formats megabytes', () => {
-      expect(formatFileSize(1024 * 1024)).toBe('1.00 MB');
-      expect(formatFileSize(2.5 * 1024 * 1024)).toBe('2.50 MB');
-      expect(formatFileSize(100 * 1024 * 1024)).toBe('100.00 MB');
+      expect(formatFileSize(1024 * 1024).formatted).toBe('1.00 MB');
+      expect(formatFileSize(2.5 * 1024 * 1024).formatted).toBe('2.50 MB');
+      expect(formatFileSize(100 * 1024 * 1024).formatted).toBe('100.00 MB');
     });
 
     it('formats gigabytes', () => {
-      expect(formatFileSize(1024 * 1024 * 1024)).toBe('1.00 GB');
-      expect(formatFileSize(3.7 * 1024 * 1024 * 1024)).toBe('3.70 GB');
+      expect(formatFileSize(1024 * 1024 * 1024).formatted).toBe('1.00 GB');
+      expect(formatFileSize(3.7 * 1024 * 1024 * 1024).formatted).toBe(
+        '3.70 GB',
+      );
     });
 
     it('handles zero bytes', () => {
-      expect(formatFileSize(0)).toBe('0 B');
+      expect(formatFileSize(0).formatted).toBe('0 Bytes');
     });
 
     it('handles very small sizes', () => {
-      expect(formatFileSize(1)).toBe('1 B');
-      expect(formatFileSize(10)).toBe('10 B');
+      expect(formatFileSize(1).formatted).toBe('1 bytes');
+      expect(formatFileSize(10).formatted).toBe('10 bytes');
     });
 
     it('handles very large sizes', () => {
       const size = formatFileSize(10 * 1024 * 1024 * 1024);
-      expect(size).toContain('GB');
+      expect(size.formatted).toContain('GB');
     });
 
     it('rounds to 2 decimal places', () => {
       const size = formatFileSize(1234567);
-      expect(size).toBe('1.18 MB');
+      expect(size.formatted).toBe('1.18 MB');
     });
   });
 
@@ -405,55 +387,43 @@ describe('imageProcessor', () => {
 
   describe('Edge Cases', () => {
     it('handles 1x1 pixel image', () => {
-      const result = fitDimensions(
-        { width: 1, height: 1 },
-        { width: 100, height: 100 },
-      );
+      const result = fitDimensions(1, 1, 100, 100);
 
       expect(result.width).toBe(1);
       expect(result.height).toBe(1);
     });
 
     it('handles extremely wide aspect ratio', () => {
-      const result = fitDimensions(
-        { width: 10000, height: 100 },
-        { width: 1000, height: 1000 },
-      );
+      const result = fitDimensions(10000, 100, 1000, 1000);
 
       expect(result.width).toBe(1000);
       expect(result.height).toBe(10);
     });
 
     it('handles extremely tall aspect ratio', () => {
-      const result = fitDimensions(
-        { width: 100, height: 10000 },
-        { width: 1000, height: 1000 },
-      );
+      const result = fitDimensions(100, 10000, 1000, 1000);
 
       expect(result.width).toBe(10);
       expect(result.height).toBe(1000);
     });
 
     it('handles zero dimension gracefully', () => {
-      const result = fitDimensions(
-        { width: 0, height: 100 },
-        { width: 100, height: 100 },
-      );
+      const result = fitDimensions(0, 100, 100, 100);
 
       // Should handle edge case without error
       expect(result).toBeDefined();
     });
 
     it('formats fractional bytes', () => {
-      expect(formatFileSize(512.7)).toBe('513 B');
+      expect(formatFileSize(512.7).formatted).toBe('513 bytes');
     });
 
     it('formats negative sizes as zero', () => {
-      expect(formatFileSize(-100)).toBe('0 B');
+      expect(formatFileSize(-100).formatted).toBe('0 Bytes');
     });
 
     it('handles NaN gracefully', () => {
-      expect(formatFileSize(NaN)).toBe('0 B');
+      expect(formatFileSize(NaN).formatted).toBe('0 Bytes');
     });
 
     it('handles Infinity gracefully', () => {
@@ -484,7 +454,12 @@ describe('imageProcessor', () => {
       const file = createMockFile('large.jpg', 'image/jpeg');
 
       const dimensions = await getImageDimensions(file);
-      const fitted = fitDimensions(dimensions, { width: 800, height: 600 });
+      const fitted = fitDimensions(
+        dimensions.width,
+        dimensions.height,
+        800,
+        600,
+      );
 
       expect(fitted.width).toBeLessThanOrEqual(800);
       expect(fitted.height).toBeLessThanOrEqual(600);

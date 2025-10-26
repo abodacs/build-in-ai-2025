@@ -6,6 +6,8 @@
  * @module proofreader/components/ProofreaderResults
  */
 
+import { useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -71,6 +73,15 @@ export function ProofreaderResults({
 }: ProofreaderResultsProps) {
   const stats = calculateCorrectionStats(corrections, correctionStates);
   const hasPending = correctionStates.some((s) => s.state === 'pending');
+
+  /**
+   * Sanitize corrected text for safe display
+   * Strip all HTML tags for plain text display
+   */
+  const sanitizedCorrectedText = useMemo(
+    () => DOMPurify.sanitize(correctedText, { ALLOWED_TAGS: [] }),
+    [correctedText],
+  );
 
   // Download corrected text
   const handleDownload = () => {
@@ -206,7 +217,7 @@ export function ProofreaderResults({
         </CardHeader>
         <CardContent>
           <Textarea
-            value={correctedText}
+            value={sanitizedCorrectedText}
             readOnly
             className="min-h-[200px] font-mono text-sm"
             aria-label="Corrected text output"

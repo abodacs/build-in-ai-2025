@@ -30,6 +30,7 @@ export type {
   LanguageModel,
   LanguageModelAPI,
   LanguageModelCapabilities,
+  LanguageModelParameterBounds,
   // Browser Compatibility
   APIVersion,
   BrowserCapabilities,

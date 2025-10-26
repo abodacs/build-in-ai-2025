@@ -112,7 +112,9 @@ describe('PlaygroundTab - Error Handling', () => {
       renderWithProviders(<PlaygroundTab />);
 
       expect(screen.getByText(/Rewrite Failed/i)).toBeInTheDocument();
-      expect(screen.getByText(/user activation required/i)).toBeInTheDocument();
+      // Multiple elements may contain this text, use getAllByText
+      const userActivationTexts = screen.getAllByText(/user activation required/i);
+      expect(userActivationTexts.length).toBeGreaterThan(0);
       expect(
         screen.getByText(/The API requires a user interaction/i),
       ).toBeInTheDocument();
@@ -354,7 +356,9 @@ describe('PlaygroundTab - Error Handling', () => {
       renderWithProviders(<PlaygroundTab />);
 
       expect(screen.getByText(/Rewrite Failed/i)).toBeInTheDocument();
-      expect(screen.getByText(/Something went wrong/i)).toBeInTheDocument();
+      // Multiple elements may contain this text, use getAllByText
+      const errorTexts = screen.getAllByText(/Something went wrong/i);
+      expect(errorTexts.length).toBeGreaterThan(0);
       expect(
         screen.getByRole('button', { name: /Try Again/i }),
       ).toBeInTheDocument();

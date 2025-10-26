@@ -82,8 +82,8 @@ interface UsePromptReturn {
  * Manages LanguageModel instance, executes prompts, handles streaming,
  * and maintains conversation history.
  */
-export function usePrompt(options: UsePromptOptions): UsePromptReturn {
-  const { config, autoSave = true, enableHistory = true } = options;
+export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
+  const { config = {}, autoSave = true, enableHistory = true } = options;
 
   // Managers
   const promptManagerRef = useRef<PromptManager | null>(null);

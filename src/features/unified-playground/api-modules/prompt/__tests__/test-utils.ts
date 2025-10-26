@@ -20,12 +20,39 @@ import type {
 // ============================================================================
 
 export function createMockLanguageModel(): LanguageModel {
-  return {
+  const model: LanguageModel = {
     prompt: vi.fn().mockResolvedValue('Mock response'),
-    promptStreaming: vi.fn(async function* () {
-      yield 'Mock ';
-      yield 'streaming ';
-      yield 'response';
+    promptStreaming: vi.fn(() => {
+      // Create a ReadableStream mock that is async iterable
+      const chunks = ['Mock ', 'streaming ', 'response'];
+      let index = 0;
+
+      const stream = {
+        getReader: () => ({
+          read: vi.fn(async () => {
+            if (index < chunks.length) {
+              return { done: false, value: chunks[index++] };
+            }
+            return { done: true, value: undefined };
+          }),
+          releaseLock: vi.fn(),
+        }),
+        // Make the stream async iterable for for-await-of loops
+        [Symbol.asyncIterator]: async function* () {
+          const reader = stream.getReader();
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              yield value;
+            }
+          } finally {
+            reader.releaseLock();
+          }
+        },
+      } as any;
+
+      return stream;
     }),
     countPromptTokens: vi.fn().mockResolvedValue(10),
     maxTokens: 4096,
@@ -33,12 +60,21 @@ export function createMockLanguageModel(): LanguageModel {
     tokensLeft: 4096,
     topK: 3,
     temperature: 0.7,
-    clone: vi.fn().mockResolvedValue(createMockLanguageModel()),
+    clone: vi.fn().mockImplementation(async () => createMockLanguageModel()),
     destroy: vi.fn(),
+    // NEW - Added for factual API accuracy
+    inputQuota: 4096,
+    inputUsage: 0,
   };
+  return model;
 }
 
 export function setupLanguageModelAPIMock() {
+  // Clear any existing mocks first to prevent conflicts
+  vi.clearAllMocks();
+  delete (global as any).LanguageModel;
+  delete (globalThis as any).LanguageModel;
+
   const mockCreate = vi.fn().mockResolvedValue(createMockLanguageModel());
   const mockAvailability = vi
     .fn()
@@ -50,12 +86,15 @@ export function setupLanguageModelAPIMock() {
     defaultTemperature: 0.7,
   });
 
-  // Mock global LanguageModel
-  (global as any).LanguageModel = {
+  // Mock global LanguageModel on both global and globalThis
+  const mockAPI = {
     create: mockCreate,
     availability: mockAvailability,
     capabilities: mockCapabilities,
   };
+
+  (global as any).LanguageModel = mockAPI;
+  (globalThis as any).LanguageModel = mockAPI;
 
   return {
     create: mockCreate,
@@ -66,6 +105,7 @@ export function setupLanguageModelAPIMock() {
 
 export function cleanupLanguageModelAPIMock() {
   delete (global as any).LanguageModel;
+  delete (globalThis as any).LanguageModel;
   vi.clearAllMocks();
 }
 
@@ -280,6 +320,21 @@ export function mockImage() {
 
     constructor() {
       setTimeout(() => {
+        // Set dimensions based on filename in src
+        if (this.src.includes('large')) {
+          this.width = 1920;
+          this.height = 1080;
+        } else if (this.src.includes('wide')) {
+          this.width = 2000;
+          this.height = 1000;
+        } else if (this.src.includes('tall')) {
+          this.width = 1000;
+          this.height = 2000;
+        } else if (this.src.includes('small')) {
+          this.width = 100;
+          this.height = 100;
+        }
+
         if (this.onload) {
           this.onload();
         }
@@ -312,9 +367,16 @@ export function mockCanvas() {
   const mockCanvas = {
     getContext: vi.fn().mockReturnValue(mockContext),
     toDataURL: vi.fn().mockReturnValue('data:image/png;base64,iVBORw0KGgo...'),
-    toBlob: vi.fn((callback: (blob: Blob) => void) => {
-      callback(new Blob(['test'], { type: 'image/png' }));
-    }),
+    toBlob: vi.fn(
+      (
+        callback: (blob: Blob) => void,
+        mimeType: string = 'image/png',
+        _quality?: number,
+      ) => {
+        // Respect the mimeType parameter
+        callback(new Blob(['test'], { type: mimeType }));
+      },
+    ),
     width: 100,
     height: 100,
   };
@@ -337,15 +399,26 @@ export function mockCanvas() {
  */
 export function mockURL() {
   const urls = new Set<string>();
+  const blobToUrl = new Map<Blob | File, string>();
 
-  const mockCreateObjectURL = vi.fn((blob: Blob) => {
-    const url = `blob:http://localhost:3000/${Math.random()}`;
+  const mockCreateObjectURL = vi.fn((blob: Blob | File) => {
+    // Include filename in URL if it's a File
+    const filename = (blob as File).name || 'blob';
+    const url = `blob:http://localhost:3000/${filename}-${Math.random()}`;
     urls.add(url);
+    blobToUrl.set(blob, url);
     return url;
   });
 
   const mockRevokeObjectURL = vi.fn((url: string) => {
     urls.delete(url);
+    // Find and remove from blob map
+    for (const [blob, blobUrl] of blobToUrl.entries()) {
+      if (blobUrl === url) {
+        blobToUrl.delete(blob);
+        break;
+      }
+    }
   });
 
   const originalCreateObjectURL = URL.createObjectURL;
@@ -358,6 +431,7 @@ export function mockURL() {
     createObjectURL: mockCreateObjectURL,
     revokeObjectURL: mockRevokeObjectURL,
     urls,
+    blobToUrl,
     restore: () => {
       URL.createObjectURL = originalCreateObjectURL;
       URL.revokeObjectURL = originalRevokeObjectURL;

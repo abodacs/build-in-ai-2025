@@ -696,12 +696,24 @@ export interface CompressionStatistics {
   /** Bytes saved */
   bytesSaved: number;
 
+  /** Space saved (alias for bytesSaved) */
+  spaceSaved: number;
+
   /** Compression ratio (0-1) */
   ratio: number;
+
+  /** Compression ratio (alias for ratio) */
+  compressionRatio: number;
 
   /** Percentage saved */
   percentageSaved: number;
 
+  /** Space saved percentage (alias for percentageSaved) */
+  spaceSavedPercentage: number;
+
   /** Compression time in milliseconds */
   compressionTime: number;
+
+  /** Whether image was resized */
+  resized?: boolean;
 }

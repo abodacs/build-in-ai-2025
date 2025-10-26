@@ -193,7 +193,7 @@ function PromptConfigComponent({
                 id="system-prompt"
                 value={config.systemPrompt || ''}
                 onChange={(e) => updateConfig('systemPrompt', e.target.value)}
-                placeholder="You are a helpful AI assistant..."
+                placeholder="You are a helpful and friendly assistant..."
                 className="min-h-[80px] resize-none"
                 disabled={disabled}
                 aria-describedby="system-prompt-help"
@@ -453,7 +453,7 @@ function PromptConfigComponent({
                 size="sm"
                 onClick={() => {
                   onChange({
-                    systemPrompt: 'You are a helpful AI assistant.',
+                    systemPrompt: 'You are a helpful and friendly assistant.',
                     temperature: 0.8,
                     topK: 8,
                     maxTokens: 512, // Default max tokens (max allowed: 1024)

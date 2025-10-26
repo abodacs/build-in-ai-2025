@@ -114,7 +114,7 @@ interface ProofreaderCreateOptions {
 
 interface ProofreaderAPI {
   create(options?: ProofreaderCreateOptions): Promise<Proofreader>;
-  availability(): Promise<'available' | 'after-download' | 'no'>;
+  availability(): Promise<'available' | 'downloadable' | 'unavailable'>;
 }
 
 declare global {
@@ -145,13 +145,13 @@ async function checkAvailability(): Promise<boolean> {
     );
   }
 
-  const availability = await window.Proofreader.availability(config);
+  const availability = await self.Proofreader.availability(config);
 
-  if (availability === 'no') {
+  if (availability === 'unavailable') {
     throw new Error('Proofreader not available on this device');
   }
 
-  if (availability === 'after-download') {
+  if (availability === 'downloadable') {
     console.log('Model download required - this may take a few minutes');
     // Model will download automatically on first create() call
   }
@@ -164,7 +164,7 @@ async function checkAvailability(): Promise<boolean> {
  * Note: Requires user activation (must be called from user interaction)
  */
 async function createProofreader(): Promise<Proofreader> {
-  const proofreader = await window.Proofreader.create(config);
+  const proofreader = await self.Proofreader.create(config);
   return proofreader;
 }
 
@@ -176,7 +176,7 @@ async function proofread(text: string): Promise<ProofreadResult[]> {
   const proofreader = await createProofreader();
 
   try {
-    const corrections = await proofreader.proofread(text);
+    const { corrections } = await proofreader.proofread(text);
     return corrections;
   } finally {
     proofreader.destroy();
@@ -229,8 +229,8 @@ function createHighlights(
     const textNode = containerElement.firstChild as Text;
 
     if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-      range.setStart(textNode, correction.start);
-      range.setEnd(textNode, correction.end);
+      range.setStart(textNode, correction.startIndex);
+      range.setEnd(textNode, correction.endIndex);
 
       const highlight = new Highlight(range);
       CSS.highlights.set(\`correction-\${index}\`, highlight);
@@ -246,15 +246,19 @@ function createHighlights(
  * Example 1: Basic proofreading
  */
 async function exampleBasic() {
-  const text = 'This is an example sentance with some erors.';
+  const text = "The team are working on they're new project. Its a important milestone for the company.";
 
   try {
     const corrections = await proofread(text);
-    console.log('Corrections found:', corrections);
-    // Output: [{ type: 'spelling', start: 20, end: 28, ... }]
+    console.log('Corrections found:', corrections.length);
+
+    corrections.forEach((c, i) => {
+      console.log(\`\${i + 1}. \${c.type}: "\${text.slice(c.startIndex, c.endIndex)}" → "\${c.correction}"\`);
+      if (c.explanation) console.log(\`   Reason: \${c.explanation}\`);
+    });
 
     const correctedText = applyCorrections(text, corrections);
-    console.log('Corrected text:', correctedText);
+    console.log('\\nCorrected text:', correctedText);
   } catch (error) {
     console.error('Proofreading failed:', error);
   }
@@ -295,7 +299,7 @@ function setupHTMLIntegration() {
           (c) =>
             \`<div class="correction">
               <strong>\${c.type}</strong>:
-              "\${text.slice(c.startIndex, c.endIndex)}" → "\${c.correction}"
+              "\${input.value.slice(c.startIndex, c.endIndex)}" → "\${c.correction}"
               \${c.explanation ? \`<br><em>\${c.explanation}</em>\` : ''}
             </div>\`
         )
@@ -365,13 +369,13 @@ async function checkAvailability() {
     );
   }
 
-  const availability = await window.Proofreader.availability(config);
+  const availability = await self.Proofreader.availability(config);
 
-  if (availability === 'no') {
+  if (availability === 'unavailable') {
     throw new Error('Proofreader not available on this device');
   }
 
-  if (availability === 'after-download') {
+  if (availability === 'downloadable') {
     console.log('Model download required - this may take a few minutes');
     // Model will download automatically on first create() call
   }
@@ -384,7 +388,7 @@ async function checkAvailability() {
  * Note: Requires user activation (must be called from user interaction)
  */
 async function createProofreader() {
-  const proofreader = await window.Proofreader.create(config);
+  const proofreader = await self.Proofreader.create(config);
   return proofreader;
 }
 
@@ -396,7 +400,7 @@ async function proofread(text) {
   const proofreader = await createProofreader();
 
   try {
-    const corrections = await proofreader.proofread(text);
+    const { corrections } = await proofreader.proofread(text);
     return corrections;
   } finally {
     proofreader.destroy();
@@ -442,8 +446,8 @@ function createHighlights(text, corrections, containerElement) {
     const textNode = containerElement.firstChild;
 
     if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-      range.setStart(textNode, correction.start);
-      range.setEnd(textNode, correction.end);
+      range.setStart(textNode, correction.startIndex);
+      range.setEnd(textNode, correction.endIndex);
 
       const highlight = new Highlight(range);
       CSS.highlights.set(\`correction-\${index}\`, highlight);
@@ -459,15 +463,19 @@ function createHighlights(text, corrections, containerElement) {
  * Example 1: Basic proofreading
  */
 async function exampleBasic() {
-  const text = 'This is an example sentance with some erors.';
+  const text = "The team are working on they're new project. Its a important milestone for the company.";
 
   try {
     const corrections = await proofread(text);
-    console.log('Corrections found:', corrections);
-    // Output: [{ type: 'spelling', start: 20, end: 28, ... }]
+    console.log('Corrections found:', corrections.length);
+
+    corrections.forEach((c, i) => {
+      console.log(\`\${i + 1}. \${c.type}: "\${text.slice(c.startIndex, c.endIndex)}" → "\${c.correction}"\`);
+      if (c.explanation) console.log(\`   Reason: \${c.explanation}\`);
+    });
 
     const correctedText = applyCorrections(text, corrections);
-    console.log('Corrected text:', correctedText);
+    console.log('\\nCorrected text:', correctedText);
   } catch (error) {
     console.error('Proofreading failed:', error);
   }
@@ -508,7 +516,7 @@ function setupHTMLIntegration() {
           (c) =>
             \`<div class="correction">
               <strong>\${c.type}</strong>:
-              "\${text.slice(c.startIndex, c.endIndex)}" → "\${c.correction}"
+              "\${input.value.slice(c.startIndex, c.endIndex)}" → "\${c.correction}"
               \${c.explanation ? \`<br><em>\${c.explanation}</em>\` : ''}
             </div>\`
         )

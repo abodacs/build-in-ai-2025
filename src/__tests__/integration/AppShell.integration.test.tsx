@@ -1,10 +1,8 @@
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { screen, waitFor, act } from '@testing-library/react';
+import { render, TestProviders } from '../../../tests/test-utils/TestProviders';
 import userEvent from '@testing-library/user-event';
-import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import App from '@/App';
-import { ThemeProvider } from '@/providers/ThemeProvider';
-import { CodeThemeProvider } from '@/providers/CodeThemeProvider';
 
 // Mock AI service - using vi.hoisted to properly handle hoisting
 const { mockTestAiAvailability } = vi.hoisted(() => ({
@@ -14,18 +12,11 @@ vi.mock('@/services/aiService', () => ({
   testAiAvailability: mockTestAiAvailability,
 }));
 
-// Wrapper component with all required providers
-const AllProviders = ({ children }: { children: React.ReactNode }) => (
-  <ThemeProvider defaultTheme="light" storageKey="test-theme">
-    <CodeThemeProvider defaultCodeTheme="dark" storageKey="test-code-theme">
-      <BrowserRouter>{children}</BrowserRouter>
-    </CodeThemeProvider>
-  </ThemeProvider>
-);
-
 // Helper to render App with all providers
 const renderApp = () => {
-  return render(<App />, { wrapper: AllProviders });
+  return render(<App />, {
+    wrapper: ({ children }) => <TestProviders>{children}</TestProviders>,
+  });
 };
 
 describe('App Shell Integration Tests', () => {

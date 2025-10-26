@@ -17,8 +17,9 @@ import {
 } from '../../shared/components';
 import { cn } from '@/lib/utils';
 import type { PerformanceMetrics } from '../../shared/types';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
+import DOMPurify from 'dompurify';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
 import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
@@ -49,6 +50,12 @@ SyntaxHighlighter.registerLanguage('bash', bash);
 const createMarkdownComponents = (
   isDarkMode: boolean,
 ): Partial<Components> => ({
+  // Use div instead of p to avoid invalid nesting of <pre> inside <p>
+  p: ({ children, ...props }) => (
+    <div className="my-2" {...props}>
+      {children}
+    </div>
+  ),
   code: ({
     inline,
     className,
@@ -201,6 +208,43 @@ export function WriterResults({
   const isDarkMode = document.documentElement.classList.contains('dark');
   const markdownComponents = createMarkdownComponents(isDarkMode);
 
+  /**
+   * Sanitize content for safe display
+   * Allows markdown tags but prevents XSS attacks
+   */
+  const sanitizedContent = useMemo(
+    () =>
+      content
+        ? DOMPurify.sanitize(content, {
+            ALLOWED_TAGS: [
+              'p',
+              'br',
+              'strong',
+              'em',
+              'u',
+              'span',
+              'div',
+              'h1',
+              'h2',
+              'h3',
+              'h4',
+              'h5',
+              'h6',
+              'ul',
+              'ol',
+              'li',
+              'code',
+              'pre',
+              'blockquote',
+              'a',
+            ],
+            ALLOWED_ATTR: ['class', 'href', 'rel', 'target'],
+            ALLOW_DATA_ATTR: false,
+          })
+        : '',
+    [content],
+  );
+
   const handleCopy = async () => {
     if (onCopy) {
       onCopy();
@@ -243,7 +287,7 @@ export function WriterResults({
             )}
           >
             <ReactMarkdown components={markdownComponents}>
-              {content}
+              {sanitizedContent}
             </ReactMarkdown>
           </div>
         )}

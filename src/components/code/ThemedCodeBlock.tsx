@@ -11,6 +11,7 @@ import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
 import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
 import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
+import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Button } from '@/components/ui/button';
@@ -19,11 +20,14 @@ import { useCodeTheme } from '@/providers/CodeThemeProvider';
 import { CodeThemeToggle } from './CodeThemeToggle';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { vibrateSuccess } from '@/utils/hapticFeedback';
+import './code-animations.css';
 
 // Register only needed languages for optimal bundle size
 SyntaxHighlighter.registerLanguage('typescript', typescript);
 SyntaxHighlighter.registerLanguage('javascript', javascript);
 SyntaxHighlighter.registerLanguage('json', json);
+SyntaxHighlighter.registerLanguage('markdown', markdown);
 
 // ============================================================================
 // Types
@@ -34,7 +38,7 @@ export interface ThemedCodeBlockProps {
   code: string;
 
   /** Programming language */
-  language: 'typescript' | 'javascript' | 'json';
+  language: 'typescript' | 'javascript' | 'json' | 'markdown';
 
   /** Show copy button */
   showCopyButton?: boolean;
@@ -106,20 +110,29 @@ export function ThemedCodeBlock({
         return '.js';
       case 'json':
         return '.json';
+      case 'markdown':
+        return '.md';
       default:
         return '.txt';
     }
   };
 
-  // Copy to clipboard
+  // Copy to clipboard with haptic feedback
   const copyCode = async () => {
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
-      toast.success('Code copied to clipboard', {
+
+      // Haptic feedback for mobile devices
+      vibrateSuccess();
+
+      // Enhanced toast notification
+      toast.success('Code copied to clipboard!', {
         duration: 2000,
+        icon: '✨',
       });
-      // Reset after 2.5 seconds (2-3 seconds as per requirements)
+
+      // Reset after 2.5 seconds
       setTimeout(() => setCopied(false), 2500);
     } catch (error) {
       console.error('Failed to copy:', error);
@@ -192,7 +205,10 @@ export function ThemedCodeBlock({
                 size="sm"
                 onClick={copyCode}
                 className={cn(
-                  'h-7 px-2 shrink-0',
+                  'h-7 px-2 shrink-0 transition-colors-smooth button-hover-lift relative',
+                  copied && 'copy-success copy-success-glow',
+                  copied && isDark && 'success-dark',
+                  copied && !isDark && 'success-light',
                   isDark
                     ? 'text-slate-300 hover:text-slate-100 hover:bg-slate-800'
                     : 'text-slate-700 hover:text-slate-900',
@@ -200,8 +216,8 @@ export function ThemedCodeBlock({
               >
                 {copied ? (
                   <>
-                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                    <span className="text-xs">Copied</span>
+                    <CheckCircle2 className="w-3 h-3 mr-1 checkmark-pop" />
+                    <span className="text-xs font-medium">Copied!</span>
                   </>
                 ) : (
                   <>

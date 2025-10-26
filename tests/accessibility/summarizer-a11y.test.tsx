@@ -7,14 +7,16 @@
  * @module tests/accessibility/summarizer-a11y
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { screen, within, waitFor } from '@testing-library/react';
+import { render } from '@/tests/test-utils/TestProviders';
 import userEvent from '@testing-library/user-event';
 import { axe } from 'vitest-axe';
 import {
   axeConfig,
   getFocusableElements,
   testInteractiveElement,
+  mockGetComputedStyle,
 } from './setup';
 
 // Import the Summarizer playground component
@@ -22,20 +24,80 @@ import {
 import { SummarizerPlayground } from '@/features/unified-playground/api-modules/summarizer/components/tabs/SummarizerPlayground';
 
 describe('Summarizer - Accessibility Tests', () => {
+  // Helper to wait for component to load
+  const waitForComponentLoad = async () => {
+    await waitFor(
+      () => {
+        expect(
+          screen.queryByText(/Checking Chrome AI availability/i),
+        ).not.toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
+  };
+
   beforeEach(() => {
     // Ensure clean DOM for each test
     document.body.innerHTML = '';
+
+    // Mock getComputedStyle
+    mockGetComputedStyle();
+
+    // Mock Chrome AI APIs with complete structure
+    (global as any).ai = {
+      summarizer: {
+        availability: vi.fn(async () => 'readily'),
+        capabilities: vi.fn(async () => ({
+          available: 'readily',
+          supportsType: vi.fn(() => true),
+        })),
+        create: vi.fn(async (options) => ({
+          summarize: vi.fn(async (text) => 'This is a test summary.'),
+          destroy: vi.fn(),
+          type: options?.type || 'tl;dr',
+          format: options?.format || 'plain-text',
+          length: options?.length || 'short',
+        })),
+      },
+    };
+
+    (global as any).Summarizer = {
+      availability: vi.fn(async () => 'readily'),
+      capabilities: vi.fn(async () => ({
+        available: 'readily',
+        languageAvailable: vi.fn(() => 'readily'),
+      })),
+      create: vi.fn(async (options) => ({
+        summarize: vi.fn(async (text) => 'This is a test summary.'),
+        destroy: vi.fn(),
+        sharedContext: options?.sharedContext || '',
+        type: options?.type || 'tl;dr',
+        format: options?.format || 'plain-text',
+        length: options?.length || 'short',
+      })),
+    };
+
+    // Mock Writer API
+    (global as any).WriterAPI = {
+      availability: vi.fn(async () => 'readily'),
+      create: vi.fn(async () => ({
+        write: vi.fn(async (text) => text),
+        destroy: vi.fn(),
+      })),
+    };
   });
 
   describe('WCAG 2.1 AA Compliance', () => {
     it('should have no axe violations', async () => {
       const { container } = render(<SummarizerPlayground />);
+      await waitForComponentLoad();
       const results = await axe(container, axeConfig);
       expect(results).toHaveNoViolations();
     });
 
-    it('should have proper document structure', () => {
+    it('should have proper document structure', async () => {
       render(<SummarizerPlayground />);
+      await waitForComponentLoad();
 
       // Should have proper heading hierarchy
       const headings = screen.getAllByRole('heading');
@@ -46,8 +108,9 @@ describe('Summarizer - Accessibility Tests', () => {
       expect(['H1', 'H2', 'H3']).toContain(firstHeading.tagName);
     });
 
-    it('should have proper landmark regions', () => {
+    it('should have proper landmark regions', async () => {
       const { container } = render(<SummarizerPlayground />);
+      await waitForComponentLoad();
 
       // Check for semantic HTML5 elements or ARIA landmarks
       const landmarks = container.querySelectorAll(
@@ -61,6 +124,7 @@ describe('Summarizer - Accessibility Tests', () => {
     it('should allow keyboard-only navigation through all interactive elements', async () => {
       const user = userEvent.setup();
       const { container } = render(<SummarizerPlayground />);
+      await waitForComponentLoad();
 
       // Get all focusable elements
       const focusableElements = getFocusableElements(container);
@@ -97,6 +161,7 @@ describe('Summarizer - Accessibility Tests', () => {
     it('should handle Enter key on buttons', async () => {
       const user = userEvent.setup();
       render(<SummarizerPlayground />);
+      await waitForComponentLoad();
 
       // Find summarize button
       const buttons = screen.getAllByRole('button');
@@ -145,8 +210,9 @@ describe('Summarizer - Accessibility Tests', () => {
   });
 
   describe('ARIA Attributes', () => {
-    it('should have proper ARIA labels for interactive elements', () => {
+    it('should have proper ARIA labels for interactive elements', async () => {
       render(<SummarizerPlayground />);
+      await waitForComponentLoad();
 
       const buttons = screen.getAllByRole('button');
       buttons.forEach((button) => {
@@ -186,8 +252,9 @@ describe('Summarizer - Accessibility Tests', () => {
       });
     });
 
-    it('should properly label form inputs', () => {
+    it('should properly label form inputs', async () => {
       render(<SummarizerPlayground />);
+      await waitForComponentLoad();
 
       // All textareas should have labels
       const textareas = screen.getAllByRole('textbox');
@@ -235,6 +302,7 @@ describe('Summarizer - Accessibility Tests', () => {
     it('should restore focus after modal closes', async () => {
       const user = userEvent.setup();
       render(<SummarizerPlayground />);
+      await waitForComponentLoad();
 
       // Find button that opens modal/dialog
       const buttons = screen.getAllByRole('button');
@@ -281,8 +349,9 @@ describe('Summarizer - Accessibility Tests', () => {
       expect(results.violations).toHaveLength(0);
     });
 
-    it('should have sufficient contrast for interactive elements', () => {
+    it('should have sufficient contrast for interactive elements', async () => {
       render(<SummarizerPlayground />);
+      await waitForComponentLoad();
 
       const buttons = screen.getAllByRole('button');
 
@@ -351,11 +420,12 @@ describe('Summarizer - Accessibility Tests', () => {
       expect(desktopResults).toHaveNoViolations();
     });
 
-    it('should have touch-friendly targets on mobile', () => {
+    it('should have touch-friendly targets on mobile', async () => {
       global.innerWidth = 375;
       window.dispatchEvent(new Event('resize'));
 
       render(<SummarizerPlayground />);
+      await waitForComponentLoad();
 
       const buttons = screen.getAllByRole('button');
 

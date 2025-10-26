@@ -267,14 +267,15 @@ export class ChromeAILanguageDetectionService {
         '[ChromeAILanguageDetectionService] Calling LanguageDetector.create with monitor',
       );
 
-      // Create a timeout promise that rejects after 2 minutes
+      // Create a timeout promise that rejects after 15 minutes (900 seconds)
       // Model download is ~22MB and should complete quickly on most connections
-      const DOWNLOAD_TIMEOUT = 2 * 60 * 1000; // 2 minutes
+      // Generous timeout ensures downloads don't fail on slow internet
+      const DOWNLOAD_TIMEOUT = 15 * 60 * 1000; // 15 minutes
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
           reject(
             new Error(
-              'Model download timed out after 2 minutes. Please check your internet connection and try again. If the download started, it may still be running in the background - try refreshing the page in a few minutes.',
+              'Model download timed out after 15 minutes. Please check your internet connection and try again. If the download started, it may still be running in the background - try refreshing the page.',
             ),
           );
         }, DOWNLOAD_TIMEOUT);

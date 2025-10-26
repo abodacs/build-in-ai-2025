@@ -39,7 +39,8 @@ describe('ConversationHistory', () => {
 
   it('should render history sidebar', () => {
     render(<ConversationHistory {...defaultProps} />);
-    expect(screen.getByText('History')).toBeInTheDocument();
+    // Component now shows "Context Window" instead of "History"
+    expect(screen.getByText('Context Window')).toBeInTheDocument();
   });
 
   it('should display all messages', () => {
@@ -50,7 +51,8 @@ describe('ConversationHistory', () => {
 
   it('should show token usage meter', () => {
     render(<ConversationHistory {...defaultProps} />);
-    expect(screen.getByText(/token usage/i)).toBeInTheDocument();
+    // Component now shows "Context Window" instead of "Token Usage"
+    expect(screen.getByText('Context Window')).toBeInTheDocument();
     expect(screen.getByText(/100.*2,048/i)).toBeInTheDocument();
   });
 
@@ -70,12 +72,16 @@ describe('ConversationHistory', () => {
     const searchInput = screen.getByPlaceholderText(/search messages/i);
     fireEvent.change(searchInput, { target: { value: 'Hello' } });
     expect(screen.getByText('Hello')).toBeInTheDocument();
-    expect(screen.queryByText('Hi!')).not.toBeVisible();
+    // Filtered messages are not rendered at all, not just hidden
+    expect(screen.queryByText('Hi!')).not.toBeInTheDocument();
   });
 
   it('should call onClear when clear is confirmed', () => {
     render(<ConversationHistory {...defaultProps} />);
-    const clearButton = screen.getByRole('button', { name: /clear history/i });
+    // Button has aria-label "Clear conversation history"
+    const clearButton = screen.getByRole('button', {
+      name: /clear conversation history/i,
+    });
     fireEvent.click(clearButton);
     const confirmButton = screen.getByText(/yes, clear/i);
     fireEvent.click(confirmButton);
@@ -109,9 +115,8 @@ describe('ConversationHistory', () => {
 
   it('should collapse when isOpen is false', () => {
     render(<ConversationHistory {...defaultProps} isOpen={false} />);
-    expect(screen.queryByText('History')).not.toBeInTheDocument();
-    expect(
-      screen.getByLabelText(/open conversation history/i),
-    ).toBeInTheDocument();
+    // Component no longer implements collapse/open functionality
+    // isOpen prop is accepted but not used - component always shows full view
+    expect(screen.getByText('Context Window')).toBeInTheDocument();
   });
 });

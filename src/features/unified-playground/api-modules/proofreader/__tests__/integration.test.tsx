@@ -5,35 +5,55 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { render } from '@/tests/test-utils/TestProviders';
 import { ProofreaderMain } from '../components/tabs/PlaygroundTab';
+
+// Helper function to set contenteditable text
+const setContentEditableText = (element: HTMLElement, text: string) => {
+  element.textContent = text;
+  fireEvent.input(element);
+};
 
 // Mock Chrome AI API
 const mockProofread = vi.fn();
 const mockProofreader = { proofread: mockProofread, destroy: vi.fn() };
 
+// Helper to wait for component to be ready
+const waitForComponentReady = async () => {
+  await waitFor(
+    () => {
+      // Wait for any loading/checking state to clear and proofreader button to appear
+      const proofreadButton = screen.queryByRole('button', {
+        name: /proofread/i,
+      });
+      expect(proofreadButton).toBeInTheDocument();
+    },
+    { timeout: 3000 },
+  );
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
 
-  // Setup Chrome AI mock
+  // Setup Chrome AI mock with proper structure
   (globalThis as any).Proofreader = {
     create: vi.fn().mockResolvedValue(mockProofreader),
-    availability: vi.fn().mockResolvedValue('available'),
+    // availability() must accept options parameter
+    availability: vi.fn().mockImplementation(async (options) => 'available'),
   };
 
   mockProofread.mockResolvedValue({
     corrections: [
       {
-        original: 'teh',
-        suggestion: 'the',
+        correction: 'the',
         type: 'spelling',
         startIndex: 0,
         endIndex: 3,
         explanation: 'Spelling error',
       },
       {
-        original: 'quik',
-        suggestion: 'quick',
+        correction: 'quick',
         type: 'spelling',
         startIndex: 4,
         endIndex: 8,
@@ -47,10 +67,11 @@ describe('Proofreader Integration', () => {
   describe('Complete Workflow', () => {
     it('should complete full proofreading flow', async () => {
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       // 1. Enter text
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'teh quik test' } });
+      setContentEditableText(textarea, 'teh quik test');
 
       // 2. Click proofread button
       const proofreadButton = screen.getByRole('button', {
@@ -74,10 +95,11 @@ describe('Proofreader Integration', () => {
 
     it('should apply corrections and update text', async () => {
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       // Enter and proofread
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'teh test' } });
+      setContentEditableText(textarea, 'teh test');
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,
@@ -99,9 +121,10 @@ describe('Proofreader Integration', () => {
 
     it('should ignore corrections', async () => {
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'teh test' } });
+      setContentEditableText(textarea, 'teh test');
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,
@@ -123,9 +146,10 @@ describe('Proofreader Integration', () => {
 
     it('should clear text and results', async () => {
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'teh test' } });
+      setContentEditableText(textarea, 'teh test');
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,
@@ -140,8 +164,8 @@ describe('Proofreader Integration', () => {
       const clearButton = screen.getByRole('button', { name: /clear/i });
       fireEvent.click(clearButton);
 
-      // Verify cleared
-      expect((textarea as HTMLTextAreaElement).value).toBe('');
+      // Verify cleared - contenteditable uses textContent, not value
+      expect(textarea.textContent).toBe('');
     });
   });
 
@@ -152,7 +176,7 @@ describe('Proofreader Integration', () => {
       render(<ProofreaderMain />);
 
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'test' } });
+      setContentEditableText(textarea, 'test');
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,
@@ -169,9 +193,10 @@ describe('Proofreader Integration', () => {
       mockProofread.mockRejectedValueOnce(new Error('Proofread failed'));
 
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'test' } });
+      setContentEditableText(textarea, 'test');
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,
@@ -186,8 +211,7 @@ describe('Proofreader Integration', () => {
       mockProofread.mockResolvedValueOnce({
         corrections: [
           {
-            original: 'teh',
-            suggestion: 'the',
+            correction: 'the',
             type: 'spelling',
             startIndex: 0,
             endIndex: 3,
@@ -196,7 +220,7 @@ describe('Proofreader Integration', () => {
         ],
       });
 
-      fireEvent.change(textarea, { target: { value: 'teh test' } });
+      setContentEditableText(textarea, 'teh test');
       fireEvent.click(proofreadButton);
 
       await waitFor(() => {
@@ -206,21 +230,19 @@ describe('Proofreader Integration', () => {
     });
 
     it('should handle API unavailable', async () => {
-      (globalThis as any).Proofreader.availability.mockResolvedValueOnce('no');
+      (globalThis as any).Proofreader.availability.mockImplementation(
+        async (options) => 'no',
+      );
 
       render(<ProofreaderMain />);
 
-      const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'test' } });
-
-      const proofreadButton = screen.getByRole('button', {
-        name: /proofread/i,
-      });
-      fireEvent.click(proofreadButton);
-
-      await waitFor(() => {
-        expect(screen.getByText(/not available/i)).toBeInTheDocument();
-      });
+      // Wait for availability check to complete and error message to appear
+      await waitFor(
+        () => {
+          expect(screen.getByText(/not available/i)).toBeInTheDocument();
+        },
+        { timeout: 3000 },
+      );
     });
   });
 
@@ -235,8 +257,7 @@ describe('Proofreader Integration', () => {
                 resolve({
                   corrections: [
                     {
-                      original: 'teh',
-                      suggestion: 'the',
+                      correction: 'the',
                       type: 'spelling',
                       startIndex: 0,
                       endIndex: 3,
@@ -250,9 +271,10 @@ describe('Proofreader Integration', () => {
       );
 
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'test' } });
+      setContentEditableText(textarea, 'test');
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,
@@ -282,23 +304,30 @@ describe('Proofreader Integration', () => {
       );
 
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'test' } });
+      setContentEditableText(textarea, 'test');
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,
       });
       fireEvent.click(proofreadButton);
 
-      // Controls should be disabled
+      // Controls should be disabled (contenteditable uses tabindex and contenteditable attributes)
       await waitFor(() => {
-        expect(textarea).toBeDisabled();
+        const isDisabled =
+          textarea.getAttribute('contenteditable') === 'false' ||
+          textarea.getAttribute('tabindex') === '-1';
+        expect(isDisabled).toBe(true);
       });
 
       // Wait for completion
       await waitFor(() => {
-        expect(textarea).not.toBeDisabled();
+        const isEnabled =
+          textarea.getAttribute('contenteditable') === 'true' ||
+          textarea.getAttribute('tabindex') !== '-1';
+        expect(isEnabled).toBe(true);
       });
     });
   });
@@ -308,9 +337,10 @@ describe('Proofreader Integration', () => {
       mockProofread.mockResolvedValueOnce({ corrections: [] });
 
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'perfect text' } });
+      setContentEditableText(textarea, 'perfect text');
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,
@@ -326,9 +356,10 @@ describe('Proofreader Integration', () => {
       const longText = 'word '.repeat(1000);
 
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: longText } });
+      setContentEditableText(textarea, longText);
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,
@@ -347,8 +378,7 @@ describe('Proofreader Integration', () => {
       mockProofread.mockResolvedValueOnce({
         corrections: [
           {
-            original: 'こんにちは',
-            suggestion: 'こんにちは世界',
+            correction: 'こんにちは世界',
             type: 'spelling',
             startIndex: 0,
             endIndex: 5,
@@ -360,7 +390,7 @@ describe('Proofreader Integration', () => {
       render(<ProofreaderMain />);
 
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'こんにちは' } });
+      setContentEditableText(textarea, 'こんにちは');
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,
@@ -376,8 +406,7 @@ describe('Proofreader Integration', () => {
       mockProofread.mockResolvedValueOnce({
         corrections: [
           {
-            original: 'test!@#',
-            suggestion: 'test?!',
+            correction: 'test?!',
             type: 'punctuation',
             startIndex: 0,
             endIndex: 7,
@@ -387,9 +416,10 @@ describe('Proofreader Integration', () => {
       });
 
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'test!@# text' } });
+      setContentEditableText(textarea, 'test!@# text');
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,
@@ -406,9 +436,10 @@ describe('Proofreader Integration', () => {
   describe('Undo/Redo Functionality', () => {
     it('should support undo operation', async () => {
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'teh test' } });
+      setContentEditableText(textarea, 'teh test');
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,
@@ -436,9 +467,10 @@ describe('Proofreader Integration', () => {
 
     it('should support redo operation', async () => {
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'teh test' } });
+      setContentEditableText(textarea, 'teh test');
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,
@@ -489,9 +521,10 @@ describe('Proofreader Integration', () => {
   describe('Multiple Corrections', () => {
     it('should apply all corrections at once', async () => {
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'teh quik test' } });
+      setContentEditableText(textarea, 'teh quik test');
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,
@@ -514,9 +547,10 @@ describe('Proofreader Integration', () => {
 
     it('should display statistics for multiple corrections', async () => {
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'teh quik test' } });
+      setContentEditableText(textarea, 'teh quik test');
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,
@@ -539,9 +573,10 @@ describe('Proofreader Integration', () => {
       });
 
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       const textarea = screen.getByRole('textbox');
-      fireEvent.change(textarea, { target: { value: 'teh test' } });
+      setContentEditableText(textarea, 'teh test');
 
       const proofreadButton = screen.getByRole('button', {
         name: /proofread/i,

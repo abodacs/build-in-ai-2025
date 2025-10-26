@@ -4,7 +4,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { render } from '@/tests/test-utils/TestProviders';
 import { PlaygroundTab } from '../tabs/PlaygroundTab';
 
 // Mock hooks
@@ -53,11 +54,32 @@ vi.mock('../../hooks/useConversationHistory', () => ({
   useConversationHistory: () => ({
     messages: [],
     messageCount: 0,
-    tokenCount: 0,
+    contextWindow: {
+      maxTokens: 4096,
+      tokensUsed: 0,
+      tokensRemaining: 4096,
+      percentageUsed: 0,
+      nearLimit: false,
+      warningMessage: null,
+    },
+    currentConversation: null,
+    allConversations: [],
+    isLoading: false,
+    error: null,
+    isNearContextLimit: false,
+    createConversation: vi.fn(),
     addMessage: vi.fn(),
-    removeMessage: vi.fn(),
-    clear: vi.fn(),
-    export: vi.fn(),
+    deleteMessage: vi.fn(),
+    clearMessages: vi.fn(),
+    exportConversation: vi.fn(),
+    switchConversation: vi.fn(),
+    deleteConversation: vi.fn(),
+    clearCurrentConversation: vi.fn(),
+    updateConversationTitle: vi.fn(),
+    updateMessage: vi.fn(),
+    getLastMessages: vi.fn(() => []),
+    getMessagesByRole: vi.fn(() => []),
+    importConversation: vi.fn(),
   }),
 }));
 

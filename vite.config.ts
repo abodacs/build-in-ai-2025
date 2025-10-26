@@ -33,7 +33,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@/tests': path.resolve(__dirname, './tests'),
       '@/components': path.resolve(__dirname, './src/components'),
       '@/hooks': path.resolve(__dirname, './src/hooks'),
       '@/services': path.resolve(__dirname, './src/services'),
@@ -42,6 +42,7 @@ export default defineConfig({
       '@/utils': path.resolve(__dirname, './src/utils'),
       '@/lib': path.resolve(__dirname, './src/lib'),
       '@/features': path.resolve(__dirname, './src/features'),
+      '@': path.resolve(__dirname, './src'),
     },
   },
   build: {

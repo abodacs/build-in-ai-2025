@@ -30,7 +30,8 @@
       "@/types/*": ["./src/types/*"],
       "@/utils/*": ["./src/utils/*"],
       "@/lib/*": ["./src/lib/*"],
-      "@/features/*": ["./src/features/*"]
+      "@/features/*": ["./src/features/*"],
+      "@/tests/*": ["./tests/*"]
     },
     /* Chrome AI Types */
     "types": ["vite/client"]

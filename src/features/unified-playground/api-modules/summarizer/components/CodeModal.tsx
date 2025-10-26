@@ -78,8 +78,12 @@ function generateTypeScriptCode(config: SummarizerCreateOptions): string {
  * Chrome AI Summarizer - Complete TypeScript Implementation
  *
  * Requirements:
- * - Chrome 138+ with Summarizer API enabled
- * - Enable chrome://flags#summarization-api-for-gemini-nano
+ * - Chrome 138+ (Stable channel)
+ * - GPU: 4GB+ VRAM (integrated GPUs not supported)
+ * - RAM: 16GB+ system memory
+ * - CPU: 4+ cores recommended
+ * - Disk: 22GB+ free space
+ * - Network: Unlimited data or unmetered connection
  *
  * This is a complete, self-contained implementation.
  * Copy this entire file to use in your project.
@@ -89,9 +93,13 @@ function generateTypeScriptCode(config: SummarizerCreateOptions): string {
 // Type Definitions
 // ============================================================================
 
+interface SummarizeOptions {
+  context?: string;
+}
+
 interface Summarizer {
-  summarize(text: string): Promise<string>;
-  summarizeStreaming?(text: string): ReadableStream<string>;
+  summarize(text: string, options?: SummarizeOptions): Promise<string>;
+  summarizeStreaming(text: string, options?: SummarizeOptions): ReadableStream<string>;
   destroy(): void;
 }
 
@@ -100,11 +108,14 @@ interface SummarizerCreateOptions {
   format?: 'plain-text' | 'markdown';
   length?: 'short' | 'medium' | 'long';
   sharedContext?: string;
+  expectedInputLanguages?: string[];
+  outputLanguage?: string;
+  expectedContextLanguages?: string[];
 }
 
 interface SummarizerAPI {
   create(options?: SummarizerCreateOptions): Promise<Summarizer>;
-  availability(): Promise<'available' | 'after-download' | 'no'>;
+  availability(): Promise<'unavailable' | 'downloadable'>;
 }
 
 declare global {
@@ -128,25 +139,31 @@ const config: SummarizerCreateOptions = ${configStr};
  * Check if Chrome AI Summarizer is available
  */
 async function checkAvailability(): Promise<boolean> {
-  if (!('Summarizer' in window)) {
+  if (!('Summarizer' in self)) {
     throw new Error(
       'Chrome AI Summarizer not supported. ' +
-      'Requires Chrome 138+ with chrome://flags#summarization-api-for-gemini-nano enabled.'
+      'Requires Chrome 138+ (Stable channel) with hardware requirements met.'
     );
   }
 
-  const availability = await window.Summarizer.availability();
+  const availability = await self.Summarizer.availability();
 
-  if (availability === 'no') {
-    throw new Error('Chrome AI not available on this device');
+  if (availability === 'unavailable') {
+    throw new Error(
+      'Summarizer API not available on this device. ' +
+      'Requires: GPU with 4GB+ VRAM (no integrated), 16GB+ RAM, 4+ CPU cores, 22GB+ free disk space'
+    );
   }
 
-  if (availability === 'after-download') {
-    console.log('Model download required - this may take a few minutes');
+  if (availability === 'downloadable') {
+    console.log(
+      'Model download required (22+ GB, 10-30 minutes on first use). ' +
+      'Requires unlimited data or unmetered connection.'
+    );
     // Model will download automatically on first create() call
   }
 
-  return availability === 'available';
+  return availability === 'downloadable';
 }
 
 /**
@@ -154,19 +171,19 @@ async function checkAvailability(): Promise<boolean> {
  * Note: Requires user activation (must be called from user interaction like button click)
  */
 async function createSummarizer(): Promise<Summarizer> {
-  const summarizer = await window.Summarizer.create(config);
+  const summarizer = await self.Summarizer.create(config);
   return summarizer;
 }
 
 /**
  * Summarize text (non-streaming)
  */
-async function summarize(text: string): Promise<string> {
+async function summarize(text: string, context?: string): Promise<string> {
   await checkAvailability();
   const summarizer = await createSummarizer();
 
   try {
-    const summary = await summarizer.summarize(text);
+    const summary = await summarizer.summarize(text, { context });
     return summary;
   } finally {
     summarizer.destroy();
@@ -178,26 +195,20 @@ async function summarize(text: string): Promise<string> {
  */
 async function summarizeStreaming(
   text: string,
-  onChunk: (chunk: string) => void
+  onChunk: (chunk: string) => void,
+  context?: string
 ): Promise<string> {
   await checkAvailability();
   const summarizer = await createSummarizer();
 
   try {
-    if (!summarizer.summarizeStreaming) {
-      throw new Error('Streaming not supported in this version');
-    }
+    const stream = summarizer.summarizeStreaming(text, { context });
 
-    const stream = summarizer.summarizeStreaming(text);
-    const reader = stream.getReader();
+    // Use for-await-of for async iteration
     let fullSummary = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      fullSummary = value;
-      onChunk(value);
+    for await (const chunk of stream) {
+      fullSummary = chunk;
+      onChunk(chunk);
     }
 
     return fullSummary;
@@ -267,6 +278,103 @@ function setupHTMLIntegration() {
   });
 }
 
+/**
+ * Example 4: Using context for better summaries
+ */
+async function exampleWithContext() {
+  const text = \`
+    The new smartphone features a 6.5-inch OLED display,
+    5G connectivity, and a 108MP camera system.
+  \`;
+
+  const context = \`
+    This is a product review for a flagship smartphone
+    targeting tech enthusiasts.
+  \`;
+
+  try {
+    const summary = await summarize(text, context);
+    console.log('Summary with context:', summary);
+  } catch (error) {
+    console.error('Summarization failed:', error);
+  }
+}
+
+/**
+ * Example 5: Different summary types
+ */
+async function exampleDifferentTypes() {
+  const text = \`Long article text...\`;
+
+  // Key points (bullet points)
+  const keyPointsSummarizer = await self.Summarizer.create({
+    type: 'key-points',
+    format: 'markdown',
+    length: 'medium'
+  });
+
+  // TL;DR (concise sentences)
+  const tldrSummarizer = await self.Summarizer.create({
+    type: 'tldr',
+    format: 'plain-text',
+    length: 'short'
+  });
+
+  // Headline (article title)
+  const headlineSummarizer = await self.Summarizer.create({
+    type: 'headline',
+    length: 'short'
+  });
+
+  // Teaser (preview text)
+  const teaserSummarizer = await self.Summarizer.create({
+    type: 'teaser',
+    length: 'medium'
+  });
+
+  try {
+    const keyPoints = await keyPointsSummarizer.summarize(text);
+    console.log('Key Points:', keyPoints);
+
+    const tldr = await tldrSummarizer.summarize(text);
+    console.log('TL;DR:', tldr);
+
+    const headline = await headlineSummarizer.summarize(text);
+    console.log('Headline:', headline);
+
+    const teaser = await teaserSummarizer.summarize(text);
+    console.log('Teaser:', teaser);
+
+    // Clean up
+    keyPointsSummarizer.destroy();
+    tldrSummarizer.destroy();
+    headlineSummarizer.destroy();
+    teaserSummarizer.destroy();
+  } catch (error) {
+    console.error('Summarization failed:', error);
+  }
+}
+
+/**
+ * Example 6: Language-specific configuration
+ */
+async function exampleLanguageConfig() {
+  const summarizer = await self.Summarizer.create({
+    type: 'tldr',
+    expectedInputLanguages: ['en', 'es'],
+    outputLanguage: 'en',
+    length: 'medium'
+  });
+
+  try {
+    const text = \`Mixed English and Spanish content...\`;
+    const summary = await summarizer.summarize(text);
+    console.log('Summary:', summary);
+  } finally {
+    summarizer.destroy();
+  }
+}
+
 // ============================================================================
 // Run Examples (uncomment to test)
 // ============================================================================
@@ -274,6 +382,9 @@ function setupHTMLIntegration() {
 // exampleBasic();
 // exampleStreaming();
 // setupHTMLIntegration();
+// exampleWithContext();
+// exampleDifferentTypes();
+// exampleLanguageConfig();
 
 export { summarize, summarizeStreaming, checkAvailability };`;
 }
@@ -298,8 +409,12 @@ function generateJavaScriptCode(config: SummarizerCreateOptions): string {
  * Chrome AI Summarizer - Complete JavaScript Implementation
  *
  * Requirements:
- * - Chrome 138+ with Summarizer API enabled
- * - Enable chrome://flags#summarization-api-for-gemini-nano
+ * - Chrome 138+ (Stable channel)
+ * - GPU: 4GB+ VRAM (integrated GPUs not supported)
+ * - RAM: 16GB+ system memory
+ * - CPU: 4+ cores recommended
+ * - Disk: 22GB+ free space
+ * - Network: Unlimited data or unmetered connection
  *
  * This is a complete, self-contained implementation.
  * Copy this entire file to use in your project.
@@ -319,25 +434,31 @@ const config = ${configStr};
  * Check if Chrome AI Summarizer is available
  */
 async function checkAvailability() {
-  if (!('Summarizer' in window)) {
+  if (!('Summarizer' in self)) {
     throw new Error(
       'Chrome AI Summarizer not supported. ' +
-      'Requires Chrome 138+ with chrome://flags#summarization-api-for-gemini-nano enabled.'
+      'Requires Chrome 138+ (Stable channel) with hardware requirements met.'
     );
   }
 
-  const availability = await window.Summarizer.availability();
+  const availability = await self.Summarizer.availability();
 
-  if (availability === 'no') {
-    throw new Error('Chrome AI not available on this device');
+  if (availability === 'unavailable') {
+    throw new Error(
+      'Summarizer API not available on this device. ' +
+      'Requires: GPU with 4GB+ VRAM (no integrated), 16GB+ RAM, 4+ CPU cores, 22GB+ free disk space'
+    );
   }
 
-  if (availability === 'after-download') {
-    console.log('Model download required - this may take a few minutes');
+  if (availability === 'downloadable') {
+    console.log(
+      'Model download required (22+ GB, 10-30 minutes on first use). ' +
+      'Requires unlimited data or unmetered connection.'
+    );
     // Model will download automatically on first create() call
   }
 
-  return availability === 'available';
+  return availability === 'downloadable';
 }
 
 /**
@@ -345,19 +466,19 @@ async function checkAvailability() {
  * Note: Requires user activation (must be called from user interaction like button click)
  */
 async function createSummarizer() {
-  const summarizer = await window.Summarizer.create(config);
+  const summarizer = await self.Summarizer.create(config);
   return summarizer;
 }
 
 /**
  * Summarize text (non-streaming)
  */
-async function summarize(text) {
+async function summarize(text, context) {
   await checkAvailability();
   const summarizer = await createSummarizer();
 
   try {
-    const summary = await summarizer.summarize(text);
+    const summary = await summarizer.summarize(text, { context });
     return summary;
   } finally {
     summarizer.destroy();
@@ -367,25 +488,18 @@ async function summarize(text) {
 /**
  * Summarize text with streaming (for real-time results)
  */
-async function summarizeStreaming(text, onChunk) {
+async function summarizeStreaming(text, onChunk, context) {
   await checkAvailability();
   const summarizer = await createSummarizer();
 
   try {
-    if (!summarizer.summarizeStreaming) {
-      throw new Error('Streaming not supported in this version');
-    }
+    const stream = summarizer.summarizeStreaming(text, { context });
 
-    const stream = summarizer.summarizeStreaming(text);
-    const reader = stream.getReader();
+    // Use for-await-of for async iteration
     let fullSummary = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      fullSummary = value;
-      onChunk(value);
+    for await (const chunk of stream) {
+      fullSummary = chunk;
+      onChunk(chunk);
     }
 
     return fullSummary;
@@ -455,6 +569,103 @@ function setupHTMLIntegration() {
   });
 }
 
+/**
+ * Example 4: Using context for better summaries
+ */
+async function exampleWithContext() {
+  const text = \`
+    The new smartphone features a 6.5-inch OLED display,
+    5G connectivity, and a 108MP camera system.
+  \`;
+
+  const context = \`
+    This is a product review for a flagship smartphone
+    targeting tech enthusiasts.
+  \`;
+
+  try {
+    const summary = await summarize(text, context);
+    console.log('Summary with context:', summary);
+  } catch (error) {
+    console.error('Summarization failed:', error);
+  }
+}
+
+/**
+ * Example 5: Different summary types
+ */
+async function exampleDifferentTypes() {
+  const text = \`Long article text...\`;
+
+  // Key points (bullet points)
+  const keyPointsSummarizer = await self.Summarizer.create({
+    type: 'key-points',
+    format: 'markdown',
+    length: 'medium'
+  });
+
+  // TL;DR (concise sentences)
+  const tldrSummarizer = await self.Summarizer.create({
+    type: 'tldr',
+    format: 'plain-text',
+    length: 'short'
+  });
+
+  // Headline (article title)
+  const headlineSummarizer = await self.Summarizer.create({
+    type: 'headline',
+    length: 'short'
+  });
+
+  // Teaser (preview text)
+  const teaserSummarizer = await self.Summarizer.create({
+    type: 'teaser',
+    length: 'medium'
+  });
+
+  try {
+    const keyPoints = await keyPointsSummarizer.summarize(text);
+    console.log('Key Points:', keyPoints);
+
+    const tldr = await tldrSummarizer.summarize(text);
+    console.log('TL;DR:', tldr);
+
+    const headline = await headlineSummarizer.summarize(text);
+    console.log('Headline:', headline);
+
+    const teaser = await teaserSummarizer.summarize(text);
+    console.log('Teaser:', teaser);
+
+    // Clean up
+    keyPointsSummarizer.destroy();
+    tldrSummarizer.destroy();
+    headlineSummarizer.destroy();
+    teaserSummarizer.destroy();
+  } catch (error) {
+    console.error('Summarization failed:', error);
+  }
+}
+
+/**
+ * Example 6: Language-specific configuration
+ */
+async function exampleLanguageConfig() {
+  const summarizer = await self.Summarizer.create({
+    type: 'tldr',
+    expectedInputLanguages: ['en', 'es'],
+    outputLanguage: 'en',
+    length: 'medium'
+  });
+
+  try {
+    const text = \`Mixed English and Spanish content...\`;
+    const summary = await summarizer.summarize(text);
+    console.log('Summary:', summary);
+  } finally {
+    summarizer.destroy();
+  }
+}
+
 // ============================================================================
 // Run Examples (uncomment to test)
 // ============================================================================
@@ -462,6 +673,9 @@ function setupHTMLIntegration() {
 // exampleBasic();
 // exampleStreaming();
 // setupHTMLIntegration();
+// exampleWithContext();
+// exampleDifferentTypes();
+// exampleLanguageConfig();
 
 export { summarize, summarizeStreaming, checkAvailability };`;
 }

@@ -150,6 +150,7 @@ export async function compressImage(
   // Calculate dimensions
   let width = img.width;
   let height = img.height;
+  let resized = false;
 
   if (maxDimensions) {
     const fitted = fitDimensions(
@@ -158,6 +159,8 @@ export async function compressImage(
       maxDimensions.width,
       maxDimensions.height,
     );
+    // Check if actually resized
+    resized = fitted.width !== img.width || fitted.height !== img.height;
     width = fitted.width;
     height = fitted.height;
   }
@@ -191,9 +194,13 @@ export async function compressImage(
       originalSize,
       compressedSize,
       bytesSaved,
+      spaceSaved: bytesSaved, // Alias
       ratio,
+      compressionRatio: ratio, // Alias
       percentageSaved,
+      spaceSavedPercentage: percentageSaved, // Alias
       compressionTime,
+      resized,
     },
   };
 }
@@ -218,8 +225,11 @@ export function calculateCompressionStatistics(
     originalSize,
     compressedSize,
     bytesSaved,
+    spaceSaved: bytesSaved, // Alias
     ratio,
+    compressionRatio: ratio, // Alias
     percentageSaved,
+    spaceSavedPercentage: percentageSaved, // Alias
     compressionTime,
   };
 }
@@ -303,7 +313,8 @@ export function formatFileSize(
   bytes: number,
   decimals: number = 2,
 ): FormattedFileSize {
-  if (bytes === 0) {
+  // Handle invalid inputs
+  if (bytes <= 0 || !isFinite(bytes) || isNaN(bytes)) {
     return {
       value: 0,
       unit: 'bytes',
@@ -319,13 +330,26 @@ export function formatFileSize(
     'GB',
   ];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  const value = parseFloat((bytes / Math.pow(k, i)).toFixed(decimals));
+
+  // For bytes, round to integer
+  if (i === 0) {
+    const value = Math.round(bytes);
+    return {
+      value,
+      unit: 'bytes',
+      formatted: `${value} bytes`,
+    };
+  }
+
+  // For larger units, format with decimal places
+  const value = bytes / Math.pow(k, i);
   const unit = sizes[i] ?? 'bytes';
+  const formattedValue = value.toFixed(decimals);
 
   return {
-    value,
+    value: parseFloat(formattedValue),
     unit,
-    formatted: `${value} ${unit}`,
+    formatted: `${formattedValue} ${unit}`,
   };
 }
 

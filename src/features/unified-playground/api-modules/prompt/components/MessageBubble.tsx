@@ -12,6 +12,7 @@ import React, {
   useCallback,
   memo,
 } from 'react';
+import DOMPurify from 'dompurify';
 import { Copy, Edit, RotateCcw, Trash2, MoreVertical } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -46,6 +47,12 @@ interface MessageBubbleProps {
 const createMarkdownComponents = (
   isDarkMode: boolean,
 ): Partial<Components> => ({
+  // Use div instead of p to avoid invalid nesting of <pre> inside <p>
+  p: ({ children, ...props }) => (
+    <div className="my-2" {...props}>
+      {children}
+    </div>
+  ),
   code: ({
     inline,
     className,
@@ -212,6 +219,43 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
     [isDarkMode],
   );
 
+  /**
+   * Sanitize assistant message content for safe display
+   * Only sanitize assistant messages, user messages are plain text
+   */
+  const sanitizedContent = useMemo(
+    () =>
+      !isUser
+        ? DOMPurify.sanitize(message.content, {
+            ALLOWED_TAGS: [
+              'p',
+              'br',
+              'strong',
+              'em',
+              'u',
+              'span',
+              'div',
+              'h1',
+              'h2',
+              'h3',
+              'h4',
+              'h5',
+              'h6',
+              'ul',
+              'ol',
+              'li',
+              'code',
+              'pre',
+              'blockquote',
+              'a',
+            ],
+            ALLOWED_ATTR: ['class', 'href', 'rel', 'target'],
+            ALLOW_DATA_ATTR: false,
+          })
+        : message.content,
+    [message.content, isUser],
+  );
+
   return (
     <div
       className={`message-bubble flex ${isUser ? 'justify-end' : 'justify-start'}`}
@@ -329,7 +373,7 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
               // Assistant messages: render markdown with syntax highlighting
               <div className="prose prose-sm dark:prose-invert max-w-none">
                 <ReactMarkdown components={markdownComponents}>
-                  {message.content}
+                  {sanitizedContent}
                 </ReactMarkdown>
               </div>
             )}

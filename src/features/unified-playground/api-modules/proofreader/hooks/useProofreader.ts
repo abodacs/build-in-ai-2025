@@ -267,6 +267,7 @@ export function useProofreader(
   );
   const configRef = useRef<ProofreaderConfig>(config);
   const isApplyingHistoryRef = useRef(false);
+  const pushHistoryRef = useRef<((description?: string) => void) | null>(null);
 
   // Keep configRef in sync with config state
   configRef.current = config;
@@ -342,11 +343,12 @@ export function useProofreader(
       try {
         console.log('🔨 Waiting for Proofreader instance...');
 
-        // Await instance creation with timeout (6 minutes to allow for 22GB model download)
+        // Await instance creation with timeout (65 minutes to allow for 22GB model download on slow connections)
+        // Hook timeout exceeds service-level 60-minute timeout to prevent premature cancellation
         await withTimeout(
           instancePromise,
-          360000,
-          'Proofreader instance creation timed out after 6 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure 22GB+ free space and unmetered connection.',
+          3900000,
+          'Proofreader instance creation timed out after 65 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure 22GB+ free space and unmetered connection.',
         );
         console.log('✅ Proofreader instance obtained');
         setDownloadProgress(null); // Clear download progress
@@ -440,6 +442,12 @@ export function useProofreader(
             state.index === index ? { ...state, state: 'applied' } : state,
           ),
         );
+
+        // Save to history for undo/redo
+        // Use setTimeout to ensure state updates are complete
+        setTimeout(() => {
+          pushHistoryRef.current?.(`Applied correction ${index}`);
+        }, 0);
 
         console.log(`✅ Applied correction ${index}`);
       } catch (error) {
@@ -638,6 +646,9 @@ export function useProofreader(
     },
     [correctedText, correctionStates, originalInput],
   );
+
+  // Keep pushHistoryRef in sync for use in callbacks
+  pushHistoryRef.current = pushHistory;
 
   /**
    * Apply history state

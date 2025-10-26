@@ -15,12 +15,8 @@ import type { SummarizerMetrics } from '../../types/summarizer.types';
 // Mocks
 // ============================================================================
 
-// Mock Streamdown to avoid CSS import issues
-vi.mock('streamdown', () => ({
-  Streamdown: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="streamdown-content">{children}</div>
-  ),
-}));
+// Note: Component now uses ReactMarkdown instead of Streamdown
+// No mock needed - ReactMarkdown renders standard HTML elements
 
 // Mock clipboard API
 const mockClipboard = {
@@ -88,16 +84,13 @@ describe('SummarizerResults', () => {
   // ==========================================================================
 
   describe('Content Display', () => {
-    it('should render summary text with Streamdown', () => {
+    it('should render summary text with ReactMarkdown', () => {
       const { container } = render(
         <SummarizerResults result="This is a test summary" />,
       );
 
-      const streamdownContent = container.querySelector(
-        '[data-testid="streamdown-content"]',
-      );
-      expect(streamdownContent).toBeTruthy();
-      expect(streamdownContent).toHaveTextContent('This is a test summary');
+      // ReactMarkdown renders content directly - check container has the text
+      expect(container).toHaveTextContent('This is a test summary');
     });
 
     it('should show streaming indicator when isStreaming=true', () => {
@@ -137,12 +130,10 @@ describe('SummarizerResults', () => {
         <SummarizerResults result={markdownContent} />,
       );
 
-      const content = container.querySelector(
-        '[data-testid="streamdown-content"]',
-      );
-      expect(content).toHaveTextContent('Heading');
-      expect(content).toHaveTextContent('Bold');
-      expect(content).toHaveTextContent('italic');
+      // ReactMarkdown renders markdown as HTML
+      expect(container).toHaveTextContent('Heading');
+      expect(container).toHaveTextContent('Bold');
+      expect(container).toHaveTextContent('italic');
     });
 
     it('should handle code blocks', () => {
@@ -151,10 +142,8 @@ describe('SummarizerResults', () => {
         <SummarizerResults result={markdownContent} />,
       );
 
-      const content = container.querySelector(
-        '[data-testid="streamdown-content"]',
-      );
-      expect(content).toHaveTextContent('const x = 10;');
+      // ReactMarkdown with syntax highlighter renders code blocks
+      expect(container).toHaveTextContent('const x = 10;');
     });
   });
 
@@ -308,20 +297,16 @@ describe('SummarizerResults', () => {
     it('should handle empty result string', () => {
       const { container } = render(<SummarizerResults result="" />);
 
-      const streamdownContent = container.querySelector(
-        '[data-testid="streamdown-content"]',
-      );
-      expect(streamdownContent).toBeTruthy();
+      // Component should render even with empty content (Card renders as div)
+      expect(container.firstChild).toBeTruthy();
     });
 
     it('should handle very long content', () => {
       const longContent = 'A'.repeat(10000);
       const { container } = render(<SummarizerResults result={longContent} />);
 
-      const streamdownContent = container.querySelector(
-        '[data-testid="streamdown-content"]',
-      );
-      expect(streamdownContent).toBeTruthy();
+      // Component should render and contain the long content
+      expect(container).toHaveTextContent(longContent.substring(0, 100));
     });
 
     it('should apply custom className', () => {

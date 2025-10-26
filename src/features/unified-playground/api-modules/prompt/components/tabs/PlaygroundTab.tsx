@@ -457,9 +457,9 @@ export const PlaygroundTab: React.FC = () => {
           {fileUpload.fileCount === 0 && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-gray-700">
                   Attach Images (Optional)
-                </label>
+                </span>
                 <span className="text-xs text-gray-500">
                   Add up to 3 images for multimodal prompts
                 </span>

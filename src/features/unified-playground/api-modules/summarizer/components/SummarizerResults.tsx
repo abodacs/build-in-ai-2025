@@ -7,7 +7,8 @@
  * @module SummarizerResults
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import {
   CheckCircle2,
   Copy,
@@ -84,6 +85,12 @@ export interface SummarizerResultsProps {
 const createMarkdownComponents = (
   isDarkMode: boolean,
 ): Partial<Components> => ({
+  // Use div instead of p to avoid invalid nesting of <pre> inside <p>
+  p: ({ children, ...props }) => (
+    <div className="my-2" {...props}>
+      {children}
+    </div>
+  ),
   code: ({
     inline,
     className,
@@ -199,6 +206,43 @@ export function SummarizerResults({
 
   // Get custom markdown components
   const markdownComponents = createMarkdownComponents(isDarkMode);
+
+  /**
+   * Sanitize summary result for safe display
+   * Allows markdown tags but prevents XSS attacks
+   */
+  const sanitizedResult = useMemo(
+    () =>
+      result
+        ? DOMPurify.sanitize(result, {
+            ALLOWED_TAGS: [
+              'p',
+              'br',
+              'strong',
+              'em',
+              'u',
+              'span',
+              'div',
+              'h1',
+              'h2',
+              'h3',
+              'h4',
+              'h5',
+              'h6',
+              'ul',
+              'ol',
+              'li',
+              'code',
+              'pre',
+              'blockquote',
+              'a',
+            ],
+            ALLOWED_ATTR: ['class', 'href', 'rel', 'target'],
+            ALLOW_DATA_ATTR: false,
+          })
+        : '',
+    [result],
+  );
 
   /**
    * Copy to clipboard
@@ -325,7 +369,7 @@ export function SummarizerResults({
           )}
         >
           <ReactMarkdown components={markdownComponents}>
-            {result}
+            {sanitizedResult}
           </ReactMarkdown>
         </div>
 

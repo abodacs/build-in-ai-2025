@@ -40,8 +40,17 @@ describe('MessageBubble', () => {
   it('should call onCopy when copy button is clicked', () => {
     const onCopy = vi.fn();
     render(<MessageBubble message={userMessage} onCopy={onCopy} />);
+
+    // First, open the actions menu
+    const actionsButton = screen.getByRole('button', {
+      name: /message actions/i,
+    });
+    fireEvent.click(actionsButton);
+
+    // Then click the copy button in the dropdown
     const copyButton = screen.getByRole('button', { name: /copy/i });
     fireEvent.click(copyButton);
+
     expect(onCopy).toHaveBeenCalledWith('Test user message');
   });
 
@@ -60,6 +69,10 @@ describe('MessageBubble', () => {
       ],
     };
     render(<MessageBubble message={messageWithAttachment} />);
-    expect(screen.getByText(/1.*attachment/i)).toBeInTheDocument();
+
+    // Component displays the image directly, not a text count
+    const image = screen.getByAltText('test.png');
+    expect(image).toBeInTheDocument();
+    expect(image).toHaveAttribute('src', 'data:image/png');
   });
 });

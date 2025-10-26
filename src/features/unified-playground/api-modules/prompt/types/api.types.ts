@@ -337,6 +337,40 @@ export interface LanguageModelCapabilities {
   supportedLanguages?: string[];
 }
 
+/**
+ * Parameter bounds for LanguageModel configuration
+ * Includes minimum, maximum, and default values for validation and UI controls
+ */
+export interface LanguageModelParameterBounds {
+  /** Temperature parameter bounds (controls randomness/creativity) */
+  temperature: {
+    /** Minimum allowed value */
+    min: number;
+    /** Maximum allowed value (from API or fallback) */
+    max: number;
+    /** Recommended default value */
+    default: number;
+  };
+  /** Top-K sampling parameter bounds (number of top tokens to consider) */
+  topK: {
+    /** Minimum allowed value */
+    min: number;
+    /** Maximum allowed value (from API or fallback) */
+    max: number;
+    /** Recommended default value */
+    default: number;
+  };
+  /** Maximum tokens parameter bounds (controls response length) */
+  maxTokens: {
+    /** Minimum allowed value */
+    min: number;
+    /** Maximum allowed value (from API or fallback) */
+    max: number;
+    /** Recommended default value */
+    default: number;
+  };
+}
+
 // ============================================================================
 // Type Guards
 // ============================================================================

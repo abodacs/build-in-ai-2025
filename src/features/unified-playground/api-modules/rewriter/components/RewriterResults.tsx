@@ -8,6 +8,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import {
   FileOutput,
   Copy,
@@ -134,6 +135,23 @@ export function RewriterResults({
     }
     return calculateDiffResult(originalText, content);
   }, [originalText, content]);
+
+  /**
+   * Sanitize original and rewritten text for safe display
+   * Strip all HTML tags for plain text display
+   */
+  const sanitizedOriginalText = useMemo(
+    () =>
+      originalText
+        ? DOMPurify.sanitize(originalText, { ALLOWED_TAGS: [] })
+        : '',
+    [originalText],
+  );
+
+  const sanitizedContent = useMemo(
+    () => (content ? DOMPurify.sanitize(content, { ALLOWED_TAGS: [] }) : ''),
+    [content],
+  );
 
   console.log('Diff Result::::content', content); // Debug log
   console.log('Diff Result::::originalText', originalText); // Debug log
@@ -349,7 +367,7 @@ export function RewriterResults({
             <TabsContent value="rewritten" className="mt-4">
               <div className="rounded-md border bg-muted/30 p-4">
                 <div className="font-mono text-fluid-sm whitespace-pre-wrap break-words">
-                  {content}
+                  {sanitizedContent}
                 </div>
               </div>
             </TabsContent>
@@ -358,7 +376,7 @@ export function RewriterResults({
             <TabsContent value="original" className="mt-4">
               <div className="rounded-md border bg-muted/30 p-4">
                 <div className="font-mono text-fluid-sm whitespace-pre-wrap break-words text-muted-foreground">
-                  {originalText}
+                  {sanitizedOriginalText}
                 </div>
               </div>
             </TabsContent>
@@ -399,7 +417,7 @@ export function RewriterResults({
         {isStreaming && hasContent && (
           <div className="rounded-md border bg-muted/30 p-4">
             <div className="font-mono text-sm whitespace-pre-wrap break-words">
-              {content}
+              {sanitizedContent}
             </div>
           </div>
         )}
