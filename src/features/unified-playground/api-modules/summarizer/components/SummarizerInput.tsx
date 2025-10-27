@@ -244,6 +244,7 @@ export function SummarizerInput({
             onBlur={() => setIsFocused(false)}
             placeholder={placeholder}
             disabled={disabled}
+            aria-label="Text to summarize"
             aria-invalid={!!error}
             aria-describedby={error ? 'summarizer-input-error' : undefined}
             className={cn(

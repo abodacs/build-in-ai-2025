@@ -23,13 +23,17 @@ const mockProofreader = { proofread: mockProofread, destroy: vi.fn() };
 const waitForComponentReady = async () => {
   await waitFor(
     () => {
-      // Wait for any loading/checking state to clear and proofreader button to appear
+      // Wait for availability check to complete
+      expect(
+        screen.queryByText(/Checking Chrome AI availability/i),
+      ).not.toBeInTheDocument();
+      // Wait for proofreader button to appear
       const proofreadButton = screen.queryByRole('button', {
         name: /proofread/i,
       });
       expect(proofreadButton).toBeInTheDocument();
     },
-    { timeout: 3000 },
+    { timeout: 5000 }, // Increased timeout for initialization
   );
 };
 
@@ -111,8 +115,8 @@ describe('Proofreader Integration', () => {
       });
 
       // Apply correction
-      const applyButton = screen.getByRole('button', { name: /apply/i });
-      fireEvent.click(applyButton);
+      const applyButtons = screen.getAllByRole('button', { name: /^apply$/i });
+      fireEvent.click(applyButtons[0]);
 
       await waitFor(() => {
         expect(screen.getByText('Applied')).toBeInTheDocument();
@@ -136,8 +140,10 @@ describe('Proofreader Integration', () => {
       });
 
       // Ignore correction
-      const ignoreButton = screen.getByRole('button', { name: /ignore/i });
-      fireEvent.click(ignoreButton);
+      const ignoreButtons = screen.getAllByRole('button', {
+        name: /^ignore$/i,
+      });
+      fireEvent.click(ignoreButtons[0]);
 
       await waitFor(() => {
         expect(screen.getByText('Ignored')).toBeInTheDocument();
@@ -171,7 +177,8 @@ describe('Proofreader Integration', () => {
 
   describe('Error Handling', () => {
     it('should show error when proofreading fails', async () => {
-      mockProofread.mockRejectedValueOnce(new Error('Proofread failed'));
+      // Reject all retry attempts to fail faster
+      mockProofread.mockRejectedValue(new Error('Proofread failed'));
 
       render(<ProofreaderMain />);
 
@@ -183,14 +190,21 @@ describe('Proofreader Integration', () => {
       });
       fireEvent.click(proofreadButton);
 
-      await waitFor(() => {
-        expect(screen.getByText(/error/i)).toBeInTheDocument();
-      });
-    });
+      // Wait longer for retries to complete and error to appear
+      await waitFor(
+        () => {
+          // Check for error message text directly
+          expect(
+            screen.getByText(/proofreading failed|proofread failed/i),
+          ).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
+    }, 15000); // 15 second test timeout
 
     it('should recover from error state', async () => {
-      // First call fails
-      mockProofread.mockRejectedValueOnce(new Error('Proofread failed'));
+      // First call fails all retries
+      mockProofread.mockRejectedValue(new Error('Proofread failed'));
 
       render(<ProofreaderMain />);
       await waitForComponentReady();
@@ -203,9 +217,16 @@ describe('Proofreader Integration', () => {
       });
       fireEvent.click(proofreadButton);
 
-      await waitFor(() => {
-        expect(screen.getByText(/error/i)).toBeInTheDocument();
-      });
+      // Wait longer for retries to complete and error to appear
+      await waitFor(
+        () => {
+          // Check for error message text directly
+          expect(
+            screen.getByText(/proofreading failed|proofread failed/i),
+          ).toBeInTheDocument();
+        },
+        { timeout: 10000 },
+      );
 
       // Second call succeeds
       mockProofread.mockResolvedValueOnce({
@@ -225,9 +246,12 @@ describe('Proofreader Integration', () => {
 
       await waitFor(() => {
         expect(screen.getByText('teh')).toBeInTheDocument();
-        expect(screen.queryByText(/error/i)).not.toBeInTheDocument();
+        // Check that the error message is gone
+        expect(
+          screen.queryByText(/proofreading failed|proofread failed/i),
+        ).not.toBeInTheDocument();
       });
-    });
+    }, 15000); // 15 second test timeout
 
     it('should handle API unavailable', async () => {
       (globalThis as any).Proofreader.availability.mockImplementation(
@@ -236,10 +260,10 @@ describe('Proofreader Integration', () => {
 
       render(<ProofreaderMain />);
 
-      // Wait for availability check to complete and error message to appear
+      // Wait for availability check to complete and "Not Supported" badge to appear
       await waitFor(
         () => {
-          expect(screen.getByText(/not available/i)).toBeInTheDocument();
+          expect(screen.getByText(/not supported/i)).toBeInTheDocument();
         },
         { timeout: 3000 },
       );
@@ -281,9 +305,12 @@ describe('Proofreader Integration', () => {
       });
       fireEvent.click(proofreadButton);
 
-      // Should show loading state
-      expect(screen.getByText(/proofreading/i)).toBeInTheDocument();
+      // Should show loading state (wait for state update)
+      await waitFor(() => {
+        expect(screen.getByText(/proofreading/i)).toBeInTheDocument();
+      });
 
+      // Then loading state should disappear
       await waitFor(() => {
         expect(screen.queryByText(/proofreading/i)).not.toBeInTheDocument();
       });
@@ -451,8 +478,8 @@ describe('Proofreader Integration', () => {
       });
 
       // Apply correction
-      const applyButton = screen.getByRole('button', { name: /apply/i });
-      fireEvent.click(applyButton);
+      const applyButtons = screen.getAllByRole('button', { name: /^apply$/i });
+      fireEvent.click(applyButtons[0]);
 
       await waitFor(() => {
         expect(screen.getByText('Applied')).toBeInTheDocument();
@@ -482,8 +509,8 @@ describe('Proofreader Integration', () => {
       });
 
       // Apply correction
-      const applyButton = screen.getByRole('button', { name: /apply/i });
-      fireEvent.click(applyButton);
+      const applyButtons = screen.getAllByRole('button', { name: /^apply$/i });
+      fireEvent.click(applyButtons[0]);
 
       await waitFor(() => {
         expect(screen.getByText('Applied')).toBeInTheDocument();
@@ -588,8 +615,8 @@ describe('Proofreader Integration', () => {
       });
 
       // Apply correction
-      const applyButton = screen.getByRole('button', { name: /apply/i });
-      fireEvent.click(applyButton);
+      const applyButtons = screen.getAllByRole('button', { name: /^apply$/i });
+      fireEvent.click(applyButtons[0]);
 
       await waitFor(() => {
         expect(screen.getByText('Applied')).toBeInTheDocument();

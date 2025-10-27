@@ -50,7 +50,7 @@ if (typeof HTMLCanvasElement !== 'undefined') {
     transform: vi.fn(),
     rect: vi.fn(),
     clip: vi.fn(),
-  })) as unknown as CanvasRenderingContext2D;
+  })) as unknown as typeof HTMLCanvasElement.prototype.getContext;
 }
 
 // Mock Chrome AI APIs for testing using the new global structure
@@ -214,7 +214,7 @@ if (!window.getComputedStyle) {
       padding: '0px',
       paddingTop: '0px',
       paddingBottom: '0px',
-    } as CSSStyleDeclaration;
+    } as unknown as CSSStyleDeclaration;
   }) as unknown as typeof window.getComputedStyle;
 }
 

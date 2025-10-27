@@ -113,7 +113,9 @@ describe('PlaygroundTab - Error Handling', () => {
 
       expect(screen.getByText(/Rewrite Failed/i)).toBeInTheDocument();
       // Multiple elements may contain this text, use getAllByText
-      const userActivationTexts = screen.getAllByText(/user activation required/i);
+      const userActivationTexts = screen.getAllByText(
+        /user activation required/i,
+      );
       expect(userActivationTexts.length).toBeGreaterThan(0);
       expect(
         screen.getByText(/The API requires a user interaction/i),

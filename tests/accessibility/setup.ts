@@ -277,6 +277,11 @@ export const mockGetComputedStyle = (): void => {
           outline: '2px solid blue',
           outlineWidth: '2px',
           boxShadow: 'none',
+          padding: '8px',
+          paddingTop: '8px',
+          paddingBottom: '8px',
+          paddingLeft: '8px',
+          paddingRight: '8px',
           getPropertyValue: (_prop: string) => '',
           // Add other properties as needed
         }) as CSSStyleDeclaration;

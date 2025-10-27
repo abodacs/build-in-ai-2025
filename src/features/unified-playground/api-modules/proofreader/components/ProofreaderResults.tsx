@@ -61,6 +61,7 @@ export interface ProofreaderResultsProps {
  * ProofreaderResults component
  */
 export function ProofreaderResults({
+  originalText,
   correctedText,
   corrections,
   correctionStates,
@@ -237,6 +238,7 @@ export function ProofreaderResults({
             onApply={() => onApplyCorrection(state.index)}
             onIgnore={() => onIgnoreCorrection(state.index)}
             disabled={disabled}
+            originalText={originalText}
           />
         ))}
       </div>

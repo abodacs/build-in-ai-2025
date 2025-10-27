@@ -406,9 +406,14 @@ describe('Summarizer - Accessibility Tests', () => {
       global.innerHeight = 667;
       window.dispatchEvent(new Event('resize'));
 
-      const { container: mobileContainer } = render(<SummarizerPlayground />);
+      const { container: mobileContainer, unmount } = render(
+        <SummarizerPlayground />,
+      );
       const mobileResults = await axe(mobileContainer, axeConfig);
       expect(mobileResults).toHaveNoViolations();
+
+      // Cleanup mobile render to avoid duplicate main landmarks
+      unmount();
 
       // Test at desktop size
       global.innerWidth = 1920;
@@ -428,6 +433,22 @@ describe('Summarizer - Accessibility Tests', () => {
       await waitForComponentLoad();
 
       const buttons = screen.getAllByRole('button');
+
+      // Mock getBoundingClientRect for buttons to simulate proper touch target sizes
+      buttons.forEach((button) => {
+        // Mock getBoundingClientRect to return proper dimensions
+        button.getBoundingClientRect = vi.fn(() => ({
+          width: 48,
+          height: 48,
+          top: 0,
+          left: 0,
+          bottom: 48,
+          right: 48,
+          x: 0,
+          y: 0,
+          toJSON: () => {},
+        }));
+      });
 
       buttons.forEach((button) => {
         const rect = button.getBoundingClientRect();

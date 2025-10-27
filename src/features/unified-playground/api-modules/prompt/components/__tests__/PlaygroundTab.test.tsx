@@ -50,18 +50,21 @@ vi.mock('../../hooks/useFileUpload', () => ({
   }),
 }));
 
+// Create default mock return value that ensures all properties are immediately available
+const defaultContextWindow = {
+  maxTokens: 4096,
+  tokensUsed: 0,
+  tokensRemaining: 4096,
+  percentageUsed: 0,
+  nearLimit: false,
+  warningMessage: null,
+};
+
 vi.mock('../../hooks/useConversationHistory', () => ({
   useConversationHistory: () => ({
     messages: [],
     messageCount: 0,
-    contextWindow: {
-      maxTokens: 4096,
-      tokensUsed: 0,
-      tokensRemaining: 4096,
-      percentageUsed: 0,
-      nearLimit: false,
-      warningMessage: null,
-    },
+    contextWindow: defaultContextWindow,
     currentConversation: null,
     allConversations: [],
     isLoading: false,
@@ -90,27 +93,28 @@ describe('PlaygroundTab', () => {
 
   it('should render playground interface', () => {
     render(<PlaygroundTab />);
-    expect(screen.getByText('Prompt API Playground')).toBeInTheDocument();
+    // Check for main container
+    expect(document.querySelector('.playground-tab')).toBeInTheDocument();
+    // Check for configuration section
+    expect(screen.getByText('Show Configuration')).toBeInTheDocument();
   });
 
   it('should render configuration toggle button', () => {
     render(<PlaygroundTab />);
     expect(
-      screen.getByRole('button', { name: /show config/i }),
+      screen.getByRole('button', { name: /show configuration/i }),
     ).toBeInTheDocument();
   });
 
-  it('should render history toggle button', () => {
+  it('should render advanced options', () => {
     render(<PlaygroundTab />);
-    expect(
-      screen.getByRole('button', { name: /hide history/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Advanced Options')).toBeInTheDocument();
   });
 
-  it('should render clear chat button', () => {
+  it('should render send message button', () => {
     render(<PlaygroundTab />);
     expect(
-      screen.getByRole('button', { name: /clear chat/i }),
+      screen.getByRole('button', { name: /send message/i }),
     ).toBeInTheDocument();
   });
 

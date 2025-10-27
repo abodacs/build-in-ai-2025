@@ -202,7 +202,7 @@ export function SummarizerPlayground({ className }: SummarizerPlaygroundProps) {
   // ============================================================================
 
   return (
-    <div className={className}>
+    <main className={className} role="main">
       <PlaygroundTab
         // Pass all shared state
         config={config}
@@ -228,7 +228,7 @@ export function SummarizerPlayground({ className }: SummarizerPlaygroundProps) {
         chunkingStrategy={chunkingStrategy}
         onChunkingStrategyChange={setChunkingStrategy}
       />
-    </div>
+    </main>
   );
 }
 

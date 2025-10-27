@@ -19,6 +19,7 @@ import type {
   ImageData,
   DownloadProgress,
 } from '../types';
+import { DEFAULT_PROMPT_CONFIG } from '../types';
 
 // ============================================================================
 // Types
@@ -26,7 +27,7 @@ import type {
 
 interface UsePromptOptions {
   /** Initial configuration */
-  config: PromptConfig;
+  config?: PromptConfig;
 
   /** Enable auto-save to localStorage */
   autoSave?: boolean;
@@ -83,7 +84,11 @@ interface UsePromptReturn {
  * and maintains conversation history.
  */
 export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
-  const { config = {}, autoSave = true, enableHistory = true } = options;
+  const {
+    config = DEFAULT_PROMPT_CONFIG,
+    autoSave = true,
+    enableHistory = true,
+  } = options;
 
   // Managers
   const promptManagerRef = useRef<PromptManager | null>(null);

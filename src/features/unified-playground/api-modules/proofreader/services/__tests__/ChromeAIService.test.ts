@@ -21,8 +21,14 @@ describe('ChromeAIProofreaderService', () => {
     availability: vi.fn(),
   };
 
+  // Store original value for proper cleanup
+  let originalProofreader: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Store original value before mocking
+    originalProofreader = (window as any).Proofreader;
 
     // ✅ CRITICAL FIX: Use direct assignment like Language Detection tests
     (window as any).Proofreader = mockAPI;
@@ -34,8 +40,12 @@ describe('ChromeAIProofreaderService', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
-    // Clean up the mock
-    (window as any).Proofreader = mockAPI; // Restore for next test
+    // Restore original value or delete if it didn't exist
+    if (originalProofreader === undefined) {
+      delete (window as any).Proofreader;
+    } else {
+      (window as any).Proofreader = originalProofreader;
+    }
   });
 
   // ==========================================================================
@@ -47,9 +57,8 @@ describe('ChromeAIProofreaderService', () => {
       expect(ChromeAIProofreaderService.isSupported()).toBe(true);
     });
 
-    // FIXME: Mock cleanup issues - skipping edge case tests
-    it.skip('should return false when Proofreader API does not exist', () => {
-      (window as any).Proofreader = undefined; // ✅ FIX: Use undefined instead of delete
+    it('should return false when Proofreader API does not exist', () => {
+      delete (window as any).Proofreader;
 
       expect(ChromeAIProofreaderService.isSupported()).toBe(false);
     });
@@ -199,18 +208,16 @@ describe('ChromeAIProofreaderService', () => {
       expect(mockAPI.availability).toHaveBeenCalled();
     });
 
-    // FIXME: Mock cleanup issues - skipping edge case tests
-    it.skip('should throw when API is not available', async () => {
-      mockAPI.availability.mockResolvedValue('no');
+    it('should throw when API is not available', async () => {
+      mockAPI.availability.mockResolvedValue('unavailable');
 
       await expect(ChromeAIProofreaderService.createInstance()).rejects.toThrow(
         /not available/,
       );
     });
 
-    // FIXME: Mock cleanup issues - skipping edge case tests
-    it.skip('should throw when API is not supported', async () => {
-      (window as any).Proofreader = undefined; // ✅ FIX: Use undefined instead of delete
+    it('should throw when API is not supported', async () => {
+      delete (window as any).Proofreader;
 
       await expect(ChromeAIProofreaderService.createInstance()).rejects.toThrow(
         /not supported/,

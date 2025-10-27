@@ -319,6 +319,9 @@ export function useProofreader(
       const activeConfig = configRef.current;
       console.log('⚡ Starting instance creation...');
 
+      // Set config on manager before using it
+      managerRef.current.updateConfig(activeConfig);
+
       // Check if instance already exists
       const hasInstance = managerRef.current.hasInstance();
       let instancePromise: Promise<void>;
