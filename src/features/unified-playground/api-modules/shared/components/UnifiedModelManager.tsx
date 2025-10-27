@@ -236,13 +236,12 @@ export function UnifiedModelManager({
   const [isClearing, setIsClearing] = useState(false);
 
   // Progressive loading messages (escalate over time)
-  const messageType =
-    loadingPhase === 'initializing' || loadingPhase === 'downloading'
-      ? 'proofreader-init'
-      : 'proofreading';
   const { currentMessage, elapsedTime } = useProgressiveLoadingMessage(
     isLoading || false,
-    messageType,
+    apiName,
+    loadingPhase === 'initializing' || loadingPhase === 'downloading'
+      ? 'init'
+      : 'processing',
   );
 
   /**
@@ -494,10 +493,10 @@ export function UnifiedModelManager({
           </AlertDescription>
         </Alert>
 
-        {/* Progressive Requirements (show during long initialization) */}
+        {/* Progressive Requirements (show during long initialization or immediately if origin trial required) */}
         {showLoadingState &&
           (loadingPhase === 'initializing' || loadingPhase === 'downloading') &&
-          elapsedTime >= 10 && (
+          (elapsedTime >= 10 || modelInfo.requiresOriginTrial) && (
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
@@ -567,7 +566,7 @@ export function UnifiedModelManager({
         {/* Action Buttons */}
         {!showLoadingState && (
           <div className="flex items-center gap-2 pt-2">
-            {availability === 'after-download' && (
+            {availability === 'after-download' && !isReady && (
               <Button
                 onClick={handleStartDownload}
                 size="sm"
@@ -576,6 +575,19 @@ export function UnifiedModelManager({
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download Model
+              </Button>
+            )}
+
+            {isReady && onStartDownload && (
+              <Button
+                onClick={handleStartDownload}
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                disabled={isLoading}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Re-Download
               </Button>
             )}
 
@@ -598,10 +610,14 @@ export function UnifiedModelManager({
         {!showLoadingState && (
           <div className="pt-2 border-t border-slate-200">
             <div className="text-xs text-muted-foreground">
-              View detailed status in{' '}
-              <code className="px-1 py-0.5 bg-muted rounded text-xs">
-                chrome://on-device-internals
-              </code>
+              <a
+                href="chrome://on-device-internals"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 underline"
+              >
+                View detailed status in Chrome Internals
+              </a>
             </div>
           </div>
         )}

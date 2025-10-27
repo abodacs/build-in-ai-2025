@@ -257,14 +257,15 @@ export class ChromeAIService {
         hasMonitor: !!options.monitor,
       });
 
-      // Create a timeout promise that rejects after 5 minutes (300 seconds)
+      // Create a timeout promise that rejects after 15 minutes (900 seconds)
       // Model download is ~22MB and can take several minutes on slower connections
-      const DOWNLOAD_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+      // Generous timeout ensures downloads don't fail on slow internet
+      const DOWNLOAD_TIMEOUT = 15 * 60 * 1000; // 15 minutes
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
           reject(
             new Error(
-              'Model download timed out after 5 minutes. Please check your internet connection and try again. If the download started, it may still be running in the background - try refreshing the page in a few minutes.',
+              'Model download timed out after 15 minutes. Please check your internet connection and try again. If the download started, it may still be running in the background - try refreshing the page.',
             ),
           );
         }, DOWNLOAD_TIMEOUT);

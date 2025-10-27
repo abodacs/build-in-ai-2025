@@ -411,25 +411,13 @@ export function usePerformanceMetrics() {
   // Memoize performance score to only recalculate when metrics meaningfully change
   const performanceScore = useMemo(
     () => getPerformanceScore(),
-    [
-      metrics.lcp,
-      metrics.fid,
-      metrics.cls,
-      metrics.apiResponseTime,
-      metrics.frameRate,
-    ],
+    [getPerformanceScore],
   );
 
   // Memoize optimization suggestions to only recalculate when metrics change
   const optimizationSuggestions = useMemo(
     () => getOptimizationSuggestions(),
-    [
-      metrics.fid,
-      metrics.cls,
-      metrics.apiResponseTime,
-      metrics.memoryUsage,
-      metrics.frameRate,
-    ],
+    [getOptimizationSuggestions],
   );
 
   // Memoize health indicators

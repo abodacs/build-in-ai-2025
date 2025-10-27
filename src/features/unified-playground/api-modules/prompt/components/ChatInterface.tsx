@@ -1,11 +1,11 @@
 /**
  * ChatInterface Component
- * Displays conversation messages with auto-scroll, stop button, and scroll controls
- * PERFORMANCE OPTIMIZED: RAF-based throttling for smooth 60fps scrolling
+ * Displays conversation messages with manual scroll control
+ * PERFORMANCE OPTIMIZED: Memoized to prevent unnecessary re-renders
  */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { MessageSquare, ArrowDown, StopCircle } from 'lucide-react';
+import React, { memo } from 'react';
+import { MessageSquare, StopCircle } from 'lucide-react';
 import type { Message } from '../types';
 import { MessageBubble } from './MessageBubble';
 
@@ -15,127 +15,131 @@ interface ChatInterfaceProps {
   streamingContent?: string;
   onCopyMessage?: (content: string) => void;
   onStop?: () => void;
-  autoScroll?: boolean;
+  onExamplePromptClick?: (prompt: string) => void;
 }
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({
+const ChatInterfaceComponent: React.FC<ChatInterfaceProps> = ({
   messages,
   isStreaming = false,
   streamingContent = '',
   onCopyMessage,
   onStop,
-  autoScroll = true,
+  onExamplePromptClick,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const [isAtBottom, setIsAtBottom] = useState(true);
-  const [showScrollButton, setShowScrollButton] = useState(false);
-  const lastMessageCountRef = useRef(messages.length);
-
-  // RAF throttling refs for performance
-  const scrollPendingRef = useRef(false);
-  const rafIdRef = useRef<number | null>(null);
-
-  // Scroll to bottom handler with RAF-based throttling for 60fps performance
-  const scrollToBottom = useCallback(
-    (behavior: 'auto' | 'smooth' = 'smooth') => {
-      if (!bottomRef.current) return;
-
-      // If scroll is already pending, skip (throttle to one scroll per frame)
-      if (scrollPendingRef.current) return;
-
-      scrollPendingRef.current = true;
-
-      // Use RAF to batch scroll updates with browser repaint cycle
-      rafIdRef.current = requestAnimationFrame(() => {
-        bottomRef.current?.scrollIntoView({ behavior });
-        scrollPendingRef.current = false;
-      });
-    },
-    [],
-  );
-
-  // Cleanup RAF on unmount
-  useEffect(() => {
-    return () => {
-      if (rafIdRef.current !== null) {
-        cancelAnimationFrame(rafIdRef.current);
-      }
-    };
-  }, []);
-
-  // Intersection Observer to detect if user is at bottom
-  useEffect(() => {
-    const bottomElement = bottomRef.current;
-    if (!bottomElement) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const isBottom = entries[0]?.isIntersecting ?? false;
-        setIsAtBottom(isBottom);
-        setShowScrollButton(!isBottom && messages.length > 0);
-      },
-      {
-        root: containerRef.current,
-        threshold: 0.1,
-      },
-    );
-
-    observer.observe(bottomElement);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [messages.length]);
-
-  // Check if user is actually at bottom (more reliable than state during fast updates)
-  const checkIsAtBottom = useCallback(() => {
-    if (!containerRef.current) return false;
-
-    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-    // Consider "at bottom" if within 100px of bottom
-    return scrollHeight - scrollTop - clientHeight < 100;
-  }, []);
-
-  // Auto-scroll on new messages (only if user is at bottom)
-  // OPTIMIZED: Reduced dependency array to minimize effect runs
-  useEffect(() => {
-    if (!autoScroll) return;
-
-    const currentMessageCount = messages.length;
-    const hasNewMessage = currentMessageCount > lastMessageCountRef.current;
-
-    if (hasNewMessage) {
-      // New message added - only scroll if user is at bottom
-      if (isAtBottom) {
-        scrollToBottom('smooth');
-      }
-      lastMessageCountRef.current = currentMessageCount;
-    } else if (isStreaming && streamingContent) {
-      // Streaming in progress - check actual scroll position for accuracy
-      // RAF throttling ensures this doesn't run more than 60fps
-      if (checkIsAtBottom()) {
-        scrollToBottom('auto'); // Use 'auto' for instant scroll during streaming
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    messages.length,
-    streamingContent, // Only watch content changes, not all deps
-    isStreaming,
-    isAtBottom,
-  ]);
-
   if (messages.length === 0 && !isStreaming) {
     return (
-      <div className="chat-interface flex items-center justify-center h-full text-gray-500">
-        <div className="text-center space-y-4">
-          <MessageSquare className="w-16 h-16 mx-auto text-gray-400" />
-          <div className="space-y-2">
-            <p className="text-lg font-medium">Start a conversation</p>
-            <p className="text-sm text-gray-400">
-              Type a message below to begin
+      <div
+        className="chat-interface flex items-center justify-center h-full text-gray-500 p-8"
+        role="status"
+        aria-live="polite"
+      >
+        <div className="text-center space-y-6 max-w-2xl">
+          <MessageSquare
+            className="w-16 h-16 mx-auto text-blue-400"
+            aria-hidden="true"
+          />
+          <div className="space-y-3">
+            <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">
+              Start a conversation with AI
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Try these example prompts or type your own below
             </p>
+          </div>
+
+          {/* Example Prompts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">
+            <button
+              onClick={() =>
+                onExamplePromptClick?.(
+                  'Explain quantum computing in simple terms',
+                )
+              }
+              className="p-4 text-left border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-blue-400 transition-all group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              aria-label="Try example prompt: Explain quantum computing"
+            >
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                Explain quantum computing
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                Get a simple explanation of complex topics
+              </div>
+            </button>
+
+            <button
+              onClick={() =>
+                onExamplePromptClick?.(
+                  'Write a creative short story about a time traveler',
+                )
+              }
+              className="p-4 text-left border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-blue-400 transition-all group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              aria-label="Try example prompt: Write a creative story"
+            >
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                Write a creative story
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                Generate creative content and ideas
+              </div>
+            </button>
+
+            <button
+              onClick={() =>
+                onExamplePromptClick?.(
+                  'Help me write a JavaScript function to debounce user input',
+                )
+              }
+              className="p-4 text-left border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-blue-400 transition-all group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              aria-label="Try example prompt: Help me code a function"
+            >
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                Help me code a function
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                Get coding assistance and examples
+              </div>
+            </button>
+
+            <button
+              onClick={() =>
+                onExamplePromptClick?.(
+                  'Describe what you see in the image I uploaded',
+                )
+              }
+              className="p-4 text-left border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-blue-400 transition-all group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              aria-label="Try example prompt with image: Describe this image"
+            >
+              <div className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                📷 Describe this image
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                Attach images for multimodal analysis
+              </div>
+            </button>
+          </div>
+
+          {/* Feature Highlights */}
+          <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-gray-600 dark:text-gray-400">
+              <div className="flex items-start gap-2">
+                <span className="text-blue-500" aria-hidden="true">
+                  ✓
+                </span>
+                <span>Streaming responses in real-time</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-blue-500" aria-hidden="true">
+                  ✓
+                </span>
+                <span>Image upload & analysis (up to 3)</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-blue-500" aria-hidden="true">
+                  ✓
+                </span>
+                <span>100% private, runs on your device</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -143,12 +147,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   }
 
   return (
-    <div className="relative h-full">
+    <div className="relative h-full flex flex-col">
       {/* Chat Messages Container */}
-      <div
-        ref={containerRef}
-        className="chat-interface flex flex-col space-y-4 p-4 overflow-y-auto h-full scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-900 hover:scrollbar-thumb-gray-500 dark:hover:scrollbar-thumb-gray-500 scroll-smooth"
-      >
+      <div className="chat-interface flex-1 flex flex-col space-y-4 p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-900 hover:scrollbar-thumb-gray-500 dark:hover:scrollbar-thumb-gray-500 scroll-smooth">
         {messages.map((message) => (
           <MessageBubble
             key={message.id}
@@ -158,25 +159,22 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         ))}
 
         {/* Streaming Message */}
-        {isStreaming && streamingContent && (
+        {isStreaming && (
           <MessageBubble
             message={{
               id: 'streaming',
               role: 'assistant',
-              content: streamingContent,
+              content: streamingContent || 'Waiting for response...',
               timestamp: new Date(),
             }}
             isStreaming
           />
         )}
-
-        <div ref={bottomRef} />
       </div>
 
-      {/* Floating Action Buttons */}
-      <div className="absolute bottom-4 right-4 flex flex-col gap-2">
-        {/* Stop Button (shown during streaming) */}
-        {isStreaming && onStop && (
+      {/* Stop Button (shown during streaming) */}
+      {isStreaming && onStop && (
+        <div className="absolute bottom-4 right-4">
           <button
             onClick={onStop}
             aria-label="Stop generation"
@@ -186,26 +184,49 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <StopCircle className="w-4 h-4" />
             <span className="text-sm font-medium">Stop</span>
           </button>
-        )}
-
-        {/* Scroll to Bottom Button (shown when not at bottom) */}
-        {showScrollButton && !isStreaming && (
-          <button
-            onClick={() => {
-              scrollToBottom('smooth');
-              // Reset tracking to prevent double-scroll
-              lastMessageCountRef.current = messages.length;
-            }}
-            aria-label="Scroll to bottom"
-            className="p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all hover:scale-110"
-            title="Scroll to bottom"
-          >
-            <ArrowDown className="w-5 h-5" />
-          </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
+
+// Memoize component with custom comparison
+// Only re-render if messages array, streaming state, or streaming content changes
+export const ChatInterface = memo(
+  ChatInterfaceComponent,
+  (prevProps, nextProps) => {
+    // Re-render if streaming state changed
+    if (prevProps.isStreaming !== nextProps.isStreaming) {
+      return false;
+    }
+
+    // Re-render if streaming content changed
+    if (prevProps.streamingContent !== nextProps.streamingContent) {
+      return false;
+    }
+
+    // Re-render if messages array reference changed or length changed
+    if (
+      prevProps.messages !== nextProps.messages ||
+      prevProps.messages.length !== nextProps.messages.length
+    ) {
+      return false;
+    }
+
+    // Re-render if callback references changed (rare, but important for correctness)
+    if (
+      prevProps.onCopyMessage !== nextProps.onCopyMessage ||
+      prevProps.onStop !== nextProps.onStop ||
+      prevProps.onExamplePromptClick !== nextProps.onExamplePromptClick
+    ) {
+      return false;
+    }
+
+    // Props are equal, skip re-render
+    return true;
+  },
+);
+
+ChatInterface.displayName = 'ChatInterface';
 
 export default ChatInterface;

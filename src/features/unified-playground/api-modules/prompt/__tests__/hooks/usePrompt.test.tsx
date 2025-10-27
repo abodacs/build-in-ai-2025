@@ -33,13 +33,22 @@ describe('usePrompt', () => {
       prompt: vi.fn(),
       promptStreaming: vi.fn(),
       destroy: vi.fn(),
+      maxTokens: 4096,
+      tokensSoFar: 0,
+      tokensLeft: 4096,
+      topK: 3,
+      temperature: 0.7,
     });
 
-    const { result } = renderHook(() => usePrompt({ autoInitialize: true }));
+    const { result } = renderHook(() => usePrompt());
 
-    await waitFor(() => {
-      expect(result.current.isInitialized).toBe(true);
+    expect(result.current.isInitialized).toBe(false);
+
+    await act(async () => {
+      await result.current.initialize();
     });
+
+    expect(result.current.isInitialized).toBe(true);
   });
 
   it('executes basic prompt', async () => {
@@ -47,6 +56,11 @@ describe('usePrompt', () => {
       prompt: vi.fn().mockResolvedValue('AI response'),
       promptStreaming: vi.fn(),
       destroy: vi.fn(),
+      maxTokens: 4096,
+      tokensSoFar: 0,
+      tokensLeft: 4096,
+      topK: 3,
+      temperature: 0.7,
     };
     mockAPI.create.mockResolvedValue(mockInstance);
 
@@ -62,17 +76,37 @@ describe('usePrompt', () => {
     });
 
     expect(response!).toBe('AI response');
-    expect(mockInstance.prompt).toHaveBeenCalledWith('Hello');
+    expect(mockInstance.prompt).toHaveBeenCalledWith(
+      'Hello',
+      expect.objectContaining({ signal: expect.any(Object) }),
+    );
   });
 
   it('executes streaming prompt', async () => {
+    const chunks = ['Hello ', 'world'];
+    let index = 0;
+
+    const mockStream = {
+      getReader: () => ({
+        read: vi.fn(async () => {
+          if (index < chunks.length) {
+            return { done: false, value: chunks[index++] };
+          }
+          return { done: true, value: undefined };
+        }),
+        releaseLock: vi.fn(),
+      }),
+    };
+
     const mockInstance = {
       prompt: vi.fn(),
-      promptStreaming: vi.fn(async function* () {
-        yield 'Hello ';
-        yield 'world';
-      }),
+      promptStreaming: vi.fn().mockReturnValue(mockStream),
       destroy: vi.fn(),
+      maxTokens: 4096,
+      tokensSoFar: 0,
+      tokensLeft: 4096,
+      topK: 3,
+      temperature: 0.7,
     };
     mockAPI.create.mockResolvedValue(mockInstance);
 

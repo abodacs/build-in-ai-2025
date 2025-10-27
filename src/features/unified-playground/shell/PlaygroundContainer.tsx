@@ -141,9 +141,9 @@ export function PlaygroundContainer({
           <div className="flex items-start gap-3">
             <Activity className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <h3 className="font-semibold text-yellow-700 mb-2">
+              <h2 className="font-semibold text-yellow-700 mb-2">
                 Performance Optimization
-              </h3>
+              </h2>
               <ul className="space-y-1 text-sm text-yellow-700/80">
                 {optimizationSuggestions
                   .slice(0, 3)

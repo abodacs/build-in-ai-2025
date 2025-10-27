@@ -19,6 +19,18 @@ import { ChromeAICompatibility } from './ChromeAICompatibility';
 import { ErrorHandler } from './ErrorHandler';
 
 // ============================================================================
+// Default Options
+// ============================================================================
+
+const DEFAULT_CREATE_OPTIONS: SummarizerCreateOptions = {
+  outputLanguage: 'en',
+};
+
+const DEFAULT_SUMMARIZE_OPTIONS: SummarizeOptions = {
+  outputLanguage: 'en',
+};
+
+// ============================================================================
 // Summarizer Manager Service
 // ============================================================================
 
@@ -50,7 +62,7 @@ export class SummarizerManager {
    * @returns {Promise<Summarizer>} Summarizer instance
    */
   async getSummarizer(
-    options: SummarizerCreateOptions = {},
+    options: SummarizerCreateOptions = DEFAULT_CREATE_OPTIONS,
   ): Promise<Summarizer> {
     // Normalize options for consistency
     const normalizedOptions =
@@ -74,7 +86,7 @@ export class SummarizerManager {
    * @returns {Promise<Summarizer>} New summarizer instance
    */
   async createSummarizer(
-    options: SummarizerCreateOptions = {},
+    options: SummarizerCreateOptions = DEFAULT_CREATE_OPTIONS,
   ): Promise<Summarizer> {
     // Prevent concurrent initialization
     if (this.isInitializing) {
@@ -285,8 +297,8 @@ export class SummarizerManager {
    */
   async summarize(
     text: string,
-    summarizeOptions: SummarizeOptions = {},
-    createOptions: SummarizerCreateOptions = {},
+    summarizeOptions: SummarizeOptions = DEFAULT_SUMMARIZE_OPTIONS,
+    createOptions: SummarizerCreateOptions = DEFAULT_CREATE_OPTIONS,
   ): Promise<string> {
     // Validate input
     if (!text || text.trim().length === 0) {
@@ -336,8 +348,8 @@ export class SummarizerManager {
    */
   async summarizeStreaming(
     text: string,
-    summarizeOptions: SummarizeOptions = {},
-    createOptions: SummarizerCreateOptions = {},
+    summarizeOptions: SummarizeOptions = DEFAULT_SUMMARIZE_OPTIONS,
+    createOptions: SummarizerCreateOptions = DEFAULT_CREATE_OPTIONS,
   ): Promise<ReadableStream<string>> {
     // Validate input
     if (!text || text.trim().length === 0) {

@@ -401,14 +401,14 @@ export function useWriter(initialConfig: WriterConfig): UseWriterReturn {
       try {
         console.log('🔨 Waiting for Writer instance...');
 
-        // Await instance creation first (with 30s timeout to prevent indefinite hanging)
+        // Await instance creation first (with 20-minute timeout to allow for model downloads on slow connections)
         // This must happen BEFORE retry logic since retries are only for streaming errors,
         // not instance creation errors
-        console.log('⏱️ Awaiting instance with 30s timeout...');
+        console.log('⏱️ Awaiting instance with 20-minute timeout...');
         await withTimeout(
           instancePromise,
-          30000,
-          'Writer instance creation timed out after 30 seconds. This may indicate a model download is required or the API is unresponsive.',
+          1200000,
+          'Writer instance creation timed out after 20 minutes. This may indicate a model download is required or the API is unresponsive. Check chrome://on-device-internals for download status.',
         );
         console.log('✅ Writer instance obtained');
         setIsLoading(false);

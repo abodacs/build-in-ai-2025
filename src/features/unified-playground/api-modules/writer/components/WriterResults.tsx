@@ -17,8 +17,9 @@ import {
 } from '../../shared/components';
 import { cn } from '@/lib/utils';
 import type { PerformanceMetrics } from '../../shared/types';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
+import DOMPurify from 'dompurify';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
 import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
 import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
@@ -30,6 +31,7 @@ import {
   oneLight,
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { Components } from 'react-markdown';
+import { isChromeInternalLink } from '@/utils/linkSanitizer';
 
 // Register common languages for syntax highlighting
 SyntaxHighlighter.registerLanguage('typescript', typescript);
@@ -45,10 +47,38 @@ SyntaxHighlighter.registerLanguage('bash', bash);
 /**
  * Custom markdown components for ReactMarkdown
  * Provides syntax highlighting for code blocks
+ *
+ * NOTE: chrome:// links are intentionally non-clickable
+ * These URLs only work in Chrome's internal pages, not web browsers
  */
 const createMarkdownComponents = (
   isDarkMode: boolean,
 ): Partial<Components> => ({
+  // Use div instead of p to avoid invalid nesting of <pre> inside <p>
+  p: ({ children, ...props }) => (
+    <div className="my-2" {...props}>
+      {children}
+    </div>
+  ),
+  // Custom link handler: Prevent chrome:// links from being clickable
+  a: ({ href, children, ...props }) => {
+    if (isChromeInternalLink(href)) {
+      return (
+        <code className="text-blue-600 dark:text-blue-400">{children}</code>
+      );
+    }
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 dark:text-blue-400 hover:underline"
+        {...props}
+      >
+        {children}
+      </a>
+    );
+  },
   code: ({
     inline,
     className,
@@ -201,6 +231,43 @@ export function WriterResults({
   const isDarkMode = document.documentElement.classList.contains('dark');
   const markdownComponents = createMarkdownComponents(isDarkMode);
 
+  /**
+   * Sanitize content for safe display
+   * Allows markdown tags but prevents XSS attacks
+   */
+  const sanitizedContent = useMemo(
+    () =>
+      content
+        ? DOMPurify.sanitize(content, {
+            ALLOWED_TAGS: [
+              'p',
+              'br',
+              'strong',
+              'em',
+              'u',
+              'span',
+              'div',
+              'h1',
+              'h2',
+              'h3',
+              'h4',
+              'h5',
+              'h6',
+              'ul',
+              'ol',
+              'li',
+              'code',
+              'pre',
+              'blockquote',
+              'a',
+            ],
+            ALLOWED_ATTR: ['class', 'href', 'rel', 'target'],
+            ALLOW_DATA_ATTR: false,
+          })
+        : '',
+    [content],
+  );
+
   const handleCopy = async () => {
     if (onCopy) {
       onCopy();
@@ -243,7 +310,7 @@ export function WriterResults({
             )}
           >
             <ReactMarkdown components={markdownComponents}>
-              {content}
+              {sanitizedContent}
             </ReactMarkdown>
           </div>
         )}

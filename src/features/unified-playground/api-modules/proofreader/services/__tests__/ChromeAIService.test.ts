@@ -21,21 +21,31 @@ describe('ChromeAIProofreaderService', () => {
     availability: vi.fn(),
   };
 
+  // Store original value for proper cleanup
+  let originalProofreader: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Store original value before mocking
+    originalProofreader = (window as any).Proofreader;
 
     // ✅ CRITICAL FIX: Use direct assignment like Language Detection tests
     (window as any).Proofreader = mockAPI;
 
-    // Default mock responses
-    mockAPI.availability.mockResolvedValue('available');
+    // Default mock responses - availability() accepts options parameter
+    mockAPI.availability.mockImplementation(async (_options) => 'available');
     mockAPI.create.mockResolvedValue(mockProofreader);
   });
 
   afterEach(() => {
     vi.clearAllMocks();
-    // Clean up the mock
-    (window as any).Proofreader = mockAPI; // Restore for next test
+    // Restore original value or delete if it didn't exist
+    if (originalProofreader === undefined) {
+      delete (window as any).Proofreader;
+    } else {
+      (window as any).Proofreader = originalProofreader;
+    }
   });
 
   // ==========================================================================
@@ -48,7 +58,7 @@ describe('ChromeAIProofreaderService', () => {
     });
 
     it('should return false when Proofreader API does not exist', () => {
-      (window as any).Proofreader = undefined; // ✅ FIX: Use undefined instead of delete
+      delete (window as any).Proofreader;
 
       expect(ChromeAIProofreaderService.isSupported()).toBe(false);
     });
@@ -60,7 +70,7 @@ describe('ChromeAIProofreaderService', () => {
 
   describe('checkAvailability', () => {
     it('should return readily when API is available', async () => {
-      mockAPI.availability.mockResolvedValue('available');
+      mockAPI.availability.mockImplementation(async (_options) => 'available');
 
       const result = await ChromeAIProofreaderService.checkAvailability();
 
@@ -69,7 +79,9 @@ describe('ChromeAIProofreaderService', () => {
     });
 
     it('should return after-download when model needs download', async () => {
-      mockAPI.availability.mockResolvedValue('after-download');
+      mockAPI.availability.mockImplementation(
+        async (_options) => 'after-download',
+      );
 
       const result = await ChromeAIProofreaderService.checkAvailability();
 
@@ -85,7 +97,9 @@ describe('ChromeAIProofreaderService', () => {
     });
 
     it('should return no on error', async () => {
-      mockAPI.availability.mockRejectedValue(new Error('API error'));
+      mockAPI.availability.mockImplementation(async (_options) => {
+        throw new Error('API error');
+      });
 
       const result = await ChromeAIProofreaderService.checkAvailability();
 
@@ -195,7 +209,7 @@ describe('ChromeAIProofreaderService', () => {
     });
 
     it('should throw when API is not available', async () => {
-      mockAPI.availability.mockResolvedValue('no');
+      mockAPI.availability.mockResolvedValue('unavailable');
 
       await expect(ChromeAIProofreaderService.createInstance()).rejects.toThrow(
         /not available/,
@@ -203,7 +217,7 @@ describe('ChromeAIProofreaderService', () => {
     });
 
     it('should throw when API is not supported', async () => {
-      (window as any).Proofreader = undefined; // ✅ FIX: Use undefined instead of delete
+      delete (window as any).Proofreader;
 
       await expect(ChromeAIProofreaderService.createInstance()).rejects.toThrow(
         /not supported/,

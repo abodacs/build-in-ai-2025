@@ -7,7 +7,7 @@
  * @module PromptConfig
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { Settings, Thermometer, Hash, FileText, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -30,6 +30,8 @@ import { ViewCodeButton } from '@/components/shared/ViewCodeButton';
 import { ValidationMessage } from '../../../shared/components/ValidationMessage';
 import { useFieldValidation } from '../../../shared/hooks/useFieldValidation';
 import { validationRules } from '../../../shared/utils/validationRules';
+import { ParameterTooltip } from './ParameterTooltip';
+import { ParameterPresets } from './ParameterPresets';
 import type { PromptConfig as PromptConfigType } from '../types';
 
 // ============================================================================
@@ -79,7 +81,7 @@ export interface PromptConfigProps {
  * <PromptConfig config={config} onChange={setConfig} />
  * ```
  */
-export function PromptConfig({
+function PromptConfigComponent({
   config,
   onChange,
   defaultCollapsed = false,
@@ -142,6 +144,18 @@ export function PromptConfig({
 
         <CollapsibleContent>
           <CardContent className="space-y-4 pt-3">
+            {/* Quick Presets */}
+            <ParameterPresets
+              currentConfig={config}
+              onSelectPreset={(preset) => {
+                onChange({
+                  ...config,
+                  ...preset.config,
+                });
+              }}
+              mode="compact"
+            />
+
             {/* System Prompt - Full Width */}
             <div className="space-y-2.5">
               <div className="flex items-center gap-2">
@@ -154,7 +168,16 @@ export function PromptConfig({
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Info className="w-4 h-4 text-slate-400 cursor-help" />
+                      <button
+                        type="button"
+                        className="inline-flex items-center"
+                        aria-label="More information about system prompts"
+                      >
+                        <Info
+                          className="w-4 h-4 text-slate-400 cursor-help"
+                          aria-hidden="true"
+                        />
+                      </button>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
                       <p className="text-sm">
@@ -170,12 +193,14 @@ export function PromptConfig({
                 id="system-prompt"
                 value={config.systemPrompt || ''}
                 onChange={(e) => updateConfig('systemPrompt', e.target.value)}
-                placeholder="You are a helpful AI assistant..."
+                placeholder="You are a helpful and friendly assistant..."
                 className="min-h-[80px] resize-none"
                 disabled={disabled}
+                aria-describedby="system-prompt-help"
+                aria-label="System prompt text area"
               />
 
-              <p className="text-xs text-slate-500">
+              <p id="system-prompt-help" className="text-xs text-slate-500">
                 Sets the context and instructions for the AI model
               </p>
             </div>
@@ -183,116 +208,240 @@ export function PromptConfig({
             {/* 3-column grid for numeric settings */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
               {/* Temperature */}
-              <div
-                className="space-y-2"
-                aria-label="Temperature controls randomness and creativity"
+              <ParameterTooltip
+                name="Temperature"
+                value={config.temperature || 0.8}
+                range={{
+                  min: 0,
+                  max: 1,
+                  recommendedMin: 0.3,
+                  recommendedMax: 0.9,
+                }}
+                description="Controls randomness in output generation"
+                currentValueExplanation={
+                  (config.temperature || 0.8) < 0.3
+                    ? 'Deterministic - Same input always produces similar output. Great for factual tasks.'
+                    : (config.temperature || 0.8) < 0.7
+                      ? 'Balanced - Mix of consistency and variety. Good for most use cases.'
+                      : 'Creative - More diverse and unpredictable outputs. Perfect for brainstorming and creative writing.'
+                }
+                example={{
+                  input: 'The sky is',
+                  lowOutput: 'blue',
+                  highOutput: 'a canvas of endless azure possibilities',
+                }}
+                icon={<Thermometer className="w-4 h-4 text-orange-500" />}
               >
-                <div className="flex items-center gap-2">
-                  <Thermometer className="w-3 h-3 text-orange-500" />
-                  <Label
-                    className="text-xs font-medium text-slate-700"
-                    title="Controls randomness: 0 = deterministic, 1 = creative"
-                  >
-                    Temperature
-                  </Label>
-                </div>
-                <p className="text-[10px] text-slate-400">
-                  {config.temperature?.toFixed(2) || '0.80'}
-                </p>
-                <Slider
-                  value={[config.temperature || 0.8]}
-                  onValueChange={(value) =>
-                    updateConfig('temperature', value[0])
-                  }
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  disabled={disabled}
-                  className="w-full"
-                  aria-describedby={
-                    !temperatureValidation.isValid
-                      ? 'temp-validation'
-                      : undefined
-                  }
-                />
-
-                {/* Real-time validation feedback */}
-                {!temperatureValidation.isValid &&
-                  temperatureValidation.message && (
-                    <ValidationMessage
-                      id="temp-validation"
-                      type={temperatureValidation.type || 'info'}
-                      showIcon={false}
-                      className="text-[10px] py-1 px-2"
+                <div
+                  className="space-y-2"
+                  role="group"
+                  aria-labelledby="temperature-label"
+                >
+                  <div className="flex items-center gap-2">
+                    <Thermometer
+                      className="w-3 h-3 text-orange-500"
+                      aria-hidden="true"
+                    />
+                    <Label
+                      id="temperature-label"
+                      htmlFor="temperature-slider"
+                      className="text-xs font-medium text-slate-700"
                     >
-                      {temperatureValidation.message}
-                    </ValidationMessage>
-                  )}
-
-                {temperatureValidation.isValid && (
-                  <p className="text-[10px] text-slate-500">
-                    Lower = focused, Higher = creative
+                      Temperature
+                    </Label>
+                  </div>
+                  <p
+                    id="temperature-value"
+                    className="text-[10px] text-slate-400"
+                    aria-live="polite"
+                  >
+                    {config.temperature?.toFixed(2) || '0.80'}
                   </p>
-                )}
-              </div>
+                  <Slider
+                    id="temperature-slider"
+                    value={[config.temperature || 0.8]}
+                    onValueChange={(value) =>
+                      updateConfig('temperature', value[0])
+                    }
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    disabled={disabled}
+                    className="w-full"
+                    aria-label="Temperature slider"
+                    aria-valuemin={0}
+                    aria-valuemax={1}
+                    aria-valuenow={config.temperature || 0.8}
+                    aria-valuetext={`Temperature: ${(config.temperature || 0.8).toFixed(2)}. Controls randomness: 0 is deterministic, 1 is creative`}
+                    aria-describedby={
+                      !temperatureValidation.isValid
+                        ? 'temp-validation temperature-help'
+                        : 'temperature-help'
+                    }
+                  />
+
+                  {/* Real-time validation feedback */}
+                  {!temperatureValidation.isValid &&
+                    temperatureValidation.message && (
+                      <ValidationMessage
+                        id="temp-validation"
+                        type={temperatureValidation.type || 'info'}
+                        showIcon={false}
+                        className="text-[10px] py-1 px-2"
+                      >
+                        {temperatureValidation.message}
+                      </ValidationMessage>
+                    )}
+
+                  {temperatureValidation.isValid && (
+                    <p
+                      id="temperature-help"
+                      className="text-[10px] text-slate-500"
+                    >
+                      Lower = focused, Higher = creative
+                    </p>
+                  )}
+                </div>
+              </ParameterTooltip>
 
               {/* Top K */}
-              <div
-                className="space-y-2"
-                aria-label="Top K limits vocabulary selection"
+              <ParameterTooltip
+                name="Top K"
+                value={config.topK || 8}
+                range={{
+                  min: 1,
+                  max: 50,
+                  recommendedMin: 5,
+                  recommendedMax: 40,
+                }}
+                description="Limits the number of word choices the model considers"
+                currentValueExplanation={
+                  (config.topK || 8) <= 10
+                    ? 'Conservative - Selects from top few words only. More focused and predictable.'
+                    : (config.topK || 8) <= 30
+                      ? 'Moderate - Balances vocabulary diversity. Good middle ground.'
+                      : 'Diverse - Wider vocabulary selection. More varied word choices.'
+                }
+                example={{
+                  input: 'She felt',
+                  lowOutput: 'happy / sad',
+                  highOutput: 'ecstatic / melancholy / anxious / excited',
+                }}
+                icon={<Hash className="w-4 h-4 text-blue-500" />}
               >
-                <div className="flex items-center gap-2">
-                  <Hash className="w-3 h-3 text-blue-500" />
-                  <Label
-                    className="text-xs font-medium text-slate-700"
-                    title="Number of top tokens to consider"
+                <div
+                  className="space-y-2"
+                  role="group"
+                  aria-labelledby="topk-label"
+                >
+                  <div className="flex items-center gap-2">
+                    <Hash
+                      className="w-3 h-3 text-blue-500"
+                      aria-hidden="true"
+                    />
+                    <Label
+                      id="topk-label"
+                      htmlFor="topk-slider"
+                      className="text-xs font-medium text-slate-700"
+                    >
+                      Top K
+                    </Label>
+                  </div>
+                  <p
+                    className="text-[10px] text-slate-400"
+                    aria-live="polite"
+                    id="topk-value"
                   >
-                    Top K
-                  </Label>
+                    {config.topK || 8}
+                  </p>
+                  <Slider
+                    id="topk-slider"
+                    value={[config.topK || 8]}
+                    onValueChange={(value) => updateConfig('topK', value[0])}
+                    min={1}
+                    max={50}
+                    step={1}
+                    disabled={disabled}
+                    className="w-full"
+                    aria-label="Top K slider"
+                    aria-valuemin={1}
+                    aria-valuemax={50}
+                    aria-valuenow={config.topK || 8}
+                    aria-valuetext={`Top K: ${config.topK || 8}. Limits vocabulary choices`}
+                    aria-describedby="topk-help"
+                  />
+                  <p id="topk-help" className="text-[10px] text-slate-500">
+                    Limits vocabulary choices
+                  </p>
                 </div>
-                <p className="text-[10px] text-slate-400">{config.topK || 8}</p>
-                <Slider
-                  value={[config.topK || 8]}
-                  onValueChange={(value) => updateConfig('topK', value[0])}
-                  min={1}
-                  max={50}
-                  step={1}
-                  disabled={disabled}
-                  className="w-full"
-                />
-                <p className="text-[10px] text-slate-500">
-                  Limits vocabulary choices
-                </p>
-              </div>
+              </ParameterTooltip>
 
               {/* Max Tokens */}
               <div
                 className="space-y-2"
-                aria-label="Max tokens controls response length"
+                role="group"
+                aria-labelledby="maxtokens-label"
               >
                 <div className="flex items-center gap-2">
-                  <FileText className="w-3 h-3 text-green-500" />
+                  <FileText
+                    className="w-3 h-3 text-green-500"
+                    aria-hidden="true"
+                  />
                   <Label
+                    id="maxtokens-label"
+                    htmlFor="maxtokens-slider"
                     className="text-xs font-medium text-slate-700"
-                    title="Maximum response length in tokens"
                   >
                     Max Tokens
                   </Label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex items-center"
+                          aria-label="More information about max tokens"
+                        >
+                          <Info
+                            className="w-3 h-3 text-slate-400 cursor-help"
+                            aria-hidden="true"
+                          />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-xs">
+                          Gemini Nano typically supports up to 1024 tokens for
+                          responses. Higher values may fail or be truncated.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
-                <p className="text-[10px] text-slate-400">
-                  {config.maxTokens || 2048}
+                <p
+                  className="text-[10px] text-slate-400"
+                  aria-live="polite"
+                  id="maxtokens-value"
+                >
+                  {config.maxTokens || 512}
                 </p>
                 <Slider
-                  value={[config.maxTokens || 2048]}
+                  id="maxtokens-slider"
+                  value={[config.maxTokens || 512]}
                   onValueChange={(value) => updateConfig('maxTokens', value[0])}
                   min={256}
-                  max={4096}
-                  step={256}
+                  max={1024}
+                  step={128}
                   disabled={disabled}
                   className="w-full"
+                  aria-label="Max tokens slider"
+                  aria-valuemin={256}
+                  aria-valuemax={1024}
+                  aria-valuenow={config.maxTokens || 512}
+                  aria-valuetext={`Max tokens: ${config.maxTokens || 512}. Maximum response length`}
+                  aria-describedby="maxtokens-help"
                 />
-                <p className="text-[10px] text-slate-500">
-                  Maximum response length
+                <p id="maxtokens-help" className="text-[10px] text-slate-500">
+                  Maximum response length (default: 512, max: 1024)
                 </p>
               </div>
             </div>
@@ -304,10 +453,10 @@ export function PromptConfig({
                 size="sm"
                 onClick={() => {
                   onChange({
-                    systemPrompt: 'You are a helpful AI assistant.',
+                    systemPrompt: 'You are a helpful and friendly assistant.',
                     temperature: 0.8,
                     topK: 8,
-                    maxTokens: 2048,
+                    maxTokens: 512, // Default max tokens (max allowed: 1024)
                     enableStreaming: true,
                   });
                   onReset?.(); // Call reset handler if provided
@@ -328,5 +477,10 @@ export function PromptConfig({
 // ============================================================================
 // Export
 // ============================================================================
+
+// Memoize component - only re-render if config or onChange changes
+// Most config changes will be driven by user interaction anyway
+export const PromptConfig = memo(PromptConfigComponent);
+PromptConfig.displayName = 'PromptConfig';
 
 export default PromptConfig;

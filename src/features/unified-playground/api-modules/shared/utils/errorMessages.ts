@@ -63,6 +63,16 @@ export type ErrorCode =
   | 'STORAGE_ERROR'
   | 'NETWORK_ERROR'
 
+  // Context-Aware Prompt Errors (NEW)
+  | 'CONTEXT_WINDOW_EXCEEDED'
+  | 'INVALID_PARAMETER_COMBINATION'
+  | 'MODEL_OVERLOADED'
+  | 'TEMPERATURE_TOO_HIGH_FOR_TASK'
+  | 'TEMPERATURE_TOO_LOW_FOR_TASK'
+  | 'TOKEN_LIMIT_WARNING'
+  | 'SYSTEM_PROMPT_MISSING'
+  | 'RESPONSE_TRUNCATED'
+
   // Generic
   | 'UNKNOWN_ERROR';
 
@@ -256,6 +266,63 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessage> = {
   NETWORK_ERROR: {
     message: 'Network connection problem',
     helpText: 'Check your internet connection and try again.',
+    severity: 'warning',
+  },
+
+  // Context-Aware Prompt Errors (NEW)
+  CONTEXT_WINDOW_EXCEEDED: {
+    message: 'Prompt exceeds maximum token limit',
+    helpText:
+      'Your prompt is too long for the model to process. Reduce the text length or split it into smaller sections.',
+    severity: 'error',
+  },
+
+  INVALID_PARAMETER_COMBINATION: {
+    message: 'Parameter settings are conflicting',
+    helpText:
+      'Your current parameter combination may not work well together. Try using recommended settings or presets.',
+    severity: 'warning',
+  },
+
+  MODEL_OVERLOADED: {
+    message: 'Model is busy processing another request',
+    helpText:
+      'The on-device AI model can only handle one request at a time. Wait for the current operation to finish.',
+    severity: 'warning',
+  },
+
+  TEMPERATURE_TOO_HIGH_FOR_TASK: {
+    message: 'Temperature may be too high for accurate results',
+    helpText:
+      'You set Temperature above 0.9, which works better for creative writing. For factual or analytical tasks, try 0.1-0.5.',
+    severity: 'info',
+  },
+
+  TEMPERATURE_TOO_LOW_FOR_TASK: {
+    message: 'Temperature may be too low for creative tasks',
+    helpText:
+      'You set Temperature below 0.3, which produces predictable outputs. For creative or brainstorming tasks, try 0.7-0.9.',
+    severity: 'info',
+  },
+
+  TOKEN_LIMIT_WARNING: {
+    message: 'Approaching token limit',
+    helpText:
+      'You are using over 75% of the available context window. Consider shortening your prompt for better performance.',
+    severity: 'warning',
+  },
+
+  SYSTEM_PROMPT_MISSING: {
+    message: 'System prompt is empty',
+    helpText:
+      'Adding a system prompt helps guide the AI behavior. Try selecting a preset or writing your own.',
+    severity: 'info',
+  },
+
+  RESPONSE_TRUNCATED: {
+    message: 'Response was cut off',
+    helpText:
+      'The response exceeded the maximum token limit and was truncated. Try reducing your input length or increasing max tokens.',
     severity: 'warning',
   },
 

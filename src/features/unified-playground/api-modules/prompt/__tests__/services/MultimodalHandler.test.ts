@@ -283,7 +283,8 @@ describe('MultimodalHandler', () => {
 
       const result = await handler.processImage(file);
 
-      expect(result.metadata.aspectRatio).toBe(1.0);
+      // wide.jpg is 2000x1000 in the mock, so aspect ratio should be 2.0
+      expect(result.metadata.aspectRatio).toBe(2.0);
     });
 
     it('skips optimization for small images', async () => {

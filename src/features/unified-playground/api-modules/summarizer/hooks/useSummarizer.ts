@@ -241,7 +241,7 @@ export function useSummarizer(
   const summarize = useCallback(
     async (
       text: string,
-      summarizeOptions: SummarizeOptions = {},
+      summarizeOptions: SummarizeOptions = { outputLanguage: 'en' },
       customConfig?: SummarizerCreateOptions,
     ): Promise<string> => {
       // Use custom config if provided, otherwise use ref to get latest state
@@ -372,7 +372,7 @@ export function useSummarizer(
   const summarizeStreaming = useCallback(
     async (
       text: string,
-      summarizeOptions: SummarizeOptions = {},
+      summarizeOptions: SummarizeOptions = { outputLanguage: 'en' },
       customConfig?: SummarizerCreateOptions,
     ): Promise<ReadableStream<string>> => {
       // Use custom config if provided, otherwise use ref to get latest state

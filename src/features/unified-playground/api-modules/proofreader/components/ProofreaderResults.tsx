@@ -6,6 +6,8 @@
  * @module proofreader/components/ProofreaderResults
  */
 
+import { useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -59,6 +61,7 @@ export interface ProofreaderResultsProps {
  * ProofreaderResults component
  */
 export function ProofreaderResults({
+  originalText,
   correctedText,
   corrections,
   correctionStates,
@@ -71,6 +74,15 @@ export function ProofreaderResults({
 }: ProofreaderResultsProps) {
   const stats = calculateCorrectionStats(corrections, correctionStates);
   const hasPending = correctionStates.some((s) => s.state === 'pending');
+
+  /**
+   * Sanitize corrected text for safe display
+   * Strip all HTML tags for plain text display
+   */
+  const sanitizedCorrectedText = useMemo(
+    () => DOMPurify.sanitize(correctedText, { ALLOWED_TAGS: [] }),
+    [correctedText],
+  );
 
   // Download corrected text
   const handleDownload = () => {
@@ -121,6 +133,7 @@ export function ProofreaderResults({
                 disabled={!hasPending || disabled}
                 size="sm"
                 className="h-10 lg:h-8 tap-fast"
+                aria-label="Apply all corrections"
               >
                 <CheckCircle2 className="mr-2 h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">Apply All</span>
@@ -131,6 +144,7 @@ export function ProofreaderResults({
                 size="sm"
                 variant="outline"
                 className="h-10 lg:h-8 tap-fast"
+                aria-label="Reset corrections"
               >
                 <RefreshCw className="mr-2 h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">Reset</span>
@@ -188,6 +202,7 @@ export function ProofreaderResults({
                 size="sm"
                 variant="outline"
                 className="h-10 lg:h-8 tap-fast"
+                aria-label="Copy corrected text"
               >
                 <Copy className="mr-2 h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">Copy</span>
@@ -197,6 +212,7 @@ export function ProofreaderResults({
                 size="sm"
                 variant="outline"
                 className="h-10 lg:h-8 tap-fast"
+                aria-label="Download corrected text"
               >
                 <Download className="mr-2 h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">Download</span>
@@ -206,7 +222,7 @@ export function ProofreaderResults({
         </CardHeader>
         <CardContent>
           <Textarea
-            value={correctedText}
+            value={sanitizedCorrectedText}
             readOnly
             className="min-h-[200px] font-mono text-sm"
             aria-label="Corrected text output"
@@ -226,6 +242,7 @@ export function ProofreaderResults({
             onApply={() => onApplyCorrection(state.index)}
             onIgnore={() => onIgnoreCorrection(state.index)}
             disabled={disabled}
+            originalText={originalText}
           />
         ))}
       </div>

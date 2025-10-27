@@ -33,7 +33,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@/tests': path.resolve(__dirname, './tests'),
       '@/components': path.resolve(__dirname, './src/components'),
       '@/hooks': path.resolve(__dirname, './src/hooks'),
       '@/services': path.resolve(__dirname, './src/services'),
@@ -42,6 +42,7 @@ export default defineConfig({
       '@/utils': path.resolve(__dirname, './src/utils'),
       '@/lib': path.resolve(__dirname, './src/lib'),
       '@/features': path.resolve(__dirname, './src/features'),
+      '@': path.resolve(__dirname, './src'),
     },
   },
   build: {
@@ -49,7 +50,9 @@ export default defineConfig({
     sourcemap: true,
     minify: 'esbuild',
     chunkSizeWarningLimit: 500,
-    target: 'ES2022',
+    // Target latest browsers only (last 2 versions of Chrome/Edge as per browserslist)
+    // This allows using modern JavaScript features for smaller bundles
+    target: 'esnext',
     // Memory-safe: Limit asset inline to prevent memory bloat
     assetsInlineLimit: 4096, // 4KB - smaller files are inlined
     rollupOptions: {
@@ -63,19 +66,31 @@ export default defineConfig({
       output: {
         // Split vendors and syntax highlighting for optimal loading
         manualChunks: (id) => {
-          // React core (highest priority)
+          // React core and ALL React-related dependencies (highest priority)
+          // IMPORTANT: Keep all React dependencies together to avoid module initialization issues
           if (
             id.includes('node_modules/react/') ||
             id.includes('node_modules/react-dom/') ||
-            id.includes('node_modules/react-router')
+            id.includes('node_modules/react-router') ||
+            id.includes('node_modules/scheduler/') ||
+            id.includes('node_modules/react-hook-form') ||
+            id.includes('node_modules/react-resizable-panels') ||
+            id.includes('node_modules/react-day-picker') ||
+            id.includes('node_modules/embla-carousel-react')
           ) {
             return 'vendor-react';
           }
 
-          // UI component library
+          // UI component library - includes ALL @radix-ui packages (both main and internal)
+          // This prevents Radix internal dependencies from being split into vendor-other
           if (
             id.includes('node_modules/@radix-ui/') ||
-            id.includes('node_modules/lucide-react')
+            id.includes('node_modules/lucide-react') ||
+            id.includes('node_modules/cmdk') ||
+            id.includes('node_modules/vaul') ||
+            id.includes('node_modules/sonner') ||
+            id.includes('node_modules/next-themes') ||
+            id.includes('node_modules/input-otp')
           ) {
             return 'vendor-ui';
           }
@@ -97,13 +112,23 @@ export default defineConfig({
             return 'vendor-utils';
           }
 
-          // Charts library (heavy, lazy-load)
+          // Charts library (heavy, lazy-load) - Keep with React
           if (id.includes('node_modules/recharts')) {
-            return 'vendor-charts';
+            return 'vendor-react';
           }
 
-          // All other node_modules
+          // All other node_modules - but exclude common React utility packages
+          // These need to stay with React to avoid initialization issues
           if (id.includes('node_modules/')) {
+            // Check if this is a common React utility/helper package
+            if (
+              id.includes('react-remove-scroll') ||
+              id.includes('aria-hidden') ||
+              id.includes('use-') ||
+              id.includes('@floating-ui/react')
+            ) {
+              return 'vendor-react';
+            }
             return 'vendor-other';
           }
         },
@@ -136,8 +161,8 @@ export default defineConfig({
     esbuildOptions: {
       // Memory-safe: Limit log output to prevent memory bloat
       logLimit: 10,
-      // Memory-safe: Target modern browsers for smaller bundles
-      target: 'es2022',
+      // Target latest browsers only (last 2 versions) for optimal bundle size
+      target: 'esnext',
     },
     // Memory-safe: Exclude large dependencies from pre-bundling
     exclude: ['@testing-library/react', '@testing-library/jest-dom'],

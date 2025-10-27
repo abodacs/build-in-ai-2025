@@ -42,7 +42,6 @@ import { ModelDownloadProgress } from '../../../shared/components/ModelDownloadP
 import { UnifiedModelManager } from '../../../shared/components';
 import { CodeModal } from '../CodeModal';
 import { DEFAULT_PROMPT_CONFIG } from '../../types';
-import { estimateTokens } from '../../utils/tokenCounter';
 import { validateTextInput } from '../../../shared/utils/validation';
 
 export const PlaygroundTab: React.FC = () => {
@@ -63,7 +62,7 @@ export const PlaygroundTab: React.FC = () => {
   const fileUpload = useFileUpload({ maxFiles: 3 });
   const prompt = usePrompt({ config });
   const history = useConversationHistory({
-    maxContextTokens: config.maxTokens,
+    maxContextTokens: prompt.inputQuota, // Use inputQuota (6144) instead of maxTokens (1024)
   });
 
   // Track previous initialization state for auto-run after download
@@ -144,9 +143,6 @@ export const PlaygroundTab: React.FC = () => {
     try {
       // Check if model needs to be downloaded first
       if (availability.requiresDownload && !prompt.isLoading) {
-        console.log(
-          '[PlaygroundTab] Model download required, triggering download',
-        );
         setPendingPrompt(true); // Mark that we want to prompt after download
         await prompt.initialize();
         return; // Exit - the useEffect will handle running prompt after download
@@ -238,9 +234,6 @@ export const PlaygroundTab: React.FC = () => {
       pendingPrompt &&
       inputValue.trim()
     ) {
-      console.log(
-        '[PlaygroundTab] Download complete, auto-running pending prompt',
-      );
       handlersRef.current.handleSubmit?.();
     }
 
@@ -253,40 +246,17 @@ export const PlaygroundTab: React.FC = () => {
    * and prevent multiple initialization attempts
    */
   useEffect(() => {
-    console.log('PlaygroundTab: Auto-init useEffect triggered');
-    console.log(
-      'PlaygroundTab: availability.isReady =',
-      handlersRef.current.isReady,
-    );
-    console.log(
-      'PlaygroundTab: prompt.isInitialized =',
-      handlersRef.current.isInitialized,
-    );
-    console.log(
-      'PlaygroundTab: initializationAttempted =',
-      initializationAttempted.current,
-    );
-    console.log(
-      'PlaygroundTab: Should initialize?',
-      handlersRef.current.isReady &&
-        !handlersRef.current.isInitialized &&
-        !initializationAttempted.current,
-    );
-
     if (
       handlersRef.current.isReady &&
       !handlersRef.current.isInitialized &&
       !initializationAttempted.current
     ) {
-      console.log('PlaygroundTab: Calling prompt.initialize()...');
       initializationAttempted.current = true;
       handlersRef.current.initializeFn().catch((err) => {
         console.error('PlaygroundTab: Auto-init failed:', err);
         // Reset flag on failure to allow retry
         initializationAttempted.current = false;
       });
-    } else {
-      console.log('PlaygroundTab: Skipping initialization - condition not met');
     }
   }, [availability.isReady, prompt.isInitialized]);
 
@@ -344,10 +314,6 @@ export const PlaygroundTab: React.FC = () => {
       </div>
     );
   }
-  console.log('PlaygroundTab RENDER:');
-  console.log('  - availability:', availability);
-  console.log('  - prompt.isInitialized:', prompt.isInitialized);
-  console.log('  - prompt.isLoading:', prompt.isLoading);
 
   return (
     <div className="playground-tab space-y-6">
@@ -437,42 +403,80 @@ export const PlaygroundTab: React.FC = () => {
         />
       )}
 
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Messages */}
-        <div className="flex-1 overflow-hidden">
+      {/* Chat Area - Fixed height with scroll */}
+      <div className="flex flex-col">
+        {/* Messages Container - Fixed height for proper scrolling */}
+        <div
+          className="rounded-lg border border-gray-200 bg-white dark:bg-gray-900"
+          style={{ height: '500px', minHeight: '400px', maxHeight: '70vh' }}
+          role="region"
+          aria-label="Chat conversation area"
+        >
           <ChatInterface
             messages={history.messages}
             isStreaming={prompt.isStreaming}
             streamingContent={prompt.currentResponse}
             onCopyMessage={(content) => navigator.clipboard.writeText(content)}
             onStop={() => prompt.cancel()}
+            onExamplePromptClick={(promptText) => {
+              setInputValue(promptText);
+              // Focus the input field for better UX
+              setTimeout(() => {
+                document.getElementById('prompt-input')?.focus();
+              }, 100);
+            }}
           />
         </div>
 
         {/* Input Area */}
         <div className="border-t p-4 space-y-4">
-          {/* File Upload */}
+          {/* Error Display - Prominent placement above input */}
+          {prompt.error && (
+            <Alert variant="destructive" className="animate-in fade-in-50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription className="mt-2">
+                {prompt.error}
+                {prompt.error.includes('download') && (
+                  <div className="mt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => prompt.initialize()}
+                      className="mt-1"
+                    >
+                      Retry Download
+                    </Button>
+                  </div>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* File Upload - Always visible when no files attached */}
           {fileUpload.fileCount === 0 && (
-            <details>
-              <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800">
-                Attach images (optional)
-              </summary>
-              <div className="mt-4">
-                <FileUploadZone
-                  files={fileUpload.files}
-                  isDragOver={fileUpload.isDragOver}
-                  onFilesAdded={(files) => fileUpload.addFiles(files)}
-                  onFileRemoved={fileUpload.removeFile}
-                  onDragEnter={fileUpload.handleDragEnter}
-                  onDragOver={fileUpload.handleDragOver}
-                  onDragLeave={fileUpload.handleDragLeave}
-                  onDrop={fileUpload.handleDrop}
-                  maxFiles={3}
-                  disabled={prompt.isLoading}
-                />
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">
+                  Attach Images (Optional)
+                </span>
+                <span className="text-xs text-gray-500">
+                  Add up to 3 images for multimodal prompts
+                </span>
               </div>
-            </details>
+              <FileUploadZone
+                files={fileUpload.files}
+                isDragOver={fileUpload.isDragOver}
+                onFilesAdded={(files) => fileUpload.addFiles(files)}
+                onFileRemoved={fileUpload.removeFile}
+                onDragEnter={fileUpload.handleDragEnter}
+                onDragOver={fileUpload.handleDragOver}
+                onDragLeave={fileUpload.handleDragLeave}
+                onDrop={fileUpload.handleDrop}
+                maxFiles={3}
+                disabled={prompt.isLoading}
+              />
+            </div>
           )}
 
           {fileUpload.fileCount > 0 && (
@@ -484,6 +488,7 @@ export const PlaygroundTab: React.FC = () => {
                 <button
                   onClick={fileUpload.clearFiles}
                   className="text-sm text-red-600 hover:text-red-700"
+                  aria-label={`Remove all ${fileUpload.fileCount} attached images`}
                 >
                   Remove All
                 </button>
@@ -523,23 +528,25 @@ export const PlaygroundTab: React.FC = () => {
             onChange={setInputValue}
             onSubmit={handleSubmit}
             disabled={prompt.isLoading || !prompt.isInitialized}
-            estimatedTokens={estimateTokens(inputValue)}
             hasFiles={fileUpload.fileCount > 0}
             error={inputError?.message}
             errorHelpText={inputError?.helpText}
+            systemPrompt={config.systemPrompt}
+            maxTokens={config.maxTokens}
           />
-
-          {/* Error Display */}
-          {prompt.error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-              {prompt.error}
-            </div>
-          )}
         </div>
 
-        {/* Streaming Status Indicator */}
+        {/* Streaming Status Indicator - with screen reader announcement */}
         {prompt.isStreaming && streamingMode && (
-          <StreamingIndicator text="Streaming Response..." variant="default" />
+          <div role="status" aria-live="polite" aria-atomic="true">
+            <StreamingIndicator
+              text="Streaming Response..."
+              variant="default"
+            />
+            <span className="sr-only">
+              AI is currently generating a response
+            </span>
+          </div>
         )}
       </div>
 
@@ -608,11 +615,9 @@ export const PlaygroundTab: React.FC = () => {
                 URL.revokeObjectURL(url);
               }}
               onRemoveMessage={(id) => history.deleteMessage(id)}
-              onMessageClick={(id) => {
-                const message = history.messages.find((m) => m.id === id);
-                if (message) {
-                  console.log('Message clicked:', message);
-                }
+              onMessageClick={(_id) => {
+                // Message click handler - could be used for future features
+                // Future: implement message editing or details view
               }}
               isOpen={true}
               onToggle={() => setIsHistoryOpen(false)}
@@ -642,13 +647,13 @@ export const PlaygroundTab: React.FC = () => {
                 : 'no'
           }
           isReady={prompt.isInitialized}
-          isLoading={prompt.isLoading}
+          isLoading={prompt.isLoading && !prompt.isInitialized}
           loadingPhase={
-            prompt.isLoading && prompt.downloadProgress
-              ? 'downloading'
-              : prompt.isLoading
-                ? 'initializing'
-                : null
+            prompt.isLoading && !prompt.isInitialized
+              ? prompt.downloadProgress
+                ? 'downloading'
+                : 'initializing'
+              : null
           }
           downloadProgress={prompt.downloadProgress}
           error={prompt.error || null}

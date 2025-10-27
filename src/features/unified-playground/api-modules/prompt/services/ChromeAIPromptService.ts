@@ -15,6 +15,7 @@ import type {
   PromptOptions,
   AvailabilityCheckResult,
   LanguageModelCapabilities,
+  LanguageModelParameterBounds,
   DownloadProgress,
 } from '../types';
 import { normalizeAvailability } from '../../shared/utils/normalizeAvailability';
@@ -150,6 +151,29 @@ export class ChromeAIPromptService {
   }
 
   /**
+   * Check if multimodal input (images) is supported
+   * @returns Promise resolving to availability status
+   */
+  static async checkMultimodalAvailability(): Promise<LanguageModelAvailability> {
+    try {
+      if (!this.isSupported()) {
+        return 'no';
+      }
+
+      const api = this.getAPI();
+      const status = await api.availability({
+        expectedInputs: [{ type: 'image' }],
+      });
+
+      // Normalize Chrome API status to internal AvailabilityStatus
+      return normalizeAvailability(status);
+    } catch (error) {
+      console.warn('Multimodal availability check failed:', error);
+      return 'no';
+    }
+  }
+
+  /**
    * Check detailed availability information
    * @returns Promise resolving to detailed availability info
    */
@@ -209,8 +233,8 @@ export class ChromeAIPromptService {
           supportsStreaming: true,
           supportsTokenCounting: true,
           supportsCloning: true,
-          maxTemperature: 1.0,
-          maxTopK: 50,
+          maxTemperature: 2.0,
+          maxTopK: 128,
           maxTokens: 4096,
         };
       }
@@ -219,6 +243,47 @@ export class ChromeAIPromptService {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Get parameter bounds for validation and UI controls
+   *
+   * Retrieves minimum, maximum, and default values for all configurable parameters.
+   * Uses API capabilities() for max values with sensible fallbacks.
+   *
+   * @returns Promise resolving to parameter bounds with min/max/default values
+   *
+   * @example
+   * ```typescript
+   * const bounds = await ChromeAIPromptService.getParameterBounds();
+   * // Use for validation
+   * if (temp < bounds.temperature.min || temp > bounds.temperature.max) {
+   *   throw new Error('Invalid temperature');
+   * }
+   * // Use for UI controls
+   * <Slider min={bounds.topK.min} max={bounds.topK.max} defaultValue={bounds.topK.default} />
+   * ```
+   */
+  static async getParameterBounds(): Promise<LanguageModelParameterBounds> {
+    const capabilities = await this.getCapabilities();
+
+    return {
+      temperature: {
+        min: 0,
+        max: capabilities?.maxTemperature ?? 2.0,
+        default: 0.8,
+      },
+      topK: {
+        min: 1,
+        max: capabilities?.maxTopK ?? 128,
+        default: 8,
+      },
+      maxTokens: {
+        min: 1,
+        max: capabilities?.maxTokens ?? 4096,
+        default: 2048,
+      },
+    };
   }
 
   // ============================================================================
@@ -337,8 +402,14 @@ export class ChromeAIPromptService {
       const result = await instance.prompt(prompt, options);
       return result;
     } catch (error: any) {
-      // Throw user-friendly error without wrapping
-      throw new Error(getUserFriendlyError(error));
+      // Throw user-friendly error, preserving AbortError name
+      const friendlyMessage = getUserFriendlyError(error);
+      const wrappedError = new Error(friendlyMessage);
+      // Preserve AbortError name so retry logic can detect it
+      if (error?.name === 'AbortError') {
+        wrappedError.name = 'AbortError';
+      }
+      throw wrappedError;
     }
   }
 
@@ -397,8 +468,13 @@ export class ChromeAIPromptService {
         reader.releaseLock();
       }
     } catch (error: any) {
-      // Throw user-friendly error without wrapping
-      throw new Error(getUserFriendlyError(error));
+      // Throw user-friendly error, preserving AbortError name
+      const friendlyMessage = getUserFriendlyError(error);
+      const wrappedError = new Error(friendlyMessage);
+      if (error?.name === 'AbortError') {
+        wrappedError.name = 'AbortError';
+      }
+      throw wrappedError;
     }
   }
 
@@ -553,8 +629,13 @@ export class ChromeAIPromptService {
       const result = await instance.append(messages);
       return result;
     } catch (error: any) {
-      // Throw user-friendly error
-      throw new Error(getUserFriendlyError(error));
+      // Throw user-friendly error, preserving AbortError name
+      const friendlyMessage = getUserFriendlyError(error);
+      const wrappedError = new Error(friendlyMessage);
+      if (error?.name === 'AbortError') {
+        wrappedError.name = 'AbortError';
+      }
+      throw wrappedError;
     }
   }
 
@@ -598,8 +679,13 @@ export class ChromeAIPromptService {
         reader.releaseLock();
       }
     } catch (error: any) {
-      // Throw user-friendly error
-      throw new Error(getUserFriendlyError(error));
+      // Throw user-friendly error, preserving AbortError name
+      const friendlyMessage = getUserFriendlyError(error);
+      const wrappedError = new Error(friendlyMessage);
+      if (error?.name === 'AbortError') {
+        wrappedError.name = 'AbortError';
+      }
+      throw wrappedError;
     }
   }
 
@@ -619,10 +705,10 @@ export class ChromeAIPromptService {
       if (
         typeof options.temperature !== 'number' ||
         options.temperature < 0 ||
-        options.temperature > 1
+        options.temperature > 2
       ) {
         throw new Error(
-          `Invalid temperature: ${options.temperature}. Must be a number between 0 and 1.`,
+          `Invalid temperature: ${options.temperature}. Must be a number between 0 and 2.`,
         );
       }
     }
@@ -632,11 +718,11 @@ export class ChromeAIPromptService {
       if (
         typeof options.topK !== 'number' ||
         options.topK < 1 ||
-        options.topK > 50 ||
+        options.topK > 128 ||
         !Number.isInteger(options.topK)
       ) {
         throw new Error(
-          `Invalid topK: ${options.topK}. Must be an integer between 1 and 50.`,
+          `Invalid topK: ${options.topK}. Must be an integer between 1 and 128.`,
         );
       }
     }
@@ -752,7 +838,7 @@ export class ChromeAIPromptService {
 
       // Create LanguageModel instance with monitor to track download
       const options: LanguageModelCreateOptions = {
-        systemPrompt: 'You are a helpful AI assistant.',
+        systemPrompt: 'You are a helpful and friendly assistant.',
         temperature: 0.7,
         topK: 8,
         monitor(m: EventTarget) {
@@ -782,8 +868,22 @@ export class ChromeAIPromptService {
         },
       };
 
-      api
-        .create(options)
+      // Create a timeout promise that rejects after 60 minutes (3600 seconds)
+      // Model download is ~22GB and can take 30+ minutes on slower connections
+      // Generous timeout ensures downloads don't fail on slow internet (e.g., <1 Mbps)
+      const DOWNLOAD_TIMEOUT = 60 * 60 * 1000; // 60 minutes
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(
+            new Error(
+              'Model download timed out after 60 minutes. Please check your internet connection and try again. If the download started, it may still be running in the background - try refreshing the page.',
+            ),
+          );
+        }, DOWNLOAD_TIMEOUT);
+      });
+
+      // Race between create and timeout
+      Promise.race([api.create(options), timeoutPromise])
         .then((model: unknown) => {
           // Use setTimeout to ensure the final progress update is processed
           setTimeout(() => {
@@ -876,7 +976,7 @@ export class ChromeAIPromptService {
   ): LanguageModelCreateOptions {
     const configs: Record<string, LanguageModelCreateOptions> = {
       general: {
-        systemPrompt: 'You are a helpful AI assistant.',
+        systemPrompt: 'You are a helpful and friendly assistant.',
         temperature: 0.7,
         topK: 8,
         maxTokens: 2048,
@@ -904,7 +1004,7 @@ export class ChromeAIPromptService {
       },
       chat: {
         systemPrompt:
-          'You are a friendly conversational AI assistant. Be helpful and engaging.',
+          'You are a helpful and friendly assistant. Be engaging in conversations.',
         temperature: 0.8,
         topK: 20,
         maxTokens: 2048,
@@ -920,7 +1020,7 @@ export class ChromeAIPromptService {
 
     return (
       configs[useCase] || {
-        systemPrompt: 'You are a helpful AI assistant.',
+        systemPrompt: 'You are a helpful and friendly assistant.',
         temperature: 0.7,
         topK: 8,
         maxTokens: 2048,

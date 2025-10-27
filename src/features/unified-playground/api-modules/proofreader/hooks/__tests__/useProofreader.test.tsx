@@ -9,46 +9,50 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { useProofreader } from '../useProofreader';
 import type { ProofreaderConfig } from '../../types';
 
+// Create shared mock instance that will be reused
+const mockManagerInstance = {
+  getInstance: vi.fn().mockResolvedValue({
+    proofread: vi.fn(),
+    destroy: vi.fn(),
+  }),
+  proofread: vi.fn().mockResolvedValue({
+    corrections: [
+      {
+        correction: 'the',
+        type: 'spelling',
+        startIndex: 0,
+        endIndex: 3,
+      },
+    ],
+  }),
+  applyCorrectionAtIndex: vi.fn().mockImplementation((text, correction) => {
+    return (
+      text.slice(0, correction.startIndex) +
+      correction.correction +
+      text.slice(correction.endIndex)
+    );
+  }),
+  applyAllCorrections: vi.fn().mockImplementation((text, corrections) => {
+    let result = text;
+    const sorted = [...corrections].sort((a, b) => b.startIndex - a.startIndex);
+    for (const correction of sorted) {
+      result =
+        result.slice(0, correction.startIndex) +
+        correction.correction +
+        result.slice(correction.endIndex);
+    }
+    return result;
+  }),
+  hasInstance: vi.fn().mockReturnValue(false),
+  monitorDownload: vi.fn().mockResolvedValue(undefined),
+  destroy: vi.fn(),
+  getState: vi.fn().mockReturnValue('ready'),
+  updateConfig: vi.fn(),
+};
+
 // Mock services
 vi.mock('../../services', () => ({
-  ProofreaderManager: vi.fn().mockImplementation(() => ({
-    getInstance: vi.fn().mockResolvedValue({
-      proofread: vi.fn(),
-      destroy: vi.fn(),
-    }),
-    proofread: vi.fn().mockResolvedValue({
-      corrections: [
-        {
-          correction: 'the',
-          type: 'spelling',
-          startIndex: 0,
-          endIndex: 3,
-        },
-      ],
-    }),
-    applyCorrectionAtIndex: vi.fn().mockImplementation((text, correction) => {
-      return (
-        text.slice(0, correction.startIndex) +
-        correction.correction +
-        text.slice(correction.endIndex)
-      );
-    }),
-    applyAllCorrections: vi.fn().mockImplementation((text, corrections) => {
-      let result = text;
-      const sorted = [...corrections].sort(
-        (a, b) => b.startIndex - a.startIndex,
-      );
-      for (const correction of sorted) {
-        result =
-          result.slice(0, correction.startIndex) +
-          correction.correction +
-          result.slice(correction.endIndex);
-      }
-      return result;
-    }),
-    destroy: vi.fn(),
-    getState: vi.fn().mockReturnValue('ready'),
-  })),
+  ProofreaderManager: vi.fn().mockImplementation(() => mockManagerInstance),
   ProofreaderErrorHandler: {
     handleProofreadError: vi.fn().mockImplementation((err) => err),
     getUserMessage: vi
@@ -80,6 +84,18 @@ describe('useProofreader', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Reset proofread mock to default successful implementation
+    mockManagerInstance.proofread.mockResolvedValue({
+      corrections: [
+        {
+          correction: 'the',
+          type: 'spelling',
+          startIndex: 0,
+          endIndex: 3,
+        },
+      ],
+    });
   });
 
   // ==========================================================================
@@ -130,8 +146,7 @@ describe('useProofreader', () => {
       });
 
       expect(result.current.corrections[0]).toEqual({
-        original: 'teh',
-        suggestion: 'the',
+        correction: 'the',
         type: 'spelling',
         startIndex: 0,
         endIndex: 3,
@@ -220,9 +235,8 @@ describe('useProofreader', () => {
     });
 
     it('should handle errors', async () => {
-      const { ProofreaderManager } = await import('../../services');
-      const mockManager = new ProofreaderManager();
-      vi.mocked(mockManager.proofread).mockRejectedValue(
+      // Override the mock to reject for all retries (hook retries 3 times)
+      mockManagerInstance.proofread.mockRejectedValue(
         new Error('Proofread failed'),
       );
 
@@ -329,13 +343,11 @@ describe('useProofreader', () => {
 
   describe('applyAllCorrections', () => {
     it('should apply all corrections', async () => {
-      const { ProofreaderManager } = await import('../../services');
-      const mockManager = new ProofreaderManager();
-      vi.mocked(mockManager.proofread).mockResolvedValue({
+      // Override the mock to return 2 corrections for this test
+      mockManagerInstance.proofread.mockResolvedValueOnce({
         corrections: [
           {
-            original: 'teh',
-            suggestion: 'the',
+            correction: 'the',
             type: 'spelling',
             startIndex: 0,
             endIndex: 3,
@@ -376,13 +388,11 @@ describe('useProofreader', () => {
 
   describe('applyCorrectionsByType', () => {
     it('should apply corrections of specific type', async () => {
-      const { ProofreaderManager } = await import('../../services');
-      const mockManager = new ProofreaderManager();
-      vi.mocked(mockManager.proofread).mockResolvedValue({
+      // Override the mock to return 2 corrections for this test
+      mockManagerInstance.proofread.mockResolvedValueOnce({
         corrections: [
           {
-            original: 'teh',
-            suggestion: 'the',
+            correction: 'the',
             type: 'spelling',
             startIndex: 0,
             endIndex: 3,
@@ -622,9 +632,8 @@ describe('useProofreader', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty corrections result', async () => {
-      const { ProofreaderManager } = await import('../../services');
-      const mockManager = new ProofreaderManager();
-      vi.mocked(mockManager.proofread).mockResolvedValue({
+      // Override the mock to return empty corrections for this test
+      mockManagerInstance.proofread.mockResolvedValueOnce({
         corrections: [],
       });
 

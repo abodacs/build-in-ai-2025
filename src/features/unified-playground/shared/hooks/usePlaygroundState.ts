@@ -226,8 +226,6 @@ async function checkAPIAvailability(
       };
     }
 
-    console.log('hereherehereherehere', apiName);
-
     // Get API configuration
     const config = API_CONFIG[apiName];
     debugLog(

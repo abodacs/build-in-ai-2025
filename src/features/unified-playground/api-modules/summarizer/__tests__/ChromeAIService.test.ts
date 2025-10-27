@@ -694,8 +694,8 @@ describe('ChromeAIService', () => {
       // Act
       const result = await ChromeAIService.checkAvailability();
 
-      // Assert
-      expect(result.availability).toBe('unexpected-value');
+      // Assert - unknown values should be normalized to 'no' for safety
+      expect(result.availability).toBe('no');
     });
 
     it('should handle concurrent availability checks', async () => {

@@ -99,8 +99,7 @@ describe('ProofreaderManager', () => {
   describe('proofread', () => {
     const mockCorrections: ProofreadCorrection[] = [
       {
-        original: 'teh',
-        suggestion: 'the',
+        correction: 'the',
         type: 'spelling',
         startIndex: 0,
         endIndex: 3,
@@ -224,8 +223,7 @@ describe('ProofreaderManager', () => {
     it('should apply correction correctly', () => {
       const text = 'teh quick fox';
       const correction: ProofreadCorrection = {
-        original: 'teh',
-        suggestion: 'the',
+        correction: 'the',
         type: 'spelling',
         startIndex: 0,
         endIndex: 3,
@@ -239,8 +237,7 @@ describe('ProofreaderManager', () => {
     it('should handle correction in middle of text', () => {
       const text = 'the quik fox';
       const correction: ProofreadCorrection = {
-        original: 'quik',
-        suggestion: 'quick',
+        correction: 'quick',
         type: 'spelling',
         startIndex: 4,
         endIndex: 8,
@@ -254,8 +251,7 @@ describe('ProofreaderManager', () => {
     it('should handle correction at end of text', () => {
       const text = 'the quick fo';
       const correction: ProofreadCorrection = {
-        original: 'fo',
-        suggestion: 'fox',
+        correction: 'fox',
         type: 'spelling',
         startIndex: 10,
         endIndex: 12,
@@ -269,8 +265,7 @@ describe('ProofreaderManager', () => {
     it('should throw on invalid start index', () => {
       const text = 'test';
       const correction: ProofreadCorrection = {
-        original: 'x',
-        suggestion: 'y',
+        correction: 'y',
         type: 'spelling',
         startIndex: -1,
         endIndex: 1,
@@ -284,8 +279,7 @@ describe('ProofreaderManager', () => {
     it('should throw on invalid end index', () => {
       const text = 'test';
       const correction: ProofreadCorrection = {
-        original: 'x',
-        suggestion: 'y',
+        correction: 'y',
         type: 'spelling',
         startIndex: 0,
         endIndex: 100,
@@ -299,8 +293,7 @@ describe('ProofreaderManager', () => {
     it('should throw when start >= end', () => {
       const text = 'test';
       const correction: ProofreadCorrection = {
-        original: 'x',
-        suggestion: 'y',
+        correction: 'y',
         type: 'spelling',
         startIndex: 5,
         endIndex: 5,
@@ -321,15 +314,13 @@ describe('ProofreaderManager', () => {
       const text = 'teh quik fox';
       const corrections: ProofreadCorrection[] = [
         {
-          original: 'teh',
-          suggestion: 'the',
+          correction: 'the',
           type: 'spelling',
           startIndex: 0,
           endIndex: 3,
         },
         {
-          original: 'quik',
-          suggestion: 'quick',
+          correction: 'quick',
           type: 'spelling',
           startIndex: 4,
           endIndex: 8,
@@ -346,15 +337,13 @@ describe('ProofreaderManager', () => {
       const text = 'a b c d';
       const corrections: ProofreadCorrection[] = [
         {
-          original: 'a',
-          suggestion: 'A',
+          correction: 'A',
           type: 'style',
           startIndex: 0,
           endIndex: 1,
         },
         {
-          original: 'd',
-          suggestion: 'D',
+          correction: 'D',
           type: 'style',
           startIndex: 6,
           endIndex: 7,
@@ -378,8 +367,7 @@ describe('ProofreaderManager', () => {
       const text = 'teh';
       const corrections: ProofreadCorrection[] = [
         {
-          original: 'teh',
-          suggestion: 'the',
+          correction: 'the',
           type: 'spelling',
           startIndex: 0,
           endIndex: 3,
@@ -395,8 +383,7 @@ describe('ProofreaderManager', () => {
       const text = 'test';
       const corrections: ProofreadCorrection[] = [
         {
-          original: 'test',
-          suggestion: 'TEST',
+          correction: 'TEST',
           type: 'style',
           startIndex: 0,
           endIndex: 4,
@@ -417,22 +404,19 @@ describe('ProofreaderManager', () => {
   describe('filterCorrectionsByType', () => {
     const mockCorrections: ProofreadCorrection[] = [
       {
-        original: 'teh',
-        suggestion: 'the',
+        correction: 'the',
         type: 'spelling',
         startIndex: 0,
         endIndex: 3,
       },
       {
-        original: 'bad grammar',
-        suggestion: 'good grammar',
+        correction: 'good grammar',
         type: 'grammar',
         startIndex: 10,
         endIndex: 21,
       },
       {
-        original: 'missing comma',
-        suggestion: 'with comma',
+        correction: 'with comma',
         type: 'punctuation',
         startIndex: 30,
         endIndex: 43,
@@ -477,22 +461,19 @@ describe('ProofreaderManager', () => {
   describe('groupCorrectionsByType', () => {
     const mockCorrections: ProofreadCorrection[] = [
       {
-        original: 'teh',
-        suggestion: 'the',
+        correction: 'the',
         type: 'spelling',
         startIndex: 0,
         endIndex: 3,
       },
       {
-        original: 'fox',
-        suggestion: 'Fox',
+        correction: 'Fox',
         type: 'spelling',
         startIndex: 10,
         endIndex: 13,
       },
       {
-        original: 'bad',
-        suggestion: 'good',
+        correction: 'good',
         type: 'grammar',
         startIndex: 20,
         endIndex: 23,

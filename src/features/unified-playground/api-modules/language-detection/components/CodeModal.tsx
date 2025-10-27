@@ -104,7 +104,7 @@ interface LanguageDetectorCreateOptions {
 
 interface LanguageDetectorAPI {
   create(options?: LanguageDetectorCreateOptions): Promise<LanguageDetector>;
-  availability(): Promise<'available' | 'after-download' | 'no'>;
+  availability(): Promise<'available' | 'downloadable'>;
 }
 
 declare global {
@@ -134,13 +134,13 @@ async function checkAvailability(): Promise<boolean> {
     );
   }
 
-  const availability = await window.LanguageDetector.availability();
+  const availability = await self.LanguageDetector.availability();
 
-  if (availability === 'no') {
+  if (availability === 'unavailable') {
     throw new Error('Language Detection not available on this device');
   }
 
-  if (availability === 'after-download') {
+  if (availability === 'downloadable') {
     console.log('Model download required - this may take a few minutes');
     // Model will download automatically on first create() call
   }
@@ -152,7 +152,7 @@ async function checkAvailability(): Promise<boolean> {
  * Create a new language detector instance
  */
 async function createDetector(): Promise<LanguageDetector> {
-  const detector = await window.LanguageDetector.create();
+  const detector = await self.LanguageDetector.create();
   return detector;
 }
 
@@ -310,13 +310,13 @@ async function checkAvailability() {
     );
   }
 
-  const availability = await window.LanguageDetector.availability();
+  const availability = await self.LanguageDetector.availability();
 
-  if (availability === 'no') {
+  if (availability === 'unavailable') {
     throw new Error('Language Detection not available on this device');
   }
 
-  if (availability === 'after-download') {
+  if (availability === 'downloadable') {
     console.log('Model download required - this may take a few minutes');
     // Model will download automatically on first create() call
   }
@@ -328,7 +328,7 @@ async function checkAvailability() {
  * Create a new language detector instance
  */
 async function createDetector() {
-  const detector = await window.LanguageDetector.create();
+  const detector = await self.LanguageDetector.create();
   return detector;
 }
 

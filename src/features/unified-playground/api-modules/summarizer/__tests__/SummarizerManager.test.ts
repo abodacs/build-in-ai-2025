@@ -340,9 +340,10 @@ describe('SummarizerManager', () => {
       await manager.getSummarizer({ type: 'tldr' });
 
       // Act & Assert
+      // ErrorHandler transforms unknown errors to user-friendly messages
       await expect(
         manager.summarize('Inappropriate content', {}, { type: 'tldr' }),
-      ).rejects.toThrow('Content filtered');
+      ).rejects.toThrow('An unexpected problem occurred');
     });
 
     it('should cleanup on error during creation', async () => {

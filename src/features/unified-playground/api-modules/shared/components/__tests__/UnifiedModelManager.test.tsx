@@ -97,7 +97,7 @@ describe('UnifiedModelManager', () => {
       render(
         <UnifiedModelManager
           {...defaultProps}
-          availability="readily"
+          availability="available"
           isReady={true}
         />,
       );
@@ -123,7 +123,9 @@ describe('UnifiedModelManager', () => {
 
     it('should not display error alert when error is null', () => {
       render(<UnifiedModelManager {...defaultProps} error={null} />);
-      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      // Should not have a destructive/error alert, but info alerts are ok
+      const errorAlert = screen.queryByText(/failed|error/i);
+      expect(errorAlert).not.toBeInTheDocument();
     });
   });
 
@@ -279,13 +281,15 @@ describe('UnifiedModelManager', () => {
 
     it('should show re-download and clear cache buttons when model is ready', () => {
       const onClearCache = vi.fn();
+      const onStartDownload = vi.fn();
 
       render(
         <UnifiedModelManager
           {...defaultProps}
-          availability="readily"
+          availability="available"
           isReady={true}
           onClearCache={onClearCache}
+          onStartDownload={onStartDownload}
         />,
       );
 
@@ -367,7 +371,7 @@ describe('UnifiedModelManager', () => {
         <UnifiedModelManager
           {...defaultProps}
           isReady={true}
-          availability="readily"
+          availability="available"
         />,
       );
 
@@ -440,21 +444,16 @@ describe('UnifiedModelManager', () => {
 
   describe('Progressive Disclosure', () => {
     it('should show first-time requirements alert during loading', () => {
-      // Mock useProgressiveLoadingMessage to return elapsed time > 10s
-      vi.mock('../../proofreader/hooks/useProgressiveLoadingMessage', () => ({
-        useProgressiveLoadingMessage: () => ({
-          currentMessage: {
-            message: 'Downloading...',
-            level: 'info',
-          },
-          elapsedTime: 15,
-          reset: vi.fn(),
-        }),
-      }));
+      // Alert shows immediately when origin trial is required
+      const modelInfoWithTrial: ModelInfo = {
+        ...mockModelInfo,
+        requiresOriginTrial: true,
+      };
 
       render(
         <UnifiedModelManager
           {...defaultProps}
+          modelInfo={modelInfoWithTrial}
           isLoading={true}
           loadingPhase="initializing"
         />,

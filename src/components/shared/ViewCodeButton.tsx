@@ -3,6 +3,7 @@
  *
  * Reusable button for viewing implementation code in playground modules.
  * Provides consistent styling, tooltip, and keyboard shortcut hint across all API playgrounds.
+ * Automatically detects user's OS and displays the appropriate keyboard shortcut.
  *
  * @module ViewCodeButton
  * @example
@@ -22,6 +23,7 @@
  * ```
  */
 
+import React from 'react';
 import { Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,6 +32,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { SHORTCUTS } from '@/utils/keyboard';
 
 // ============================================================================
 // Types
@@ -54,16 +57,16 @@ export interface ViewCodeButtonProps {
   tooltipText?: string;
 
   /**
-   * Show keyboard shortcut in tooltip
+   * Show keyboard shortcut in tooltip and button
    * @default true
    */
   showKeyboardHint?: boolean;
 
   /**
-   * Keyboard shortcut to display (e.g., "⌘K", "Ctrl+K")
-   * @default "⌘K"
+   * Show keyboard shortcut on button label (inline)
+   * @default false
    */
-  keyboardHint?: string;
+  showInlineShortcut?: boolean;
 
   /**
    * Whether the button is disabled
@@ -87,9 +90,11 @@ export interface ViewCodeButtonProps {
  * Consistent "View Code" button used across all API playground modules.
  * Features:
  * - Ghost variant with subtle hover states
- * - Informative tooltip with keyboard shortcut
+ * - Informative tooltip with OS-specific keyboard shortcut
+ * - Optional inline keyboard shortcut display
  * - Stops event propagation (for use in collapsible headers)
  * - Accessible and responsive design
+ * - Automatic OS detection for shortcuts (⌘K on Mac, Ctrl+K on Windows/Linux)
  *
  * @see {@link https://github.com/your-repo/docs/components/view-code-button.md|Documentation}
  */
@@ -98,10 +103,13 @@ export function ViewCodeButton({
   label = 'View Code',
   tooltipText = 'View implementation code',
   showKeyboardHint = true,
-  keyboardHint = '⌘K',
+  showInlineShortcut = false,
   disabled = false,
   className,
 }: ViewCodeButtonProps) {
+  // Get OS-specific keyboard shortcut
+  const keyboardShortcut = SHORTCUTS.viewCode();
+
   /**
    * Handle click with event propagation stop
    * Prevents triggering parent collapsible/accordion when used in headers
@@ -120,18 +128,26 @@ export function ViewCodeButton({
             size="sm"
             onClick={handleClick}
             disabled={disabled}
-            className={`h-8 text-xs text-slate-600 hover:text-slate-700 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:bg-slate-800 ${className || ''}`}
-            aria-label={tooltipText}
+            className={`h-8 text-xs text-slate-600 hover:text-slate-700 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors ${className || ''}`}
+            aria-label={`${tooltipText} (${keyboardShortcut})`}
           >
             <Code className="w-4 h-4 mr-1.5" />
-            {label}
+            <span>{label}</span>
+            {showInlineShortcut && (
+              <kbd className="ml-2 px-1.5 py-0.5 text-[10px] font-mono bg-slate-100 dark:bg-slate-700 rounded border border-slate-300 dark:border-slate-600">
+                {keyboardShortcut}
+              </kbd>
+            )}
           </Button>
         </TooltipTrigger>
         <TooltipContent side="bottom" align="end">
           <p className="text-xs">{tooltipText}</p>
           {showKeyboardHint && (
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">
-              {keyboardHint}
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+              Press{' '}
+              <kbd className="px-1 py-0.5 font-mono bg-slate-100 dark:bg-slate-700 rounded text-[10px]">
+                {keyboardShortcut}
+              </kbd>
             </p>
           )}
         </TooltipContent>
@@ -141,19 +157,24 @@ export function ViewCodeButton({
 }
 
 /**
- * Hook for keyboard shortcut support (optional enhancement)
- * Can be used in playground components to trigger code modal with keyboard
+ * Hook for keyboard shortcut support
+ * Enables Cmd+K (Mac) or Ctrl+K (Windows/Linux) to open code modal
  *
  * @example
  * ```tsx
- * const { openCodeModal } = useCodeModalShortcut(() => setIsCodeModalOpen(true));
+ * function MyPlayground() {
+ *   const [isOpen, setIsOpen] = useState(false);
+ *   useCodeModalShortcut(() => setIsOpen(true));
+ *
+ *   return <CodeModal isOpen={isOpen} onClose={() => setIsOpen(false)} />;
+ * }
  * ```
  */
 export function useCodeModalShortcut(onOpen: () => void) {
   React.useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      // ⌘K on Mac, Ctrl+K on Windows/Linux
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      // Cmd+K on Mac, Ctrl+K on Windows/Linux
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         onOpen();
       }
@@ -165,6 +186,3 @@ export function useCodeModalShortcut(onOpen: () => void) {
 
   return { openCodeModal: onOpen };
 }
-
-// Re-export React for the hook
-import React from 'react';

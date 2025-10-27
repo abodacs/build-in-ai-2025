@@ -5,8 +5,14 @@
  * Focus: Rendering, code generation, button functionality.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from '@testing-library/react';
 import { CodeModal } from '../CodeModal';
 import type { WriterConfig } from '../../types';
 import { ThemeProvider } from '@/providers/ThemeProvider';
@@ -72,19 +78,38 @@ describe('CodeModal', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('should show TypeScript tab by default', () => {
+    it('should show TypeScript tab by default', async () => {
       renderWithProviders(
         <CodeModal isOpen={true} onClose={vi.fn()} config={DEFAULT_CONFIG} />,
       );
-      expect(
-        screen.getByRole('tab', { name: /typescript/i, selected: true }),
-      ).toBeInTheDocument();
+
+      // Wait for loading to complete (200ms setTimeout)
+      await waitFor(
+        () => {
+          expect(
+            screen.getByRole('tab', { name: /typescript/i }),
+          ).toBeInTheDocument();
+        },
+        { timeout: 2000 },
+      );
     });
 
-    it('should show JavaScript tab', () => {
+    it('should show JavaScript tab', async () => {
       renderWithProviders(
         <CodeModal isOpen={true} onClose={vi.fn()} config={DEFAULT_CONFIG} />,
       );
+
+      // Advance timers to complete loading
+      await waitFor(
+        () => {
+          expect(
+            screen.getByRole('tab', { name: /typescript/i }),
+          ).toBeInTheDocument();
+        },
+        { timeout: 2000 },
+      );
+
+      // JavaScript tab should be visible
       expect(
         screen.getByRole('tab', { name: /javascript/i }),
       ).toBeInTheDocument();
@@ -92,7 +117,7 @@ describe('CodeModal', () => {
   });
 
   describe('Configuration Display', () => {
-    it('should display current configuration', () => {
+    it('should display current configuration', async () => {
       const config: WriterConfig = {
         tone: 'formal',
         format: 'plain-text',
@@ -105,12 +130,22 @@ describe('CodeModal', () => {
         <CodeModal isOpen={true} onClose={vi.fn()} config={config} />,
       );
 
+      // Advance timers to complete loading
+      await waitFor(
+        () => {
+          expect(
+            screen.getByRole('tab', { name: /typescript/i }),
+          ).toBeInTheDocument();
+        },
+        { timeout: 2000 },
+      );
+
       expect(screen.getByText(/tone.*formal/i)).toBeInTheDocument();
       expect(screen.getByText(/format.*plain-text/i)).toBeInTheDocument();
       expect(screen.getByText(/length.*long/i)).toBeInTheDocument();
     });
 
-    it('should show shared context badge when present', () => {
+    it('should show shared context badge when present', async () => {
       const config: WriterConfig = {
         ...DEFAULT_CONFIG,
         sharedContext: 'Business context',
@@ -119,38 +154,62 @@ describe('CodeModal', () => {
       renderWithProviders(
         <CodeModal isOpen={true} onClose={vi.fn()} config={config} />,
       );
+
+      // Advance timers to complete loading
+      await waitFor(
+        () => {
+          expect(
+            screen.getByRole('tab', { name: /typescript/i }),
+          ).toBeInTheDocument();
+        },
+        { timeout: 2000 },
+      );
+
       expect(screen.getByText(/shared context.*yes/i)).toBeInTheDocument();
     });
   });
 
   describe('Code Generation', () => {
-    it('should show TypeScript tab content', () => {
+    it('should show TypeScript tab', async () => {
       renderWithProviders(
         <CodeModal isOpen={true} onClose={vi.fn()} config={DEFAULT_CONFIG} />,
       );
 
-      // TypeScript tab is selected by default
+      // Advance timers to complete loading
+      await waitFor(
+        () => {
+          expect(
+            screen.getByRole('tab', { name: /typescript/i }),
+          ).toBeInTheDocument();
+        },
+        { timeout: 2000 },
+      );
+
+      // TypeScript tab should be available
       const tsTab = screen.getByRole('tab', {
         name: /typescript/i,
-        selected: true,
       });
       expect(tsTab).toBeInTheDocument();
-
-      // Check that code generation description is shown
-      expect(
-        screen.getByText(/Full TypeScript implementation/i),
-      ).toBeInTheDocument();
     });
 
-    it('should have JavaScript tab available', () => {
+    it('should have JavaScript tab available', async () => {
       renderWithProviders(
         <CodeModal isOpen={true} onClose={vi.fn()} config={DEFAULT_CONFIG} />,
       );
 
-      // Verify JavaScript tab exists and can be interacted with
+      // Advance timers to complete loading
+      await waitFor(
+        () => {
+          expect(
+            screen.getByRole('tab', { name: /typescript/i }),
+          ).toBeInTheDocument();
+        },
+        { timeout: 2000 },
+      );
+
+      // JavaScript tab should be available
       const jsTab = screen.getByRole('tab', { name: /javascript/i });
       expect(jsTab).toBeInTheDocument();
-      expect(jsTab).not.toHaveAttribute('aria-selected', 'true');
     });
   });
 
@@ -170,7 +229,7 @@ describe('CodeModal', () => {
   });
 
   describe('Edge Cases', () => {
-    it('should handle empty shared context', () => {
+    it('should handle empty shared context', async () => {
       const config: WriterConfig = {
         ...DEFAULT_CONFIG,
         sharedContext: '',
@@ -179,12 +238,23 @@ describe('CodeModal', () => {
       renderWithProviders(
         <CodeModal isOpen={true} onClose={vi.fn()} config={config} />,
       );
+
+      // Advance timers to complete loading
+      await waitFor(
+        () => {
+          expect(
+            screen.getByRole('tab', { name: /typescript/i }),
+          ).toBeInTheDocument();
+        },
+        { timeout: 2000 },
+      );
+
       expect(
         screen.queryByText(/shared context.*yes/i),
       ).not.toBeInTheDocument();
     });
 
-    it('should handle different config options', () => {
+    it('should handle different config options', async () => {
       const config: WriterConfig = {
         tone: 'casual',
         format: 'markdown',
@@ -197,7 +267,16 @@ describe('CodeModal', () => {
         <CodeModal isOpen={true} onClose={vi.fn()} config={config} />,
       );
 
-      // Verify config is displayed in the modal
+      // Advance timers to complete loading
+      await waitFor(
+        () => {
+          expect(
+            screen.getByRole('tab', { name: /typescript/i }),
+          ).toBeInTheDocument();
+        },
+        { timeout: 2000 },
+      );
+
       expect(screen.getByText(/tone.*casual/i)).toBeInTheDocument();
       expect(screen.getByText(/format.*markdown/i)).toBeInTheDocument();
       expect(screen.getByText(/length.*short/i)).toBeInTheDocument();

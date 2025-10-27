@@ -3,9 +3,11 @@
  * Multiline textarea with keyboard shortcuts and file attachment
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { Send, Paperclip } from 'lucide-react';
 import { FieldError } from '../../shared/components';
+import { TokenVisualization, type TokenBreakdown } from './TokenVisualization';
+import { estimateTokensAccurate } from '../utils/tokenCounter';
 
 interface PromptInputProps {
   value: string;
@@ -20,6 +22,12 @@ interface PromptInputProps {
   error?: string;
   /** Error help text for recovery guidance */
   errorHelpText?: string;
+  /** System prompt for token calculation */
+  systemPrompt?: string;
+  /** Maximum tokens allowed */
+  maxTokens?: number;
+  /** Callback for token optimization */
+  onOptimizeTokens?: () => void;
 }
 
 export const PromptInput: React.FC<PromptInputProps> = ({
@@ -29,11 +37,41 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   onAttachFile,
   disabled = false,
   placeholder = 'Type your message...',
-  estimatedTokens = 0,
   error,
   errorHelpText,
+  systemPrompt = '',
+  maxTokens = 512,
+  onOptimizeTokens,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Calculate token breakdown in real-time
+  const tokenBreakdown: TokenBreakdown = useMemo(() => {
+    const systemPromptTokens = systemPrompt
+      ? estimateTokensAccurate(systemPrompt) + 4 // +4 for structure
+      : 0;
+
+    const inputTokens = value ? estimateTokensAccurate(value) + 4 : 0;
+
+    // Estimate response tokens based on maxTokens setting
+    // Typically reserve ~30% of remaining space for response
+    const usedTokens = systemPromptTokens + inputTokens;
+    const remainingTokens = Math.max(0, maxTokens - usedTokens);
+    const estimatedResponseTokens = Math.min(
+      Math.floor(remainingTokens * 0.3),
+      200, // Cap at 200 tokens for estimate
+    );
+
+    const totalTokens = usedTokens + estimatedResponseTokens;
+
+    return {
+      systemPromptTokens,
+      inputTokens,
+      estimatedResponseTokens,
+      totalTokens,
+      maxTokens,
+    };
+  }, [value, systemPrompt, maxTokens]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -125,25 +163,19 @@ export const PromptInput: React.FC<PromptInputProps> = ({
         />
       )}
 
-      {/* Info Bar */}
-      <div className="flex justify-between text-xs">
-        {/* Character/Token Count - with aria-live for screen readers */}
-        <span
-          id="prompt-input-info"
-          aria-live="polite"
-          aria-atomic="true"
-          className="text-gray-600 dark:text-gray-400"
-        >
-          {value.length} characters
-          {estimatedTokens > 0 && ` • ~${estimatedTokens} tokens`}
-        </span>
+      {/* Token Visualization */}
+      <TokenVisualization
+        breakdown={tokenBreakdown}
+        onOptimize={onOptimizeTokens}
+      />
 
-        {/* Keyboard Shortcuts Help */}
+      {/* Keyboard Shortcuts Help */}
+      <div className="flex justify-start">
         <span
           id="prompt-input-shortcuts"
-          className="text-gray-400 dark:text-gray-500"
+          className="text-xs text-gray-400 dark:text-gray-500"
         >
-          Enter to send • Shift+Enter for newline • Escape to clear
+          Enter to send • Shift+Enter for newline • Esc to clear
         </span>
       </div>
     </div>

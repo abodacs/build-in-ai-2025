@@ -280,6 +280,31 @@
   }
 }
 
+/* GPU-optimized streaming dot animation - uses transform for better performance */
+@keyframes streamingDot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1) translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2) translateY(-4px);
+  }
+}
+
+/* GPU-optimized token limit pulse - only animates opacity for better performance */
+@keyframes tokenLimitPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
 /* ==========================================================================
    ANIMATION CLASSES
    ========================================================================== */

@@ -191,7 +191,7 @@ export function ProofreaderMain() {
       )}
 
       {/* Results */}
-      {corrections.length > 0 && (
+      {correctedText !== null && (
         <ProofreaderResults
           originalText={inputText}
           correctedText={correctedText || inputText}

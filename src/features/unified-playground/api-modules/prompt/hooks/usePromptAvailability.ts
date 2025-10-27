@@ -114,15 +114,6 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
   const isReady = availability === 'available' && !isDownloading && isSupported;
   const requiresDownload = availability === 'after-download';
 
-  console.log(
-    '[usePromptAvailability] Derived state - availability:',
-    availability,
-    '| isReady:',
-    isReady,
-    '| requiresDownload:',
-    requiresDownload,
-  );
-
   // ============================================================================
   // Check Availability
   // ============================================================================
@@ -317,14 +308,6 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
   // Return
   // ============================================================================
 
-  console.log(
-    '[usePromptAvailability] availability=',
-    availability,
-    'isSupported=',
-    isSupported,
-    'isReady=',
-    isReady,
-  );
   return {
     availability,
     requirements,

@@ -9,11 +9,21 @@ import { FileUploadZone } from '../FileUploadZone';
 describe('FileUploadZone', () => {
   const mockFile = {
     id: '1',
-    name: 'test.png',
-    size: 102400,
-    mimeType: 'image/png',
-    preview: 'data:image/png',
     file: new File([''], 'test.png', { type: 'image/png' }),
+    dataUrl: 'data:image/png',
+    blobUrl: 'blob:test',
+    dimensions: { width: 100, height: 100 },
+    size: 102400,
+    mimeType: 'image/png' as const,
+    format: 'png' as const,
+    optimized: false,
+    thumbnailUrl: 'data:image/png',
+    metadata: {
+      fileName: 'test.png',
+      originalSize: 102400,
+      uploadedAt: new Date(),
+      lastModified: new Date(),
+    },
   };
 
   const defaultProps = {
@@ -33,33 +43,33 @@ describe('FileUploadZone', () => {
 
   it('should render upload zone', () => {
     render(<FileUploadZone {...defaultProps} />);
+    // Component shows "Click or drag files to upload"
     expect(
-      screen.getByText(/drag.*drop.*click to select/i),
+      screen.getByText(/click or drag files to upload/i),
     ).toBeInTheDocument();
   });
 
   it('should show drag over state', () => {
     render(<FileUploadZone {...defaultProps} isDragOver={true} />);
-    const zone = screen.getByText(/drop.*here/i);
+    // When dragging, aria-label changes to "Drop files to upload"
+    const zone = screen.getByRole('button', { name: /drop files to upload/i });
     expect(zone).toBeInTheDocument();
   });
 
   it('should call onDragEnter on drag enter', () => {
-    const { container } = render(<FileUploadZone {...defaultProps} />);
-    const zone = container.firstChild;
-    if (zone) {
-      fireEvent.dragEnter(zone);
-      expect(defaultProps.onDragEnter).toHaveBeenCalled();
-    }
+    render(<FileUploadZone {...defaultProps} />);
+    // Fire dragEnter on the drop zone button element
+    const zone = screen.getByRole('button');
+    fireEvent.dragEnter(zone);
+    expect(defaultProps.onDragEnter).toHaveBeenCalled();
   });
 
   it('should call onDrop on file drop', () => {
-    const { container } = render(<FileUploadZone {...defaultProps} />);
-    const zone = container.firstChild;
-    if (zone) {
-      fireEvent.drop(zone);
-      expect(defaultProps.onDrop).toHaveBeenCalled();
-    }
+    render(<FileUploadZone {...defaultProps} />);
+    // Fire drop on the drop zone button element
+    const zone = screen.getByRole('button');
+    fireEvent.drop(zone);
+    expect(defaultProps.onDrop).toHaveBeenCalled();
   });
 
   it('should display uploaded files', () => {
@@ -83,7 +93,8 @@ describe('FileUploadZone', () => {
 
   it('should disable when disabled prop is true', () => {
     render(<FileUploadZone {...defaultProps} disabled={true} />);
-    const input = screen.queryByRole('button');
-    expect(input).toHaveAttribute('disabled');
+    const button = screen.queryByRole('button');
+    // Component uses aria-disabled instead of disabled attribute
+    expect(button).toHaveAttribute('aria-disabled', 'true');
   });
 });

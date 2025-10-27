@@ -93,8 +93,9 @@ function generateTypeScriptCode(
  * Quality: ${settings.quality}
  *
  * Requirements:
- * - Chrome 138+ with Translator API enabled
- * - Enable chrome://flags#translation-api
+ * - Chrome 138+ (Stable channel)
+ * - Desktop only (not available on mobile devices)
+ * - Internet connection for first-time model download
  *
  * This is a complete, self-contained implementation.
  * Copy this entire file to use in your project.
@@ -125,7 +126,7 @@ interface Translator {
   destroy(): void;
 }
 
-type AvailabilityStatus = 'no' | 'after-download' | 'available';
+type AvailabilityStatus = 'available' | 'downloadable';
 
 declare global {
   interface Window {
@@ -158,15 +159,15 @@ const CONFIG = {
  * Check if translation is available for the language pair
  */
 async function checkAvailability(): Promise<AvailabilityStatus> {
-  if (!('Translator' in window)) {
+  if (!('Translator' in self)) {
     throw new Error(
       'Translator API not supported. ' +
-      'Requires Chrome 138+ with chrome://flags#translation-api enabled.'
+      'Requires Chrome 138+ (Stable) on desktop devices.'
     );
   }
 
   try {
-    const status = await Translator.availability({
+    const status = await self.Translator.availability({
       sourceLanguage: CONFIG.sourceLanguage,
       targetLanguage: CONFIG.targetLanguage,
     });
@@ -174,7 +175,7 @@ async function checkAvailability(): Promise<AvailabilityStatus> {
     return status;
   } catch (error) {
     console.error('Availability check failed:', error);
-    return 'no';
+    throw error;
   }
 }
 
@@ -186,7 +187,7 @@ async function createTranslator(
   signal?: AbortSignal
 ): Promise<Translator | null> {
   try {
-    const translator = await Translator.create({
+    const translator = await self.Translator.create({
       sourceLanguage: CONFIG.sourceLanguage,
       targetLanguage: CONFIG.targetLanguage,
       signal,

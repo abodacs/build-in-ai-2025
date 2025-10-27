@@ -54,8 +54,8 @@ export function formatModelSize(bytes: number, decimals: number = 2): string {
     return `${(bytes / BYTES_PER_KB).toFixed(decimals)} KB`;
   }
 
-  // Bytes
-  return `${bytes} B`;
+  // Bytes - floor to whole number since fractional bytes don't exist
+  return `${Math.floor(bytes)} B`;
 }
 
 /**

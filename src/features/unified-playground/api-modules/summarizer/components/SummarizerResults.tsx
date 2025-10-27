@@ -7,7 +7,8 @@
  * @module SummarizerResults
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import {
   CheckCircle2,
   Copy,
@@ -40,6 +41,7 @@ import {
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { Components } from 'react-markdown';
 import type { SummarizerMetrics } from '../types/summarizer.types';
+import { isChromeInternalLink } from '@/utils/linkSanitizer';
 
 // Register only needed languages for optimal bundle size
 SyntaxHighlighter.registerLanguage('typescript', typescript);
@@ -80,10 +82,38 @@ export interface SummarizerResultsProps {
 /**
  * Custom markdown components for ReactMarkdown
  * Provides syntax highlighting for code blocks
+ *
+ * NOTE: chrome:// links are intentionally non-clickable
+ * These URLs only work in Chrome's internal pages, not web browsers
  */
 const createMarkdownComponents = (
   isDarkMode: boolean,
 ): Partial<Components> => ({
+  // Use div instead of p to avoid invalid nesting of <pre> inside <p>
+  p: ({ children, ...props }) => (
+    <div className="my-2" {...props}>
+      {children}
+    </div>
+  ),
+  // Custom link handler: Prevent chrome:// links from being clickable
+  a: ({ href, children, ...props }) => {
+    if (isChromeInternalLink(href)) {
+      return (
+        <code className="text-blue-600 dark:text-blue-400">{children}</code>
+      );
+    }
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 dark:text-blue-400 hover:underline"
+        {...props}
+      >
+        {children}
+      </a>
+    );
+  },
   code: ({
     inline,
     className,
@@ -199,6 +229,43 @@ export function SummarizerResults({
 
   // Get custom markdown components
   const markdownComponents = createMarkdownComponents(isDarkMode);
+
+  /**
+   * Sanitize summary result for safe display
+   * Allows markdown tags but prevents XSS attacks
+   */
+  const sanitizedResult = useMemo(
+    () =>
+      result
+        ? DOMPurify.sanitize(result, {
+            ALLOWED_TAGS: [
+              'p',
+              'br',
+              'strong',
+              'em',
+              'u',
+              'span',
+              'div',
+              'h1',
+              'h2',
+              'h3',
+              'h4',
+              'h5',
+              'h6',
+              'ul',
+              'ol',
+              'li',
+              'code',
+              'pre',
+              'blockquote',
+              'a',
+            ],
+            ALLOWED_ATTR: ['class', 'href', 'rel', 'target'],
+            ALLOW_DATA_ATTR: false,
+          })
+        : '',
+    [result],
+  );
 
   /**
    * Copy to clipboard
@@ -325,7 +392,7 @@ export function SummarizerResults({
           )}
         >
           <ReactMarkdown components={markdownComponents}>
-            {result}
+            {sanitizedResult}
           </ReactMarkdown>
         </div>
 

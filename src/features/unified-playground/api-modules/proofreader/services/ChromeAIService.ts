@@ -487,14 +487,15 @@ export class ChromeAIProofreaderService {
         },
       );
 
-      // Create a timeout promise that rejects after 5 minutes (300 seconds)
-      // Model download is ~22GB and can take several minutes on slower connections
-      const DOWNLOAD_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+      // Create a timeout promise that rejects after 60 minutes (3600 seconds)
+      // Model download is ~22GB and can take 30+ minutes on slower connections
+      // Generous timeout ensures downloads don't fail on slow internet (e.g., <1 Mbps)
+      const DOWNLOAD_TIMEOUT = 60 * 60 * 1000; // 60 minutes
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => {
           reject(
             new Error(
-              'Model download timed out after 5 minutes. Please check your internet connection and try again. If the download started, it may still be running in the background - try refreshing the page in a few minutes.',
+              'Model download timed out after 60 minutes. Please check your internet connection and try again. If the download started, it may still be running in the background - try refreshing the page in a few minutes.',
             ),
           );
         }, DOWNLOAD_TIMEOUT);

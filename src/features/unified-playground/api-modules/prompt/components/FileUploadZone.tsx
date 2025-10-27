@@ -65,13 +65,21 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         }}
         role="button"
         tabIndex={disabled || !canAddMore ? -1 : 0}
-        aria-label="Upload files - click or drop files here"
+        aria-label={
+          !canAddMore
+            ? `Maximum ${maxFiles} files reached`
+            : isDragOver
+              ? 'Drop files to upload'
+              : 'Upload files - click, press Enter, or drop files here'
+        }
         aria-disabled={disabled || !canAddMore}
+        aria-describedby="file-upload-help"
         className={`
-          border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-          ${isDragOver ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-300'}
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-blue-400 hover:bg-gray-50'}
+          border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all
+          ${isDragOver ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-105' : 'border-gray-300'}
+          ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'}
           ${!canAddMore ? 'opacity-50 cursor-not-allowed' : ''}
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
         `}
       >
         <input
@@ -85,17 +93,19 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         />
 
         <div className="space-y-2">
-          <div className="text-4xl">📁</div>
+          <div className="text-4xl" aria-hidden="true">
+            📁
+          </div>
           <p className="text-sm font-medium">
             {canAddMore
               ? 'Click or drag files to upload'
               : `Maximum ${maxFiles} files reached`}
           </p>
-          <p className="text-xs text-gray-500">
-            Supports: JPEG, PNG, WebP, GIF (max 10MB)
+          <p id="file-upload-help" className="text-xs text-gray-500">
+            Supports: JPEG, PNG, WebP, GIF (max 10MB each)
           </p>
           {canAddMore && (
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-gray-400" aria-live="polite">
               {files.length}/{maxFiles} files uploaded
             </p>
           )}
@@ -104,12 +114,16 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
 
       {/* File List */}
       {files.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
+          role="list"
+          aria-label="Uploaded files"
+        >
           {files.map((file) => (
-            <div key={file.id} className="relative group">
+            <div key={file.id} className="relative group" role="listitem">
               <img
                 src={file.thumbnailUrl || file.dataUrl}
-                alt={file.metadata.fileName}
+                alt={`Preview of ${file.metadata.fileName}`}
                 className="w-full h-24 object-cover rounded border"
               />
               <button
@@ -117,10 +131,11 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
                   e.stopPropagation();
                   onFileRemoved(file.id);
                 }}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                title="Remove file"
+                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                aria-label={`Remove ${file.metadata.fileName}`}
+                type="button"
               >
-                ×
+                <span aria-hidden="true">×</span>
               </button>
               <p
                 className="text-xs truncate mt-1"

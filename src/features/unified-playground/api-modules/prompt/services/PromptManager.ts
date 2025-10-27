@@ -174,13 +174,19 @@ export class PromptManager {
       // Validate configuration
       ChromeAIPromptService.validateOptions(config);
 
+      // Add multimodal support (image input) to enable appendStreaming
+      const multimodalConfig: LanguageModelCreateOptions = {
+        ...config,
+        expectedInputs: [{ type: 'image' }],
+      };
+
       // Create instance with download monitoring
       if (onProgress) {
         this.downloadInProgress = true;
 
         this.instance =
           await ChromeAIPromptService.createInstanceWithMonitoring(
-            config,
+            multimodalConfig,
             (loaded, total) => {
               const progress: DownloadProgress = {
                 loaded,
@@ -195,19 +201,62 @@ export class PromptManager {
         this.downloadInProgress = false;
         this.downloadProgress = null;
       } else {
-        this.instance = await ChromeAIPromptService.createInstance(config);
+        this.instance =
+          await ChromeAIPromptService.createInstance(multimodalConfig);
       }
 
-      this.currentConfig = config;
-      this.multimodalEnabled = false;
+      this.currentConfig = multimodalConfig;
+
+      // Multimodal support is now enabled via expectedInputs
+      // Check if multimodal (image) input is supported
+      try {
+        const multimodalStatus =
+          await ChromeAIPromptService.checkMultimodalAvailability();
+        this.multimodalEnabled = multimodalStatus === 'available';
+        console.log(
+          'PromptManager: multimodal availability =',
+          multimodalStatus,
+        );
+        console.log(
+          'PromptManager: multimodal enabled =',
+          this.multimodalEnabled,
+        );
+        console.log(
+          'PromptManager: instance created with expectedInputs=[{type:"image"}]',
+        );
+      } catch (error) {
+        console.warn('Failed to check multimodal support:', error);
+        // Keep multimodal enabled since instance was created with expectedInputs
+        this.multimodalEnabled = true;
+        console.log(
+          'PromptManager: multimodal enabled (via expectedInputs despite check failure)',
+        );
+      }
+
       this.state = 'ready';
       console.log('PromptManager initialized successfully.');
       console.log('PromptManager: instance is null?', this.instance === null);
       console.log('PromptManager: state =', this.state);
-      console.log(
-        'PromptManager: multimodal enabled =',
-        this.multimodalEnabled,
-      );
+
+      // Log context window and token information
+      if (this.instance?.inputQuota) {
+        console.log(
+          `PromptManager: Context window = ${this.instance.inputQuota} tokens`,
+        );
+      }
+      if (this.instance?.maxTokens) {
+        console.log(
+          `PromptManager: Max output tokens = ${this.instance.maxTokens}`,
+        );
+      }
+      if (this.instance?.tokensSoFar !== undefined) {
+        console.log(
+          `PromptManager: Tokens used so far = ${this.instance.tokensSoFar}`,
+        );
+      }
+      if (this.instance?.tokensLeft !== undefined) {
+        console.log(`PromptManager: Tokens left = ${this.instance.tokensLeft}`);
+      }
     } catch (error) {
       console.error('PromptManager: Initialization FAILED:', error);
       console.error(
@@ -216,7 +265,7 @@ export class PromptManager {
       );
       this.state = 'error';
       this.downloadInProgress = false;
-      this.multimodalEnabled = false;
+      this.multimodalEnabled = false; // Reset on error
       throw error;
     }
   }
@@ -391,6 +440,13 @@ export class PromptManager {
     this.ensureReady();
     this.validatePrompt(text);
 
+    // Check if multimodal is supported
+    if (!this.multimodalEnabled) {
+      throw new Error(
+        'Multimodal input is not supported. Please ensure chrome://flags#prompt-api-for-gemini-nano-multimodal-input is enabled and restart Chrome.',
+      );
+    }
+
     const startTime = Date.now();
     this.lastOperationStartTime = new Date();
     this.state = 'prompting';
@@ -441,6 +497,13 @@ export class PromptManager {
   ): Promise<string> {
     this.ensureReady();
     this.validatePrompt(text);
+
+    // Check if multimodal is supported
+    if (!this.multimodalEnabled) {
+      throw new Error(
+        'Multimodal input is not supported. Please ensure chrome://flags#prompt-api-for-gemini-nano-multimodal-input is enabled and restart Chrome.',
+      );
+    }
 
     const startTime = Date.now();
     this.lastOperationStartTime = new Date();
@@ -600,6 +663,19 @@ export class PromptManager {
 
     const successful = this.metrics.filter((m) => m.success).length;
     return successful / this.metrics.length;
+  }
+
+  /**
+   * Get input quota (context window size in tokens)
+   * Returns the total available context window for the model
+   * For Gemini Nano: typically 6144 tokens
+   * @returns Input quota in tokens, or 6144 as default if not available
+   */
+  getInputQuota(): number {
+    if (!this.instance) {
+      return 6144; // Default for Gemini Nano
+    }
+    return this.instance.inputQuota || 6144;
   }
 
   /**

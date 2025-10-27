@@ -12,6 +12,7 @@ import React, {
   useCallback,
   memo,
 } from 'react';
+import DOMPurify from 'dompurify';
 import { Copy, Edit, RotateCcw, Trash2, MoreVertical } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -24,6 +25,7 @@ import {
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { Message } from '../types';
 import type { Components } from 'react-markdown';
+import { isChromeInternalLink } from '@/utils/linkSanitizer';
 
 // Register only needed languages for optimal bundle size
 SyntaxHighlighter.registerLanguage('typescript', typescript);
@@ -42,10 +44,38 @@ interface MessageBubbleProps {
 /**
  * Custom markdown components for Streamdown
  * Provides syntax highlighting for TypeScript and JavaScript only
+ *
+ * NOTE: chrome:// links are intentionally non-clickable
+ * These URLs only work in Chrome's internal pages, not web browsers
  */
 const createMarkdownComponents = (
   isDarkMode: boolean,
 ): Partial<Components> => ({
+  // Use div instead of p to avoid invalid nesting of <pre> inside <p>
+  p: ({ children, ...props }) => (
+    <div className="my-2" {...props}>
+      {children}
+    </div>
+  ),
+  // Custom link handler: Prevent chrome:// links from being clickable
+  a: ({ href, children, ...props }) => {
+    if (isChromeInternalLink(href)) {
+      return (
+        <code className="text-blue-600 dark:text-blue-400">{children}</code>
+      );
+    }
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 dark:text-blue-400 hover:underline"
+        {...props}
+      >
+        {children}
+      </a>
+    );
+  },
   code: ({
     inline,
     className,
@@ -212,6 +242,43 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
     [isDarkMode],
   );
 
+  /**
+   * Sanitize assistant message content for safe display
+   * Only sanitize assistant messages, user messages are plain text
+   */
+  const sanitizedContent = useMemo(
+    () =>
+      !isUser
+        ? DOMPurify.sanitize(message.content, {
+            ALLOWED_TAGS: [
+              'p',
+              'br',
+              'strong',
+              'em',
+              'u',
+              'span',
+              'div',
+              'h1',
+              'h2',
+              'h3',
+              'h4',
+              'h5',
+              'h6',
+              'ul',
+              'ol',
+              'li',
+              'code',
+              'pre',
+              'blockquote',
+              'a',
+            ],
+            ALLOWED_ATTR: ['class', 'href', 'rel', 'target'],
+            ALLOW_DATA_ATTR: false,
+          })
+        : message.content,
+    [message.content, isUser],
+  );
+
   return (
     <div
       className={`message-bubble flex ${isUser ? 'justify-end' : 'justify-start'}`}
@@ -329,7 +396,7 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
               // Assistant messages: render markdown with syntax highlighting
               <div className="prose prose-sm dark:prose-invert max-w-none">
                 <ReactMarkdown components={markdownComponents}>
-                  {message.content}
+                  {sanitizedContent}
                 </ReactMarkdown>
               </div>
             )}
@@ -362,12 +429,36 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({
           )}
         </div>
 
-        {/* Streaming Indicator */}
+        {/* Streaming Indicator - Optimized with transform for better performance */}
         {isStreaming && (
           <div className="flex items-center space-x-1 text-xs">
-            <span className="animate-bounce">●</span>
-            <span className="animate-bounce delay-100">●</span>
-            <span className="animate-bounce delay-200">●</span>
+            <span
+              className="inline-block"
+              style={{
+                animation: 'streamingDot 1.4s ease-in-out infinite',
+                willChange: 'transform',
+              }}
+            >
+              ●
+            </span>
+            <span
+              className="inline-block"
+              style={{
+                animation: 'streamingDot 1.4s ease-in-out 0.2s infinite',
+                willChange: 'transform',
+              }}
+            >
+              ●
+            </span>
+            <span
+              className="inline-block"
+              style={{
+                animation: 'streamingDot 1.4s ease-in-out 0.4s infinite',
+                willChange: 'transform',
+              }}
+            >
+              ●
+            </span>
           </div>
         )}
       </div>

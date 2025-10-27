@@ -105,7 +105,7 @@ interface WriterCreateOptions {
 
 interface WriterAPI {
   create(options?: WriterCreateOptions): Promise<Writer>;
-  availability(): Promise<'available' | 'after-download' | 'no'>;
+  availability(): Promise<'available' | 'downloadable' | 'unavailable'>;
 }
 
 declare global {
@@ -135,13 +135,13 @@ async function checkAvailability(): Promise<boolean> {
     );
   }
 
-  const availability = await window.Writer.availability();
+  const availability = await self.Writer.availability();
 
-  if (availability === 'no') {
+  if (availability === 'unavailable') {
     throw new Error('Chrome AI not available on this device');
   }
 
-  if (availability === 'after-download') {
+  if (availability === 'downloadable') {
     console.log('Model download required - this may take a few minutes');
     // Model will download automatically on first create() call
   }
@@ -154,7 +154,7 @@ async function checkAvailability(): Promise<boolean> {
  * Note: Requires user activation (must be called from user interaction like button click)
  */
 async function createWriter(): Promise<Writer> {
-  const writer = await window.Writer.create(config);
+  const writer = await self.Writer.create(config);
   return writer;
 }
 
@@ -320,13 +320,13 @@ async function checkAvailability() {
     );
   }
 
-  const availability = await window.Writer.availability();
+  const availability = await self.Writer.availability();
 
-  if (availability === 'no') {
+  if (availability === 'unavailable') {
     throw new Error('Chrome AI not available on this device');
   }
 
-  if (availability === 'after-download') {
+  if (availability === 'downloadable') {
     console.log('Model download required - this may take a few minutes');
     // Model will download automatically on first create() call
   }
@@ -339,7 +339,7 @@ async function checkAvailability() {
  * Note: Requires user activation (must be called from user interaction like button click)
  */
 async function createWriter() {
-  const writer = await window.Writer.create(config);
+  const writer = await self.Writer.create(config);
   return writer;
 }
 

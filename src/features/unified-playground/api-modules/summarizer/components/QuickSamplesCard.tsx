@@ -74,6 +74,7 @@ However, challenges remain. Privacy concerns, algorithmic bias, and the need for
       type: 'tldr',
       format: 'plain-text',
       length: 'medium',
+      outputLanguage: 'en',
       sharedContext:
         'Focus on medical and healthcare terminology. Explain AI applications clearly for a general audience. Highlight key benefits and challenges in accessible language.',
     },
@@ -148,6 +149,7 @@ As the technology matures, it will unlock new possibilities in science, medicine
       type: 'key-points',
       format: 'markdown',
       length: 'long',
+      outputLanguage: 'en',
       sharedContext:
         'Extract chapter-level insights and key concepts. Maintain technical accuracy for quantum computing terminology. Structure as clear bullet points with brief explanations.',
     },
@@ -181,6 +183,7 @@ Implement pagination for collections using limit and offset or cursor-based pagi
       type: 'key-points',
       format: 'markdown',
       length: 'medium',
+      outputLanguage: 'en',
       sharedContext:
         'Preserve technical API terminology and HTTP methods. Focus on implementation details and best practices. Use developer-friendly language with code examples where relevant.',
     },
@@ -210,6 +213,7 @@ Industry analysts predict the announcement will intensify competition in the AI 
       type: 'headline',
       format: 'plain-text',
       length: 'short',
+      outputLanguage: 'en',
       sharedContext:
         'Emphasize newsworthy facts and announcements. Quote key sources and experts accurately. Maintain journalistic tone with focus on what, when, who, and why.',
     },

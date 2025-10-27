@@ -110,7 +110,11 @@ export class ChunkingEngine {
     // Check if chunking is needed
     if (text.length <= strategy.maxChunkSize) {
       // No chunking needed - summarize directly
-      const summary = await this.manager.summarize(text, {}, config);
+      const summary = await this.manager.summarize(
+        text,
+        { outputLanguage: 'en' },
+        config,
+      );
       const finalWordCount = this.countWords(summary);
 
       return {
@@ -139,7 +143,11 @@ export class ChunkingEngine {
       const chunkStartTime = performance.now();
 
       try {
-        const summary = await this.manager.summarize(chunk, {}, config);
+        const summary = await this.manager.summarize(
+          chunk,
+          { outputLanguage: 'en' },
+          config,
+        );
         level1Summaries.push(summary);
 
         const chunkTime = performance.now() - chunkStartTime;
@@ -184,7 +192,7 @@ export class ChunkingEngine {
       // Final summarization
       finalSummary = await this.manager.summarize(
         combinedSummaries,
-        {},
+        { outputLanguage: 'en' },
         config,
       );
       recursionLevels = 2;

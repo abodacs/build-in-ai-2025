@@ -19,6 +19,7 @@ import type {
   ImageData,
   DownloadProgress,
 } from '../types';
+import { DEFAULT_PROMPT_CONFIG } from '../types';
 
 // ============================================================================
 // Types
@@ -26,7 +27,7 @@ import type {
 
 interface UsePromptOptions {
   /** Initial configuration */
-  config: PromptConfig;
+  config?: PromptConfig;
 
   /** Enable auto-save to localStorage */
   autoSave?: boolean;
@@ -69,6 +70,7 @@ interface UsePromptReturn {
   // Token Management
   estimatedTokens: number;
   contextWindowUsage: number; // percentage
+  inputQuota: number; // Total context window in tokens (e.g., 6144 for Gemini Nano)
 }
 
 // ============================================================================
@@ -81,13 +83,20 @@ interface UsePromptReturn {
  * Manages LanguageModel instance, executes prompts, handles streaming,
  * and maintains conversation history.
  */
-export function usePrompt(options: UsePromptOptions): UsePromptReturn {
-  const { config, autoSave = true, enableHistory = true } = options;
+export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
+  const {
+    config = DEFAULT_PROMPT_CONFIG,
+    autoSave = true,
+    enableHistory = true,
+  } = options;
 
   // Managers
   const promptManagerRef = useRef<PromptManager | null>(null);
   const sessionManagerRef = useRef<SessionManager | null>(null);
   const multimodalHandlerRef = useRef<MultimodalHandler | null>(null);
+
+  // Track if component is unmounting to suppress cleanup errors
+  const isUnmountingRef = useRef(false);
 
   // State
   const [isInitialized, setIsInitialized] = useState(false);
@@ -306,6 +315,12 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
 
         return response;
       } catch (err) {
+        // Suppress errors during cleanup/unmount
+        if (isUnmountingRef.current) {
+          console.log('usePrompt: Prompt operation cancelled during cleanup');
+          return '';
+        }
+
         const errorMessage =
           err instanceof Error ? err.message : 'Prompt failed';
         setError(errorMessage);
@@ -461,6 +476,14 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
 
         return response;
       } catch (err) {
+        // Suppress errors during cleanup/unmount
+        if (isUnmountingRef.current) {
+          console.log(
+            'usePrompt: Streaming operation cancelled during cleanup',
+          );
+          return '';
+        }
+
         const errorMessage =
           err instanceof Error ? err.message : 'Streaming failed';
         setError(errorMessage);
@@ -489,12 +512,16 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
       promptManagerRef.current.cancelOperation();
       setIsLoading(false);
       setIsStreaming(false);
-      setStreamingState((prev) => ({
-        ...prev,
-        status: 'error',
-        error: 'Cancelled by user',
-        endTime: new Date(),
-      }));
+
+      // Only set error state if not unmounting (user-initiated cancel)
+      if (!isUnmountingRef.current) {
+        setStreamingState((prev) => ({
+          ...prev,
+          status: 'error',
+          error: 'Cancelled by user',
+          endTime: new Date(),
+        }));
+      }
     }
   }, []);
 
@@ -598,14 +625,26 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
   }, [messages]);
 
   /**
+   * Get input quota (context window) from PromptManager
+   * Uses useMemo to compute during render
+   * Note: isInitialized dependency ensures we recalculate when manager is ready
+   */
+  const inputQuota = useMemo(() => {
+    if (promptManagerRef.current) {
+      return promptManagerRef.current.getInputQuota();
+    }
+    return 6144; // Default for Gemini Nano
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInitialized]);
+
+  /**
    * Calculate context window usage percentage
    * Uses useMemo to compute during render instead of in useEffect
    */
   const contextWindowUsage = useMemo(() => {
-    const maxTokens = config.maxTokens || 4096;
-    const usage = (estimatedTokens / maxTokens) * 100;
+    const usage = (estimatedTokens / inputQuota) * 100;
     return Math.min(usage, 100);
-  }, [estimatedTokens, config.maxTokens]);
+  }, [estimatedTokens, inputQuota]);
 
   // ============================================================================
   // Cleanup
@@ -613,6 +652,9 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
 
   useEffect(() => {
     return () => {
+      // Mark as unmounting to suppress cleanup errors
+      isUnmountingRef.current = true;
+
       if (promptManagerRef.current) {
         promptManagerRef.current.destroy();
         setIsInitialized(false);
@@ -655,6 +697,7 @@ export function usePrompt(options: UsePromptOptions): UsePromptReturn {
     // Token Management
     estimatedTokens,
     contextWindowUsage,
+    inputQuota,
   };
 }
 
