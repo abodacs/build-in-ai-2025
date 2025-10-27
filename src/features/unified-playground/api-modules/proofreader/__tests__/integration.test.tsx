@@ -177,6 +177,9 @@ describe('Proofreader Integration', () => {
 
   describe('Error Handling', () => {
     it('should show error when proofreading fails', async () => {
+      // Use fake timers to skip retry delays
+      vi.useFakeTimers();
+
       // Reject all retry attempts to fail faster
       mockProofread.mockRejectedValue(new Error('Proofread failed'));
 
@@ -190,7 +193,10 @@ describe('Proofreader Integration', () => {
       });
       fireEvent.click(proofreadButton);
 
-      // Wait longer for retries to complete and error to appear
+      // Advance timers to skip all retry delays (1s + 2s + 4s = 7s)
+      await vi.advanceTimersByTimeAsync(7000);
+
+      // Wait for error to appear
       await waitFor(
         () => {
           // Check for error message text directly
@@ -198,11 +204,17 @@ describe('Proofreader Integration', () => {
             screen.getByText(/proofreading failed|proofread failed/i),
           ).toBeInTheDocument();
         },
-        { timeout: 10000 },
+        { timeout: 5000 },
       );
+
+      // Restore real timers
+      vi.useRealTimers();
     }, 15000); // 15 second test timeout
 
     it('should recover from error state', async () => {
+      // Use fake timers to skip retry delays for the error case
+      vi.useFakeTimers();
+
       // First call fails all retries
       mockProofread.mockRejectedValue(new Error('Proofread failed'));
 
@@ -217,7 +229,10 @@ describe('Proofreader Integration', () => {
       });
       fireEvent.click(proofreadButton);
 
-      // Wait longer for retries to complete and error to appear
+      // Advance timers to skip all retry delays (1s + 2s + 4s = 7s)
+      await vi.advanceTimersByTimeAsync(7000);
+
+      // Wait for error to appear
       await waitFor(
         () => {
           // Check for error message text directly
@@ -225,8 +240,11 @@ describe('Proofreader Integration', () => {
             screen.getByText(/proofreading failed|proofread failed/i),
           ).toBeInTheDocument();
         },
-        { timeout: 10000 },
+        { timeout: 5000 },
       );
+
+      // Restore real timers for the success case
+      vi.useRealTimers();
 
       // Second call succeeds
       mockProofread.mockResolvedValueOnce({
