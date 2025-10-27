@@ -50,7 +50,9 @@ export default defineConfig({
     sourcemap: true,
     minify: 'esbuild',
     chunkSizeWarningLimit: 500,
-    target: 'ES2022',
+    // Target latest browsers only (last 2 versions of Chrome/Edge as per browserslist)
+    // This allows using modern JavaScript features for smaller bundles
+    target: 'esnext',
     // Memory-safe: Limit asset inline to prevent memory bloat
     assetsInlineLimit: 4096, // 4KB - smaller files are inlined
     rollupOptions: {
@@ -159,8 +161,8 @@ export default defineConfig({
     esbuildOptions: {
       // Memory-safe: Limit log output to prevent memory bloat
       logLimit: 10,
-      // Memory-safe: Target modern browsers for smaller bundles
-      target: 'es2022',
+      // Target latest browsers only (last 2 versions) for optimal bundle size
+      target: 'esnext',
     },
     // Memory-safe: Exclude large dependencies from pre-bundling
     exclude: ['@testing-library/react', '@testing-library/jest-dom'],

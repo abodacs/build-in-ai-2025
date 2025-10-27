@@ -183,7 +183,7 @@ async function summarize(text: string, context?: string): Promise<string> {
   const summarizer = await createSummarizer();
 
   try {
-    const summary = await summarizer.summarize(text, { context });
+    const summary = await summarizer.summarize(text, { context, outputLanguage: 'en' });
     return summary;
   } finally {
     summarizer.destroy();
@@ -202,7 +202,7 @@ async function summarizeStreaming(
   const summarizer = await createSummarizer();
 
   try {
-    const stream = summarizer.summarizeStreaming(text, { context });
+    const stream = summarizer.summarizeStreaming(text, { context, outputLanguage: 'en' });
 
     // Use for-await-of for async iteration
     let fullSummary = '';
@@ -310,39 +310,43 @@ async function exampleDifferentTypes() {
   const keyPointsSummarizer = await self.Summarizer.create({
     type: 'key-points',
     format: 'markdown',
-    length: 'medium'
+    length: 'medium',
+    outputLanguage: 'en'
   });
 
   // TL;DR (concise sentences)
   const tldrSummarizer = await self.Summarizer.create({
     type: 'tldr',
     format: 'plain-text',
-    length: 'short'
+    length: 'short',
+    outputLanguage: 'en'
   });
 
   // Headline (article title)
   const headlineSummarizer = await self.Summarizer.create({
     type: 'headline',
-    length: 'short'
+    length: 'short',
+    outputLanguage: 'en'
   });
 
   // Teaser (preview text)
   const teaserSummarizer = await self.Summarizer.create({
     type: 'teaser',
-    length: 'medium'
+    length: 'medium',
+    outputLanguage: 'en'
   });
 
   try {
-    const keyPoints = await keyPointsSummarizer.summarize(text);
+    const keyPoints = await keyPointsSummarizer.summarize(text, { outputLanguage: 'en' });
     console.log('Key Points:', keyPoints);
 
-    const tldr = await tldrSummarizer.summarize(text);
+    const tldr = await tldrSummarizer.summarize(text, { outputLanguage: 'en' });
     console.log('TL;DR:', tldr);
 
-    const headline = await headlineSummarizer.summarize(text);
+    const headline = await headlineSummarizer.summarize(text, { outputLanguage: 'en' });
     console.log('Headline:', headline);
 
-    const teaser = await teaserSummarizer.summarize(text);
+    const teaser = await teaserSummarizer.summarize(text, { outputLanguage: 'en' });
     console.log('Teaser:', teaser);
 
     // Clean up
@@ -368,7 +372,7 @@ async function exampleLanguageConfig() {
 
   try {
     const text = \`Mixed English and Spanish content...\`;
-    const summary = await summarizer.summarize(text);
+    const summary = await summarizer.summarize(text, { outputLanguage: 'en' });
     console.log('Summary:', summary);
   } finally {
     summarizer.destroy();
@@ -478,7 +482,7 @@ async function summarize(text, context) {
   const summarizer = await createSummarizer();
 
   try {
-    const summary = await summarizer.summarize(text, { context });
+    const summary = await summarizer.summarize(text, { context, outputLanguage: 'en' });
     return summary;
   } finally {
     summarizer.destroy();
@@ -493,7 +497,7 @@ async function summarizeStreaming(text, onChunk, context) {
   const summarizer = await createSummarizer();
 
   try {
-    const stream = summarizer.summarizeStreaming(text, { context });
+    const stream = summarizer.summarizeStreaming(text, { context, outputLanguage: 'en' });
 
     // Use for-await-of for async iteration
     let fullSummary = '';
@@ -601,39 +605,43 @@ async function exampleDifferentTypes() {
   const keyPointsSummarizer = await self.Summarizer.create({
     type: 'key-points',
     format: 'markdown',
-    length: 'medium'
+    length: 'medium',
+    outputLanguage: 'en'
   });
 
   // TL;DR (concise sentences)
   const tldrSummarizer = await self.Summarizer.create({
     type: 'tldr',
     format: 'plain-text',
-    length: 'short'
+    length: 'short',
+    outputLanguage: 'en'
   });
 
   // Headline (article title)
   const headlineSummarizer = await self.Summarizer.create({
     type: 'headline',
-    length: 'short'
+    length: 'short',
+    outputLanguage: 'en'
   });
 
   // Teaser (preview text)
   const teaserSummarizer = await self.Summarizer.create({
     type: 'teaser',
-    length: 'medium'
+    length: 'medium',
+    outputLanguage: 'en'
   });
 
   try {
-    const keyPoints = await keyPointsSummarizer.summarize(text);
+    const keyPoints = await keyPointsSummarizer.summarize(text, { outputLanguage: 'en' });
     console.log('Key Points:', keyPoints);
 
-    const tldr = await tldrSummarizer.summarize(text);
+    const tldr = await tldrSummarizer.summarize(text, { outputLanguage: 'en' });
     console.log('TL;DR:', tldr);
 
-    const headline = await headlineSummarizer.summarize(text);
+    const headline = await headlineSummarizer.summarize(text, { outputLanguage: 'en' });
     console.log('Headline:', headline);
 
-    const teaser = await teaserSummarizer.summarize(text);
+    const teaser = await teaserSummarizer.summarize(text, { outputLanguage: 'en' });
     console.log('Teaser:', teaser);
 
     // Clean up
@@ -659,7 +667,7 @@ async function exampleLanguageConfig() {
 
   try {
     const text = \`Mixed English and Spanish content...\`;
-    const summary = await summarizer.summarize(text);
+    const summary = await summarizer.summarize(text, { outputLanguage: 'en' });
     console.log('Summary:', summary);
   } finally {
     summarizer.destroy();
@@ -699,7 +707,7 @@ export { summarize, summarizeStreaming, checkAvailability };`;
 export function CodeModal({
   isOpen,
   onClose,
-  config = {},
+  config = { outputLanguage: 'en' },
   className,
 }: CodeModalProps) {
   // State

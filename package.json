@@ -16,6 +16,11 @@
     "node": ">=22.0.0",
     "pnpm": ">=8.0.0"
   },
+  "browserslist": [
+    "last 2 Chrome versions",
+    "last 2 ChromeAndroid versions",
+    "last 2 Edge versions"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

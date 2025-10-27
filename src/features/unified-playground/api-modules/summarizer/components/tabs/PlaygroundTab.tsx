@@ -37,6 +37,7 @@ import { CodeModal } from '../CodeModal';
 // Import types
 import type {
   SummarizerCreateOptions,
+  SummarizeOptions,
   SummarizerMetrics,
   SummarizerError,
 } from '../../types/summarizer.types';
@@ -73,14 +74,14 @@ export interface PlaygroundTabProps {
   /** Summarize function */
   summarize: (
     text: string,
-    options?: Record<string, unknown>,
+    options?: SummarizeOptions,
     config?: SummarizerCreateOptions,
   ) => Promise<string>;
 
   /** Summarize streaming function */
   summarizeStreaming: (
     text: string,
-    options?: Record<string, unknown>,
+    options?: SummarizeOptions,
     config?: SummarizerCreateOptions,
   ) => Promise<ReadableStream<string>>;
 
@@ -314,9 +315,13 @@ export function PlaygroundTab({
 
       // Use streaming or regular mode based on toggle
       if (streamingMode) {
-        await summarizeStreaming(inputText, {}, finalConfig);
+        await summarizeStreaming(
+          inputText,
+          { outputLanguage: 'en' },
+          finalConfig,
+        );
       } else {
-        await summarize(inputText, {}, finalConfig);
+        await summarize(inputText, { outputLanguage: 'en' }, finalConfig);
       }
     } catch (error) {
       console.error('Summarization failed:', error);

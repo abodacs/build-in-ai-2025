@@ -48,12 +48,11 @@ export interface SummarizerCreateOptions {
   /**
    * Output language code
    * Supported languages: 'en' (English), 'es' (Spanish), 'ja' (Japanese)
-   * Default: 'en'
    *
-   * Note: An output language should be specified to ensure optimal output quality
-   * and properly attest to output safety.
+   * Note: An output language MUST be specified to ensure optimal output quality
+   * and properly attest to output safety. This is now required by the Chrome AI API.
    */
-  outputLanguage?: 'en' | 'es' | 'ja';
+  outputLanguage: 'en' | 'es' | 'ja';
 
   /**
    * Optional AbortSignal for cancellation support
@@ -79,12 +78,11 @@ export interface SummarizeOptions {
   /**
    * Output language code
    * Supported languages: 'en' (English), 'es' (Spanish), 'ja' (Japanese)
-   * Default: 'en'
    *
-   * Note: An output language should be specified to ensure optimal output quality
-   * and properly attest to output safety.
+   * Note: An output language MUST be specified to ensure optimal output quality
+   * and properly attest to output safety. This is now required by the Chrome AI API.
    */
-  outputLanguage?: 'en' | 'es' | 'ja';
+  outputLanguage: 'en' | 'es' | 'ja';
 
   /**
    * Optional AbortSignal for cancellation support

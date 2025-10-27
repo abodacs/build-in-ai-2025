@@ -335,6 +335,7 @@ export function SummarizerConfig({
                     type: 'tldr',
                     format: 'plain-text',
                     length: 'medium',
+                    outputLanguage: 'en',
                     sharedContext: '',
                   })
                 }
