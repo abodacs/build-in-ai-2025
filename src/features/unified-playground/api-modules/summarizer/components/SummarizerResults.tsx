@@ -41,6 +41,7 @@ import {
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { Components } from 'react-markdown';
 import type { SummarizerMetrics } from '../types/summarizer.types';
+import { isChromeInternalLink } from '@/utils/linkSanitizer';
 
 // Register only needed languages for optimal bundle size
 SyntaxHighlighter.registerLanguage('typescript', typescript);
@@ -81,6 +82,9 @@ export interface SummarizerResultsProps {
 /**
  * Custom markdown components for ReactMarkdown
  * Provides syntax highlighting for code blocks
+ *
+ * NOTE: chrome:// links are intentionally non-clickable
+ * These URLs only work in Chrome's internal pages, not web browsers
  */
 const createMarkdownComponents = (
   isDarkMode: boolean,
@@ -91,6 +95,25 @@ const createMarkdownComponents = (
       {children}
     </div>
   ),
+  // Custom link handler: Prevent chrome:// links from being clickable
+  a: ({ href, children, ...props }) => {
+    if (isChromeInternalLink(href)) {
+      return (
+        <code className="text-blue-600 dark:text-blue-400">{children}</code>
+      );
+    }
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-600 dark:text-blue-400 hover:underline"
+        {...props}
+      >
+        {children}
+      </a>
+    );
+  },
   code: ({
     inline,
     className,

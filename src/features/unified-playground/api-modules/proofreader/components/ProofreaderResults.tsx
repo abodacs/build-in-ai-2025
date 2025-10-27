@@ -133,6 +133,7 @@ export function ProofreaderResults({
                 disabled={!hasPending || disabled}
                 size="sm"
                 className="h-10 lg:h-8 tap-fast"
+                aria-label="Apply all corrections"
               >
                 <CheckCircle2 className="mr-2 h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">Apply All</span>
@@ -143,6 +144,7 @@ export function ProofreaderResults({
                 size="sm"
                 variant="outline"
                 className="h-10 lg:h-8 tap-fast"
+                aria-label="Reset corrections"
               >
                 <RefreshCw className="mr-2 h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">Reset</span>
@@ -200,6 +202,7 @@ export function ProofreaderResults({
                 size="sm"
                 variant="outline"
                 className="h-10 lg:h-8 tap-fast"
+                aria-label="Copy corrected text"
               >
                 <Copy className="mr-2 h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">Copy</span>
@@ -209,6 +212,7 @@ export function ProofreaderResults({
                 size="sm"
                 variant="outline"
                 className="h-10 lg:h-8 tap-fast"
+                aria-label="Download corrected text"
               >
                 <Download className="mr-2 h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">Download</span>

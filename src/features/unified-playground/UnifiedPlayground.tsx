@@ -245,10 +245,10 @@ function APIModuleContent({ apiId }: { apiId: string }) {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-2xl flex items-center gap-2">
+                    <h2 className="text-2xl flex items-center gap-2 leading-none font-semibold">
                       <Sparkles className="h-6 w-6 text-primary" />
                       {m.name}
-                    </CardTitle>
+                    </h2>
                     <p className="text-sm text-muted-foreground mt-1">
                       {m.description}
                     </p>

@@ -587,7 +587,7 @@ export function PlaygroundTab({
             {/* Chunking Strategy - First: Process long content */}
             {onChunkingStrategyChange && chunkingStrategy && (
               <div className="space-y-2">
-                <h4 className="text-sm font-medium">Long Content Processing</h4>
+                <h3 className="text-sm font-medium">Long Content Processing</h3>
                 <p className="text-xs text-muted-foreground">
                   Automatically applied to content exceeding 10,000 characters
                 </p>

@@ -4,8 +4,14 @@
  * End-to-end integration tests for the complete proofreading workflow.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import {
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+  cleanup,
+} from '@testing-library/react';
 import { render } from '@/tests/test-utils/TestProviders';
 import { ProofreaderMain } from '../components/tabs/PlaygroundTab';
 
@@ -65,6 +71,20 @@ beforeEach(() => {
       },
     ],
   });
+});
+
+afterEach(() => {
+  // Critical: Cleanup all mounted components
+  cleanup();
+
+  // Reset all mocks
+  vi.clearAllMocks();
+
+  // Restore real timers if they were faked
+  vi.useRealTimers();
+
+  // Clear the Proofreader mock to ensure clean state
+  delete (globalThis as any).Proofreader;
 });
 
 describe('Proofreader Integration', () => {
@@ -177,13 +197,11 @@ describe('Proofreader Integration', () => {
 
   describe('Error Handling', () => {
     it('should show error when proofreading fails', async () => {
-      // Use fake timers to skip retry delays
-      vi.useFakeTimers();
-
-      // Reject all retry attempts to fail faster
+      // Reject all retry attempts
       mockProofread.mockRejectedValue(new Error('Proofread failed'));
 
       render(<ProofreaderMain />);
+      await waitForComponentReady();
 
       const textarea = screen.getByRole('textbox');
       setContentEditableText(textarea, 'test');
@@ -193,27 +211,18 @@ describe('Proofreader Integration', () => {
       });
       fireEvent.click(proofreadButton);
 
-      // Advance timers to skip all retry delays (1s + 2s + 4s = 7s)
-      await vi.advanceTimersByTimeAsync(7000);
-
-      // Wait for error to appear (check for error alert)
+      // Wait for error to appear after retries (allow enough time for 3 retries)
       await waitFor(
         () => {
-          // Check for error alert or message - be more flexible with the text
+          // Check for error alert or message
           const errorElements = screen.queryAllByText(/failed|error/i);
           expect(errorElements.length).toBeGreaterThan(0);
         },
-        { timeout: 5000 },
+        { timeout: 10000 }, // Allow time for retries: 1s + 2s + 4s = 7s + buffer
       );
-
-      // Restore real timers
-      vi.useRealTimers();
     }, 15000); // 15 second test timeout
 
     it('should recover from error state', async () => {
-      // Use fake timers to skip retry delays for the error case
-      vi.useFakeTimers();
-
       // First call fails all retries
       mockProofread.mockRejectedValue(new Error('Proofread failed'));
 
@@ -228,21 +237,15 @@ describe('Proofreader Integration', () => {
       });
       fireEvent.click(proofreadButton);
 
-      // Advance timers to skip all retry delays (1s + 2s + 4s = 7s)
-      await vi.advanceTimersByTimeAsync(7000);
-
-      // Wait for error to appear (check for error alert)
+      // Wait for error to appear after retries
       await waitFor(
         () => {
-          // Check for error alert or message - be more flexible with the text
+          // Check for error alert or message
           const errorElements = screen.queryAllByText(/failed|error/i);
           expect(errorElements.length).toBeGreaterThan(0);
         },
-        { timeout: 5000 },
+        { timeout: 10000 }, // Allow time for retries
       );
-
-      // Restore real timers for the success case
-      vi.useRealTimers();
 
       // Second call succeeds
       mockProofread.mockResolvedValueOnce({
@@ -610,15 +613,11 @@ describe('Proofreader Integration', () => {
         expect(screen.getByText('quik')).toBeInTheDocument();
       });
 
-      // Apply all - get the "Corrections Found" section and find button by index
-      // The text is hidden on small screens, so we find by button order
-      const correctionsSection = screen
-        .getByText(/^Corrections Found$/i)
-        .closest('div');
-      expect(correctionsSection).toBeTruthy();
-      const buttons = within(correctionsSection!).getAllByRole('button');
-      // First button in Corrections Found section is "Apply All"
-      fireEvent.click(buttons[0]);
+      // Apply all - use aria-label for accessibility
+      const applyAllButton = screen.getByRole('button', {
+        name: /apply all corrections/i,
+      });
+      fireEvent.click(applyAllButton);
 
       await waitFor(() => {
         expect(screen.getAllByText('Applied')).toHaveLength(2);
@@ -675,15 +674,11 @@ describe('Proofreader Integration', () => {
         expect(screen.getByText('Applied')).toBeInTheDocument();
       });
 
-      // Copy - get the "Corrected Text" section and find Copy button
-      // The text is hidden on small screens, so we find by button order
-      const correctedTextSection = screen
-        .getByText(/^Corrected Text$/i)
-        .closest('div');
-      expect(correctedTextSection).toBeTruthy();
-      const buttons = within(correctedTextSection!).getAllByRole('button');
-      // First button in Corrected Text section is "Copy"
-      fireEvent.click(buttons[0]);
+      // Copy - use aria-label for accessibility
+      const copyButton = screen.getByRole('button', {
+        name: /copy corrected text/i,
+      });
+      fireEvent.click(copyButton);
 
       await waitFor(() => {
         expect(navigator.clipboard.writeText).toHaveBeenCalled();
