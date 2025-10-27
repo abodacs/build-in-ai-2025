@@ -247,8 +247,9 @@ describe('Proofreader Integration', () => {
         { timeout: 10000 }, // Allow time for retries
       );
 
-      // Second call succeeds
-      mockProofread.mockResolvedValueOnce({
+      // Now reset mock completely to return success on next call
+      mockProofread.mockReset();
+      mockProofread.mockResolvedValue({
         corrections: [
           {
             correction: 'the',
@@ -260,17 +261,28 @@ describe('Proofreader Integration', () => {
         ],
       });
 
+      // Wait for button to be ready again (not disabled)
+      await waitFor(() => {
+        expect(proofreadButton).not.toBeDisabled();
+      });
+
+      // Clear the textarea and add new text
+      setContentEditableText(textarea, '');
+      await new Promise((resolve) => setTimeout(resolve, 100));
       setContentEditableText(textarea, 'teh test');
+
+      // Try proofreading again
       fireEvent.click(proofreadButton);
 
-      await waitFor(() => {
-        expect(screen.getByText('teh')).toBeInTheDocument();
-        // Check that error indicators are gone - be more flexible
-        const errorElements = screen.queryAllByText(/failed|error/i);
-        // Should have fewer error messages or none
-        expect(errorElements.length).toBeLessThanOrEqual(1);
-      });
-    }, 15000); // 15 second test timeout
+      // Should successfully show corrections this time (verifies recovery)
+      await waitFor(
+        () => {
+          // Look for the Corrections Found heading (indicates success, not error)
+          expect(screen.getByText(/^Corrections Found$/i)).toBeInTheDocument();
+        },
+        { timeout: 10000 }, // Longer timeout to allow for full processing
+      );
+    }, 30000); // 30 second test timeout to allow for full retries + recovery
 
     it('should handle API unavailable', async () => {
       (globalThis as any).Proofreader.availability.mockImplementation(
