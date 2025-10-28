@@ -278,15 +278,14 @@ export function ProofreaderLoadingCard({
                 </span>
               )}
             </div>
-            {downloadProgress.timeRemaining &&
-              downloadProgress.timeRemaining > 0 && (
-                <p className="text-xs text-center text-muted-foreground pt-1">
-                  Estimated time remaining:{' '}
-                  <span className="font-medium">
-                    {formatDuration(downloadProgress.timeRemaining)}
-                  </span>
-                </p>
-              )}
+            {downloadProgress.timeRemaining != null && (
+              <p className="text-xs text-center text-muted-foreground pt-1">
+                Estimated time remaining:{' '}
+                <span className="font-medium">
+                  {formatDuration(downloadProgress.timeRemaining)}
+                </span>
+              </p>
+            )}
           </div>
         )}
 

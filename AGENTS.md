@@ -171,28 +171,25 @@ The project demonstrates how Chrome's built-in AI APIs can be used as developmen
 
 ### GitHub Actions Workflows
 
-**Automated Checks**:
+**Current Workflow** (`.github/workflows/deploy.yml`):
 
 ```yaml
-# .github/workflows/ci.yml
-- Linting (ESLint)
-- Type checking (TypeScript)
-- Unit tests (Vitest)
-- Integration tests
-- E2E tests (Playwright)
-- Security scans
-- Bundle analysis
+lint-and-test job:
+  - Type checking (pnpm type-check)
+  - Linting (pnpm lint)
+  - Unit tests with coverage (pnpm test:coverage)
+
+build-and-deploy job:
+  - Production build (pnpm build:cloudflare)
+  - Cloudflare Pages deployment
 ```
 
-**Automated Deployment**:
+**Triggers**:
 
-```yaml
-# .github/workflows/deploy.yml
-- Build validation
-- Performance testing
-- Lighthouse audits
-- Cloudflare Pages deployment
-```
+- Push to main → Production deployment
+- Pull requests → Preview deployment
+
+**Note**: Advanced features (E2E tests, security scans, bundle analysis, performance testing, Lighthouse audits) are configured locally via npm scripts but not yet integrated into the CI/CD pipeline. These are available for local development and can be added to the workflow as needed.
 
 ### Code Quality Bots
 

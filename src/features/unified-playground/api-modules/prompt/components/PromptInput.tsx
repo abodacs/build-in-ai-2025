@@ -4,7 +4,7 @@
  */
 
 import React, { useRef, useEffect, useMemo } from 'react';
-import { Send, Paperclip } from 'lucide-react';
+import { Send, Paperclip, Command } from 'lucide-react';
 import { FieldError } from '../../shared/components';
 import { TokenVisualization, type TokenBreakdown } from './TokenVisualization';
 import { estimateTokensAccurate } from '../utils/tokenCounter';
@@ -40,7 +40,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   error,
   errorHelpText,
   systemPrompt = '',
-  maxTokens = 512,
+  maxTokens = 2048,
   onOptimizeTokens,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -102,7 +102,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
     <div className="prompt-input-container space-y-2">
       {/* Textarea Container */}
       <div
-        className={`border rounded-lg bg-white dark:bg-gray-800 ${error ? 'border-red-400 dark:border-red-500' : ''}`}
+        className={`relative border rounded-lg bg-white dark:bg-gray-800 ${error ? 'border-red-400 dark:border-red-500' : ''}`}
       >
         <textarea
           ref={textareaRef}
@@ -115,13 +115,18 @@ export const PromptInput: React.FC<PromptInputProps> = ({
           aria-label="Message input"
           aria-invalid={!!error}
           aria-describedby={
-            error
-              ? 'prompt-input-error prompt-input-info prompt-input-shortcuts'
-              : 'prompt-input-info prompt-input-shortcuts'
+            error ? 'prompt-input-error prompt-input-info' : 'prompt-input-info'
           }
           className="w-full p-3 resize-none rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px] max-h-[50vh] overflow-y-auto text-base md:text-sm"
           rows={3}
         />
+        {/* Keyboard Shortcut Hint */}
+        {!disabled && value.length > 0 && (
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] text-muted-foreground/60 pointer-events-none">
+            <Command className="w-3 h-3" />
+            <span>+Enter to send</span>
+          </div>
+        )}
 
         {/* Action Bar - Outside textarea */}
         <div className="flex items-center justify-between px-3 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-b-lg">
@@ -168,16 +173,6 @@ export const PromptInput: React.FC<PromptInputProps> = ({
         breakdown={tokenBreakdown}
         onOptimize={onOptimizeTokens}
       />
-
-      {/* Keyboard Shortcuts Help */}
-      <div className="flex justify-start">
-        <span
-          id="prompt-input-shortcuts"
-          className="text-xs text-gray-400 dark:text-gray-500"
-        >
-          Enter to send • Shift+Enter for newline • Esc to clear
-        </span>
-      </div>
     </div>
   );
 };

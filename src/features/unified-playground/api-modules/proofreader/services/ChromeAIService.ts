@@ -187,7 +187,7 @@ export class ChromeAIProofreaderService {
             'This could be due to: \n' +
             '1. Chrome version < 141 (Origin Trial period: Chrome 141-145)\n' +
             '2. Origin Trial not enabled for your domain\n' +
-            '3. Insufficient storage space (22GB+ required)\n' +
+            '3. Insufficient storage space\n' +
             '4. Unsupported platform (mobile devices not supported)\n' +
             'Check chrome://on-device-internals for details.',
         );
@@ -291,14 +291,12 @@ export class ChromeAIProofreaderService {
    *
    * @param instance - Proofreader instance
    * @param input - Text to proofread
-   * @param context - Optional context
    * @param signal - Optional abort signal
    * @returns Proofread result with corrections
    */
   static async proofread(
     instance: Proofreader,
     input: string,
-    context?: string,
     signal?: AbortSignal,
   ): Promise<ProofreadResult> {
     try {
@@ -318,7 +316,6 @@ export class ChromeAIProofreaderService {
 
       // Prepare options
       const options: ProofreadOptions = {
-        context,
         signal,
       };
 
@@ -446,7 +443,7 @@ export class ChromeAIProofreaderService {
             });
 
             const loaded = customEvent.loaded || 0;
-            const total = customEvent.total || 22 * 1024 * 1024 * 1024; // Default 22GB
+            const total = customEvent.total || 1024 * 1024 * 1024; // Default 1GB fallback
 
             // Calculate download speed
             const elapsed =
@@ -488,7 +485,7 @@ export class ChromeAIProofreaderService {
       );
 
       // Create a timeout promise that rejects after 60 minutes (3600 seconds)
-      // Model download is ~22GB and can take 30+ minutes on slower connections
+      // Model download can take 30+ minutes on slower connections
       // Generous timeout ensures downloads don't fail on slow internet (e.g., <1 Mbps)
       const DOWNLOAD_TIMEOUT = 60 * 60 * 1000; // 60 minutes
       const timeoutPromise = new Promise<never>((_, reject) => {
@@ -643,7 +640,7 @@ export class ChromeAIProofreaderService {
 
       // Model download required
       if (error.message.includes('after-download')) {
-        return 'Proofreader model needs to be downloaded. This requires 22GB+ storage and unmetered connection.';
+        return 'Proofreader model needs to be downloaded. This requires sufficient storage and unmetered connection.';
       }
 
       // Cancelled

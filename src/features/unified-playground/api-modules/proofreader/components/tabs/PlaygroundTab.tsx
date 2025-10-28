@@ -42,7 +42,7 @@ export function ProofreaderMain() {
   } | null>(null);
 
   // Availability hook for model management
-  const { availability, isReady } = useProofreaderAvailability();
+  const { availability, isReady, isSupported } = useProofreaderAvailability();
 
   const {
     isProofreading,
@@ -87,6 +87,12 @@ export function ProofreaderMain() {
   // Handle proofread
   const handleProofread = async () => {
     if (!inputText.trim()) {
+      return;
+    }
+
+    // Check if model is ready before proofreading
+    if (!isReady) {
+      console.warn('[Proofreader] Model not ready, cannot proofread');
       return;
     }
 
@@ -140,6 +146,28 @@ export function ProofreaderMain() {
         </Alert>
       )}
 
+      {/* Model Download Warning */}
+      {!isLoading && !isReady && availability === 'after-download' && (
+        <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-sm text-amber-800 dark:text-amber-200">
+            Model download required. Use the Model Management section below to
+            download the Proofreader model.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* API Not Supported Warning */}
+      {!isReady && availability === 'no' && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="text-sm">
+            Proofreader API is not supported in your browser. Requires Chrome
+            141-145 with Proofreader API enabled.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Quick Samples */}
       <QuickSamples
         onTemplateSelect={handleTemplateSelect}
@@ -168,7 +196,7 @@ export function ProofreaderMain() {
         onRedo={actions.redo}
         isProofreading={isProofreading || isLoading}
         loadingPhase={loadingPhase}
-        disabled={false}
+        disabled={!isReady || !isSupported}
         maxLength={5000}
         correctionCount={corrections.length}
         error={inputError?.message}

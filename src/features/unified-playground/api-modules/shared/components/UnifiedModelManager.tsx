@@ -610,14 +610,10 @@ export function UnifiedModelManager({
         {!showLoadingState && (
           <div className="pt-2 border-t border-slate-200">
             <div className="text-xs text-muted-foreground">
-              <a
-                href="chrome://on-device-internals"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 underline"
-              >
-                View detailed status in Chrome Internals
-              </a>
+              <code className="px-1 py-0.5 bg-muted rounded text-xs">
+                chrome://on-device-internals
+              </code>{' '}
+              View detailed status in Chrome Internals
             </div>
           </div>
         )}

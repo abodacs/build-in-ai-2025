@@ -16,6 +16,8 @@ import {
   Sparkles,
   Shield,
   Activity,
+  Github,
+  ExternalLink,
 } from 'lucide-react';
 import { usePlaygroundState } from '../shared/hooks/usePlaygroundState';
 import { usePerformanceMetrics } from '../shared/hooks/usePerformanceMetrics';
@@ -287,15 +289,25 @@ export function PlaygroundContainer({
               </div>
 
               <div className="flex items-center gap-4">
-                <Button variant="ghost" size="sm">
-                  Security Guide
-                </Button>
-                <Button variant="ghost" size="sm">
-                  API Documentation
-                </Button>
-                <Button variant="ghost" size="sm">
-                  Performance Tips
-                </Button>
+                <a
+                  href="https://github.com/abodacs/build-in-ai-2025"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Github className="w-4 h-4" />
+                  <span>GitHub</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+                <a
+                  href="https://developer.chrome.com/docs/ai/built-in"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <span>Documentation</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
             </div>
           </div>

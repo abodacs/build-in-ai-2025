@@ -467,28 +467,27 @@ describe('UnifiedModelManager', () => {
   // Links and External Navigation Tests
   // ==========================================================================
 
-  describe('External Links', () => {
-    it('should render link to Chrome internals', () => {
+  describe('Chrome Internals Reference', () => {
+    it('should display Chrome internals URL as non-clickable text', () => {
       render(<UnifiedModelManager {...defaultProps} />);
 
-      const link = screen.getByText(
+      // Verify the informational text is present
+      const infoText = screen.getByText(
         /View detailed status in Chrome Internals/i,
       );
-      expect(link).toBeInTheDocument();
-      expect(link.closest('a')).toHaveAttribute(
-        'href',
-        'chrome://on-device-internals',
-      );
+      expect(infoText).toBeInTheDocument();
+
+      // Verify it is NOT a clickable link (design decision: chrome:// URLs should not be clickable)
+      expect(infoText.closest('a')).not.toBeInTheDocument();
     });
 
-    it('should open links in new tab', () => {
+    it('should display chrome:// URL in code element', () => {
       render(<UnifiedModelManager {...defaultProps} />);
 
-      const link = screen
-        .getByText(/View detailed status in Chrome Internals/i)
-        .closest('a');
-      expect(link).toHaveAttribute('target', '_blank');
-      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+      // Verify the chrome:// URL is displayed in a code element for copy-paste
+      const codeElement = screen.getByText('chrome://on-device-internals');
+      expect(codeElement).toBeInTheDocument();
+      expect(codeElement.tagName.toLowerCase()).toBe('code');
     });
   });
 

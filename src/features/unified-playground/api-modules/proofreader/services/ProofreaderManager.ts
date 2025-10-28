@@ -123,18 +123,15 @@ export class ProofreaderManager extends BaseWritingManager<
    * Proofread text and return corrections
    *
    * @param input - Input text to proofread
-   * @param context - Optional per-operation context
    * @param signal - Optional abort signal
    * @returns Proofread result with corrections
    */
   async proofread(
     input: string,
-    context?: string,
     signal?: AbortSignal,
   ): Promise<ProofreadResult> {
     console.log('📝 ProofreaderManager.proofread called');
     console.log('  → Input length:', input.length, 'chars');
-    console.log('  → Context:', context ? `${context.length} chars` : 'none');
     console.log('  → Signal provided:', !!signal);
 
     if (!this.config) {
@@ -164,7 +161,6 @@ export class ProofreaderManager extends BaseWritingManager<
       const result = await ChromeAIProofreaderService.proofread(
         instance,
         input,
-        context,
         signal,
       );
 

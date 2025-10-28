@@ -112,14 +112,14 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessage> = {
   MODEL_DOWNLOAD_FAILED: {
     message: 'Failed to download the AI model',
     helpText:
-      'Check your internet connection and ensure you have at least 22GB of free storage space. Then try again.',
+      'Check your internet connection and ensure you have sufficient free storage space. Then try again.',
     severity: 'error',
   },
 
   INSUFFICIENT_STORAGE: {
     message: 'Not enough storage space available',
     helpText:
-      'Free up at least 22GB of disk space to download the AI model, then try again.',
+      'Free up sufficient disk space to download the AI model, then try again.',
     severity: 'error',
   },
 
@@ -228,7 +228,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, ErrorMessage> = {
   MODEL_DOWNLOAD_REQUIRED: {
     message: 'AI model needs to be downloaded',
     helpText:
-      'The AI model must be downloaded before use. This requires 22GB+ storage. Check chrome://on-device-internals for download status.',
+      'The AI model must be downloaded before use. This requires sufficient storage. Check chrome://on-device-internals for download status.',
     severity: 'info',
   },
 

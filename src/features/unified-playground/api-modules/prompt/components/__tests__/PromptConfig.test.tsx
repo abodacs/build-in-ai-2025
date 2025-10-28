@@ -137,7 +137,7 @@ describe('PromptConfig', () => {
       const slider = screen.getByLabelText(/Max tokens slider/i);
       expect(slider).toBeInTheDocument();
       expect(slider).toHaveAttribute('aria-valuemin', '256');
-      expect(slider).toHaveAttribute('aria-valuemax', '1024');
+      expect(slider).toHaveAttribute('aria-valuemax', '4096');
     });
   });
 
@@ -163,7 +163,7 @@ describe('PromptConfig', () => {
         systemPrompt: 'You are a helpful and friendly assistant.',
         temperature: 0.8,
         topK: 8,
-        maxTokens: 512,
+        maxTokens: 2048,
         enableStreaming: true,
       });
     });

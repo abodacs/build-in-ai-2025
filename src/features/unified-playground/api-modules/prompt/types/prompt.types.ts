@@ -191,7 +191,7 @@ export const DEFAULT_PROMPT_CONFIG: PromptConfig = {
   systemPrompt: 'You are a helpful AI assistant.',
   temperature: 0.8,
   topK: 8,
-  maxTokens: 512, // Default max tokens for responses (max allowed: 1024)
+  maxTokens: 2048, // Default max tokens for responses (max allowed: 4096)
   enableStreaming: true,
   enableAutoSave: true,
   enableHistory: true,

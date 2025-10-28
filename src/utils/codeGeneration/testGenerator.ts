@@ -8,6 +8,9 @@
  */
 
 import type { PromptConfig } from '@/features/unified-playground/api-modules/prompt/types';
+import type { ProofreaderConfig } from '@/features/unified-playground/api-modules/proofreader/types/proofreader.types';
+import type { WriterConfig } from '@/features/unified-playground/api-modules/writer/types/writer.types';
+import type { RewriterConfig } from '@/features/unified-playground/api-modules/rewriter/types/rewriter.types';
 
 // ============================================================================
 // Types
@@ -699,11 +702,312 @@ describe('${apiName} API Tests', () => {
 `;
 }
 
+/**
+ * Generate concise Vitest tests for Proofreader API
+ */
+export function generateProofreaderAPITests(config: ProofreaderConfig): string {
+  const configStr = JSON.stringify(
+    {
+      expectedInputLanguages: config.expectedInputLanguages || ['en'],
+      includeCorrectionTypes: config.includeCorrectionTypes ?? true,
+      includeCorrectionExplanations:
+        config.includeCorrectionExplanations ?? true,
+    },
+    null,
+    2,
+  );
+
+  return `/**
+ * Chrome AI Proofreader API - Test Suite
+ * Tests both type correctness and runtime behavior
+ * @vitest
+ */
+
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// Test configuration
+const testConfig = ${configStr};
+
+// Top-level async function following DefinitelyTyped pattern
+async function testProofreaderAPI() {
+  // Mock setup
+  const mockProofreader = {
+    proofread: vi.fn(),
+  };
+
+  const mockProofreaderAPI = {
+    create: vi.fn().mockResolvedValue(mockProofreader),
+    availability: vi.fn().mockResolvedValue('readily' as ProofreaderAvailability),
+  };
+
+  beforeEach(() => {
+    // @ts-ignore - Mocking browser API
+    global.window.Proofreader = mockProofreaderAPI;
+    vi.clearAllMocks();
+  });
+
+  describe('Proofreader API', () => {
+    it('should check API availability with correct type', async () => {
+      const availability: ProofreaderAvailability = await window.Proofreader.availability();
+      expect(['no', 'readily', 'after-download']).toContain(availability);
+    });
+
+    it('should create proofreader with config', async () => {
+      const proofreader: Proofreader = await window.Proofreader.create(testConfig);
+      expect(proofreader).toBeDefined();
+      expect(proofreader).toHaveProperty('proofread');
+    });
+
+    it('should proofread text and return typed corrections', async () => {
+      const testText = 'This is a test with erors.';
+      const mockCorrections: ProofreaderCorrection[] = [
+        { start: 22, end: 27, suggestion: 'errors', type: 'spelling' }
+      ];
+      mockProofreader.proofread.mockResolvedValue(mockCorrections);
+
+      const proofreader = await window.Proofreader.create(testConfig);
+      const corrections: ProofreaderCorrection[] = await proofreader.proofread(testText);
+
+      expect(corrections).toHaveLength(1);
+      expect(corrections[0].suggestion).toBe('errors');
+      expect(corrections[0].type).toBe('spelling');
+    });
+
+    it('should handle text with no errors', async () => {
+      mockProofreader.proofread.mockResolvedValue([]);
+
+      const proofreader = await window.Proofreader.create(testConfig);
+      const corrections: ProofreaderCorrection[] = await proofreader.proofread('This is correct text.');
+
+      expect(corrections).toHaveLength(0);
+    });
+  });
+}
+
+// Run tests
+testProofreaderAPI();
+`;
+}
+
+/**
+ * Generate concise Vitest tests for Writer API
+ */
+export function generateWriterAPITests(config: WriterConfig): string {
+  const configStr = JSON.stringify(
+    {
+      tone: config.tone || 'neutral',
+      format: config.format || 'plain-text',
+      length: config.length || 'medium',
+      outputLanguage: config.outputLanguage || 'en',
+      sharedContext: config.sharedContext,
+    },
+    null,
+    2,
+  );
+
+  return `/**
+ * Chrome AI Writer API - Test Suite
+ * Tests both type correctness and runtime behavior
+ * @vitest
+ */
+
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// Test configuration
+const testConfig = ${configStr};
+
+// Top-level async function following DefinitelyTyped pattern
+async function testWriterAPI() {
+  // Mock setup
+  const mockWriter = {
+    write: vi.fn(),
+    writeStreaming: vi.fn(),
+  };
+
+  const mockWriterAPI = {
+    create: vi.fn().mockResolvedValue(mockWriter),
+    availability: vi.fn().mockResolvedValue('readily' as WriterAvailability),
+  };
+
+  beforeEach(() => {
+    // @ts-ignore - Mocking browser API
+    global.window.Writer = mockWriterAPI;
+    vi.clearAllMocks();
+  });
+
+  describe('Writer API', () => {
+    it('should check API availability with correct type', async () => {
+      const availability: WriterAvailability = await window.Writer.availability();
+      expect(['no', 'readily', 'after-download']).toContain(availability);
+    });
+
+    it('should create writer with typed config', async () => {
+      const writer: Writer = await window.Writer.create(testConfig);
+      expect(writer).toBeDefined();
+      expect(writer).toHaveProperty('write');
+      expect(writer).toHaveProperty('writeStreaming');
+    });
+
+    it('should write content and return typed response', async () => {
+      const prompt = 'Write about AI technology';
+      const mockResponse = 'AI technology is transforming the world...';
+      mockWriter.write.mockResolvedValue(mockResponse);
+
+      const writer = await window.Writer.create(testConfig);
+      const result: string = await writer.write(prompt);
+
+      expect(result).toBe(mockResponse);
+      expect(mockWriter.write).toHaveBeenCalledWith(prompt);
+    });
+
+    it('should handle streaming responses with correct types', async () => {
+      const chunks = ['AI ', 'technology ', 'is ', 'amazing.'];
+      const mockStream = {
+        getReader: () => ({
+          read: vi.fn()
+            .mockResolvedValueOnce({ done: false, value: chunks[0] })
+            .mockResolvedValueOnce({ done: false, value: chunks.slice(0, 2).join('') })
+            .mockResolvedValueOnce({ done: false, value: chunks.slice(0, 3).join('') })
+            .mockResolvedValueOnce({ done: false, value: chunks.join('') })
+            .mockResolvedValueOnce({ done: true, value: undefined }),
+        }),
+      };
+      mockWriter.writeStreaming.mockReturnValue(mockStream);
+
+      const writer = await window.Writer.create(testConfig);
+      const stream: ReadableStream<string> = writer.writeStreaming('Write something');
+      const reader = stream.getReader();
+
+      const receivedChunks: string[] = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        receivedChunks.push(value);
+      }
+
+      expect(receivedChunks).toHaveLength(4);
+    });
+  });
+}
+
+// Run tests
+testWriterAPI();
+`;
+}
+
+/**
+ * Generate concise Vitest tests for Rewriter API
+ */
+export function generateRewriterAPITests(config: RewriterConfig): string {
+  const configStr = JSON.stringify(
+    {
+      tone: config.tone || 'as-is',
+      format: config.format || 'as-is',
+      length: config.length || 'as-is',
+      outputLanguage: config.outputLanguage || 'en',
+    },
+    null,
+    2,
+  );
+
+  return `/**
+ * Chrome AI Rewriter API - Test Suite
+ * Tests both type correctness and runtime behavior
+ * @vitest
+ */
+
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// Test configuration
+const testConfig = ${configStr};
+
+// Top-level async function following DefinitelyTyped pattern
+async function testRewriterAPI() {
+  // Mock setup
+  const mockRewriter = {
+    rewrite: vi.fn(),
+    rewriteStreaming: vi.fn(),
+  };
+
+  const mockRewriterAPI = {
+    create: vi.fn().mockResolvedValue(mockRewriter),
+    availability: vi.fn().mockResolvedValue('readily' as RewriterAvailability),
+  };
+
+  beforeEach(() => {
+    // @ts-ignore - Mocking browser API
+    global.window.Rewriter = mockRewriterAPI;
+    vi.clearAllMocks();
+  });
+
+  describe('Rewriter API', () => {
+    it('should check API availability with correct type', async () => {
+      const availability: RewriterAvailability = await window.Rewriter.availability();
+      expect(['no', 'readily', 'after-download']).toContain(availability);
+    });
+
+    it('should create rewriter with typed config', async () => {
+      const rewriter: Rewriter = await window.Rewriter.create(testConfig);
+      expect(rewriter).toBeDefined();
+      expect(rewriter).toHaveProperty('rewrite');
+      expect(rewriter).toHaveProperty('rewriteStreaming');
+    });
+
+    it('should rewrite text and return typed response', async () => {
+      const original = 'Hey, this is cool!';
+      const rewritten = 'This is quite impressive.';
+      mockRewriter.rewrite.mockResolvedValue(rewritten);
+
+      const rewriter = await window.Rewriter.create(testConfig);
+      const result: string = await rewriter.rewrite(original);
+
+      expect(result).toBe(rewritten);
+      expect(mockRewriter.rewrite).toHaveBeenCalledWith(original);
+    });
+
+    it('should handle streaming rewrites with correct types', async () => {
+      const chunks = ['This ', 'is ', 'rewritten ', 'text.'];
+      const mockStream = {
+        getReader: () => ({
+          read: vi.fn()
+            .mockResolvedValueOnce({ done: false, value: chunks[0] })
+            .mockResolvedValueOnce({ done: false, value: chunks.slice(0, 2).join('') })
+            .mockResolvedValueOnce({ done: false, value: chunks.slice(0, 3).join('') })
+            .mockResolvedValueOnce({ done: false, value: chunks.join('') })
+            .mockResolvedValueOnce({ done: true, value: undefined }),
+        }),
+      };
+      mockRewriter.rewriteStreaming.mockReturnValue(mockStream);
+
+      const rewriter = await window.Rewriter.create(testConfig);
+      const stream: ReadableStream<string> = rewriter.rewriteStreaming('Original text');
+      const reader = stream.getReader();
+
+      const receivedChunks: string[] = [];
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        receivedChunks.push(value);
+      }
+
+      expect(receivedChunks).toHaveLength(4);
+    });
+  });
+}
+
+// Run tests
+testRewriterAPI();
+`;
+}
+
 // ============================================================================
 // Export
 // ============================================================================
 
 export default {
   generatePromptAPITests,
+  generateProofreaderAPITests,
+  generateWriterAPITests,
+  generateRewriterAPITests,
   generateAPITests,
 };

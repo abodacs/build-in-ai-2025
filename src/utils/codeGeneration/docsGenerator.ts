@@ -8,6 +8,9 @@
  */
 
 import type { PromptConfig } from '@/features/unified-playground/api-modules/prompt/types';
+import type { ProofreaderConfig } from '@/features/unified-playground/api-modules/proofreader/types/proofreader.types';
+import type { WriterConfig } from '@/features/unified-playground/api-modules/writer/types/writer.types';
+import type { RewriterConfig } from '@/features/unified-playground/api-modules/rewriter/types/rewriter.types';
 
 // ============================================================================
 // Types
@@ -532,11 +535,504 @@ See Chrome AI documentation for ${apiName} details.
 `;
 }
 
+/**
+ * Generate comprehensive README for Proofreader API
+ */
+export function generateProofreaderAPIDocumentation(
+  config: ProofreaderConfig,
+): string {
+  return `# Chrome AI Proofreader API - Quick Start Guide
+
+> Detect and correct grammar, spelling, and punctuation errors using Chrome's built-in AI
+
+## 🚀 Quick Start
+
+\`\`\`typescript
+// Check if API is available
+const availability = await window.Proofreader.availability();
+
+if (availability === 'no') {
+  console.error('Proofreader API not available');
+  return;
+}
+
+// Create a proofreader
+const proofreader = await window.Proofreader.create({
+  expectedInputLanguages: ['en'],
+  includeCorrectionTypes: true,
+  includeCorrectionExplanations: true,
+});
+
+// Proofread text
+const text = 'This is a test with erors.';
+const corrections = await proofreader.proofread(text);
+
+corrections.forEach(correction => {
+  console.log(\`Error at position \${correction.start}-\${correction.end}\`);
+  console.log(\`Type: \${correction.type}\`);
+  console.log(\`Suggestion: \${correction.suggestion}\`);
+  console.log(\`Explanation: \${correction.explanation}\`);
+});
+\`\`\`
+
+## 📋 Requirements
+
+- **Browser**: Chrome 138+ (Dev/Canary channel)
+- **Flag**: Enable \`chrome://flags/#proofreader-api\`
+- **Model**: Downloads automatically on first use (~100MB)
+
+## ⚙️ Configuration Options
+
+| Option | Value | Description |
+|--------|-------|-------------|
+| **expectedInputLanguages** | \`${JSON.stringify(config.expectedInputLanguages || ['en'])}\` | Languages to proofread (currently only 'en' supported) |
+| **includeCorrectionTypes** | \`${config.includeCorrectionTypes ?? true}\` | Include error type labels (spelling, grammar, etc.) |
+| **includeCorrectionExplanations** | \`${config.includeCorrectionExplanations ?? true}\` | Include plain-language explanations |
+
+## 💡 Usage Examples
+
+### Basic Proofreading
+
+\`\`\`typescript
+const proofreader = await window.Proofreader.create();
+const corrections = await proofreader.proofread('Their are many erors here.');
+
+// corrections = [
+//   { start: 0, end: 5, suggestion: 'There', type: 'spelling' },
+//   { start: 17, end: 22, suggestion: 'errors', type: 'spelling' }
+// ]
+\`\`\`
+
+### Applying Corrections
+
+\`\`\`typescript
+function applyCorrections(text: string, corrections: any[]) {
+  // Sort by position (descending) to apply from end to start
+  const sorted = [...corrections].sort((a, b) => b.start - a.start);
+
+  let result = text;
+  for (const correction of sorted) {
+    result = result.slice(0, correction.start) +
+             correction.suggestion +
+             result.slice(correction.end);
+  }
+  return result;
+}
+
+const original = 'Their are many erors here.';
+const corrections = await proofreader.proofread(original);
+const corrected = applyCorrections(original, corrections);
+// corrected = 'There are many errors here.'
+\`\`\`
+
+### React Hook Example
+
+\`\`\`typescript
+import { useState, useEffect } from 'react';
+
+function useProofreader() {
+  const [proofreader, setProofreader] = useState<any>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function init() {
+      const availability = await window.Proofreader.availability();
+
+      if (availability !== 'no' && mounted) {
+        const p = await window.Proofreader.create({
+          includeCorrectionTypes: true,
+          includeCorrectionExplanations: true,
+        });
+        setProofreader(p);
+        setIsReady(true);
+      }
+    }
+
+    init();
+    return () => { mounted = false; };
+  }, []);
+
+  const proofread = async (text: string) => {
+    if (!proofreader) throw new Error('Proofreader not ready');
+    return await proofreader.proofread(text);
+  };
+
+  return { proofread, isReady };
+}
+\`\`\`
+
+## 🎯 Correction Types
+
+- **spelling**: Misspelled words
+- **grammar**: Grammatical errors
+- **punctuation**: Missing or incorrect punctuation
+- **capitalization**: Incorrect capitalization
+- **preposition**: Wrong preposition usage
+- **missing-words**: Missing words in sentence
+
+## 🔗 Related Resources
+
+- [Chrome AI Documentation](https://developer.chrome.com/docs/ai/built-in)
+- [Proofreader API Spec](https://github.com/webmachinelearning/writing-assistance-apis)
+
+## 📝 Your Configuration
+
+\`\`\`json
+${JSON.stringify(
+  {
+    expectedInputLanguages: config.expectedInputLanguages || ['en'],
+    includeCorrectionTypes: config.includeCorrectionTypes ?? true,
+    includeCorrectionExplanations: config.includeCorrectionExplanations ?? true,
+  },
+  null,
+  2,
+)}
+\`\`\`
+
+---
+
+**Generated with Chrome AI DevBench**
+`;
+}
+
+/**
+ * Generate comprehensive README for Writer API
+ */
+export function generateWriterAPIDocumentation(config: WriterConfig): string {
+  return `# Chrome AI Writer API - Quick Start Guide
+
+> Generate AI-written content with customizable tone, format, and length
+
+## 🚀 Quick Start
+
+\`\`\`typescript
+// Check if API is available
+const availability = await window.Writer.availability();
+
+if (availability === 'no') {
+  console.error('Writer API not available');
+  return;
+}
+
+// Create a writer
+const writer = await window.Writer.create({
+  tone: '${config.tone || 'neutral'}',
+  format: '${config.format || 'plain-text'}',
+  length: '${config.length || 'medium'}',
+  outputLanguage: '${config.outputLanguage || 'en'}',
+  ${config.sharedContext ? `sharedContext: '${config.sharedContext}',` : ''}
+});
+
+// Write content
+const prompt = 'Write about the benefits of AI';
+const content = await writer.write(prompt);
+console.log(content);
+\`\`\`
+
+## 📋 Requirements
+
+- **Browser**: Chrome 138+ (Dev/Canary channel)
+- **Flag**: Enable \`chrome://flags/#writer-api\`
+- **Model**: Downloads automatically on first use (~2GB)
+
+## ⚙️ Configuration Options
+
+| Option | Value | Description |
+|--------|-------|-------------|
+| **tone** | \`"${config.tone || 'neutral'}"\` | Writing tone (formal, casual, neutral) |
+| **format** | \`"${config.format || 'plain-text'}"\` | Output format (plain-text, markdown, email) |
+| **length** | \`"${config.length || 'medium'}"\` | Content length (short, medium, long) |
+| **outputLanguage** | \`"${config.outputLanguage || 'en'}"\` | Output language code |
+| **sharedContext** | \`"${config.sharedContext || ''}"\` | Additional context for generation |
+
+## 💡 Usage Examples
+
+### Basic Writing
+
+\`\`\`typescript
+const writer = await window.Writer.create({
+  tone: 'professional',
+  format: 'markdown',
+  length: 'medium',
+  outputLanguage: 'en',
+});
+
+const content = await writer.write('Explain quantum computing');
+// Returns professionally-written markdown content about quantum computing
+\`\`\`
+
+### Streaming for Long Content
+
+\`\`\`typescript
+const writer = await window.Writer.create({
+  tone: 'casual',
+  length: 'long',
+});
+
+const stream = writer.writeStreaming('Write a story about space exploration');
+const reader = stream.getReader();
+
+let fullContent = '';
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+
+  fullContent = value;
+  console.log('Progress:', value); // Display incremental updates
+}
+
+console.log('Complete:', fullContent);
+\`\`\`
+
+### React Hook Example
+
+\`\`\`typescript
+import { useState, useEffect } from 'react';
+
+function useWriter(config: any) {
+  const [writer, setWriter] = useState<any>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function init() {
+      const availability = await window.Writer.availability();
+
+      if (availability !== 'no' && mounted) {
+        const w = await window.Writer.create(config);
+        setWriter(w);
+        setIsReady(true);
+      }
+    }
+
+    init();
+    return () => { mounted = false; };
+  }, [config]);
+
+  const write = async (prompt: string) => {
+    if (!writer) throw new Error('Writer not ready');
+    return await writer.write(prompt);
+  };
+
+  return { write, isReady };
+}
+\`\`\`
+
+## 🎯 Best Practices
+
+1. **Be Specific**: Provide clear, detailed prompts
+2. **Use Context**: Leverage sharedContext for better results
+3. **Choose Appropriate Tone**: Match tone to your audience
+4. **Stream Long Content**: Use streaming for better UX
+
+## 🔗 Related Resources
+
+- [Chrome AI Documentation](https://developer.chrome.com/docs/ai/built-in)
+- [Writer API Spec](https://github.com/webmachinelearning/writing-assistance-apis)
+
+## 📝 Your Configuration
+
+\`\`\`json
+${JSON.stringify(
+  {
+    tone: config.tone || 'neutral',
+    format: config.format || 'plain-text',
+    length: config.length || 'medium',
+    outputLanguage: config.outputLanguage || 'en',
+    sharedContext: config.sharedContext,
+  },
+  null,
+  2,
+)}
+\`\`\`
+
+---
+
+**Generated with Chrome AI DevBench**
+`;
+}
+
+/**
+ * Generate comprehensive README for Rewriter API
+ */
+export function generateRewriterAPIDocumentation(
+  config: RewriterConfig,
+): string {
+  return `# Chrome AI Rewriter API - Quick Start Guide
+
+> Rewrite existing text with different tone, format, or length while preserving meaning
+
+## 🚀 Quick Start
+
+\`\`\`typescript
+// Check if API is available
+const availability = await window.Rewriter.availability();
+
+if (availability === 'no') {
+  console.error('Rewriter API not available');
+  return;
+}
+
+// Create a rewriter
+const rewriter = await window.Rewriter.create({
+  tone: '${config.tone || 'as-is'}',
+  format: '${config.format || 'as-is'}',
+  length: '${config.length || 'as-is'}',
+  outputLanguage: '${config.outputLanguage || 'en'}',
+});
+
+// Rewrite text
+const original = 'Hey! This is really cool.';
+const rewritten = await rewriter.rewrite(original);
+console.log(rewritten); // 'This is quite impressive.'
+\`\`\`
+
+## 📋 Requirements
+
+- **Browser**: Chrome 138+ (Dev/Canary channel)
+- **Flag**: Enable \`chrome://flags/#rewriter-api\`
+- **Model**: Downloads automatically on first use (~2GB)
+
+## ⚙️ Configuration Options
+
+| Option | Value | Description |
+|--------|-------|-------------|
+| **tone** | \`"${config.tone || 'as-is'}"\` | Target tone (formal, casual, as-is, more-formal, more-casual) |
+| **format** | \`"${config.format || 'as-is'}"\` | Target format (as-is, plain-text, markdown) |
+| **length** | \`"${config.length || 'as-is'}"\` | Target length (as-is, shorter, longer) |
+| **outputLanguage** | \`"${config.outputLanguage || 'en'}"\` | Output language code |
+
+## 💡 Usage Examples
+
+### Make Text More Formal
+
+\`\`\`typescript
+const rewriter = await window.Rewriter.create({
+  tone: 'more-formal',
+  outputLanguage: 'en',
+});
+
+const casual = 'Hey, wanna grab coffee later?';
+const formal = await rewriter.rewrite(casual);
+// formal = 'Would you like to meet for coffee later?'
+\`\`\`
+
+### Shorten Text
+
+\`\`\`typescript
+const rewriter = await window.Rewriter.create({
+  length: 'shorter',
+});
+
+const long = 'This is a very long sentence that contains a lot of information and details that might be unnecessary for the main point.';
+const short = await rewriter.rewrite(long);
+// short = 'This sentence contains excessive details.'
+\`\`\`
+
+### Streaming for Long Rewrites
+
+\`\`\`typescript
+const rewriter = await window.Rewriter.create({
+  tone: 'more-casual',
+  length: 'as-is',
+});
+
+const stream = rewriter.rewriteStreaming('The aforementioned proposal necessitates comprehensive deliberation.');
+const reader = stream.getReader();
+
+let fullRewrite = '';
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+
+  fullRewrite = value;
+  console.log('Progress:', value);
+}
+
+console.log('Complete:', fullRewrite);
+// 'We need to think carefully about this proposal.'
+\`\`\`
+
+### React Hook Example
+
+\`\`\`typescript
+import { useState, useEffect } from 'react';
+
+function useRewriter(config: any) {
+  const [rewriter, setRewriter] = useState<any>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function init() {
+      const availability = await window.Rewriter.availability();
+
+      if (availability !== 'no' && mounted) {
+        const r = await window.Rewriter.create(config);
+        setRewriter(r);
+        setIsReady(true);
+      }
+    }
+
+    init();
+    return () => { mounted = false; };
+  }, [config]);
+
+  const rewrite = async (text: string) => {
+    if (!rewriter) throw new Error('Rewriter not ready');
+    return await rewriter.rewrite(text);
+  };
+
+  return { rewrite, isReady };
+}
+\`\`\`
+
+## 🎯 Common Use Cases
+
+- **Email Drafts**: Convert casual notes to professional emails
+- **Documentation**: Make technical docs more accessible
+- **Social Media**: Adapt content for different platforms
+- **Accessibility**: Simplify complex text
+- **Summarization**: Condense long passages
+
+## 🔗 Related Resources
+
+- [Chrome AI Documentation](https://developer.chrome.com/docs/ai/built-in)
+- [Rewriter API Spec](https://github.com/webmachinelearning/writing-assistance-apis)
+
+## 📝 Your Configuration
+
+\`\`\`json
+${JSON.stringify(
+  {
+    tone: config.tone || 'as-is',
+    format: config.format || 'as-is',
+    length: config.length || 'as-is',
+    outputLanguage: config.outputLanguage || 'en',
+  },
+  null,
+  2,
+)}
+\`\`\`
+
+---
+
+**Generated with Chrome AI DevBench**
+`;
+}
+
 // ============================================================================
 // Export
 // ============================================================================
 
 export default {
   generatePromptAPIDocumentation,
+  generateProofreaderAPIDocumentation,
+  generateWriterAPIDocumentation,
+  generateRewriterAPIDocumentation,
   generateAPIDocumentation,
 };

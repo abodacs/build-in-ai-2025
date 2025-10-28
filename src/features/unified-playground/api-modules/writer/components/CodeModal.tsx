@@ -35,6 +35,8 @@ import { CodeModalSkeleton } from '@/components/code/CodeModalSkeleton';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { WriterConfig } from '../types';
+import { generateWriterAPITests } from '@/utils/codeGeneration/testGenerator';
+import { generateWriterAPIDocumentation } from '@/utils/codeGeneration/docsGenerator';
 
 // ============================================================================
 // Types
@@ -523,6 +525,11 @@ export function CodeModal({
     () => generateJavaScriptCode(config),
     [config],
   );
+  const testsCode = useMemo(() => generateWriterAPITests(config), [config]);
+  const docsCode = useMemo(
+    () => generateWriterAPIDocumentation(config),
+    [config],
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal>
@@ -665,9 +672,11 @@ export function CodeModal({
 
               {/* Code Tabs */}
               <Tabs defaultValue="javascript" className="w-full">
-                <TabsList className="w-full grid grid-cols-2">
+                <TabsList className="w-full grid grid-cols-4">
                   <TabsTrigger value="typescript">TypeScript</TabsTrigger>
                   <TabsTrigger value="javascript">JavaScript</TabsTrigger>
+                  <TabsTrigger value="tests">Tests</TabsTrigger>
+                  <TabsTrigger value="docs">Docs</TabsTrigger>
                 </TabsList>
 
                 {/* TypeScript */}
@@ -698,6 +707,42 @@ export function CodeModal({
                     code={javascriptCode}
                     language="javascript"
                     filename="writer.js"
+                    showCopyButton
+                    showDownloadButton
+                    showThemeToggle={false}
+                    showLanguageBadge={false}
+                    forceTheme="dark"
+                  />
+                </TabsContent>
+
+                {/* Tests */}
+                <TabsContent value="tests" className="mt-4 space-y-3">
+                  <div className="text-sm text-slate-600 dark:text-slate-400">
+                    Concise Vitest test suite with type validation
+                  </div>
+
+                  <ThemedCodeBlock
+                    code={testsCode}
+                    language="typescript"
+                    filename="writer-api.test.ts"
+                    showCopyButton
+                    showDownloadButton
+                    showThemeToggle={false}
+                    showLanguageBadge={false}
+                    forceTheme="dark"
+                  />
+                </TabsContent>
+
+                {/* Docs */}
+                <TabsContent value="docs" className="mt-4 space-y-3">
+                  <div className="text-sm text-slate-600 dark:text-slate-400">
+                    Complete documentation and usage guide
+                  </div>
+
+                  <ThemedCodeBlock
+                    code={docsCode}
+                    language="markdown"
+                    filename="README.md"
                     showCopyButton
                     showDownloadButton
                     showThemeToggle={false}

@@ -272,20 +272,6 @@ describe('ChromeAIProofreaderService', () => {
 
       expect(result).toEqual(mockResult);
       expect(mockProofreader.proofread).toHaveBeenCalledWith('teh quick fox', {
-        context: undefined,
-        signal: undefined,
-      });
-    });
-
-    it('should include context when provided', async () => {
-      await ChromeAIProofreaderService.proofread(
-        mockProofreader,
-        'test',
-        'This is context',
-      );
-
-      expect(mockProofreader.proofread).toHaveBeenCalledWith('test', {
-        context: 'This is context',
         signal: undefined,
       });
     });
@@ -296,12 +282,10 @@ describe('ChromeAIProofreaderService', () => {
       await ChromeAIProofreaderService.proofread(
         mockProofreader,
         'test',
-        undefined,
         signal,
       );
 
       expect(mockProofreader.proofread).toHaveBeenCalledWith('test', {
-        context: undefined,
         signal,
       });
     });
@@ -332,7 +316,6 @@ describe('ChromeAIProofreaderService', () => {
         ChromeAIProofreaderService.proofread(
           mockProofreader,
           'test',
-          undefined,
           controller.signal,
         ),
       ).rejects.toThrow(/cancelled/);
@@ -478,7 +461,6 @@ describe('ChromeAIProofreaderService', () => {
       await ChromeAIProofreaderService.proofread(mockProofreader, unicodeText);
 
       expect(mockProofreader.proofread).toHaveBeenCalledWith(unicodeText, {
-        context: undefined,
         signal: undefined,
       });
     });

@@ -44,7 +44,6 @@ const mockManagerInstance = {
     return result;
   }),
   hasInstance: vi.fn().mockReturnValue(false),
-  monitorDownload: vi.fn().mockResolvedValue(undefined),
   destroy: vi.fn(),
   getState: vi.fn().mockReturnValue('ready'),
   updateConfig: vi.fn(),
@@ -208,18 +207,6 @@ describe('useProofreader', () => {
       });
     });
 
-    it('should handle proofread with context', async () => {
-      const { result } = renderHook(() => useProofreader(defaultConfig));
-
-      await act(async () => {
-        await result.current.actions.proofread('test', 'context');
-      });
-
-      await waitFor(() => {
-        expect(result.current.isProofreading).toBe(false);
-      });
-    });
-
     it('should track performance metrics', async () => {
       const { result } = renderHook(() => useProofreader(defaultConfig));
 
@@ -250,6 +237,62 @@ describe('useProofreader', () => {
         expect(result.current.error).toBeTruthy();
       });
 
+      expect(result.current.isProofreading).toBe(false);
+    });
+
+    it('should keep correctedText null during proofread operation', async () => {
+      const { result } = renderHook(() => useProofreader(defaultConfig));
+
+      // Before proofread
+      expect(result.current.correctedText).toBeNull();
+
+      // During proofread (before await completes)
+      act(() => {
+        result.current.actions.proofread('test text');
+      });
+
+      // Should still be null while proofread is in progress
+      expect(result.current.correctedText).toBeNull();
+
+      // After completion
+      await waitFor(() => {
+        expect(result.current.isProofreading).toBe(false);
+      });
+    });
+
+    it('should only set correctedText after successful proofread', async () => {
+      const { result } = renderHook(() => useProofreader(defaultConfig));
+
+      await act(async () => {
+        await result.current.actions.proofread('test text');
+      });
+
+      await waitFor(() => {
+        expect(result.current.correctedText).toBe('test text');
+      });
+
+      expect(result.current.isProofreading).toBe(false);
+      expect(result.current.corrections).toHaveLength(1);
+    });
+
+    it('should keep correctedText null on error', async () => {
+      // Override the mock to reject for all retries
+      mockManagerInstance.proofread.mockRejectedValue(
+        new Error('Model not ready'),
+      );
+
+      const { result } = renderHook(() => useProofreader(defaultConfig));
+
+      await act(async () => {
+        await result.current.actions.proofread('test');
+      });
+
+      await waitFor(() => {
+        expect(result.current.error).toBeTruthy();
+      });
+
+      // correctedText should remain null on error
+      expect(result.current.correctedText).toBeNull();
       expect(result.current.isProofreading).toBe(false);
     });
   });
@@ -688,6 +731,147 @@ describe('useProofreader', () => {
       await waitFor(() => {
         expect(result.current.isProofreading).toBe(false);
       });
+    });
+  });
+
+  // ==========================================================================
+  // Instance Creation (Bug Fix Verification)
+  // ==========================================================================
+
+  describe('Instance Creation - Fixed Pattern', () => {
+    it('should always call getInstance directly (not conditional)', async () => {
+      const { result } = renderHook(() => useProofreader(defaultConfig));
+
+      await act(async () => {
+        await result.current.actions.proofread('test text');
+      });
+
+      await waitFor(() => {
+        expect(result.current.isProofreading).toBe(false);
+      });
+
+      // Verify getInstance was called (the fixed pattern)
+      expect(mockManagerInstance.getInstance).toHaveBeenCalled();
+      expect(mockManagerInstance.updateConfig).toHaveBeenCalledWith(
+        defaultConfig,
+      );
+    });
+
+    it('should create instance only once per proofread operation', async () => {
+      mockManagerInstance.getInstance.mockClear();
+
+      const { result } = renderHook(() => useProofreader(defaultConfig));
+
+      await act(async () => {
+        await result.current.actions.proofread('test text');
+      });
+
+      await waitFor(() => {
+        expect(result.current.isProofreading).toBe(false);
+      });
+
+      // Should be called exactly once during proofread
+      expect(mockManagerInstance.getInstance).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call getInstance synchronously to preserve user activation', async () => {
+      const callOrder: string[] = [];
+
+      mockManagerInstance.getInstance.mockImplementation(async () => {
+        callOrder.push('getInstance-called');
+        return {
+          proofread: vi.fn(),
+          destroy: vi.fn(),
+        };
+      });
+
+      mockManagerInstance.proofread.mockImplementation(async () => {
+        callOrder.push('proofread-called');
+        return { corrections: [] };
+      });
+
+      const { result } = renderHook(() => useProofreader(defaultConfig));
+
+      await act(async () => {
+        await result.current.actions.proofread('test');
+      });
+
+      await waitFor(() => {
+        expect(result.current.isProofreading).toBe(false);
+      });
+
+      // getInstance should be called before proofread
+      expect(callOrder[0]).toBe('getInstance-called');
+    });
+  });
+
+  // ==========================================================================
+  // downloadModel (Bug Fix Verification)
+  // ==========================================================================
+
+  describe('downloadModel - Fixed Pattern', () => {
+    it('should use getInstance instead of monitorDownload', async () => {
+      mockManagerInstance.getInstance.mockClear();
+
+      const { result } = renderHook(() => useProofreader(defaultConfig));
+
+      await act(async () => {
+        await result.current.actions.downloadModel();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      // Verify getInstance was called (the fixed pattern)
+      expect(mockManagerInstance.getInstance).toHaveBeenCalled();
+      expect(mockManagerInstance.updateConfig).toHaveBeenCalled();
+    });
+
+    it('should store the instance for reuse after download', async () => {
+      const { result } = renderHook(() => useProofreader(defaultConfig));
+
+      // First, download the model
+      await act(async () => {
+        await result.current.actions.downloadModel();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      mockManagerInstance.getInstance.mockClear();
+
+      // Now proofread - instance should already exist and be reused
+      await act(async () => {
+        await result.current.actions.proofread('test');
+      });
+
+      await waitFor(() => {
+        expect(result.current.isProofreading).toBe(false);
+      });
+
+      // getInstance is called again during proofread (but manager caches it internally)
+      expect(mockManagerInstance.getInstance).toHaveBeenCalled();
+    });
+
+    it('should handle download errors gracefully', async () => {
+      mockManagerInstance.getInstance.mockRejectedValueOnce(
+        new Error('Download failed'),
+      );
+
+      const { result } = renderHook(() => useProofreader(defaultConfig));
+
+      await act(async () => {
+        await result.current.actions.downloadModel();
+      });
+
+      await waitFor(() => {
+        expect(result.current.error).toBeTruthy();
+      });
+
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.error?.message).toContain('Download failed');
     });
   });
 });

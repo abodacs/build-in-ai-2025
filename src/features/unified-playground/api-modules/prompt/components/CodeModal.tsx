@@ -420,17 +420,17 @@ async function exampleQuota() {
 
   try {
     console.log('Initial quota:', session.inputQuota);
-    console.log('Initial usage:', session.inputUsage);
+    console.log('Initial usage:', session.tokensSoFar);
 
     const response = await session.prompt('Hello!');
     console.log('Response:', response);
 
     console.log('After prompt quota:', session.inputQuota);
-    console.log('After prompt usage:', session.inputUsage);
-    console.log('Remaining tokens:', session.inputQuota - session.inputUsage);
+    console.log('After prompt usage:', session.tokensSoFar);
+    console.log('Remaining tokens:', session.inputQuota - session.tokensSoFar);
 
     // Check if approaching quota limit
-    if (session.inputUsage / session.inputQuota > 0.8) {
+    if (session.tokensSoFar / session.inputQuota > 0.8) {
       console.warn('Warning: Approaching token quota limit!');
     }
   } finally {
@@ -753,17 +753,17 @@ async function exampleQuota() {
 
   try {
     console.log('Initial quota:', session.inputQuota);
-    console.log('Initial usage:', session.inputUsage);
+    console.log('Initial usage:', session.tokensSoFar);
 
     const response = await session.prompt('Hello!');
     console.log('Response:', response);
 
     console.log('After prompt quota:', session.inputQuota);
-    console.log('After prompt usage:', session.inputUsage);
-    console.log('Remaining tokens:', session.inputQuota - session.inputUsage);
+    console.log('After prompt usage:', session.tokensSoFar);
+    console.log('Remaining tokens:', session.inputQuota - session.tokensSoFar);
 
     // Check if approaching quota limit
-    if (session.inputUsage / session.inputQuota > 0.8) {
+    if (session.tokensSoFar / session.inputQuota > 0.8) {
       console.warn('Warning: Approaching token quota limit!');
     }
   } finally {

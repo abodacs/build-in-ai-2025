@@ -410,7 +410,7 @@ function PromptConfigComponent({
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         <p className="text-xs">
-                          Gemini Nano typically supports up to 1024 tokens for
+                          Gemini Nano typically supports up to 4096 tokens for
                           responses. Higher values may fail or be truncated.
                         </p>
                       </TooltipContent>
@@ -422,26 +422,26 @@ function PromptConfigComponent({
                   aria-live="polite"
                   id="maxtokens-value"
                 >
-                  {config.maxTokens || 512}
+                  {config.maxTokens || 2048}
                 </p>
                 <Slider
                   id="maxtokens-slider"
-                  value={[config.maxTokens || 512]}
+                  value={[config.maxTokens || 2048]}
                   onValueChange={(value) => updateConfig('maxTokens', value[0])}
                   min={256}
-                  max={1024}
+                  max={4096}
                   step={128}
                   disabled={disabled}
                   className="w-full"
                   aria-label="Max tokens slider"
                   aria-valuemin={256}
-                  aria-valuemax={1024}
-                  aria-valuenow={config.maxTokens || 512}
-                  aria-valuetext={`Max tokens: ${config.maxTokens || 512}. Maximum response length`}
+                  aria-valuemax={4096}
+                  aria-valuenow={config.maxTokens || 2048}
+                  aria-valuetext={`Max tokens: ${config.maxTokens || 2048}. Maximum response length`}
                   aria-describedby="maxtokens-help"
                 />
                 <p id="maxtokens-help" className="text-[10px] text-slate-500">
-                  Maximum response length (default: 512, max: 1024)
+                  Maximum response length (default: 2048, max: 4096)
                 </p>
               </div>
             </div>
@@ -456,7 +456,7 @@ function PromptConfigComponent({
                     systemPrompt: 'You are a helpful and friendly assistant.',
                     temperature: 0.8,
                     topK: 8,
-                    maxTokens: 512, // Default max tokens (max allowed: 1024)
+                    maxTokens: 2048, // Default max tokens (max allowed: 4096)
                     enableStreaming: true,
                   });
                   onReset?.(); // Call reset handler if provided
