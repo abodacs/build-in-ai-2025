@@ -7,6 +7,7 @@ import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
 import prettier from 'eslint-plugin-prettier';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
+import unusedImports from 'eslint-plugin-unused-imports';
 
 export default [
   {
@@ -44,6 +45,7 @@ export default [
       'react-refresh': reactRefresh,
       prettier,
       'jsx-a11y': jsxA11y,
+      'unused-imports': unusedImports,
     },
     settings: {
       react: {
@@ -61,10 +63,23 @@ export default [
         'warn',
         { allowConstantExport: true },
       ],
-      '@typescript-eslint/no-unused-vars': [
+      // Dead Code Prevention - Unused Imports/Variables
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
         'error',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+        {
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+        },
       ],
+      '@typescript-eslint/no-unused-vars': 'off', // Handled by unused-imports
+      // Dead Code Prevention - Unreachable Code
+      'no-unreachable': 'error',
+      'no-unreachable-loop': 'error',
+      'no-unused-expressions': 'error',
+      // TypeScript Rules
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
@@ -137,6 +152,8 @@ export default [
     },
     rules: {
       '@typescript-eslint/no-unused-vars': 'off',
+      'unused-imports/no-unused-vars': 'off',
+      'unused-imports/no-unused-imports': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       'no-undef': 'off',
     },

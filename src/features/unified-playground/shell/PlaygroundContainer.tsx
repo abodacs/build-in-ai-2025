@@ -280,12 +280,6 @@ export function PlaygroundContainer({
                 <p className="text-sm text-muted-foreground">
                   Built with enterprise security & performance standards
                 </p>
-                {showPerformanceMetrics && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Activity className="w-3 h-3" />
-                    <span>Performance: {performanceScore}/100</span>
-                  </div>
-                )}
               </div>
 
               <div className="flex items-center gap-4">

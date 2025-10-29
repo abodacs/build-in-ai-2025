@@ -13,17 +13,6 @@ import type { WriterConfig } from '@/features/unified-playground/api-modules/wri
 import type { RewriterConfig } from '@/features/unified-playground/api-modules/rewriter/types/rewriter.types';
 
 // ============================================================================
-// Types
-// ============================================================================
-
-interface DocsGeneratorOptions {
-  apiName: string;
-  config: any;
-  includeExamples?: boolean;
-  includeTroubleshooting?: boolean;
-}
-
-// ============================================================================
 // Prompt API Documentation Generator
 // ============================================================================
 
@@ -475,64 +464,6 @@ function generateConfigTable(config: PromptConfig): string {
 | **temperature** | \`${config.temperature ?? 1}\` | Controls randomness (0-2, default: 1, higher = more creative) |
 | **topK** | \`${config.topK ?? 3}\` | Number of token candidates (1-128, default: 3) |
 | **maxTokens** | \`${config.maxTokens || 2048}\` | Maximum response length |`;
-}
-
-// ============================================================================
-// Generic Documentation Generator
-// ============================================================================
-
-/**
- * Generate documentation for any Chrome AI API
- */
-export function generateAPIDocumentation(
-  options: DocsGeneratorOptions,
-): string {
-  const { apiName } = options;
-
-  if (apiName.toLowerCase().includes('prompt')) {
-    return generatePromptAPIDocumentation(options.config as PromptConfig);
-  }
-
-  // Fallback generic template
-  return generateGenericAPIDocumentation(options);
-}
-
-/**
- * Generate generic API documentation
- */
-function generateGenericAPIDocumentation(
-  options: DocsGeneratorOptions,
-): string {
-  const { apiName, config } = options;
-
-  return `# Chrome AI ${apiName} - Documentation
-
-## Installation
-
-\`\`\`bash
-# Ensure you have Chrome 138+ with required flags enabled
-\`\`\`
-
-## Configuration
-
-\`\`\`json
-${JSON.stringify(config, null, 2)}
-\`\`\`
-
-## Usage
-
-\`\`\`typescript
-// Add usage examples for ${apiName}
-\`\`\`
-
-## API Reference
-
-See Chrome AI documentation for ${apiName} details.
-
----
-
-**Generated with Chrome AI DevBench**
-`;
 }
 
 /**
@@ -1024,15 +955,3 @@ ${JSON.stringify(
 **Generated with Chrome AI DevBench**
 `;
 }
-
-// ============================================================================
-// Export
-// ============================================================================
-
-export default {
-  generatePromptAPIDocumentation,
-  generateProofreaderAPIDocumentation,
-  generateWriterAPIDocumentation,
-  generateRewriterAPIDocumentation,
-  generateAPIDocumentation,
-};

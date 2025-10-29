@@ -37,7 +37,6 @@ import { cn } from '@/lib/utils';
 import type { PromptConfig } from '../types';
 import { DEFAULT_PROMPT_CONFIG } from '../types';
 import { generatePromptAPITests } from '@/utils/codeGeneration/testGenerator';
-import { generatePromptAPIDocumentation } from '@/utils/codeGeneration/docsGenerator';
 import { SHORTCUTS } from '@/utils/keyboard';
 import '@/components/code/code-animations.css';
 
@@ -858,10 +857,6 @@ export function CodeModal({
     [config],
   );
   const testsCode = useMemo(() => generatePromptAPITests(config), [config]);
-  const docsCode = useMemo(
-    () => generatePromptAPIDocumentation(config),
-    [config],
-  );
 
   // Download current tab
   const downloadCurrentTab = useCallback(() => {
@@ -869,7 +864,6 @@ export function CodeModal({
       typescript: { code: typescriptCode, filename: 'prompt-api.ts' },
       javascript: { code: javascriptCode, filename: 'prompt-api.js' },
       tests: { code: testsCode, filename: 'prompt-api.test.ts' },
-      docs: { code: docsCode, filename: 'README.md' },
     };
 
     const current = downloads[activeTab as keyof typeof downloads];
@@ -884,7 +878,7 @@ export function CodeModal({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [activeTab, typescriptCode, javascriptCode, testsCode, docsCode]);
+  }, [activeTab, typescriptCode, javascriptCode, testsCode]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -1095,7 +1089,7 @@ export function CodeModal({
                 onValueChange={setActiveTab}
                 className="w-full"
               >
-                <TabsList className="w-full grid grid-cols-4 mb-4">
+                <TabsList className="w-full grid grid-cols-3 mb-4">
                   <TabsTrigger value="typescript" className="tab-indicator">
                     TypeScript
                   </TabsTrigger>
@@ -1104,9 +1098,6 @@ export function CodeModal({
                   </TabsTrigger>
                   <TabsTrigger value="tests" className="tab-indicator">
                     Tests
-                  </TabsTrigger>
-                  <TabsTrigger value="docs" className="tab-indicator">
-                    Docs
                   </TabsTrigger>
                 </TabsList>
 
@@ -1165,27 +1156,6 @@ export function CodeModal({
                     code={testsCode}
                     language="typescript"
                     filename="prompt-api.test.ts"
-                    showCopyButton
-                    showDownloadButton
-                    showThemeToggle={false}
-                    showLanguageBadge={false}
-                    forceTheme="dark"
-                  />
-                </TabsContent>
-
-                {/* Docs */}
-                <TabsContent
-                  value="docs"
-                  className="mt-0 space-y-3 tab-content-enter"
-                >
-                  <div className="text-sm text-slate-600 dark:text-slate-400">
-                    Complete documentation and usage guide
-                  </div>
-
-                  <ThemedCodeBlock
-                    code={docsCode}
-                    language="markdown"
-                    filename="README.md"
                     showCopyButton
                     showDownloadButton
                     showThemeToggle={false}
