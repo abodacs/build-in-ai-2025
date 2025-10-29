@@ -1,16 +1,20 @@
 # Chrome AI DevBench
 
-> Interactive learning playground for Chrome's built-in AI APIs
+> Production-ready platform for compound AI workflows with privacy-first, zero-cost architecture
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](CHANGELOG.md)
 [![Chrome](https://img.shields.io/badge/Chrome-138%2B-brightgreen.svg)](https://www.google.com/chrome/canary/)
 
+[![Try Live Demo](https://img.shields.io/badge/🚀_Try_Live_Demo-brightgreen?style=for-the-badge)](https://chrome-ai-devbench.pages.dev)
+
 **Repository**: [GitHub - chrome-ai-devbench](https://github.com/abodacs/chrome-ai-devbench)
 
 ## Overview
 
-> **TL;DR**: Chrome AI DevBench is a production-ready platform unifying all 7 Chrome Built-in AI APIs. The platform provides real-time code generation with 2133 tests across 80 test files. It enables compound AI workflows and privacy-first applications running entirely on-device with zero backend costs.
+> **TL;DR**: Chrome AI DevBench is the **first production-ready platform** that unifies all 7 Chrome Built-in AI APIs, enabling **compound workflows and privacy-first AI applications that were previously impossible** without expensive cloud infrastructure. With 2133 tests across 80 test files and real-time code generation, it demonstrates how on-device AI can eliminate backend costs while ensuring data privacy.
+
+> **🌐 [Try the Live Demo Now](https://chrome-ai-devbench.pages.dev)** — No installation required, works in Chrome 138+
 
 ### Key Metrics
 
@@ -81,6 +85,8 @@ Chrome AI DevBench provides a **comprehensive, interactive environment** where d
 [![Chrome AI DevBench Demo](https://img.shields.io/badge/▶️_Watch_Demo-YouTube-red?style=for-the-badge&logo=youtube)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
 
 > **Note**: Demo video coming soon. All features fully functional - see Quick Start for local testing.
+
+> **Can't wait for the video?** [Try the live demo now →](https://chrome-ai-devbench.pages.dev)
 
 **Demo Highlights**:
 
@@ -323,17 +329,17 @@ Chrome AI DevBench is the only platform that:
 
 ### Who Benefits Most?
 
-**🎓 Student Developers** — Learn modern React/TypeScript patterns while exploring cutting-edge browser AI with production-ready code
+**💼 Enterprise Teams** — Evaluate Chrome AI for privacy-compliant internal tools and accelerate production deployments with battle-tested patterns
 
-**💼 Enterprise Teams** — Evaluate Chrome AI for privacy-compliant internal tools and accelerate POC development with production-ready patterns
+**🚀 Startups & Product Teams** — Build AI-powered MVPs without cloud infrastructure costs and ship faster with production-ready components
 
-**🚀 Startups & Product Teams** — Build AI-powered MVPs without cloud infrastructure costs and ship faster with ready-to-use components
-
-**📚 Educators & Trainers** — Comprehensive teaching resource for browser-based AI with 2100+ test examples
-
-**🔬 AI Researchers** — Benchmark on-device vs. cloud AI performance and explore privacy-preserving architectures
+**🔬 AI Researchers** — Benchmark on-device vs. cloud AI performance and explore privacy-preserving architectures at scale
 
 **🌐 Open Source Contributors** — Contribute to production-grade AI platform and build portfolio with real-world impact
+
+**🎓 Advanced Developers** — Learn modern React/TypeScript patterns while exploring cutting-edge browser AI with production-ready code
+
+**📚 Technical Educators** — Comprehensive teaching resource for production-grade browser-based AI with 2100+ test examples
 
 ### Why On-Device AI Matters
 
