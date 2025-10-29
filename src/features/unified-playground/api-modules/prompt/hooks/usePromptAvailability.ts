@@ -180,6 +180,7 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
       console.log('[usePromptAvailability] Checking availability status...');
       const availabilityStatus =
         await ChromeAIPromptService.checkAvailability();
+
       console.log(
         '[usePromptAvailability] Availability status =',
         availabilityStatus,

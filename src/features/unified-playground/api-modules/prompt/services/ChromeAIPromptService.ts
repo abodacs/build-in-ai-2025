@@ -21,66 +21,6 @@ import type {
 import { normalizeAvailability } from '../../shared/utils/normalizeAvailability';
 
 // ============================================================================
-// Diagnostic Logging Utility
-// ============================================================================
-
-const LOG_PREFIX = '[ChromeAI-Prompt]';
-const LOG_ENABLED = true; // Set to false in production
-
-class DiagnosticLogger {
-  private static timers: Map<string, number> = new Map();
-
-  static log(message: string, data?: any) {
-    if (!LOG_ENABLED) return;
-
-    const timestamp = new Date().toISOString();
-    if (data !== undefined) {
-      console.log(`${LOG_PREFIX} [${timestamp}] ${message}`, data);
-    } else {
-      console.log(`${LOG_PREFIX} [${timestamp}] ${message}`);
-    }
-  }
-
-  static error(message: string, error?: any) {
-    const timestamp = new Date().toISOString();
-    console.error(`${LOG_PREFIX} [${timestamp}] ERROR: ${message}`, error);
-  }
-
-  static warn(message: string, data?: any) {
-    const timestamp = new Date().toISOString();
-    console.warn(`${LOG_PREFIX} [${timestamp}] WARNING: ${message}`, data);
-  }
-
-  static startTimer(label: string) {
-    if (!LOG_ENABLED) return;
-    this.timers.set(label, performance.now());
-    this.log(`⏱️  ${label} - STARTED`);
-  }
-
-  static endTimer(label: string) {
-    if (!LOG_ENABLED) return;
-    const start = this.timers.get(label);
-    if (start !== undefined) {
-      const duration = (performance.now() - start).toFixed(2);
-      this.log(`⏱️  ${label} - COMPLETED in ${duration}ms`);
-      this.timers.delete(label);
-    }
-  }
-
-  static logAPICall(method: string, params?: any) {
-    this.log(`🔵 API CALL: ${method}`, params);
-  }
-
-  static logAPIResponse(method: string, response?: any) {
-    this.log(`🟢 API RESPONSE: ${method}`, response);
-  }
-
-  static logAPIError(method: string, error: any) {
-    this.error(`🔴 API ERROR: ${method}`, error);
-  }
-}
-
-// ============================================================================
 // Helper Functions
 // ============================================================================
 
@@ -172,16 +112,6 @@ export class ChromeAIPromptService {
   static isSupported(): boolean {
     const supported =
       typeof window !== 'undefined' && 'LanguageModel' in window;
-    DiagnosticLogger.log(
-      `API Support Check: ${supported ? 'SUPPORTED' : 'NOT SUPPORTED'}`,
-      {
-        hasWindow: typeof window !== 'undefined',
-        hasLanguageModel:
-          typeof window !== 'undefined' && 'LanguageModel' in window,
-        userAgent:
-          typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A',
-      },
-    );
     return supported;
   }
 
@@ -206,31 +136,18 @@ export class ChromeAIPromptService {
    * @returns Promise resolving to availability status
    */
   static async checkAvailability(): Promise<LanguageModelAvailability> {
-    DiagnosticLogger.startTimer('checkAvailability');
-    DiagnosticLogger.logAPICall('checkAvailability()');
-
     try {
       if (!this.isSupported()) {
-        DiagnosticLogger.warn('API not supported, returning "no"');
-        DiagnosticLogger.endTimer('checkAvailability');
         return 'no';
       }
 
       const api = this.getAPI();
       const status = await api.availability();
-      DiagnosticLogger.logAPIResponse('availability()', status);
-
       // Normalize Chrome API status to internal AvailabilityStatus
       const normalized = normalizeAvailability(status);
-      DiagnosticLogger.log(
-        `Availability normalized: ${status} → ${normalized}`,
-      );
-      DiagnosticLogger.endTimer('checkAvailability');
       return normalized;
-    } catch (error) {
-      // Log the error for debugging
-      DiagnosticLogger.logAPIError('checkAvailability()', error);
-      DiagnosticLogger.endTimer('checkAvailability');
+    } catch {
+      // Silently handle error - API not available
       return 'no';
     }
   }
@@ -384,58 +301,34 @@ export class ChromeAIPromptService {
   static async createInstance(
     options?: LanguageModelCreateOptions,
   ): Promise<LanguageModel> {
-    DiagnosticLogger.startTimer('createInstance');
-    DiagnosticLogger.logAPICall('createInstance()', options);
-
     try {
       if (!this.isSupported()) {
         const error = new Error(
           'LanguageModel API is not supported in this browser. ' +
             'Please use Chrome 138+ (Dev/Canary) and enable the API in chrome://flags#prompt-api-for-gemini-nano-multimodal-input',
         );
-        DiagnosticLogger.logAPIError('createInstance() - not supported', error);
         throw error;
       }
 
       // Check user activation before attempting creation
       if (typeof navigator !== 'undefined' && 'userActivation' in navigator) {
         const userActivation = (navigator as any).userActivation;
-        DiagnosticLogger.log('User Activation Status', {
-          isActive: userActivation?.isActive,
-          hasBeenActive: userActivation?.hasBeenActive,
-        });
 
         if (!userActivation?.isActive) {
-          DiagnosticLogger.warn(
-            'User activation is NOT active - API call may fail',
-          );
+          // User activation not active - may affect creation
         }
       }
 
       // Validate options before creating instance
       if (options) {
-        DiagnosticLogger.log('Validating options...');
         this.validateOptions(options);
-        DiagnosticLogger.log('Options validated successfully');
       }
 
       const api = this.getAPI();
-      DiagnosticLogger.log('Calling api.create()...');
       const instance = await api.create(options);
-
-      DiagnosticLogger.logAPIResponse('createInstance()', {
-        hasInstance: !!instance,
-        maxTokens: instance?.maxTokens,
-        tokensSoFar: instance?.tokensSoFar,
-        tokensLeft: instance?.tokensLeft,
-      });
-      DiagnosticLogger.endTimer('createInstance');
 
       return instance;
     } catch (error: any) {
-      DiagnosticLogger.logAPIError('createInstance()', error);
-      DiagnosticLogger.endTimer('createInstance');
-
       const errorMessage = error?.message?.toLowerCase() || '';
 
       // Enhance error messages with user-friendly guidance
@@ -563,49 +456,28 @@ export class ChromeAIPromptService {
     onChunk: (chunk: string) => void,
     options?: PromptOptions,
   ): Promise<string> {
-    DiagnosticLogger.startTimer('promptStreaming');
-    DiagnosticLogger.logAPICall('promptStreamingWithCallback()', {
-      promptLength: prompt.length,
-      promptPreview: prompt.substring(0, 100) + '...',
-      options,
-    });
-
     try {
       const stream = this.promptStreaming(instance, prompt, options);
       const reader = stream.getReader();
       let fullResponse = '';
-      let chunkCount = 0;
 
       try {
         while (true) {
           const { done, value } = await reader.read();
 
           if (done) {
-            DiagnosticLogger.log(
-              `Stream completed - received ${chunkCount} chunks, ${fullResponse.length} chars`,
-            );
             break;
           }
 
           fullResponse += value;
-          chunkCount++;
           onChunk(value);
         }
-
-        DiagnosticLogger.logAPIResponse('promptStreamingWithCallback()', {
-          responseLength: fullResponse.length,
-          chunkCount,
-        });
-        DiagnosticLogger.endTimer('promptStreaming');
 
         return fullResponse;
       } finally {
         reader.releaseLock();
       }
     } catch (error: any) {
-      DiagnosticLogger.logAPIError('promptStreamingWithCallback()', error);
-      DiagnosticLogger.endTimer('promptStreaming');
-
       // Throw user-friendly error, preserving AbortError name
       const friendlyMessage = getUserFriendlyError(error);
       const wrappedError = new Error(friendlyMessage);

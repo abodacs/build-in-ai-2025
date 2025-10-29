@@ -63,13 +63,15 @@ export const PromptInput: React.FC<PromptInputProps> = ({
     const inputTokens = value ? estimateTokensAccurate(value) + 4 : 0;
 
     // Estimate response tokens based on maxResponseTokens setting
-    // Typically reserve ~30% of remaining space for response, capped at maxResponseTokens
+    // Only estimate when there's actual user input (no input = no response)
     const usedTokens = systemPromptTokens + inputTokens;
     const remainingTokens = Math.max(0, maxTokens - usedTokens);
-    const estimatedResponseTokens = Math.min(
-      Math.floor(remainingTokens * 0.3),
-      maxResponseTokens || 200, // Cap at maxResponseTokens or 200
-    );
+    const estimatedResponseTokens = !value
+      ? 0 // No input = no response estimate
+      : Math.min(
+          Math.floor(remainingTokens * 0.3),
+          maxResponseTokens || 200, // Cap at maxResponseTokens or 200
+        );
 
     const totalTokens = usedTokens + estimatedResponseTokens;
 

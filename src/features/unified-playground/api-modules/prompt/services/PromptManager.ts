@@ -163,7 +163,6 @@ export class PromptManager {
    */
   setSystemPromptId(promptId: SystemPromptId): void {
     this.systemPromptId = promptId;
-    console.log(`[SECURITY] System prompt changed to: ${promptId}`);
   }
 
   /**
@@ -204,7 +203,6 @@ export class PromptManager {
     config: LanguageModelCreateOptions,
     onProgress?: DownloadProgressCallback,
   ): Promise<void> {
-    console.log('PromptManager initialize.');
     try {
       this.state = 'initializing';
 
@@ -250,50 +248,19 @@ export class PromptManager {
         const multimodalStatus =
           await ChromeAIPromptService.checkMultimodalAvailability();
         this.multimodalEnabled = multimodalStatus === 'available';
-        console.log(
-          'PromptManager: multimodal availability =',
-          multimodalStatus,
-        );
-        console.log(
-          'PromptManager: multimodal enabled =',
-          this.multimodalEnabled,
-        );
-        console.log(
-          'PromptManager: instance created with expectedInputs=[{type:"image"}]',
-        );
       } catch (error) {
         console.warn('Failed to check multimodal support:', error);
         // Keep multimodal enabled since instance was created with expectedInputs
         this.multimodalEnabled = true;
-        console.log(
-          'PromptManager: multimodal enabled (via expectedInputs despite check failure)',
-        );
       }
 
       this.state = 'ready';
-      console.log('PromptManager initialized successfully.');
-      console.log('PromptManager: instance is null?', this.instance === null);
-      console.log('PromptManager: state =', this.state);
 
-      // Log context window and token information
-      if (this.instance?.inputQuota) {
-        console.log(
-          `PromptManager: Context window = ${this.instance.inputQuota} tokens`,
-        );
-      }
-      if (this.instance?.maxTokens) {
-        console.log(
-          `PromptManager: Max output tokens = ${this.instance.maxTokens}`,
-        );
-      }
-      if (this.instance?.tokensSoFar !== undefined) {
-        console.log(
-          `PromptManager: Tokens used so far = ${this.instance.tokensSoFar}`,
-        );
-      }
-      if (this.instance?.tokensLeft !== undefined) {
-        console.log(`PromptManager: Tokens left = ${this.instance.tokensLeft}`);
-      }
+      // Context window and token information available
+      // - this.instance.inputQuota: Total context window size
+      // - this.instance.maxTokens: Maximum response length
+      // - this.instance.tokensSoFar: Tokens used so far
+      // - this.instance.tokensLeft: Remaining tokens
     } catch (error) {
       console.error('PromptManager: Initialization FAILED:', error);
       console.error(

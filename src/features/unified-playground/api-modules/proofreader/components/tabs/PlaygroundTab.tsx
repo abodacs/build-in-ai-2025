@@ -42,7 +42,8 @@ export function ProofreaderMain() {
   } | null>(null);
 
   // Availability hook for model management
-  const { availability, isReady, isSupported } = useProofreaderAvailability();
+  const { availability, isReady, isSupported, requiresDownload } =
+    useProofreaderAvailability();
 
   const {
     isProofreading,
@@ -246,7 +247,9 @@ export function ProofreaderMain() {
 
         <UnifiedModelManager
           apiName="Proofreader"
-          availability={availability || 'no'}
+          availability={
+            isReady ? 'available' : requiresDownload ? 'after-download' : 'no'
+          }
           isReady={isReady}
           isLoading={isLoading}
           loadingPhase={

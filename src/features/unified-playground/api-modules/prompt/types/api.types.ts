@@ -122,13 +122,24 @@ export interface ExpectedInput {
 // Chrome AI Availability Types
 // ============================================================================
 
+export type ModernAvailability =
+  | 'unavailable'
+  | 'downloadable'
+  | 'downloading'
+  | 'available';
+
 /**
  * Availability states from Chrome AI API
  * - 'no': API not available on this device/browser
  * - 'after-download': API available but requires model download
  * - 'available': API immediately available (model already downloaded)
  */
-export type LanguageModelAvailability = 'no' | 'after-download' | 'available';
+export type LanguageModelAvailability =
+  | 'no'
+  | 'after-download'
+  | 'available'
+  | 'downloadable'
+  | 'downloading';
 
 // ============================================================================
 // Error Types

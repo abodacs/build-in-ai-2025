@@ -235,6 +235,12 @@ export function UnifiedModelManager({
 }: UnifiedModelManagerProps) {
   const [isClearing, setIsClearing] = useState(false);
 
+  console.log(
+    'Rendering UnifiedModelManager with availability:',
+    apiName,
+    availability,
+  );
+
   // Progressive loading messages (escalate over time)
   const { currentMessage, elapsedTime } = useProgressiveLoadingMessage(
     isLoading || false,

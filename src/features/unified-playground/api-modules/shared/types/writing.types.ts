@@ -20,6 +20,25 @@
  */
 export type AvailabilityStatus = 'no' | 'after-download' | 'available';
 
+export type LegacyAvailability =
+  | 'no'
+  | 'readily'
+  | 'after-download'
+  | 'available';
+
+export type ModernAvailability =
+  | 'unavailable'
+  | 'downloadable'
+  | 'downloading'
+  | 'available';
+
+/**
+ * Common availability type - union of modern and legacy patterns
+ * @see ModernAvailability for newer APIs
+ * @see LegacyAvailability for LanguageModel/Prompt API
+ */
+export type Availability = ModernAvailability | LegacyAvailability;
+
 /**
  * Download progress information for model downloads
  */

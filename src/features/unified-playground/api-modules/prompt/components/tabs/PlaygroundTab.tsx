@@ -3,7 +3,7 @@
  * Main Prompt API playground interface
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   AlertCircle,
   Radio,
@@ -52,7 +52,6 @@ export const PlaygroundTab: React.FC = () => {
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [streamingMode, setStreamingMode] = useState(true);
   const [advancedOptionsOpen, setAdvancedOptionsOpen] = useState(false);
-  const [pendingPrompt, setPendingPrompt] = useState(false);
   const [inputError, setInputError] = useState<{
     message: string;
     helpText?: string;
@@ -66,19 +65,7 @@ export const PlaygroundTab: React.FC = () => {
     maxContextTokens: prompt.inputQuota, // Use inputQuota (6144) instead of maxTokens (1024)
   });
 
-  // Track previous initialization state for auto-run after download
-  const previousIsReady = useRef(prompt.isInitialized);
-
-  // Track if we've attempted initialization to prevent multiple calls
-  const initializationAttempted = useRef(false);
-
-  // Ref to hold latest handlers - prevents stale closures in event listeners/effects
-  const handlersRef = useRef({
-    handleSubmit: null as (() => Promise<void>) | null,
-    initializeFn: prompt.initialize,
-    isInitialized: prompt.isInitialized,
-    isReady: availability.isReady,
-  });
+  // No auto-initialization refs needed - initialization happens in event handlers only
 
   /**
    * Validate input text
@@ -136,45 +123,20 @@ export const PlaygroundTab: React.FC = () => {
     }
   };
 
-  // Handle submit with lazy download support
-  // Memoized to prevent infinite loops in useEffect dependencies
+  /**
+   * Handle submit - REFACTORED to follow React best practices
+   * All initialization logic is handled here in the event handler, not in useEffect
+   */
   const handleSubmit = useCallback(async () => {
-    console.log('[PlaygroundTab] handleSubmit called', {
-      inputValue: inputValue.substring(0, 50),
-      hasInput: !!inputValue.trim(),
-      isInitialized: prompt.isInitialized,
-      isLoading: prompt.isLoading,
-      requiresDownload: availability.requiresDownload,
-    });
-
     if (!inputValue.trim()) {
-      console.warn('[PlaygroundTab] No input value, skipping submit');
       return;
     }
 
     try {
-      // Check if model needs to be downloaded first
-      if (availability.requiresDownload && !prompt.isLoading) {
-        console.log('[PlaygroundTab] Model download required, initializing...');
-        setPendingPrompt(true); // Mark that we want to prompt after download
-        await prompt.initialize();
-        return; // Exit - the useEffect will handle running prompt after download
-      }
-
-      // Ensure we have the model ready
+      // Initialize if needed (lazy initialization on first use)
       if (!prompt.isInitialized) {
-        console.warn(
-          '[PlaygroundTab] Model not ready yet - initialization state:',
-          {
-            isInitialized: prompt.isInitialized,
-            isReady: availability.isReady,
-            availability: availability.availability,
-          },
-        );
-        return;
+        await prompt.initialize();
       }
-
-      console.log('[PlaygroundTab] Starting prompt execution...');
 
       // Add user message to history
       const userMessage = history.addMessage(
@@ -195,14 +157,9 @@ export const PlaygroundTab: React.FC = () => {
 
       // Measure actual input usage using Chrome AI API
       try {
-        const measured = await prompt.measureInputUsage(history.messages);
-        if (measured !== null) {
-          console.log(
-            `[PlaygroundTab] Measured input usage: ${measured} tokens`,
-          );
-        }
-      } catch (error) {
-        console.warn('[PlaygroundTab] Failed to measure input usage:', error);
+        await prompt.measureInputUsage(history.messages);
+      } catch {
+        // Silently fail - not critical
       }
 
       const currentInput = inputValue;
@@ -229,107 +186,11 @@ export const PlaygroundTab: React.FC = () => {
       }
     } catch (error) {
       console.error('Submit failed:', error);
-    } finally {
-      setPendingPrompt(false);
     }
-  }, [
-    inputValue,
-    availability.requiresDownload,
-    streamingMode,
-    history,
-    prompt,
-    fileUpload,
-  ]);
+  }, [inputValue, streamingMode, history, prompt, fileUpload]);
 
-  // Keep ref in sync with latest values
-  // Note: handleSubmit is intentionally excluded from deps to prevent infinite loops.
-  // The history object recreates on every render, which would cause handleSubmit to recreate,
-  // which would trigger this effect constantly. Since we're just updating a mutable ref,
-  // we can safely access the latest handleSubmit without including it in dependencies.
-  useEffect(() => {
-    handlersRef.current = {
-      handleSubmit,
-      initializeFn: prompt.initialize,
-      isInitialized: prompt.isInitialized,
-      isReady: availability.isReady,
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prompt.initialize, prompt.isInitialized, availability.isReady]);
-
-  /**
-   * Auto-run prompt after download completes
-   * Uses handlersRef to avoid stale closures while maintaining stable effect
-   */
-  useEffect(() => {
-    // Check if initialization just completed (was false, now true)
-    if (
-      !previousIsReady.current &&
-      prompt.isInitialized &&
-      pendingPrompt &&
-      inputValue.trim()
-    ) {
-      handlersRef.current.handleSubmit?.();
-    }
-
-    previousIsReady.current = prompt.isInitialized;
-  }, [prompt.isInitialized, pendingPrompt, inputValue]);
-
-  /**
-   * Initialize on mount
-   * Uses handlersRef and initializationAttempted ref to avoid stale closures
-   * and prevent multiple initialization attempts
-   */
-  useEffect(() => {
-    console.log('[PlaygroundTab] Auto-init effect triggered', {
-      isReady: handlersRef.current.isReady,
-      isInitialized: handlersRef.current.isInitialized,
-      attemptedBefore: initializationAttempted.current,
-      availabilityIsReady: availability.isReady,
-      promptIsInitialized: prompt.isInitialized,
-    });
-
-    if (
-      handlersRef.current.isReady &&
-      !handlersRef.current.isInitialized &&
-      !initializationAttempted.current
-    ) {
-      // Check for user activation before auto-init
-      const hasUserActivation =
-        typeof navigator !== 'undefined' &&
-        'userActivation' in navigator &&
-        (navigator as any).userActivation?.isActive;
-
-      console.log('[PlaygroundTab] Auto-init conditions met', {
-        hasUserActivation,
-      });
-
-      if (!hasUserActivation) {
-        console.warn(
-          '[PlaygroundTab] Skipping auto-init: User activation not present. User must click a button to initialize.',
-        );
-        // Don't mark as attempted so it can retry when user interacts
-        return;
-      }
-
-      console.log('[PlaygroundTab] Starting auto-initialization...');
-      initializationAttempted.current = true;
-      handlersRef.current
-        .initializeFn()
-        .then(() => {
-          console.log('[PlaygroundTab] Auto-init succeeded');
-        })
-        .catch((err) => {
-          console.error('[PlaygroundTab] Auto-init failed:', err);
-          console.error('[PlaygroundTab] Error details:', {
-            message: err?.message,
-            name: err?.name,
-            stack: err?.stack,
-          });
-          // Reset flag on failure to allow retry
-          initializationAttempted.current = false;
-        });
-    }
-  }, [availability.isReady, prompt.isInitialized]);
+  // REFACTORED: Removed all auto-initialization useEffects
+  // Initialization now happens lazily in handleSubmit when user clicks send
 
   // Render availability check
   if (!availability.isSupported) {
@@ -640,7 +501,7 @@ export const PlaygroundTab: React.FC = () => {
             value={inputValue}
             onChange={setInputValue}
             onSubmit={handleSubmit}
-            disabled={prompt.isLoading || !prompt.isInitialized}
+            disabled={prompt.isLoading}
             hasFiles={fileUpload.fileCount > 0}
             error={inputError?.message}
             errorHelpText={inputError?.helpText}
@@ -752,7 +613,6 @@ export const PlaygroundTab: React.FC = () => {
             Monitor and manage AI model downloads and cache
           </p>
         </div>
-
         <UnifiedModelManager
           apiName="Prompt"
           availability={
@@ -762,7 +622,7 @@ export const PlaygroundTab: React.FC = () => {
                 ? 'after-download'
                 : 'no'
           }
-          isReady={prompt.isInitialized}
+          isReady={availability.isReady}
           isLoading={prompt.isLoading && !prompt.isInitialized}
           loadingPhase={
             prompt.isLoading && !prompt.isInitialized
@@ -781,7 +641,7 @@ export const PlaygroundTab: React.FC = () => {
             }
           }}
           modelInfo={{
-            name: 'Gemini Nano',
+            name: 'Prompt Model',
             chromeVersion: '138+',
             requiresOriginTrial: false,
             storageRequirement: '22GB+ free space',
