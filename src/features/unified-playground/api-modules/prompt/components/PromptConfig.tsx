@@ -4,16 +4,31 @@
  * Configuration panel for Chrome AI Prompt API options
  * Supports system prompt, temperature, topK, max tokens, and streaming settings
  *
+ * SECURITY: System prompts are now predefined and non-user-editable (OWASP LLM01:2025 compliant)
+ *
  * @module PromptConfig
  */
 
 import { useState, useMemo, memo } from 'react';
-import { Settings, Thermometer, Hash, FileText, Info } from 'lucide-react';
+import {
+  Settings,
+  Thermometer,
+  Hash,
+  FileText,
+  Info,
+  Shield,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Collapsible,
   CollapsibleContent,
@@ -32,6 +47,10 @@ import { useFieldValidation } from '../../../shared/hooks/useFieldValidation';
 import { validationRules } from '../../../shared/utils/validationRules';
 import { ParameterTooltip } from './ParameterTooltip';
 import { ParameterPresets } from './ParameterPresets';
+import {
+  ALLOWED_SYSTEM_PROMPTS,
+  type SystemPromptId,
+} from '../../../shared/utils/promptConstruction';
 import type { PromptConfig as PromptConfigType } from '../types';
 
 // ============================================================================
@@ -156,14 +175,15 @@ function PromptConfigComponent({
               mode="compact"
             />
 
-            {/* System Prompt - Full Width */}
+            {/* System Prompt - SECURITY: Predefined prompts only */}
             <div className="space-y-2.5">
               <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-green-600" aria-hidden="true" />
                 <Label
-                  htmlFor="system-prompt"
+                  htmlFor="system-prompt-select"
                   className="text-sm font-semibold"
                 >
-                  System Prompt
+                  System Prompt (Protected)
                 </Label>
                 <TooltipProvider>
                   <Tooltip>
@@ -171,7 +191,7 @@ function PromptConfigComponent({
                       <button
                         type="button"
                         className="inline-flex items-center"
-                        aria-label="More information about system prompts"
+                        aria-label="Security information about system prompts"
                       >
                         <Info
                           className="w-4 h-4 text-slate-400 cursor-help"
@@ -179,29 +199,83 @@ function PromptConfigComponent({
                         />
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p className="text-sm">
-                        Define the AI&apos;s behavior and personality. This
-                        context is applied to all conversations.
-                      </p>
+                    <TooltipContent className="max-w-sm">
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold flex items-center gap-1">
+                          <Shield className="w-3 h-3" /> Security Protected
+                        </p>
+                        <p className="text-xs">
+                          System prompts are predefined to prevent prompt
+                          injection attacks. Choose from optimized presets for
+                          different use cases.
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          OWASP LLM01:2025 Compliant
+                        </p>
+                      </div>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
 
-              <Textarea
-                id="system-prompt"
-                value={config.systemPrompt || ''}
-                onChange={(e) => updateConfig('systemPrompt', e.target.value)}
-                placeholder="You are a helpful and friendly assistant..."
-                className="min-h-[80px] resize-none"
+              <Select
+                value={config.systemPromptId || 'general'}
+                onValueChange={(value) =>
+                  updateConfig('systemPromptId', value as SystemPromptId)
+                }
                 disabled={disabled}
-                aria-describedby="system-prompt-help"
-                aria-label="System prompt text area"
-              />
+              >
+                <SelectTrigger
+                  id="system-prompt-select"
+                  className="w-full"
+                  aria-label="Select system prompt"
+                >
+                  <SelectValue placeholder="Select a system prompt" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(ALLOWED_SYSTEM_PROMPTS).map(
+                    ([id, promptConfig]) => (
+                      <SelectItem key={id} value={id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {promptConfig.label}
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            {promptConfig.description}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ),
+                  )}
+                </SelectContent>
+              </Select>
 
-              <p id="system-prompt-help" className="text-xs text-slate-500">
-                Sets the context and instructions for the AI model
+              {/* Show selected prompt preview (read-only) */}
+              {config.systemPromptId &&
+                ALLOWED_SYSTEM_PROMPTS[
+                  config.systemPromptId as SystemPromptId
+                ] && (
+                  <div className="mt-2 p-3 bg-slate-50 rounded-md border border-slate-200">
+                    <p className="text-xs font-medium text-slate-600 mb-1">
+                      Prompt Preview:
+                    </p>
+                    <p className="text-xs text-slate-700 whitespace-pre-wrap">
+                      {
+                        ALLOWED_SYSTEM_PROMPTS[
+                          config.systemPromptId as SystemPromptId
+                        ].prompt.split('\n')[0]
+                      }
+                      ...
+                    </p>
+                  </div>
+                )}
+
+              <p
+                id="system-prompt-help"
+                className="text-xs text-slate-500 flex items-center gap-1"
+              >
+                <Shield className="w-3 h-3 text-green-600" />
+                Predefined prompts prevent prompt injection attacks
               </p>
             </div>
 
@@ -410,8 +484,10 @@ function PromptConfigComponent({
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs">
                         <p className="text-xs">
-                          Gemini Nano typically supports up to 4096 tokens for
-                          responses. Higher values may fail or be truncated.
+                          Maximum length for each AI response. Gemini Nano
+                          supports 256-4096 tokens per response. This does not
+                          affect the total conversation limit (context window:
+                          6144 tokens).
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -437,11 +513,11 @@ function PromptConfigComponent({
                   aria-valuemin={256}
                   aria-valuemax={4096}
                   aria-valuenow={config.maxTokens || 2048}
-                  aria-valuetext={`Max tokens: ${config.maxTokens || 2048}. Maximum response length`}
+                  aria-valuetext={`Max tokens: ${config.maxTokens || 2048}. Response length per message`}
                   aria-describedby="maxtokens-help"
                 />
                 <p id="maxtokens-help" className="text-[10px] text-slate-500">
-                  Maximum response length (default: 2048, max: 4096)
+                  Response length per message (default: 2048, range: 256-4096)
                 </p>
               </div>
             </div>
@@ -453,7 +529,7 @@ function PromptConfigComponent({
                 size="sm"
                 onClick={() => {
                   onChange({
-                    systemPrompt: 'You are a helpful and friendly assistant.',
+                    systemPromptId: 'general', // SECURITY: Predefined prompt (OWASP compliant)
                     temperature: 0.8,
                     topK: 8,
                     maxTokens: 2048, // Default max tokens (max allowed: 4096)

@@ -65,11 +65,13 @@ export class ChromeAICompatibility {
 
     switch (version) {
       case 'self':
-        return 'Summarizer' in self ? (self.Summarizer as SummarizerAPI) : null;
+        return 'Summarizer' in self
+          ? (self.Summarizer as unknown as SummarizerAPI)
+          : null;
 
       case 'window':
         return typeof window !== 'undefined' && 'Summarizer' in window
-          ? (window.Summarizer as SummarizerAPI)
+          ? (window.Summarizer as unknown as SummarizerAPI)
           : null;
 
       case 'none':

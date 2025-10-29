@@ -46,7 +46,7 @@ describe('SessionManager', () => {
       expect(conversation).toBeDefined();
       expect(conversation.title).toBe('Test Conv');
       expect(conversation.messages).toEqual([]);
-      expect(conversation.systemPrompt).toBe(config.systemPrompt);
+      expect(conversation.systemPromptId).toBe(config.systemPromptId);
     });
 
     it('creates conversation with default title', () => {

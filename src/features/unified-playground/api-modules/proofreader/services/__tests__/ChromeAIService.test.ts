@@ -386,7 +386,7 @@ describe('ChromeAIProofreaderService', () => {
       const message = ChromeAIProofreaderService.getErrorMessage(error);
 
       expect(message).toContain('download');
-      expect(message).toContain('22GB');
+      expect(message).toContain('storage');
     });
 
     it('should return message for cancelled operation', () => {

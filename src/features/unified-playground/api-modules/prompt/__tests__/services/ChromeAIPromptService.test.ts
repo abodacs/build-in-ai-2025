@@ -483,6 +483,8 @@ describe('ChromeAIPromptService', () => {
         maxTokens: 4096,
         tokensSoFar: 1024,
         tokensLeft: 3072,
+        inputQuota: 6144, // From mock
+        inputUsage: 0, // From mock
       });
     });
 
@@ -587,6 +589,77 @@ describe('ChromeAIPromptService', () => {
       const config = ChromeAIPromptService.getRecommendedConfig('analysis');
 
       expect(config.systemPrompt).toContain('analytical');
+    });
+  });
+
+  // ==========================================================================
+  // Token Measurement Tests (Chrome AI Native APIs)
+  // ==========================================================================
+
+  describe('Token Measurement', () => {
+    it('measureInputUsage with string input', async () => {
+      const instance = createMockLanguageModel();
+      const input = 'Test prompt for measurement';
+
+      const result = await ChromeAIPromptService.measureInputUsage(
+        instance,
+        input,
+      );
+
+      expect(result).toBe(Math.ceil(input.length / 4)); // Mock returns based on length
+      expect(instance.measureInputUsage).toHaveBeenCalledWith(input, {
+        signal: undefined,
+      });
+    });
+
+    it('measureInputUsage with message array', async () => {
+      const instance = createMockLanguageModel();
+      const messages = [
+        { role: 'user', content: 'Hello' },
+        { role: 'assistant', content: 'Hi there!' },
+      ];
+
+      const result = await ChromeAIPromptService.measureInputUsage(
+        instance,
+        messages,
+      );
+
+      expect(result).toBeGreaterThan(0);
+      expect(instance.measureInputUsage).toHaveBeenCalledWith(messages, {
+        signal: undefined,
+      });
+    });
+
+    it('addQuotaOverflowListener registers callback', () => {
+      const instance = createMockLanguageModel();
+      const callback = vi.fn();
+
+      const success = ChromeAIPromptService.addQuotaOverflowListener(
+        instance,
+        callback,
+      );
+
+      expect(success).toBe(true);
+      expect(instance.addEventListener).toHaveBeenCalledWith(
+        'quotaoverflow',
+        callback,
+      );
+    });
+
+    it('removeQuotaOverflowListener unregisters callback', () => {
+      const instance = createMockLanguageModel();
+      const callback = vi.fn();
+
+      const success = ChromeAIPromptService.removeQuotaOverflowListener(
+        instance,
+        callback,
+      );
+
+      expect(success).toBe(true);
+      expect(instance.removeEventListener).toHaveBeenCalledWith(
+        'quotaoverflow',
+        callback,
+      );
     });
   });
 });

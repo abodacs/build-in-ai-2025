@@ -278,6 +278,42 @@ export interface LanguageModel {
   clone?(): Promise<LanguageModel>;
 
   /**
+   * Current input usage in tokens (real-time tracking)
+   * Tracks the actual token count of the current context
+   * More accurate than tokensSoFar for real-time usage
+   * @returns Current input tokens used
+   */
+  inputUsage?: number;
+
+  /**
+   * Measure actual input usage using Chrome AI API
+   * More accurate than countPromptTokens for conversation contexts
+   * Accounts for system prompt, conversation history, and formatting overhead
+   * @param input - String or message array to measure
+   * @param options - Optional measurement options (e.g., signal for cancellation)
+   * @returns Promise resolving to token count, or null if not supported
+   */
+  measureInputUsage?(
+    input: string | Array<{ role: string; content: string }>,
+    options?: { signal?: AbortSignal },
+  ): Promise<number>;
+
+  /**
+   * Add event listener for model events (e.g., 'quotaoverflow')
+   * Allows listening to quota overflow and other model events
+   * @param type - Event type (e.g., 'quotaoverflow')
+   * @param callback - Event handler function
+   */
+  addEventListener?(type: string, callback: (event: Event) => void): void;
+
+  /**
+   * Remove event listener for model events
+   * @param type - Event type (e.g., 'quotaoverflow')
+   * @param callback - Event handler function to remove
+   */
+  removeEventListener?(type: string, callback: (event: Event) => void): void;
+
+  /**
    * Clean up the model instance and free resources
    */
   destroy(): void;

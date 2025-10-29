@@ -11,6 +11,8 @@
  * - Error handling
  * - Performance tracking integration
  *
+ * SECURITY: Integrated OWASP LLM01:2025 prompt injection detection and output validation
+ *
  * @module rewriter/services/RewriterManager
  */
 
@@ -18,6 +20,15 @@ import { BaseWritingManager } from '../../shared/services/BaseWritingManager';
 import { ChromeAIRewriterService } from './ChromeAIService';
 import type { Rewriter, RewriterCreateOptions, RewriterConfig } from '../types';
 import type { AvailabilityStatus } from '../../shared/types';
+
+// SECURITY: Import security utilities
+import { detectInjection } from '../../../shared/utils/promptInjectionDetection';
+import { validateAIOutput } from '../../../shared/utils/outputValidation';
+import {
+  logInjectionDetected,
+  logSuspiciousOutput,
+  getSessionId,
+} from '../../../shared/utils/securityLogger';
 
 // ============================================================================
 // Manager
@@ -139,13 +150,56 @@ export class RewriterManager extends BaseWritingManager<
     context?: string,
     signal?: AbortSignal,
   ): Promise<string> {
+    // SECURITY: Detect potential prompt injection in input
+    const injectionDetection = detectInjection(input);
+    if (injectionDetection.isInjection) {
+      logInjectionDetected(
+        getSessionId(),
+        input,
+        injectionDetection.category || 'unknown',
+        injectionDetection.confidence,
+        false, // Don't block, just log
+        'rewriter-api',
+      );
+      console.warn(
+        `[SECURITY] Potential prompt injection detected in rewriter input:`,
+        {
+          category: injectionDetection.category,
+          confidence: injectionDetection.confidence,
+          severity: injectionDetection.severity,
+        },
+      );
+    }
+
     const instance = await this.getInstance(this.config!);
-    return await ChromeAIRewriterService.rewrite(
+    const result = await ChromeAIRewriterService.rewrite(
       instance,
       input,
       context,
       signal,
     );
+
+    // SECURITY: Validate AI output
+    const outputValidation = validateAIOutput(result, input, {
+      strictMode: false,
+      sanitizeHtmlContent: true,
+    });
+
+    if (!outputValidation.safe) {
+      logSuspiciousOutput(
+        getSessionId(),
+        result,
+        outputValidation.reason || 'Output validation failed',
+        'rewriter-api',
+      );
+      console.warn(`[SECURITY] Suspicious output detected from rewriter:`, {
+        reason: outputValidation.reason,
+        issues: outputValidation.issues,
+      });
+    }
+
+    // Return sanitized output
+    return outputValidation.sanitized;
   }
 
   /**
@@ -168,6 +222,27 @@ export class RewriterManager extends BaseWritingManager<
     console.log('  → Context:', context ? `${context.length} chars` : 'none');
     console.log('  → Signal provided:', !!signal);
     console.log('  → Signal aborted:', signal?.aborted);
+
+    // SECURITY: Detect potential prompt injection in input
+    const injectionDetection = detectInjection(input);
+    if (injectionDetection.isInjection) {
+      logInjectionDetected(
+        getSessionId(),
+        input,
+        injectionDetection.category || 'unknown',
+        injectionDetection.confidence,
+        false, // Don't block, just log
+        'rewriter-api-streaming',
+      );
+      console.warn(
+        `[SECURITY] Potential prompt injection detected in rewriter streaming input:`,
+        {
+          category: injectionDetection.category,
+          confidence: injectionDetection.confidence,
+          severity: injectionDetection.severity,
+        },
+      );
+    }
 
     // NOTE: User activation check is done earlier in useRewriter.ts before any async operations.
     // We don't check it here because the transient activation expires after async boundaries.
@@ -239,10 +314,34 @@ export class RewriterManager extends BaseWritingManager<
       console.log(
         `✅ RewriterManager: Streaming complete (${chunkCount} chunks, ${result.length} total chars)`,
       );
+
+      // SECURITY: Validate complete output
+      const outputValidation = validateAIOutput(result, input, {
+        strictMode: false,
+        sanitizeHtmlContent: true,
+      });
+
+      if (!outputValidation.safe) {
+        logSuspiciousOutput(
+          getSessionId(),
+          result,
+          outputValidation.reason || 'Output validation failed',
+          'rewriter-api-streaming',
+        );
+        console.warn(
+          `[SECURITY] Suspicious output detected from streaming rewriter:`,
+          {
+            reason: outputValidation.reason,
+            issues: outputValidation.issues,
+          },
+        );
+      }
+
       this.setState('ready');
       this.updateMetadata({ lastUsedAt: Date.now(), usageCount: 1 });
 
-      return result;
+      // Return sanitized output
+      return outputValidation.sanitized;
     } catch (error: any) {
       console.error('❌ RewriterManager: Streaming error:', error);
       console.error('Signal aborted at error time:', signal?.aborted);

@@ -33,7 +33,7 @@ export interface TokenBreakdown {
   /** Total tokens used */
   totalTokens: number;
 
-  /** Maximum tokens allowed */
+  /** Maximum tokens allowed (context window limit, e.g., 6144 for Gemini Nano) */
   maxTokens: number;
 }
 
@@ -46,6 +46,12 @@ export interface TokenVisualizationProps {
 
   /** Show detailed breakdown by default */
   defaultExpanded?: boolean;
+
+  /** Whether token count is measured (true) or estimated (false) */
+  isMeasured?: boolean;
+
+  /** Whether quota overflow occurred */
+  quotaExceeded?: boolean;
 
   /** Callback when user requests token reduction */
   onOptimize?: () => void;
@@ -143,6 +149,8 @@ export function TokenVisualization({
   breakdown,
   className,
   defaultExpanded = false,
+  isMeasured = false,
+  quotaExceeded: _quotaExceeded = false,
   onOptimize,
 }: TokenVisualizationProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
@@ -178,15 +186,33 @@ export function TokenVisualization({
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
                 <div className="space-y-1 text-xs">
-                  <p className="font-medium">Token Usage</p>
+                  <p className="font-medium">Context Window Usage</p>
                   <p>1 token ≈ 4 characters or 0.75 words</p>
                   <p className="text-muted-foreground">
-                    {Math.round(percentage)}% of context window used
+                    {Math.round(percentage)}% of total conversation limit (
+                    {formatTokens(breakdown.maxTokens)} tokens)
+                  </p>
+                  <p className="text-xs mt-1 text-slate-500">
+                    {isMeasured
+                      ? '📊 Real-time measurement from Chrome AI API'
+                      : '📐 Estimated based on character count'}
                   </p>
                 </div>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          {/* Measurement Source Badge */}
+          <span
+            className={cn(
+              'text-xs px-2 py-0.5 rounded-md font-medium',
+              isMeasured
+                ? 'bg-green-100 text-green-700'
+                : 'bg-slate-100 text-slate-600',
+            )}
+          >
+            {isMeasured ? 'Measured' : 'Estimated'}
+          </span>
 
           {/* Performance Hint */}
           {hint && (

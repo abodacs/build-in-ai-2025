@@ -1,6 +1,8 @@
 /**
  * useTranslator Hook
  * Main hook for translation operations with Chrome AI Translator API
+ *
+ * SECURITY: Integrated OWASP LLM01:2025 prompt injection detection and output validation
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
@@ -13,6 +15,15 @@ import {
   TranslationErrorType,
 } from '../types';
 import { TranslatorManager } from '../services';
+
+// SECURITY: Import security utilities
+import { detectInjection } from '../../../shared/utils/promptInjectionDetection';
+import { validateAIOutput } from '../../../shared/utils/outputValidation';
+import {
+  logInjectionDetected,
+  logSuspiciousOutput,
+  getSessionId,
+} from '../../../shared/utils/securityLogger';
 
 /**
  * useTranslator hook
@@ -98,6 +109,27 @@ export function useTranslator(
         return null;
       }
 
+      // SECURITY: Detect potential prompt injection in input
+      const injectionDetection = detectInjection(text);
+      if (injectionDetection.isInjection) {
+        logInjectionDetected(
+          getSessionId(),
+          text,
+          injectionDetection.category || 'unknown',
+          injectionDetection.confidence,
+          false, // Don't block, just log
+          'translator-api',
+        );
+        console.warn(
+          `[SECURITY] Potential prompt injection detected in translator input:`,
+          {
+            category: injectionDetection.category,
+            confidence: injectionDetection.confidence,
+            severity: injectionDetection.severity,
+          },
+        );
+      }
+
       setIsLoading(true);
       setError(null);
 
@@ -111,12 +143,34 @@ export function useTranslator(
           signal: abortControllerRef.current?.signal,
         });
 
+        // SECURITY: Validate AI output
+        const outputValidation = validateAIOutput(translation, text, {
+          strictMode: false,
+          sanitizeHtmlContent: true,
+        });
+
+        if (!outputValidation.safe) {
+          logSuspiciousOutput(
+            getSessionId(),
+            translation,
+            outputValidation.reason || 'Output validation failed',
+            'translator-api',
+          );
+          console.warn(
+            `[SECURITY] Suspicious output detected from translator:`,
+            {
+              reason: outputValidation.reason,
+              issues: outputValidation.issues,
+            },
+          );
+        }
+
         const endTime = Date.now();
         const latency = endTime - startTime;
 
         const translationResult: TranslationResult = {
           original: text,
-          translated: translation,
+          translated: outputValidation.sanitized, // Use sanitized output
           sourceLanguage,
           targetLanguage,
           timestamp: new Date().toISOString(),
@@ -130,7 +184,7 @@ export function useTranslator(
         setResult(translationResult);
         setIsLoading(false);
 
-        return translation;
+        return outputValidation.sanitized;
       } catch (err) {
         const error =
           err instanceof TranslationError
@@ -169,6 +223,27 @@ export function useTranslator(
         return null;
       }
 
+      // SECURITY: Detect potential prompt injection in input
+      const injectionDetection = detectInjection(text);
+      if (injectionDetection.isInjection) {
+        logInjectionDetected(
+          getSessionId(),
+          text,
+          injectionDetection.category || 'unknown',
+          injectionDetection.confidence,
+          false, // Don't block, just log
+          'translator-api-streaming',
+        );
+        console.warn(
+          `[SECURITY] Potential prompt injection detected in translator streaming input:`,
+          {
+            category: injectionDetection.category,
+            confidence: injectionDetection.confidence,
+            severity: injectionDetection.severity,
+          },
+        );
+      }
+
       setIsLoading(true);
       setError(null);
 
@@ -191,12 +266,34 @@ export function useTranslator(
           onChunk(chunk);
         }
 
+        // SECURITY: Validate complete output
+        const outputValidation = validateAIOutput(fullTranslation, text, {
+          strictMode: false,
+          sanitizeHtmlContent: true,
+        });
+
+        if (!outputValidation.safe) {
+          logSuspiciousOutput(
+            getSessionId(),
+            fullTranslation,
+            outputValidation.reason || 'Output validation failed',
+            'translator-api-streaming',
+          );
+          console.warn(
+            `[SECURITY] Suspicious output detected from streaming translator:`,
+            {
+              reason: outputValidation.reason,
+              issues: outputValidation.issues,
+            },
+          );
+        }
+
         const endTime = Date.now();
         const latency = endTime - startTime;
 
         const translationResult: TranslationResult = {
           original: text,
-          translated: fullTranslation,
+          translated: outputValidation.sanitized, // Use sanitized output
           sourceLanguage,
           targetLanguage,
           timestamp: new Date().toISOString(),
@@ -207,7 +304,9 @@ export function useTranslator(
             streamingMetrics: {
               firstChunkLatency: 0, // TODO: Track first chunk time
               chunkCount,
-              averageChunkSize: Math.round(fullTranslation.length / chunkCount),
+              averageChunkSize: Math.round(
+                outputValidation.sanitized.length / chunkCount,
+              ),
               chunksPerSecond: (chunkCount / latency) * 1000,
             },
           },
@@ -216,7 +315,7 @@ export function useTranslator(
         setResult(translationResult);
         setIsLoading(false);
 
-        return fullTranslation;
+        return outputValidation.sanitized;
       } catch (err) {
         const error =
           err instanceof TranslationError

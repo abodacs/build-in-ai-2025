@@ -8,6 +8,7 @@ import { usePrompt } from '../../hooks/usePrompt';
 import {
   setupLanguageModelAPIMock,
   cleanupLanguageModelAPIMock,
+  createMockLanguageModel,
 } from '../test-utils';
 
 describe('usePrompt', () => {
@@ -76,8 +77,9 @@ describe('usePrompt', () => {
     });
 
     expect(response!).toBe('AI response');
+    // Prompt is now wrapped with security delimiters for OWASP LLM01:2025 compliance
     expect(mockInstance.prompt).toHaveBeenCalledWith(
-      'Hello',
+      expect.stringContaining('Hello'),
       expect.objectContaining({ signal: expect.any(Object) }),
     );
   });
@@ -247,5 +249,57 @@ describe('usePrompt', () => {
     );
 
     expect(result.current.contextWindowUsage).toBe(0);
+  });
+
+  it('realTimeInputUsage updates from API', async () => {
+    const mockInstance = createMockLanguageModel();
+    mockInstance.inputUsage = 150; // Simulate real-time usage
+    mockAPI.create.mockResolvedValue(mockInstance);
+
+    const { result } = renderHook(() => usePrompt());
+
+    await act(async () => {
+      await result.current.initialize();
+    });
+
+    // Should get initial usage
+    expect(result.current.realTimeInputUsage).toBe(150);
+
+    // Test measureInputUsage
+    await act(async () => {
+      const measured = await result.current.measureInputUsage('Test input');
+      expect(measured).toBeGreaterThan(0);
+    });
+
+    expect(result.current.realTimeInputUsage).toBeGreaterThan(0);
+  });
+
+  it('quotaExceeded flag set on overflow', async () => {
+    const mockInstance = createMockLanguageModel();
+    mockAPI.create.mockResolvedValue(mockInstance);
+
+    const { result } = renderHook(() => usePrompt());
+
+    await act(async () => {
+      await result.current.initialize();
+    });
+
+    // Initially should be false
+    expect(result.current.quotaExceeded).toBe(false);
+
+    // Trigger quota overflow event
+    await act(async () => {
+      const listeners = (
+        mockInstance.addEventListener as any
+      ).mock.calls.filter((call: any[]) => call[0] === 'quotaoverflow');
+      if (listeners.length > 0) {
+        const callback = listeners[0][1];
+        callback(new Event('quotaoverflow'));
+      }
+    });
+
+    // Should now be true
+    expect(result.current.quotaExceeded).toBe(true);
+    expect(result.current.error).toContain('quota exceeded');
   });
 });

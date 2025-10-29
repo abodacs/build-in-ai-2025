@@ -91,28 +91,12 @@ export interface Writer {
    * @param options - Write options
    * @returns Async iterable of text chunks
    */
-  writeStreaming(
-    input: string,
-    options?: WriteOptions,
-  ): ReadableStream<string> & AsyncIterable<string>;
+  writeStreaming(input: string, options?: WriteOptions): AsyncIterable<string>;
 
   /**
    * Destroy the writer instance and free resources
    */
   destroy(): void;
-}
-
-/**
- * Writer API global declaration
- */
-declare global {
-  interface Window {
-    Writer: {
-      create(options?: WriterCreateOptions): Promise<Writer>;
-      availability(): Promise<'no' | 'after-download' | 'available'>;
-    };
-  }
-  const Writer: Window['Writer'];
 }
 
 // ============================================================================

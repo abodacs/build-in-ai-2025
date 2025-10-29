@@ -59,7 +59,7 @@ Chrome AI DevBench provides a **comprehensive, interactive environment** where d
 
 - **Problem**: Summarizer API has 4096-token input limit. Documents over 3000 words fail with API errors, requiring manual chunking.
 - **Solution**: Implemented intelligent chunking algorithm with 200-token overlap and recursive summarization. Automatically detects document boundaries and preserves context across chunks.
-- **Impact**: Successfully processes documents up to 50000 words (12x improvement). Chunking engine handles 100+ edge cases including Unicode, multi-paragraph text, and nested content.
+- **Impact**: Successfully processes documents up to 50000 words (3-5x improvement). Chunking engine handles 100+ edge cases including Unicode, multi-paragraph text, and nested content.
 
 **Challenge 3: Error Recovery at Scale**
 
@@ -214,15 +214,15 @@ Provides flexible AI prompting for custom tasks with text-only and multimodal (t
 
 Chrome AI DevBench demonstrates **compound AI workflows** that were previously impractical or impossible:
 
-🔗 **Privacy-First Content Pipeline** — Detect language → Translate → Proofread → Rewrite (all on-device, no cloud dependencies)
+- 🔗 **Privacy-First Content Pipeline** — Detect language → Translate → Proofread → Rewrite (all on-device, no cloud dependencies)
 
-💰 **Zero-Cost AI at Scale** — Process unlimited text without API fees, rate limits, or backend infrastructure
+- 💰 **Zero-Cost AI at Scale** — Process unlimited text without API fees, rate limits, or backend infrastructure
 
-🔒 **Offline-First AI** — Full functionality without internet after initial model download (~1-2 GB per API)
+- 🔒 **Offline-First AI** — Full functionality without internet after initial model download (~1-2 GB per API)
 
-🖼️ **Multimodal Learning** — Combine text + image analysis for richer AI interactions (Prompt API)
+- 🖼️ **Multimodal Learning** — Combine text + image analysis for richer AI interactions (Prompt API)
 
-🌍 **True Privacy Compliance** — GDPR, HIPAA, and privacy-sensitive applications with guaranteed on-device processing
+- 🌍 **True Privacy Compliance** — GDPR, HIPAA, and privacy-sensitive applications with guaranteed on-device processing
 
 **Real-World Impact**: Developers can now build privacy-compliant AI tools for sensitive domains (healthcare, legal, education, finance) without cloud dependencies or data transmission concerns.
 
@@ -267,11 +267,11 @@ Chrome AI DevBench is the only platform that:
 
 ### Why On-Device AI Matters
 
-🔒 **Privacy** — All processing happens locally, user data never leaves the device
-⚡ **Performance** — Sub-second responses without network round-trips
-💰 **Cost** — Zero API fees or cloud infrastructure expenses
-🌐 **Offline** — Full functionality after initial model download
-🔐 **Compliance** — GDPR, HIPAA, and privacy regulations satisfied by design
+- 🔒 **Privacy** — All processing happens locally, user data never leaves the device
+- ⚡ **Performance** — Sub-second responses without network round-trips
+- 💰 **Cost** — Zero API fees or cloud infrastructure expenses
+- 🌐 **Offline** — Full functionality after initial model download
+- 🔐 **Compliance** — GDPR, HIPAA, and privacy regulations satisfied by design
 
 This enables entirely new categories of **privacy-first applications**: secure medical note-taking, confidential legal document analysis, private language learning, and offline content creation.
 
@@ -458,6 +458,50 @@ When you first use an API, Chrome will prompt you to download the AI model:
 - Close other GPU-intensive applications
 - Check GPU acceleration: `chrome://gpu`
 - Check Chrome Task Manager: Shift+Esc
+</details>
+
+<details>
+<summary><strong>Prompt API not responding?</strong></summary>
+
+**Symptoms**: Clicking "Send" does nothing, no response, no error messages
+
+**Diagnostic Steps**:
+
+1. **Open Developer Console** (F12) - Check for errors and diagnostic logs
+2. **Check Diagnostic Panel** - The Prompt Playground includes a real-time diagnostic panel showing:
+   - API Support status
+   - Chrome version (requires 138+)
+   - Availability status
+   - User Activation status (must be "Active")
+   - Model download status
+3. **Test API Button** - Use the diagnostic panel's "Test API" button to verify basic functionality
+
+**Common Causes & Solutions**:
+
+| Cause                        | Solution                                                                                                                                                                                                   |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **User Activation Required** | Chrome requires a button click to initialize the API. Refreshing the page or loading in a background tab can cause this. **Fix**: Click any button in the UI to activate, then try again.                  |
+| **Model Not Downloaded**     | First-time use requires ~22GB model download. **Fix**: Check `chrome://components` for "Optimization Guide On Device Model" status. Ensure stable internet and sufficient disk space.                      |
+| **Flags Not Enabled**        | Both basic and multimodal flags must be enabled. **Fix**: Enable both `chrome://flags/#prompt-api-for-gemini-nano` AND `chrome://flags/#prompt-api-for-gemini-nano-multimodal-input`, then restart Chrome. |
+| **Initialization Failed**    | API instance creation may fail silently. **Fix**: Check browser console for detailed error messages. Look for messages starting with `[ChromeAI-Prompt]`.                                                  |
+| **Chrome Version Too Old**   | Requires Chrome 138+ (Dev/Canary). **Fix**: Update to latest Chrome Canary from [here](https://www.google.com/chrome/canary/).                                                                             |
+
+**Debugging with Console Logs**:
+
+The application includes comprehensive logging. Look for these patterns in the console:
+
+- `[ChromeAI-Prompt]` - Low-level API calls and responses
+- `[PromptInput]` - Button click and input handling
+- `[PlaygroundTab]` - Component lifecycle and initialization
+- `[usePrompt]` - React hook state changes
+
+**Still Having Issues?**
+
+1. Enable the diagnostic panel in the Prompt Playground (shows automatically)
+2. Take a screenshot of the diagnostic panel and console errors
+3. Check if the issue occurs with other APIs (helps isolate Prompt API-specific vs general issues)
+4. Try the "Test API" button in the diagnostic panel - if it fails, it indicates a setup issue rather than a UI bug
+
 </details>
 
 ### Development Commands

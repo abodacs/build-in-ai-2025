@@ -41,6 +41,7 @@ import { StreamingIndicator } from '../../../shared/components/StreamingIndicato
 import { ModelDownloadProgress } from '../../../shared/components/ModelDownloadProgress';
 import { UnifiedModelManager } from '../../../shared/components';
 import { CodeModal } from '../CodeModal';
+import { DiagnosticPanel } from '../DiagnosticPanel';
 import { DEFAULT_PROMPT_CONFIG } from '../../types';
 import { validateTextInput } from '../../../shared/utils/validation';
 
@@ -138,11 +139,23 @@ export const PlaygroundTab: React.FC = () => {
   // Handle submit with lazy download support
   // Memoized to prevent infinite loops in useEffect dependencies
   const handleSubmit = useCallback(async () => {
-    if (!inputValue.trim()) return;
+    console.log('[PlaygroundTab] handleSubmit called', {
+      inputValue: inputValue.substring(0, 50),
+      hasInput: !!inputValue.trim(),
+      isInitialized: prompt.isInitialized,
+      isLoading: prompt.isLoading,
+      requiresDownload: availability.requiresDownload,
+    });
+
+    if (!inputValue.trim()) {
+      console.warn('[PlaygroundTab] No input value, skipping submit');
+      return;
+    }
 
     try {
       // Check if model needs to be downloaded first
       if (availability.requiresDownload && !prompt.isLoading) {
+        console.log('[PlaygroundTab] Model download required, initializing...');
         setPendingPrompt(true); // Mark that we want to prompt after download
         await prompt.initialize();
         return; // Exit - the useEffect will handle running prompt after download
@@ -150,9 +163,18 @@ export const PlaygroundTab: React.FC = () => {
 
       // Ensure we have the model ready
       if (!prompt.isInitialized) {
-        console.warn('[PlaygroundTab] Model not ready yet');
+        console.warn(
+          '[PlaygroundTab] Model not ready yet - initialization state:',
+          {
+            isInitialized: prompt.isInitialized,
+            isReady: availability.isReady,
+            availability: availability.availability,
+          },
+        );
         return;
       }
+
+      console.log('[PlaygroundTab] Starting prompt execution...');
 
       // Add user message to history
       const userMessage = history.addMessage(
@@ -170,6 +192,18 @@ export const PlaygroundTab: React.FC = () => {
         })),
       );
       const userMessageId = userMessage.id;
+
+      // Measure actual input usage using Chrome AI API
+      try {
+        const measured = await prompt.measureInputUsage(history.messages);
+        if (measured !== null) {
+          console.log(
+            `[PlaygroundTab] Measured input usage: ${measured} tokens`,
+          );
+        }
+      } catch (error) {
+        console.warn('[PlaygroundTab] Failed to measure input usage:', error);
+      }
 
       const currentInput = inputValue;
       setInputValue('');
@@ -246,17 +280,54 @@ export const PlaygroundTab: React.FC = () => {
    * and prevent multiple initialization attempts
    */
   useEffect(() => {
+    console.log('[PlaygroundTab] Auto-init effect triggered', {
+      isReady: handlersRef.current.isReady,
+      isInitialized: handlersRef.current.isInitialized,
+      attemptedBefore: initializationAttempted.current,
+      availabilityIsReady: availability.isReady,
+      promptIsInitialized: prompt.isInitialized,
+    });
+
     if (
       handlersRef.current.isReady &&
       !handlersRef.current.isInitialized &&
       !initializationAttempted.current
     ) {
-      initializationAttempted.current = true;
-      handlersRef.current.initializeFn().catch((err) => {
-        console.error('PlaygroundTab: Auto-init failed:', err);
-        // Reset flag on failure to allow retry
-        initializationAttempted.current = false;
+      // Check for user activation before auto-init
+      const hasUserActivation =
+        typeof navigator !== 'undefined' &&
+        'userActivation' in navigator &&
+        (navigator as any).userActivation?.isActive;
+
+      console.log('[PlaygroundTab] Auto-init conditions met', {
+        hasUserActivation,
       });
+
+      if (!hasUserActivation) {
+        console.warn(
+          '[PlaygroundTab] Skipping auto-init: User activation not present. User must click a button to initialize.',
+        );
+        // Don't mark as attempted so it can retry when user interacts
+        return;
+      }
+
+      console.log('[PlaygroundTab] Starting auto-initialization...');
+      initializationAttempted.current = true;
+      handlersRef.current
+        .initializeFn()
+        .then(() => {
+          console.log('[PlaygroundTab] Auto-init succeeded');
+        })
+        .catch((err) => {
+          console.error('[PlaygroundTab] Auto-init failed:', err);
+          console.error('[PlaygroundTab] Error details:', {
+            message: err?.message,
+            name: err?.name,
+            stack: err?.stack,
+          });
+          // Reset flag on failure to allow retry
+          initializationAttempted.current = false;
+        });
     }
   }, [availability.isReady, prompt.isInitialized]);
 
@@ -317,6 +388,9 @@ export const PlaygroundTab: React.FC = () => {
 
   return (
     <div className="playground-tab space-y-6">
+      {/* Diagnostic Panel - Helps debug API issues */}
+      <DiagnosticPanel />
+
       {/* Configuration */}
       <PromptConfig
         config={config}
@@ -430,8 +504,47 @@ export const PlaygroundTab: React.FC = () => {
 
         {/* Input Area */}
         <div className="border-t p-4 space-y-4">
+          {/* Quota Overflow Alert - Special handling for quota exceeded */}
+          {prompt.quotaExceeded && (
+            <Alert variant="destructive" className="animate-in fade-in-50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Context Window Quota Exceeded</AlertTitle>
+              <AlertDescription className="mt-2">
+                <p className="mb-3">
+                  The conversation has reached the maximum context window size
+                  (6144 tokens). Please clear the history or start a new
+                  conversation to continue.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      history.clearMessages();
+                      setInputValue('');
+                    }}
+                    className="mt-1"
+                  >
+                    Clear History
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      history.createConversation('New Conversation');
+                      setInputValue('');
+                    }}
+                    className="mt-1"
+                  >
+                    New Conversation
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Error Display - Prominent placement above input */}
-          {prompt.error && (
+          {prompt.error && !prompt.quotaExceeded && (
             <Alert variant="destructive" className="animate-in fade-in-50">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
@@ -532,7 +645,10 @@ export const PlaygroundTab: React.FC = () => {
             error={inputError?.message}
             errorHelpText={inputError?.helpText}
             systemPrompt={config.systemPrompt}
-            maxTokens={config.maxTokens}
+            maxTokens={prompt.inputQuota}
+            maxResponseTokens={config.maxTokens}
+            realTimeInputUsage={prompt.realTimeInputUsage}
+            quotaExceeded={prompt.quotaExceeded}
           />
         </div>
 

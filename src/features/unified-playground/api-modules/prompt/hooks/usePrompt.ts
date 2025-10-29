@@ -71,6 +71,9 @@ interface UsePromptReturn {
   estimatedTokens: number;
   contextWindowUsage: number; // percentage
   inputQuota: number; // Total context window in tokens (e.g., 6144 for Gemini Nano)
+  realTimeInputUsage: number | null; // Actual usage from Chrome AI API, null if not available
+  quotaExceeded: boolean; // True if quota overflow event occurred
+  measureInputUsage: (input: string | Message[]) => Promise<number | null>; // Measure input usage
 }
 
 // ============================================================================
@@ -97,6 +100,9 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
 
   // Track if component is unmounting to suppress cleanup errors
   const isUnmountingRef = useRef(false);
+
+  // Store quota overflow callback for cleanup
+  const quotaCallbackRef = useRef<((event: Event) => void) | null>(null);
 
   // State
   const [isInitialized, setIsInitialized] = useState(false);
@@ -125,6 +131,12 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
   const [metrics, setMetrics] = useState<PromptMetrics[]>([]);
   const [averageExecutionTime, setAverageExecutionTime] = useState(0);
   const [successRate, setSuccessRate] = useState(0);
+
+  // Real-time token tracking
+  const [realTimeInputUsage, setRealTimeInputUsage] = useState<number | null>(
+    null,
+  );
+  const [quotaExceeded, setQuotaExceeded] = useState(false);
 
   // ============================================================================
   // Initialization
@@ -197,6 +209,25 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
         'usePrompt: Manager isInitialized:',
         promptManagerRef.current?.isInitialized(),
       );
+
+      // Register quota overflow listener (only if not already registered)
+      if (!quotaCallbackRef.current) {
+        const handleQuotaOverflow = (event: Event) => {
+          console.warn('usePrompt: Quota overflow event received', event);
+          setQuotaExceeded(true);
+          setError(
+            'Context window quota exceeded. Please start a new conversation.',
+          );
+        };
+        quotaCallbackRef.current = handleQuotaOverflow;
+        promptManagerRef.current.onQuotaOverflow(handleQuotaOverflow);
+      }
+
+      // Get initial input usage if available
+      const initialUsage = promptManagerRef.current.getInputUsage();
+      if (initialUsage !== null) {
+        setRealTimeInputUsage(initialUsage);
+      }
 
       setDownloadProgress(null);
       console.log('usePrompt: About to set isInitialized to true');
@@ -612,17 +643,22 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
 
   /**
    * Calculate estimated tokens based on message content
+   * Uses real-time API measurement when available, falls back to estimation
    * Uses useMemo to compute during render instead of in useEffect
    */
   const estimatedTokens = useMemo(() => {
-    // This would use actual token counting if available
-    // For now, we'll estimate based on message length
+    // Prefer real-time measurement from Chrome AI API
+    if (realTimeInputUsage !== null) {
+      return realTimeInputUsage;
+    }
+
+    // Fall back to estimation based on message length
     const totalChars = messages.reduce(
       (sum, msg) => sum + msg.content.length,
       0,
     );
     return Math.ceil(totalChars / 4);
-  }, [messages]);
+  }, [messages, realTimeInputUsage]);
 
   /**
    * Get input quota (context window) from PromptManager
@@ -646,6 +682,43 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
     return Math.min(usage, 100);
   }, [estimatedTokens, inputQuota]);
 
+  /**
+   * Measure input usage using Chrome AI API
+   * @param input - String or message array to measure
+   * @returns Promise resolving to token count, or null if not supported
+   */
+  const measureInputUsage = useCallback(
+    async (input: string | Message[]): Promise<number | null> => {
+      if (!promptManagerRef.current) {
+        return null;
+      }
+
+      try {
+        const convertedInput =
+          typeof input === 'string'
+            ? input
+            : input.map((msg) => ({
+                role: msg.role,
+                content: msg.content,
+              }));
+
+        const measured =
+          await promptManagerRef.current.measureInputUsage(convertedInput);
+
+        // Update real-time usage state
+        if (measured !== null) {
+          setRealTimeInputUsage(measured);
+        }
+
+        return measured;
+      } catch (error) {
+        console.error('Failed to measure input usage:', error);
+        return null;
+      }
+    },
+    [],
+  );
+
   // ============================================================================
   // Cleanup
   // ============================================================================
@@ -656,6 +729,12 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
       isUnmountingRef.current = true;
 
       if (promptManagerRef.current) {
+        // Clean up quota overflow listener before destroying
+        if (quotaCallbackRef.current) {
+          promptManagerRef.current.offQuotaOverflow(quotaCallbackRef.current);
+          quotaCallbackRef.current = null;
+        }
+
         promptManagerRef.current.destroy();
         setIsInitialized(false);
       }
@@ -698,6 +777,9 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
     estimatedTokens,
     contextWindowUsage,
     inputQuota,
+    realTimeInputUsage,
+    quotaExceeded,
+    measureInputUsage,
   };
 }
 

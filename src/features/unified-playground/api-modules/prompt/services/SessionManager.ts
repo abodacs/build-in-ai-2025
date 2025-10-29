@@ -4,6 +4,8 @@
  * Manages conversation history, context window, and session persistence.
  * Handles message storage, retrieval, and localStorage sync.
  *
+ * SECURITY: Uses predefined system prompts via systemPromptId
+ *
  * @module prompt/services/SessionManager
  */
 
@@ -17,6 +19,7 @@ import type {
   MessageRole,
   MessageAttachment,
 } from '../types';
+import { ALLOWED_SYSTEM_PROMPTS } from '../../../shared/utils/promptConstruction';
 
 // ============================================================================
 // Constants
@@ -81,15 +84,20 @@ export class SessionManager {
   ): Conversation {
     const now = new Date();
 
+    // SECURITY: Get system prompt from predefined allowlist
+    const systemPromptId = config.systemPromptId || 'general';
+    const systemPromptText =
+      ALLOWED_SYSTEM_PROMPTS[systemPromptId]?.prompt || '';
+
     const conversation: Conversation = {
       id: this.generateId(),
       title,
       messages: [],
       createdAt: now,
       updatedAt: now,
-      systemPrompt: config.systemPrompt,
+      systemPromptId, // SECURITY: Store prompt ID, not user-editable text
       modelConfig: {
-        systemPrompt: config.systemPrompt,
+        systemPrompt: systemPromptText, // Use actual prompt text for Chrome AI API
         temperature: config.temperature,
         topK: config.topK,
         maxTokens: config.maxTokens,
@@ -421,8 +429,12 @@ export class SessionManager {
     // Rough estimate: 1 token ~= 4 characters
     const estimateTokens = (text: string) => Math.ceil(text.length / 4);
 
-    const systemPromptTokens = this.activeConversation.systemPrompt
-      ? estimateTokens(this.activeConversation.systemPrompt)
+    // SECURITY: Get system prompt text from predefined allowlist
+    const systemPromptId = this.activeConversation.systemPromptId || 'general';
+    const systemPromptText =
+      ALLOWED_SYSTEM_PROMPTS[systemPromptId]?.prompt || '';
+    const systemPromptTokens = systemPromptText
+      ? estimateTokens(systemPromptText)
       : 0;
 
     let historyTokens = 0;

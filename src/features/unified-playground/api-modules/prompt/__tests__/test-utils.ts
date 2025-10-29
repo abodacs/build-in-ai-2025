@@ -19,7 +19,16 @@ import type {
 // Mock LanguageModel API
 // ============================================================================
 
+// Storage for event listeners (shared across test helpers)
+const mockEventListeners = new WeakMap<
+  LanguageModel,
+  Map<string, Set<(event: Event) => void>>
+>();
+
 export function createMockLanguageModel(): LanguageModel {
+  // Event listeners storage
+  const eventListeners: Map<string, Set<(event: Event) => void>> = new Map();
+
   const model: LanguageModel = {
     prompt: vi.fn().mockResolvedValue('Mock response'),
     promptStreaming: vi.fn(() => {
@@ -55,6 +64,20 @@ export function createMockLanguageModel(): LanguageModel {
       return stream;
     }),
     countPromptTokens: vi.fn().mockResolvedValue(10),
+    // Chrome AI API: measureInputUsage
+    measureInputUsage: vi.fn(async (input: any, options?: any) => {
+      // Simulate token measurement based on input length
+      if (typeof input === 'string') {
+        return Math.ceil(input.length / 4);
+      } else if (Array.isArray(input)) {
+        const totalLength = input.reduce(
+          (sum, msg) => sum + (msg.content?.length || 0),
+          0,
+        );
+        return Math.ceil(totalLength / 4);
+      }
+      return 10; // Default
+    }),
     maxTokens: 4096,
     tokensSoFar: 0,
     tokensLeft: 4096,
@@ -62,11 +85,47 @@ export function createMockLanguageModel(): LanguageModel {
     temperature: 0.7,
     clone: vi.fn().mockImplementation(async () => createMockLanguageModel()),
     destroy: vi.fn(),
-    // NEW - Added for factual API accuracy
-    inputQuota: 4096,
+    // Chrome AI API: Input quota and usage tracking
+    inputQuota: 6144, // Correct value for Gemini Nano
     inputUsage: 0,
+    // Chrome AI API: Event handling
+    addEventListener: vi.fn(
+      (event: string, callback: (event: Event) => void) => {
+        if (!eventListeners.has(event)) {
+          eventListeners.set(event, new Set());
+        }
+        eventListeners.get(event)!.add(callback);
+      },
+    ),
+    removeEventListener: vi.fn(
+      (event: string, callback: (event: Event) => void) => {
+        if (eventListeners.has(event)) {
+          eventListeners.get(event)!.delete(callback);
+        }
+      },
+    ),
   };
+
+  // Store event listeners in WeakMap for test helper access
+  mockEventListeners.set(model, eventListeners);
+
   return model;
+}
+
+/**
+ * Test helper to trigger events on mock LanguageModel
+ * @param model - The mock LanguageModel instance
+ * @param eventName - Event name to trigger (e.g., 'quotaoverflow')
+ */
+export function triggerMockEvent(
+  model: LanguageModel,
+  eventName: string,
+): void {
+  const listeners = mockEventListeners.get(model);
+  if (listeners && listeners.has(eventName)) {
+    const mockEvent = new Event(eventName);
+    listeners.get(eventName)!.forEach((callback) => callback(mockEvent));
+  }
 }
 
 export function setupLanguageModelAPIMock() {
@@ -196,7 +255,7 @@ export function createMockPromptConfig(
   overrides?: Partial<PromptConfig>,
 ): PromptConfig {
   return {
-    systemPrompt: 'You are a helpful assistant',
+    systemPromptId: 'general', // Changed from systemPrompt (OWASP LLM01:2025)
     temperature: 0.7,
     topK: 3,
     maxTokens: 4096,
