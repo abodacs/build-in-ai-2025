@@ -3,10 +3,13 @@
  *
  * Types for prompt configuration, messages, conversations, and sessions
  *
+ * SECURITY: System prompts are now predefined via systemPromptId (OWASP LLM01:2025 compliant)
+ *
  * @module prompt/types/prompt.types
  */
 
 import type { LanguageModelCreateOptions } from './api.types';
+import type { SystemPromptId } from '../../../shared/utils/promptConstruction';
 
 // ============================================================================
 // Message Types
@@ -118,8 +121,8 @@ export interface Conversation {
   /** Last message timestamp */
   updatedAt: Date;
 
-  /** System prompt for this conversation */
-  systemPrompt?: string;
+  /** SECURITY: System prompt ID (predefined) for this conversation */
+  systemPromptId?: SystemPromptId;
 
   /** Model configuration for this conversation */
   modelConfig: LanguageModelCreateOptions;
@@ -163,8 +166,17 @@ export interface ConversationMetadata {
 
 /**
  * Prompt playground configuration
+ *
+ * SECURITY: Uses systemPromptId instead of user-editable systemPrompt
  */
 export interface PromptConfig extends LanguageModelCreateOptions {
+  /**
+   * SECURITY: System prompt ID (predefined, non-user-editable)
+   * Replaces the vulnerable user-editable systemPrompt field
+   * @see ALLOWED_SYSTEM_PROMPTS in promptConstruction.ts
+   */
+  systemPromptId?: SystemPromptId;
+
   /** Enable streaming responses? */
   enableStreaming: boolean;
 
@@ -186,12 +198,14 @@ export interface PromptConfig extends LanguageModelCreateOptions {
 
 /**
  * Default prompt configuration
+ *
+ * SECURITY: Uses predefined system prompt ID
  */
 export const DEFAULT_PROMPT_CONFIG: PromptConfig = {
-  systemPrompt: 'You are a helpful AI assistant.',
+  systemPromptId: 'general', // SECURITY: Predefined prompt (OWASP LLM01:2025 compliant)
   temperature: 0.8,
   topK: 8,
-  maxTokens: 512, // Default max tokens for responses (max allowed: 1024)
+  maxTokens: 2048, // Default max tokens for responses (max allowed: 4096)
   enableStreaming: true,
   enableAutoSave: true,
   enableHistory: true,
@@ -539,8 +553,8 @@ export interface PromptTemplate {
     | 'creative'
     | 'learning';
 
-  /** System prompt */
-  systemPrompt: string;
+  /** SECURITY: System prompt ID (predefined) */
+  systemPromptId: SystemPromptId;
 
   /** Recommended configuration */
   config: Partial<PromptConfig>;
@@ -554,6 +568,8 @@ export interface PromptTemplate {
 
 /**
  * Built-in prompt templates
+ *
+ * SECURITY: Uses predefined system prompt IDs
  */
 export const PROMPT_TEMPLATES: PromptTemplate[] = [
   {
@@ -561,7 +577,7 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
     name: 'General Assistant',
     description: 'A helpful AI assistant for everyday questions and tasks',
     category: 'general',
-    systemPrompt: 'You are a helpful AI assistant.',
+    systemPromptId: 'general', // SECURITY: Predefined prompt
     config: {
       temperature: 0.7,
       topK: 8,
@@ -578,8 +594,7 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
     name: 'Code Assistant',
     description: 'Expert programming help and code generation',
     category: 'coding',
-    systemPrompt:
-      'You are an expert programming assistant. Provide clear, efficient code with explanations.',
+    systemPromptId: 'technical', // SECURITY: Predefined prompt
     config: {
       temperature: 0.3,
       topK: 5,
@@ -597,8 +612,7 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
     name: 'Creative Writer',
     description: 'Generate creative content, stories, and ideas',
     category: 'creative',
-    systemPrompt:
-      'You are a creative writing assistant. Help users craft engaging stories and content.',
+    systemPromptId: 'creative', // SECURITY: Predefined prompt
     config: {
       temperature: 0.9,
       topK: 40,

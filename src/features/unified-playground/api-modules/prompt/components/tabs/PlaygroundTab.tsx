@@ -3,7 +3,7 @@
  * Main Prompt API playground interface
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   AlertCircle,
   Radio,
@@ -41,6 +41,7 @@ import { StreamingIndicator } from '../../../shared/components/StreamingIndicato
 import { ModelDownloadProgress } from '../../../shared/components/ModelDownloadProgress';
 import { UnifiedModelManager } from '../../../shared/components';
 import { CodeModal } from '../CodeModal';
+import { DiagnosticPanel } from '../DiagnosticPanel';
 import { DEFAULT_PROMPT_CONFIG } from '../../types';
 import { validateTextInput } from '../../../shared/utils/validation';
 
@@ -51,7 +52,6 @@ export const PlaygroundTab: React.FC = () => {
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [streamingMode, setStreamingMode] = useState(true);
   const [advancedOptionsOpen, setAdvancedOptionsOpen] = useState(false);
-  const [pendingPrompt, setPendingPrompt] = useState(false);
   const [inputError, setInputError] = useState<{
     message: string;
     helpText?: string;
@@ -65,19 +65,7 @@ export const PlaygroundTab: React.FC = () => {
     maxContextTokens: prompt.inputQuota, // Use inputQuota (6144) instead of maxTokens (1024)
   });
 
-  // Track previous initialization state for auto-run after download
-  const previousIsReady = useRef(prompt.isInitialized);
-
-  // Track if we've attempted initialization to prevent multiple calls
-  const initializationAttempted = useRef(false);
-
-  // Ref to hold latest handlers - prevents stale closures in event listeners/effects
-  const handlersRef = useRef({
-    handleSubmit: null as (() => Promise<void>) | null,
-    initializeFn: prompt.initialize,
-    isInitialized: prompt.isInitialized,
-    isReady: availability.isReady,
-  });
+  // No auto-initialization refs needed - initialization happens in event handlers only
 
   /**
    * Validate input text
@@ -135,23 +123,19 @@ export const PlaygroundTab: React.FC = () => {
     }
   };
 
-  // Handle submit with lazy download support
-  // Memoized to prevent infinite loops in useEffect dependencies
+  /**
+   * Handle submit - REFACTORED to follow React best practices
+   * All initialization logic is handled here in the event handler, not in useEffect
+   */
   const handleSubmit = useCallback(async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim()) {
+      return;
+    }
 
     try {
-      // Check if model needs to be downloaded first
-      if (availability.requiresDownload && !prompt.isLoading) {
-        setPendingPrompt(true); // Mark that we want to prompt after download
-        await prompt.initialize();
-        return; // Exit - the useEffect will handle running prompt after download
-      }
-
-      // Ensure we have the model ready
+      // Initialize if needed (lazy initialization on first use)
       if (!prompt.isInitialized) {
-        console.warn('[PlaygroundTab] Model not ready yet');
-        return;
+        await prompt.initialize();
       }
 
       // Add user message to history
@@ -170,6 +154,13 @@ export const PlaygroundTab: React.FC = () => {
         })),
       );
       const userMessageId = userMessage.id;
+
+      // Measure actual input usage using Chrome AI API
+      try {
+        await prompt.measureInputUsage(history.messages);
+      } catch {
+        // Silently fail - not critical
+      }
 
       const currentInput = inputValue;
       setInputValue('');
@@ -195,70 +186,11 @@ export const PlaygroundTab: React.FC = () => {
       }
     } catch (error) {
       console.error('Submit failed:', error);
-    } finally {
-      setPendingPrompt(false);
     }
-  }, [
-    inputValue,
-    availability.requiresDownload,
-    streamingMode,
-    history,
-    prompt,
-    fileUpload,
-  ]);
+  }, [inputValue, streamingMode, history, prompt, fileUpload]);
 
-  // Keep ref in sync with latest values
-  // Note: handleSubmit is intentionally excluded from deps to prevent infinite loops.
-  // The history object recreates on every render, which would cause handleSubmit to recreate,
-  // which would trigger this effect constantly. Since we're just updating a mutable ref,
-  // we can safely access the latest handleSubmit without including it in dependencies.
-  useEffect(() => {
-    handlersRef.current = {
-      handleSubmit,
-      initializeFn: prompt.initialize,
-      isInitialized: prompt.isInitialized,
-      isReady: availability.isReady,
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prompt.initialize, prompt.isInitialized, availability.isReady]);
-
-  /**
-   * Auto-run prompt after download completes
-   * Uses handlersRef to avoid stale closures while maintaining stable effect
-   */
-  useEffect(() => {
-    // Check if initialization just completed (was false, now true)
-    if (
-      !previousIsReady.current &&
-      prompt.isInitialized &&
-      pendingPrompt &&
-      inputValue.trim()
-    ) {
-      handlersRef.current.handleSubmit?.();
-    }
-
-    previousIsReady.current = prompt.isInitialized;
-  }, [prompt.isInitialized, pendingPrompt, inputValue]);
-
-  /**
-   * Initialize on mount
-   * Uses handlersRef and initializationAttempted ref to avoid stale closures
-   * and prevent multiple initialization attempts
-   */
-  useEffect(() => {
-    if (
-      handlersRef.current.isReady &&
-      !handlersRef.current.isInitialized &&
-      !initializationAttempted.current
-    ) {
-      initializationAttempted.current = true;
-      handlersRef.current.initializeFn().catch((err) => {
-        console.error('PlaygroundTab: Auto-init failed:', err);
-        // Reset flag on failure to allow retry
-        initializationAttempted.current = false;
-      });
-    }
-  }, [availability.isReady, prompt.isInitialized]);
+  // REFACTORED: Removed all auto-initialization useEffects
+  // Initialization now happens lazily in handleSubmit when user clicks send
 
   // Render availability check
   if (!availability.isSupported) {
@@ -317,6 +249,9 @@ export const PlaygroundTab: React.FC = () => {
 
   return (
     <div className="playground-tab space-y-6">
+      {/* Diagnostic Panel - Helps debug API issues */}
+      <DiagnosticPanel />
+
       {/* Configuration */}
       <PromptConfig
         config={config}
@@ -430,8 +365,47 @@ export const PlaygroundTab: React.FC = () => {
 
         {/* Input Area */}
         <div className="border-t p-4 space-y-4">
+          {/* Quota Overflow Alert - Special handling for quota exceeded */}
+          {prompt.quotaExceeded && (
+            <Alert variant="destructive" className="animate-in fade-in-50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Context Window Quota Exceeded</AlertTitle>
+              <AlertDescription className="mt-2">
+                <p className="mb-3">
+                  The conversation has reached the maximum context window size
+                  (6144 tokens). Please clear the history or start a new
+                  conversation to continue.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      history.clearMessages();
+                      setInputValue('');
+                    }}
+                    className="mt-1"
+                  >
+                    Clear History
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      history.createConversation('New Conversation');
+                      setInputValue('');
+                    }}
+                    className="mt-1"
+                  >
+                    New Conversation
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Error Display - Prominent placement above input */}
-          {prompt.error && (
+          {prompt.error && !prompt.quotaExceeded && (
             <Alert variant="destructive" className="animate-in fade-in-50">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
@@ -527,12 +501,15 @@ export const PlaygroundTab: React.FC = () => {
             value={inputValue}
             onChange={setInputValue}
             onSubmit={handleSubmit}
-            disabled={prompt.isLoading || !prompt.isInitialized}
+            disabled={prompt.isLoading}
             hasFiles={fileUpload.fileCount > 0}
             error={inputError?.message}
             errorHelpText={inputError?.helpText}
             systemPrompt={config.systemPrompt}
-            maxTokens={config.maxTokens}
+            maxTokens={prompt.inputQuota}
+            maxResponseTokens={config.maxTokens}
+            realTimeInputUsage={prompt.realTimeInputUsage}
+            quotaExceeded={prompt.quotaExceeded}
           />
         </div>
 
@@ -636,7 +613,6 @@ export const PlaygroundTab: React.FC = () => {
             Monitor and manage AI model downloads and cache
           </p>
         </div>
-
         <UnifiedModelManager
           apiName="Prompt"
           availability={
@@ -646,7 +622,7 @@ export const PlaygroundTab: React.FC = () => {
                 ? 'after-download'
                 : 'no'
           }
-          isReady={prompt.isInitialized}
+          isReady={availability.isReady}
           isLoading={prompt.isLoading && !prompt.isInitialized}
           loadingPhase={
             prompt.isLoading && !prompt.isInitialized
@@ -665,7 +641,7 @@ export const PlaygroundTab: React.FC = () => {
             }
           }}
           modelInfo={{
-            name: 'Gemini Nano',
+            name: 'Prompt Model',
             chromeVersion: '138+',
             requiresOriginTrial: false,
             storageRequirement: '22GB+ free space',

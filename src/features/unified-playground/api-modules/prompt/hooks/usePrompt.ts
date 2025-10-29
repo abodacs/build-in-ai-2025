@@ -1,8 +1,15 @@
 /**
- * usePrompt Hook
+ * usePrompt Hook - REFACTORED
  *
  * Main hook for executing prompts with the Chrome AI LanguageModel API.
  * Supports streaming, multimodal input, and conversation management.
+ *
+ * REFACTORED to follow React best practices:
+ * - No automatic initialization in useEffect
+ * - Initialization happens in event handlers (user actions)
+ * - No chains of Effects
+ * - Minimal use of refs (only for manager instances)
+ * - Removed console.log statements (use React DevTools instead)
  *
  * @module prompt/hooks/usePrompt
  */
@@ -69,8 +76,11 @@ interface UsePromptReturn {
 
   // Token Management
   estimatedTokens: number;
-  contextWindowUsage: number; // percentage
-  inputQuota: number; // Total context window in tokens (e.g., 6144 for Gemini Nano)
+  contextWindowUsage: number;
+  inputQuota: number;
+  realTimeInputUsage: number | null;
+  quotaExceeded: boolean;
+  measureInputUsage: (input: string | Message[]) => Promise<number | null>;
 }
 
 // ============================================================================
@@ -80,8 +90,8 @@ interface UsePromptReturn {
 /**
  * usePrompt - Main hook for Chrome AI Prompt API
  *
- * Manages LanguageModel instance, executes prompts, handles streaming,
- * and maintains conversation history.
+ * REFACTORED: Initialization must be called explicitly by user action.
+ * No automatic initialization on mount.
  */
 export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
   const {
@@ -90,13 +100,13 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
     enableHistory = true,
   } = options;
 
-  // Managers
+  // Managers (stable refs - never recreated)
   const promptManagerRef = useRef<PromptManager | null>(null);
   const sessionManagerRef = useRef<SessionManager | null>(null);
   const multimodalHandlerRef = useRef<MultimodalHandler | null>(null);
 
-  // Track if component is unmounting to suppress cleanup errors
-  const isUnmountingRef = useRef(false);
+  // Track quota overflow callback for cleanup
+  const quotaCallbackRef = useRef<((event: Event) => void) | null>(null);
 
   // State
   const [isInitialized, setIsInitialized] = useState(false);
@@ -126,49 +136,44 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
   const [averageExecutionTime, setAverageExecutionTime] = useState(0);
   const [successRate, setSuccessRate] = useState(0);
 
+  // Real-time token tracking
+  const [realTimeInputUsage, setRealTimeInputUsage] = useState<number | null>(
+    null,
+  );
+  const [quotaExceeded, setQuotaExceeded] = useState(false);
+
   // ============================================================================
   // Initialization
   // ============================================================================
 
   /**
    * Initialize the LanguageModel instance
+   *
+   * REFACTORED: This should be called from event handlers (button clicks),
+   * not automatically in useEffect.
    */
   const initialize = useCallback(async () => {
-    console.log('usePrompt: initialize() called');
     try {
       setIsLoading(true);
       setError(null);
 
-      // Create managers
+      // Create managers if they don't exist
       if (!promptManagerRef.current) {
-        console.log('usePrompt: Creating new PromptManager');
         promptManagerRef.current = new PromptManager();
-      } else {
-        console.log('usePrompt: Reusing existing PromptManager');
       }
 
-      // Create SessionManager if needed
       if (!sessionManagerRef.current && enableHistory) {
-        console.log('usePrompt: Creating new SessionManager');
         sessionManagerRef.current = new SessionManager(autoSave);
       }
 
-      // Ensure active conversation exists (even if SessionManager already existed)
+      // Ensure active conversation exists
       if (sessionManagerRef.current && enableHistory) {
         const existingConversation =
           sessionManagerRef.current.getActiveConversation();
         if (!existingConversation) {
-          console.log(
-            'usePrompt: No active conversation found, creating new one',
-          );
           sessionManagerRef.current.createConversation(
             config,
             'New Conversation',
-          );
-        } else {
-          console.log(
-            'usePrompt: Using existing conversation:',
-            existingConversation.id,
           );
         }
 
@@ -182,38 +187,35 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
       }
 
       // Initialize LanguageModel
-      console.log('usePrompt: About to call PromptManager.initialize()');
       await promptManagerRef.current.initialize(config, (progress) => {
         setDownloadProgress(progress);
       });
-      console.log(
-        'usePrompt: PromptManager.initialize() completed successfully',
-      );
-      console.log(
-        'usePrompt: Manager state:',
-        promptManagerRef.current?.getState(),
-      );
-      console.log(
-        'usePrompt: Manager isInitialized:',
-        promptManagerRef.current?.isInitialized(),
-      );
+
+      // Register quota overflow listener (only once)
+      if (!quotaCallbackRef.current) {
+        const handleQuotaOverflow = () => {
+          setQuotaExceeded(true);
+          setError(
+            'Context window quota exceeded. Please start a new conversation.',
+          );
+        };
+        quotaCallbackRef.current = handleQuotaOverflow;
+        promptManagerRef.current.onQuotaOverflow(handleQuotaOverflow);
+      }
+
+      // Get initial input usage if available
+      const initialUsage = promptManagerRef.current.getInputUsage();
+      if (initialUsage !== null) {
+        setRealTimeInputUsage(initialUsage);
+      }
 
       setDownloadProgress(null);
-      console.log('usePrompt: About to set isInitialized to true');
       setIsInitialized(true);
-      console.log('usePrompt: isInitialized state has been set to true');
     } catch (err) {
-      console.error('usePrompt: Initialization FAILED with error:', err);
-      console.error('usePrompt: Error details:', {
-        message: err instanceof Error ? err.message : 'Unknown',
-        name: err instanceof Error ? err.name : 'Unknown',
-        stack: err instanceof Error ? err.stack : 'No stack',
-      });
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to initialize';
       setError(errorMessage);
       setIsInitialized(false);
-      console.log('usePrompt: isInitialized set to false due to error');
       throw err;
     } finally {
       setIsLoading(false);
@@ -221,22 +223,29 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
   }, [config, autoSave, enableHistory]);
 
   // ============================================================================
+  // Metrics
+  // ============================================================================
+
+  /**
+   * Update metrics from manager
+   */
+  const updateMetrics = useCallback(() => {
+    if (promptManagerRef.current) {
+      const managerMetrics = promptManagerRef.current.getMetrics();
+      setMetrics(managerMetrics);
+      setAverageExecutionTime(
+        promptManagerRef.current.getAverageExecutionTime(),
+      );
+      setSuccessRate(promptManagerRef.current.getSuccessRate());
+    }
+  }, []);
+
+  // ============================================================================
   // Prompt Execution
   // ============================================================================
 
   /**
    * Execute a prompt (non-streaming)
-   *
-   * Uses Ref Pattern for Stable Manager Access:
-   * - promptManagerRef, sessionManagerRef, multimodalHandlerRef are intentionally
-   *   excluded from deps because they are stable container references
-   * - Manager instances are accessed at call-time via .current, not closure-time
-   * - Only `config` is included as a dependency since it's the only value that
-   *   should trigger callback recreation
-   * - updateMetrics() is also stable (useCallback with stable deps)
-   *
-   * This pattern prevents unnecessary callback recreation while maintaining
-   * access to the latest manager instances and state setters.
    */
   const prompt = useCallback(
     async (text: string, images?: ImageData[]): Promise<string> => {
@@ -253,13 +262,9 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
 
         // Add user message
         if (sessionManagerRef.current) {
-          // Ensure active conversation exists before adding message
           const activeConversation =
             sessionManagerRef.current.getActiveConversation();
           if (!activeConversation) {
-            console.warn(
-              'usePrompt: No active conversation during prompt, creating one',
-            );
             sessionManagerRef.current.createConversation(
               config,
               'New Conversation',
@@ -284,11 +289,6 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
         // Execute prompt - use multimodal if images provided
         let response: string;
         if (images && images.length > 0) {
-          console.log(
-            'usePrompt: Sending multimodal prompt with',
-            images.length,
-            'images',
-          );
           response = await promptManagerRef.current.promptMultimodal(
             text,
             images,
@@ -315,12 +315,6 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
 
         return response;
       } catch (err) {
-        // Suppress errors during cleanup/unmount
-        if (isUnmountingRef.current) {
-          console.log('usePrompt: Prompt operation cancelled during cleanup');
-          return '';
-        }
-
         const errorMessage =
           err instanceof Error ? err.message : 'Prompt failed';
         setError(errorMessage);
@@ -329,24 +323,11 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
         setIsLoading(false);
       }
     },
-    // Refs intentionally excluded - they're stable containers accessed at call-time
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [config],
+    [config, updateMetrics],
   );
 
   /**
    * Execute a prompt with streaming
-   *
-   * Uses Ref Pattern for Stable Manager Access:
-   * - promptManagerRef, sessionManagerRef, multimodalHandlerRef are intentionally
-   *   excluded from deps because they are stable container references
-   * - Manager instances are accessed at call-time via .current, not closure-time
-   * - Only `config` is included as a dependency since it's the only value that
-   *   should trigger callback recreation
-   * - updateMetrics() is also stable (useCallback with stable deps)
-   *
-   * This pattern prevents unnecessary callback recreation while maintaining
-   * access to the latest manager instances and state setters.
    */
   const promptStreaming = useCallback(
     async (text: string, images?: ImageData[]): Promise<string> => {
@@ -379,13 +360,9 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
 
         // Add user message
         if (sessionManagerRef.current) {
-          // Ensure active conversation exists before adding message
           const activeConversation =
             sessionManagerRef.current.getActiveConversation();
           if (!activeConversation) {
-            console.warn(
-              'usePrompt: No active conversation during streaming, creating one',
-            );
             sessionManagerRef.current.createConversation(
               config,
               'New Conversation',
@@ -429,11 +406,6 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
         };
 
         if (images && images.length > 0) {
-          console.log(
-            'usePrompt: Sending multimodal streaming prompt with',
-            images.length,
-            'images',
-          );
           response = await promptManagerRef.current.promptMultimodalStreaming(
             text,
             onChunk,
@@ -476,14 +448,6 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
 
         return response;
       } catch (err) {
-        // Suppress errors during cleanup/unmount
-        if (isUnmountingRef.current) {
-          console.log(
-            'usePrompt: Streaming operation cancelled during cleanup',
-          );
-          return '';
-        }
-
         const errorMessage =
           err instanceof Error ? err.message : 'Streaming failed';
         setError(errorMessage);
@@ -499,9 +463,7 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
         setIsStreaming(false);
       }
     },
-    // Refs intentionally excluded - they're stable containers accessed at call-time
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [config],
+    [config, updateMetrics],
   );
 
   /**
@@ -512,16 +474,12 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
       promptManagerRef.current.cancelOperation();
       setIsLoading(false);
       setIsStreaming(false);
-
-      // Only set error state if not unmounting (user-initiated cancel)
-      if (!isUnmountingRef.current) {
-        setStreamingState((prev) => ({
-          ...prev,
-          status: 'error',
-          error: 'Cancelled by user',
-          endTime: new Date(),
-        }));
-      }
+      setStreamingState((prev) => ({
+        ...prev,
+        status: 'error',
+        error: 'Cancelled by user',
+        endTime: new Date(),
+      }));
     }
   }, []);
 
@@ -589,62 +547,78 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
   }, [reset]);
 
   // ============================================================================
-  // Metrics
-  // ============================================================================
-
-  /**
-   * Update metrics from manager
-   */
-  const updateMetrics = useCallback(() => {
-    if (promptManagerRef.current) {
-      const managerMetrics = promptManagerRef.current.getMetrics();
-      setMetrics(managerMetrics);
-      setAverageExecutionTime(
-        promptManagerRef.current.getAverageExecutionTime(),
-      );
-      setSuccessRate(promptManagerRef.current.getSuccessRate());
-    }
-  }, []);
-
-  // ============================================================================
   // Token Management
   // ============================================================================
 
   /**
    * Calculate estimated tokens based on message content
-   * Uses useMemo to compute during render instead of in useEffect
+   * Uses real-time API measurement when available, falls back to estimation
    */
   const estimatedTokens = useMemo(() => {
-    // This would use actual token counting if available
-    // For now, we'll estimate based on message length
+    // Prefer real-time measurement from Chrome AI API
+    if (realTimeInputUsage !== null) {
+      return realTimeInputUsage;
+    }
+
+    // Fall back to estimation based on message length
     const totalChars = messages.reduce(
       (sum, msg) => sum + msg.content.length,
       0,
     );
     return Math.ceil(totalChars / 4);
-  }, [messages]);
+  }, [messages, realTimeInputUsage]);
 
   /**
    * Get input quota (context window) from PromptManager
-   * Uses useMemo to compute during render
-   * Note: isInitialized dependency ensures we recalculate when manager is ready
    */
   const inputQuota = useMemo(() => {
     if (promptManagerRef.current) {
       return promptManagerRef.current.getInputQuota();
     }
     return 6144; // Default for Gemini Nano
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInitialized]);
+  }, []);
 
   /**
    * Calculate context window usage percentage
-   * Uses useMemo to compute during render instead of in useEffect
    */
   const contextWindowUsage = useMemo(() => {
     const usage = (estimatedTokens / inputQuota) * 100;
     return Math.min(usage, 100);
   }, [estimatedTokens, inputQuota]);
+
+  /**
+   * Measure input usage using Chrome AI API
+   */
+  const measureInputUsage = useCallback(
+    async (input: string | Message[]): Promise<number | null> => {
+      if (!promptManagerRef.current) {
+        return null;
+      }
+
+      try {
+        const convertedInput =
+          typeof input === 'string'
+            ? input
+            : input.map((msg) => ({
+                role: msg.role,
+                content: msg.content,
+              }));
+
+        const measured =
+          await promptManagerRef.current.measureInputUsage(convertedInput);
+
+        // Update real-time usage state
+        if (measured !== null) {
+          setRealTimeInputUsage(measured);
+        }
+
+        return measured;
+      } catch {
+        return null;
+      }
+    },
+    [],
+  );
 
   // ============================================================================
   // Cleanup
@@ -652,10 +626,13 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
 
   useEffect(() => {
     return () => {
-      // Mark as unmounting to suppress cleanup errors
-      isUnmountingRef.current = true;
-
       if (promptManagerRef.current) {
+        // Clean up quota overflow listener before destroying
+        if (quotaCallbackRef.current) {
+          promptManagerRef.current.offQuotaOverflow(quotaCallbackRef.current);
+          quotaCallbackRef.current = null;
+        }
+
         promptManagerRef.current.destroy();
         setIsInitialized(false);
       }
@@ -698,6 +675,9 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
     estimatedTokens,
     contextWindowUsage,
     inputQuota,
+    realTimeInputUsage,
+    quotaExceeded,
+    measureInputUsage,
   };
 }
 

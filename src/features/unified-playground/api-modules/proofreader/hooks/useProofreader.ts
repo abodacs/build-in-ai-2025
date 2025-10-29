@@ -164,10 +164,7 @@ export interface UseProofreaderReturn {
   /** Actions */
   actions: {
     /** Proofread text */
-    proofread: (
-      input: string,
-      context?: string,
-    ) => Promise<ProofreadResult | null>;
+    proofread: (input: string) => Promise<ProofreadResult | null>;
 
     /** Apply correction at index */
     applyCorrectionAtIndex: (index: number) => void;
@@ -287,13 +284,9 @@ export function useProofreader(
    * Proofread text
    */
   const proofread = useCallback(
-    async (
-      input: string,
-      context?: string,
-    ): Promise<ProofreadResult | null> => {
+    async (input: string): Promise<ProofreadResult | null> => {
       console.group('🔧 useProofreader: proofread');
       console.log('Input:', input);
-      console.log('Context:', context || '(none)');
       console.log('📋 Active Config:', configRef.current);
 
       // Reset state
@@ -304,7 +297,7 @@ export function useProofreader(
       setOriginalInput(input);
       setCorrections([]);
       setCorrectionStates([]);
-      setCorrectedText(input); // Start with original
+      setCorrectedText(null); // Don't show results until proofread completes
       setMetrics(null);
 
       // Create abort controller
@@ -315,52 +308,36 @@ export function useProofreader(
       const tracker = performanceTrackerRef.current;
       tracker.start();
 
-      // Start instance creation synchronously
+      // Start instance creation synchronously (CRITICAL: must be synchronous to preserve user activation)
       const activeConfig = configRef.current;
-      console.log('⚡ Starting instance creation...');
+      console.log('⚡ Starting instance creation IMMEDIATELY (sync)...');
 
       // Set config on manager before using it
       managerRef.current.updateConfig(activeConfig);
 
-      // Check if instance already exists
-      const hasInstance = managerRef.current.hasInstance();
-      let instancePromise: Promise<void>;
-
-      if (hasInstance) {
-        // Instance exists, just get it
-        console.log('✓ Using existing instance');
-        instancePromise = managerRef.current
-          .getInstance(activeConfig)
-          .then(() => {});
-      } else {
-        // No instance, use monitorDownload to track progress
-        console.log(
-          '⬇ No instance, initiating download with progress tracking',
-        );
-        instancePromise = managerRef.current.monitorDownload((progress) => {
-          console.log('📥 Download progress:', progress);
-          setDownloadProgress(progress);
-        }, signal);
-      }
+      // FIXED: Always call getInstance() directly (like useWriter/useRewriter)
+      // This ensures the instance is properly created AND stored in the manager
+      console.log('🔧 Calling getInstance() to create/retrieve instance...');
+      const instancePromise = managerRef.current.getInstance(activeConfig);
 
       try {
         console.log('🔨 Waiting for Proofreader instance...');
 
-        // Await instance creation with timeout (65 minutes to allow for 22GB model download on slow connections)
+        // Await instance creation with timeout (65 minutes to allow for model download on slow connections)
         // Hook timeout exceeds service-level 60-minute timeout to prevent premature cancellation
         await withTimeout(
           instancePromise,
           3900000,
-          'Proofreader instance creation timed out after 65 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure 22GB+ free space and unmetered connection.',
+          'Proofreader instance creation timed out after 65 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure sufficient free space and unmetered connection.',
         );
-        console.log('✅ Proofreader instance obtained');
-        setDownloadProgress(null); // Clear download progress
+        console.log('✅ Proofreader instance obtained successfully');
+        setDownloadProgress(null); // Clear any download progress
         setIsLoading(false);
         setLoadingPhase('proofreading'); // Switch to proofreading phase
 
         // Perform proofread with retry logic
         const result = await withRetry(async () => {
-          return await managerRef.current.proofread(input, context, signal);
+          return await managerRef.current.proofread(input, signal);
         });
 
         console.log('✅ Proofreading complete!');
@@ -379,6 +356,9 @@ export function useProofreader(
           }),
         );
         setCorrectionStates(states);
+
+        // Set corrected text to show results (only after successful proofread)
+        setCorrectedText(input);
 
         setMetrics(tracker.getMetrics());
         setIsProofreading(false);
@@ -595,16 +575,17 @@ export function useProofreader(
 
     // Create abort controller
     abortControllerRef.current = new AbortController();
-    const signal = abortControllerRef.current.signal;
 
     try {
       console.log('[useProofreader] Starting standalone model download...');
 
-      // Use monitorDownload to track progress
-      await managerRef.current.monitorDownload((progress) => {
-        console.log('📥 Download progress:', progress);
-        setDownloadProgress(progress);
-      }, signal);
+      // FIXED: Use getInstance() to properly create and store the instance
+      // This ensures the model is downloaded and the instance is reusable
+      const activeConfig = configRef.current;
+      managerRef.current.updateConfig(activeConfig);
+
+      console.log('🔧 Calling getInstance() to download model...');
+      await managerRef.current.getInstance(activeConfig);
 
       console.log('✅ Model download complete!');
       setDownloadProgress(null);

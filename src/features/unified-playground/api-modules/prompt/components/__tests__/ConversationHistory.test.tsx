@@ -39,8 +39,10 @@ describe('ConversationHistory', () => {
 
   it('should render history sidebar', () => {
     render(<ConversationHistory {...defaultProps} />);
-    // Component now shows "Context Window" instead of "History"
-    expect(screen.getByText('Context Window')).toBeInTheDocument();
+    // Component now shows "Context Window (Conversation Limit)" instead of "History"
+    expect(
+      screen.getByText('Context Window (Conversation Limit)'),
+    ).toBeInTheDocument();
   });
 
   it('should display all messages', () => {
@@ -51,8 +53,10 @@ describe('ConversationHistory', () => {
 
   it('should show token usage meter', () => {
     render(<ConversationHistory {...defaultProps} />);
-    // Component now shows "Context Window" instead of "Token Usage"
-    expect(screen.getByText('Context Window')).toBeInTheDocument();
+    // Component now shows "Context Window (Conversation Limit)" instead of "Token Usage"
+    expect(
+      screen.getByText('Context Window (Conversation Limit)'),
+    ).toBeInTheDocument();
     expect(screen.getByText(/100.*2,048/i)).toBeInTheDocument();
   });
 
@@ -117,6 +121,8 @@ describe('ConversationHistory', () => {
     render(<ConversationHistory {...defaultProps} isOpen={false} />);
     // Component no longer implements collapse/open functionality
     // isOpen prop is accepted but not used - component always shows full view
-    expect(screen.getByText('Context Window')).toBeInTheDocument();
+    expect(
+      screen.getByText('Context Window (Conversation Limit)'),
+    ).toBeInTheDocument();
   });
 });

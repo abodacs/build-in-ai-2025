@@ -4,6 +4,8 @@
  * Manages summarizer instance lifecycle, caching, and resource cleanup
  * Provides high-level interface for summarization operations
  *
+ * SECURITY: Integrated OWASP LLM01:2025 prompt injection detection and output validation
+ *
  * @module SummarizerManager
  */
 
@@ -17,6 +19,15 @@ import type {
 
 import { ChromeAICompatibility } from './ChromeAICompatibility';
 import { ErrorHandler } from './ErrorHandler';
+
+// SECURITY: Import security utilities
+import { detectInjection } from '../../../shared/utils/promptInjectionDetection';
+import { validateAIOutput } from '../../../shared/utils/outputValidation';
+import {
+  logInjectionDetected,
+  logSuspiciousOutput,
+  getSessionId,
+} from '../../../shared/utils/securityLogger';
 
 // ============================================================================
 // Default Options
@@ -305,6 +316,27 @@ export class SummarizerManager {
       throw ErrorHandler.handleSummarizationError(new Error('Empty text'), 0);
     }
 
+    // SECURITY: Detect potential prompt injection in input text
+    const injectionDetection = detectInjection(text);
+    if (injectionDetection.isInjection) {
+      logInjectionDetected(
+        getSessionId(),
+        text,
+        injectionDetection.category || 'unknown',
+        injectionDetection.confidence,
+        false, // Don't block, just log
+        'summarizer-api',
+      );
+      console.warn(
+        `[SECURITY] Potential prompt injection detected in summarizer input:`,
+        {
+          category: injectionDetection.category,
+          confidence: injectionDetection.confidence,
+          severity: injectionDetection.severity,
+        },
+      );
+    }
+
     try {
       // Get or create summarizer
       const summarizer = await this.getSummarizer(createOptions);
@@ -322,6 +354,25 @@ export class SummarizerManager {
         normalizedSummarizeOptions,
       );
 
+      // SECURITY: Validate AI output
+      const outputValidation = validateAIOutput(summary, text, {
+        strictMode: false,
+        sanitizeHtmlContent: true,
+      });
+
+      if (!outputValidation.safe) {
+        logSuspiciousOutput(
+          getSessionId(),
+          summary,
+          outputValidation.reason || 'Output validation failed',
+          'summarizer-api',
+        );
+        console.warn(`[SECURITY] Suspicious output detected from summarizer:`, {
+          reason: outputValidation.reason,
+          issues: outputValidation.issues,
+        });
+      }
+
       // Record metrics
       const summaryTime = performance.now() - startTime;
       this.metrics.summaryTimes.push(summaryTime);
@@ -332,7 +383,8 @@ export class SummarizerManager {
         `[SummarizerManager] Summarized in ${summaryTime.toFixed(2)}ms`,
       );
 
-      return summary;
+      // Return sanitized output
+      return outputValidation.sanitized;
     } catch (error) {
       throw ErrorHandler.handleSummarizationError(error, text.length);
     }
@@ -354,6 +406,27 @@ export class SummarizerManager {
     // Validate input
     if (!text || text.trim().length === 0) {
       throw ErrorHandler.handleSummarizationError(new Error('Empty text'), 0);
+    }
+
+    // SECURITY: Detect potential prompt injection in input text
+    const injectionDetection = detectInjection(text);
+    if (injectionDetection.isInjection) {
+      logInjectionDetected(
+        getSessionId(),
+        text,
+        injectionDetection.category || 'unknown',
+        injectionDetection.confidence,
+        false, // Don't block, just log
+        'summarizer-api-streaming',
+      );
+      console.warn(
+        `[SECURITY] Potential prompt injection detected in summarizer streaming input:`,
+        {
+          category: injectionDetection.category,
+          confidence: injectionDetection.confidence,
+          severity: injectionDetection.severity,
+        },
+      );
     }
 
     try {
@@ -383,7 +456,12 @@ export class SummarizerManager {
         }
       ).summarizeStreaming(text, normalizedSummarizeOptions);
 
-      // Wrap stream to track latency
+      // SECURITY: Accumulate output for validation
+      let accumulatedOutput = '';
+      const sessionId = getSessionId();
+      const originalText = text;
+
+      // Wrap stream to track latency and validate output
       const metricsRef = this.metrics; // Capture metrics ref for closure
       const trackedStream = new ReadableStream({
         async start(controller) {
@@ -394,9 +472,40 @@ export class SummarizerManager {
               const { done, value } = await reader.read();
 
               if (done) {
+                // SECURITY: Validate complete output at end of stream
+                if (accumulatedOutput) {
+                  const outputValidation = validateAIOutput(
+                    accumulatedOutput,
+                    originalText,
+                    {
+                      strictMode: false,
+                      sanitizeHtmlContent: true,
+                    },
+                  );
+
+                  if (!outputValidation.safe) {
+                    logSuspiciousOutput(
+                      sessionId,
+                      accumulatedOutput,
+                      outputValidation.reason || 'Output validation failed',
+                      'summarizer-api-streaming',
+                    );
+                    console.warn(
+                      `[SECURITY] Suspicious output detected from streaming summarizer:`,
+                      {
+                        reason: outputValidation.reason,
+                        issues: outputValidation.issues,
+                      },
+                    );
+                  }
+                }
+
                 controller.close();
                 break;
               }
+
+              // Accumulate output for validation
+              accumulatedOutput += value;
 
               // Track chunk latency
               const now = performance.now();

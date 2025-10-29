@@ -283,7 +283,7 @@ export function useRewriter(initialConfig: RewriterConfig): UseRewriterReturn {
         await withTimeout(
           instancePromise,
           1200000,
-          'Rewriter instance creation timed out after 20 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure 22GB+ free space and unmetered connection.',
+          'Rewriter instance creation timed out after 20 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure sufficient free space and unmetered connection.',
         );
         setIsLoading(false);
 
@@ -397,7 +397,7 @@ export function useRewriter(initialConfig: RewriterConfig): UseRewriterReturn {
         await withTimeout(
           instancePromise,
           1200000,
-          'Rewriter instance creation timed out after 20 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure 22GB+ free space and unmetered connection.',
+          'Rewriter instance creation timed out after 20 minutes. Model download may be in progress. Check chrome://on-device-internals for download status. Ensure sufficient free space and unmetered connection.',
         );
         console.log('✅ Rewriter instance obtained');
         setIsLoading(false);

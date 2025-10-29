@@ -61,7 +61,40 @@ import { PlaygroundTab as WriterPlayground } from './writer/components/tabs';
 import { RewriterMain as RewriterPlayground } from './rewriter/components';
 import { ProofreaderMain } from './proofreader/components/tabs/PlaygroundTab';
 import { LanguageDetectionMain } from './language-detection/components/tabs/PlaygroundTab';
-import { PlaygroundTab as PromptPlayground } from './prompt/components/tabs/PlaygroundTab';
+import { PlaygroundTab as PromptPlaygroundRaw } from './prompt/components/tabs/PlaygroundTab';
+import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
+import React from 'react';
+
+// Fallback component for Prompt Playground errors
+const PromptPlaygroundFallback = ({
+  error,
+  resetError,
+}: {
+  error?: Error;
+  resetError: () => void;
+}) => (
+  <div className="p-6">
+    <h2 className="text-lg font-semibold text-destructive">
+      Prompt Playground Error
+    </h2>
+    <p className="text-sm text-muted-foreground mt-2">
+      {error?.message || 'An unexpected error occurred'}
+    </p>
+    <button
+      onClick={resetError}
+      className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+    >
+      Reset
+    </button>
+  </div>
+);
+
+// Wrap Prompt Playground with ErrorBoundary
+const PromptPlayground: React.FC<PlaygroundComponentProps> = () => (
+  <ErrorBoundary fallback={PromptPlaygroundFallback}>
+    <PromptPlaygroundRaw />
+  </ErrorBoundary>
+);
 
 /**
  * Registry of all available API modules

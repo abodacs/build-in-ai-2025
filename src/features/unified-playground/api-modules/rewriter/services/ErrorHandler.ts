@@ -204,8 +204,8 @@ export class RewriterErrorHandler {
     const baseError = this.handleError(error);
 
     if (baseError.type === 'NotReadableError') {
-      // Estimate model size (Rewriter model size)
-      const estimatedModelSize = 10 * 1024 * 1024 * 1024; // ~10GB estimate
+      // Estimate model size (actual size unknown, using fallback)
+      const estimatedModelSize = 1024 * 1024 * 1024; // 1GB fallback estimate
       const percentComplete = (bytesDownloaded / estimatedModelSize) * 100;
 
       const errorMessage = getErrorMessageWithContext('MODEL_DOWNLOAD_FAILED', {

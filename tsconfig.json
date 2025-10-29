@@ -19,6 +19,9 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    /* Dead Code Prevention */
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
     /* Path mapping */
     "baseUrl": ".",
     "paths": {

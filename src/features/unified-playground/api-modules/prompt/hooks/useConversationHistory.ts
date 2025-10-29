@@ -141,12 +141,31 @@ export function useConversationHistory(
       if (existing) {
         setCurrentConversation(existing);
         setMessages(existing.messages);
+      } else {
+        // No existing conversation, create a default one
+        const newConversation = sessionManagerRef.current.createConversation(
+          {
+            systemPrompt,
+            temperature: 0.8,
+            topK: 40,
+            maxTokens: maxContextTokens,
+            enableStreaming: true,
+            enableAutoSave: autoSave,
+            enableHistory: true,
+            maxHistoryLength: 100,
+            enableMarkdown: true,
+            enableCodeHighlight: true,
+          },
+          'New Conversation',
+        );
+        setCurrentConversation(newConversation);
+        setMessages(newConversation.messages);
       }
 
       // Load all conversations
       setAllConversations(sessionManagerRef.current.getAllConversations());
     }
-  }, [autoSave, maxContextTokens]);
+  }, [autoSave, maxContextTokens, systemPrompt]);
 
   // ============================================================================
   // Conversation Management

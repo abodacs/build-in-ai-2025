@@ -35,6 +35,7 @@ import { CodeModalSkeleton } from '@/components/code/CodeModalSkeleton';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { SummarizerCreateOptions } from '../types/summarizer.types';
+import { generateSummarizerAPITests } from '@/utils/codeGeneration/testGenerator';
 
 // ============================================================================
 // Types
@@ -183,7 +184,7 @@ async function summarize(text: string, context?: string): Promise<string> {
   const summarizer = await createSummarizer();
 
   try {
-    const summary = await summarizer.summarize(text, { context, outputLanguage: 'en' });
+    const summary = await summarizer.summarize(text, { context, outputLanguage: config.outputLanguage || 'en' });
     return summary;
   } finally {
     summarizer.destroy();
@@ -202,7 +203,7 @@ async function summarizeStreaming(
   const summarizer = await createSummarizer();
 
   try {
-    const stream = summarizer.summarizeStreaming(text, { context, outputLanguage: 'en' });
+    const stream = summarizer.summarizeStreaming(text, { context, outputLanguage: config.outputLanguage || 'en' });
 
     // Use for-await-of for async iteration
     let fullSummary = '';
@@ -311,7 +312,7 @@ async function exampleDifferentTypes() {
     type: 'key-points',
     format: 'markdown',
     length: 'medium',
-    outputLanguage: 'en'
+    outputLanguage: config.outputLanguage || 'en'
   });
 
   // TL;DR (concise sentences)
@@ -319,34 +320,34 @@ async function exampleDifferentTypes() {
     type: 'tldr',
     format: 'plain-text',
     length: 'short',
-    outputLanguage: 'en'
+    outputLanguage: config.outputLanguage || 'en'
   });
 
   // Headline (article title)
   const headlineSummarizer = await self.Summarizer.create({
     type: 'headline',
     length: 'short',
-    outputLanguage: 'en'
+    outputLanguage: config.outputLanguage || 'en'
   });
 
   // Teaser (preview text)
   const teaserSummarizer = await self.Summarizer.create({
     type: 'teaser',
     length: 'medium',
-    outputLanguage: 'en'
+    outputLanguage: config.outputLanguage || 'en'
   });
 
   try {
-    const keyPoints = await keyPointsSummarizer.summarize(text, { outputLanguage: 'en' });
+    const keyPoints = await keyPointsSummarizer.summarize(text, { outputLanguage: config.outputLanguage || 'en' });
     console.log('Key Points:', keyPoints);
 
-    const tldr = await tldrSummarizer.summarize(text, { outputLanguage: 'en' });
+    const tldr = await tldrSummarizer.summarize(text, { outputLanguage: config.outputLanguage || 'en' });
     console.log('TL;DR:', tldr);
 
-    const headline = await headlineSummarizer.summarize(text, { outputLanguage: 'en' });
+    const headline = await headlineSummarizer.summarize(text, { outputLanguage: config.outputLanguage || 'en' });
     console.log('Headline:', headline);
 
-    const teaser = await teaserSummarizer.summarize(text, { outputLanguage: 'en' });
+    const teaser = await teaserSummarizer.summarize(text, { outputLanguage: config.outputLanguage || 'en' });
     console.log('Teaser:', teaser);
 
     // Clean up
@@ -366,13 +367,13 @@ async function exampleLanguageConfig() {
   const summarizer = await self.Summarizer.create({
     type: 'tldr',
     expectedInputLanguages: ['en', 'es'],
-    outputLanguage: 'en',
+    outputLanguage: config.outputLanguage || 'en',
     length: 'medium'
   });
 
   try {
     const text = \`Mixed English and Spanish content...\`;
-    const summary = await summarizer.summarize(text, { outputLanguage: 'en' });
+    const summary = await summarizer.summarize(text, { outputLanguage: config.outputLanguage || 'en' });
     console.log('Summary:', summary);
   } finally {
     summarizer.destroy();
@@ -482,7 +483,7 @@ async function summarize(text, context) {
   const summarizer = await createSummarizer();
 
   try {
-    const summary = await summarizer.summarize(text, { context, outputLanguage: 'en' });
+    const summary = await summarizer.summarize(text, { context, outputLanguage: config.outputLanguage || 'en' });
     return summary;
   } finally {
     summarizer.destroy();
@@ -497,7 +498,7 @@ async function summarizeStreaming(text, onChunk, context) {
   const summarizer = await createSummarizer();
 
   try {
-    const stream = summarizer.summarizeStreaming(text, { context, outputLanguage: 'en' });
+    const stream = summarizer.summarizeStreaming(text, { context, outputLanguage: config.outputLanguage || 'en' });
 
     // Use for-await-of for async iteration
     let fullSummary = '';
@@ -606,7 +607,7 @@ async function exampleDifferentTypes() {
     type: 'key-points',
     format: 'markdown',
     length: 'medium',
-    outputLanguage: 'en'
+    outputLanguage: config.outputLanguage || 'en'
   });
 
   // TL;DR (concise sentences)
@@ -614,34 +615,34 @@ async function exampleDifferentTypes() {
     type: 'tldr',
     format: 'plain-text',
     length: 'short',
-    outputLanguage: 'en'
+    outputLanguage: config.outputLanguage || 'en'
   });
 
   // Headline (article title)
   const headlineSummarizer = await self.Summarizer.create({
     type: 'headline',
     length: 'short',
-    outputLanguage: 'en'
+    outputLanguage: config.outputLanguage || 'en'
   });
 
   // Teaser (preview text)
   const teaserSummarizer = await self.Summarizer.create({
     type: 'teaser',
     length: 'medium',
-    outputLanguage: 'en'
+    outputLanguage: config.outputLanguage || 'en'
   });
 
   try {
-    const keyPoints = await keyPointsSummarizer.summarize(text, { outputLanguage: 'en' });
+    const keyPoints = await keyPointsSummarizer.summarize(text, { outputLanguage: config.outputLanguage || 'en' });
     console.log('Key Points:', keyPoints);
 
-    const tldr = await tldrSummarizer.summarize(text, { outputLanguage: 'en' });
+    const tldr = await tldrSummarizer.summarize(text, { outputLanguage: config.outputLanguage || 'en' });
     console.log('TL;DR:', tldr);
 
-    const headline = await headlineSummarizer.summarize(text, { outputLanguage: 'en' });
+    const headline = await headlineSummarizer.summarize(text, { outputLanguage: config.outputLanguage || 'en' });
     console.log('Headline:', headline);
 
-    const teaser = await teaserSummarizer.summarize(text, { outputLanguage: 'en' });
+    const teaser = await teaserSummarizer.summarize(text, { outputLanguage: config.outputLanguage || 'en' });
     console.log('Teaser:', teaser);
 
     // Clean up
@@ -661,13 +662,13 @@ async function exampleLanguageConfig() {
   const summarizer = await self.Summarizer.create({
     type: 'tldr',
     expectedInputLanguages: ['en', 'es'],
-    outputLanguage: 'en',
+    outputLanguage: config.outputLanguage || 'en',
     length: 'medium'
   });
 
   try {
     const text = \`Mixed English and Spanish content...\`;
-    const summary = await summarizer.summarize(text, { outputLanguage: 'en' });
+    const summary = await summarizer.summarize(text, { outputLanguage: config.outputLanguage || 'en' });
     console.log('Summary:', summary);
   } finally {
     summarizer.destroy();
@@ -760,6 +761,7 @@ export function CodeModal({
     () => generateJavaScriptCode(config),
     [config],
   );
+  const testsCode = useMemo(() => generateSummarizerAPITests(config), [config]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal>
@@ -918,9 +920,10 @@ export function CodeModal({
 
               {/* Code Tabs */}
               <Tabs defaultValue="javascript" className="w-full">
-                <TabsList className="w-full grid grid-cols-2 mb-4">
+                <TabsList className="w-full grid grid-cols-3 mb-4">
                   <TabsTrigger value="typescript">TypeScript</TabsTrigger>
                   <TabsTrigger value="javascript">JavaScript</TabsTrigger>
+                  <TabsTrigger value="tests">Tests</TabsTrigger>
                 </TabsList>
 
                 {/* TypeScript */}
@@ -951,6 +954,24 @@ export function CodeModal({
                     code={javascriptCode}
                     language="javascript"
                     filename="summarizer.js"
+                    showCopyButton
+                    showDownloadButton
+                    showThemeToggle={false}
+                    showLanguageBadge={false}
+                    forceTheme="dark"
+                  />
+                </TabsContent>
+
+                {/* Tests */}
+                <TabsContent value="tests" className="mt-0 space-y-3">
+                  <div className="text-sm text-slate-600">
+                    Comprehensive Vitest test suite with type validation
+                  </div>
+
+                  <ThemedCodeBlock
+                    code={testsCode}
+                    language="typescript"
+                    filename="summarizer-api.test.ts"
                     showCopyButton
                     showDownloadButton
                     showThemeToggle={false}

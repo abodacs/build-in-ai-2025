@@ -134,29 +134,15 @@ describe('ProofreaderManager', () => {
       expect(ChromeAIProofreaderService.createInstance).toHaveBeenCalled();
     });
 
-    it('should pass context to service', async () => {
-      manager.updateConfig(defaultConfig);
-
-      await manager.proofread('test', 'This is context');
-
-      expect(ChromeAIProofreaderService.proofread).toHaveBeenCalledWith(
-        mockProofreader,
-        'test',
-        'This is context',
-        undefined,
-      );
-    });
-
     it('should pass abort signal to service', async () => {
       manager.updateConfig(defaultConfig);
       const signal = new AbortController().signal;
 
-      await manager.proofread('test', undefined, signal);
+      await manager.proofread('test', signal);
 
       expect(ChromeAIProofreaderService.proofread).toHaveBeenCalledWith(
         mockProofreader,
         'test',
-        undefined,
         signal,
       );
     });
@@ -171,7 +157,7 @@ describe('ProofreaderManager', () => {
       );
 
       await expect(
-        manager.proofread('test', undefined, controller.signal),
+        manager.proofread('test', controller.signal),
       ).rejects.toThrow(/cancelled/);
     });
 

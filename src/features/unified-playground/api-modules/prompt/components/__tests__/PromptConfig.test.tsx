@@ -25,12 +25,13 @@ describe('PromptConfig', () => {
       ).toBeInTheDocument();
     });
 
-    it('should render system prompt textarea', () => {
+    it('should render system prompt select', () => {
       render(
         <PromptConfig config={DEFAULT_PROMPT_CONFIG} onChange={mockOnChange} />,
       );
+      // Component now uses a Select dropdown (OWASP LLM01:2025 compliant)
       expect(
-        screen.getByRole('textbox', { name: /System prompt/i }),
+        screen.getByLabelText(/System Prompt \(Protected\)/i),
       ).toBeInTheDocument();
     });
 
@@ -46,22 +47,33 @@ describe('PromptConfig', () => {
     it('should display current system prompt', () => {
       render(
         <PromptConfig
-          config={{ ...DEFAULT_PROMPT_CONFIG, systemPrompt: 'Test prompt' }}
+          config={{ ...DEFAULT_PROMPT_CONFIG, systemPromptId: 'creative' }}
           onChange={mockOnChange}
         />,
       );
-      const textarea = screen.getByRole('textbox', { name: /System prompt/i });
-      expect(textarea).toHaveValue('Test prompt');
+      // Component now uses Select with systemPromptId
+      // For Radix UI Select, check the trigger's text content instead of value
+      const selectTrigger = screen.getByRole('combobox', {
+        name: /Select system prompt/i,
+      });
+      expect(selectTrigger).toBeInTheDocument();
+      // Verify the select shows "Creative" as the displayed text
+      expect(selectTrigger).toHaveTextContent(/Creative/i);
     });
 
     it('should call onChange when system prompt changes', () => {
       render(
         <PromptConfig config={DEFAULT_PROMPT_CONFIG} onChange={mockOnChange} />,
       );
-      const textarea = screen.getByRole('textbox', { name: /System prompt/i });
-      fireEvent.change(textarea, { target: { value: 'New prompt' } });
+      const selectTrigger = screen.getByRole('combobox', {
+        name: /Select system prompt/i,
+      });
+      fireEvent.click(selectTrigger);
+      // Select the 'creative' option - use getByRole to be more specific
+      const creativeOption = screen.getByRole('option', { name: /Creative/i });
+      fireEvent.click(creativeOption);
       expect(mockOnChange).toHaveBeenCalledWith(
-        expect.objectContaining({ systemPrompt: 'New prompt' }),
+        expect.objectContaining({ systemPromptId: 'creative' }),
       );
     });
   });
@@ -137,7 +149,7 @@ describe('PromptConfig', () => {
       const slider = screen.getByLabelText(/Max tokens slider/i);
       expect(slider).toBeInTheDocument();
       expect(slider).toHaveAttribute('aria-valuemin', '256');
-      expect(slider).toHaveAttribute('aria-valuemax', '1024');
+      expect(slider).toHaveAttribute('aria-valuemax', '4096');
     });
   });
 
@@ -160,10 +172,10 @@ describe('PromptConfig', () => {
       });
       fireEvent.click(resetButton);
       expect(mockOnChange).toHaveBeenCalledWith({
-        systemPrompt: 'You are a helpful and friendly assistant.',
+        systemPromptId: 'general',
         temperature: 0.8,
         topK: 8,
-        maxTokens: 512,
+        maxTokens: 2048,
         enableStreaming: true,
       });
     });
@@ -178,9 +190,9 @@ describe('PromptConfig', () => {
           disabled={true}
         />,
       );
-      expect(
-        screen.getByRole('textbox', { name: /System prompt/i }),
-      ).toBeDisabled();
+      // Component now uses Select instead of textarea
+      const select = screen.getByLabelText(/System Prompt \(Protected\)/i);
+      expect(select).toBeDisabled();
       expect(screen.getByLabelText(/Temperature slider/i)).toHaveAttribute(
         'aria-disabled',
         'true',

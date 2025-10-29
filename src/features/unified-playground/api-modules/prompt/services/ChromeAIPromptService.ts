@@ -110,7 +110,9 @@ export class ChromeAIPromptService {
    * @returns true if API is available in this browser
    */
   static isSupported(): boolean {
-    return typeof window !== 'undefined' && 'LanguageModel' in window;
+    const supported =
+      typeof window !== 'undefined' && 'LanguageModel' in window;
+    return supported;
   }
 
   /**
@@ -141,11 +143,11 @@ export class ChromeAIPromptService {
 
       const api = this.getAPI();
       const status = await api.availability();
-
       // Normalize Chrome API status to internal AvailabilityStatus
-      return normalizeAvailability(status);
+      const normalized = normalizeAvailability(status);
+      return normalized;
     } catch {
-      // Silently return 'no' on error - UI will handle messaging
+      // Silently handle error - API not available
       return 'no';
     }
   }
@@ -300,19 +302,27 @@ export class ChromeAIPromptService {
     options?: LanguageModelCreateOptions,
   ): Promise<LanguageModel> {
     try {
-      console.log('Creating LanguageModel instance with options:', options);
       if (!this.isSupported()) {
-        throw new Error(
+        const error = new Error(
           'LanguageModel API is not supported in this browser. ' +
             'Please use Chrome 138+ (Dev/Canary) and enable the API in chrome://flags#prompt-api-for-gemini-nano-multimodal-input',
         );
+        throw error;
+      }
+
+      // Check user activation before attempting creation
+      if (typeof navigator !== 'undefined' && 'userActivation' in navigator) {
+        const userActivation = (navigator as any).userActivation;
+
+        if (!userActivation?.isActive) {
+          // User activation not active - may affect creation
+        }
       }
 
       // Validate options before creating instance
       if (options) {
         this.validateOptions(options);
       }
-      console.log('Options validated successfully.');
 
       const api = this.getAPI();
       const instance = await api.create(options);
@@ -512,6 +522,8 @@ export class ChromeAIPromptService {
     maxTokens: number;
     tokensSoFar: number;
     tokensLeft: number;
+    inputQuota?: number;
+    inputUsage?: number;
   } | null {
     try {
       if (
@@ -523,11 +535,104 @@ export class ChromeAIPromptService {
           maxTokens: instance.maxTokens,
           tokensSoFar: instance.tokensSoFar,
           tokensLeft: instance.tokensLeft,
+          inputQuota: instance.inputQuota,
+          inputUsage: instance.inputUsage,
         };
       }
       return null;
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * Measure actual input usage using Chrome AI API
+   * @param instance - LanguageModel instance
+   * @param input - String or message array to measure
+   * @param signal - Optional AbortSignal for cancellation
+   * @returns Promise resolving to token count, or null if not supported
+   */
+  static async measureInputUsage(
+    instance: LanguageModel,
+    input: string | Array<{ role: string; content: string }>,
+    signal?: AbortSignal,
+  ): Promise<number | null> {
+    try {
+      if (instance.measureInputUsage) {
+        return await instance.measureInputUsage(input, { signal });
+      }
+      return null;
+    } catch {
+      // Return null if measurement fails or not supported
+      return null;
+    }
+  }
+
+  /**
+   * Get current input usage (real-time tracking)
+   * @param instance - LanguageModel instance
+   * @returns Current input usage in tokens, or null if not available
+   */
+  static getInputUsage(instance: LanguageModel): number | null {
+    try {
+      return instance.inputUsage ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Get input quota (context window size)
+   * @param instance - LanguageModel instance
+   * @returns Input quota in tokens, or null if not available
+   */
+  static getInputQuota(instance: LanguageModel): number | null {
+    try {
+      return instance.inputQuota ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Add quota overflow event listener
+   * @param instance - LanguageModel instance
+   * @param callback - Callback function to handle overflow events
+   * @returns true if listener was added successfully
+   */
+  static addQuotaOverflowListener(
+    instance: LanguageModel,
+    callback: (event: Event) => void,
+  ): boolean {
+    try {
+      if (instance.addEventListener) {
+        instance.addEventListener('quotaoverflow', callback);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Remove quota overflow event listener
+   * @param instance - LanguageModel instance
+   * @param callback - Callback function to remove
+   * @returns true if listener was removed successfully
+   */
+  static removeQuotaOverflowListener(
+    instance: LanguageModel,
+    callback: (event: Event) => void,
+  ): boolean {
+    try {
+      if (instance.removeEventListener) {
+        instance.removeEventListener('quotaoverflow', callback);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
     }
   }
 

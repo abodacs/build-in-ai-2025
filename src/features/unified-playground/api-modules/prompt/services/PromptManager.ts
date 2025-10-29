@@ -4,6 +4,8 @@
  * High-level manager for LanguageModel instances. Handles instance lifecycle,
  * configuration management, retry logic, and operation coordination.
  *
+ * SECURITY: Integrated with OWASP LLM01:2025 compliant prompt injection protection
+ *
  * @module prompt/services/PromptManager
  */
 
@@ -16,6 +18,19 @@ import type {
   LanguageModelAvailability,
   PromptMetrics,
 } from '../types';
+
+// Security utilities
+import {
+  buildSecurePrompt,
+  buildMultimodalSecurePrompt,
+  type SystemPromptId,
+} from '../../../shared/utils/promptConstruction';
+import { validateAIOutput } from '../../../shared/utils/outputValidation';
+import {
+  logInjectionDetected,
+  logSuspiciousOutput,
+  getSessionId,
+} from '../../../shared/utils/securityLogger';
 
 // ============================================================================
 // Types
@@ -66,6 +81,9 @@ export class PromptManager {
   private state: ManagerState = 'idle';
   private currentConfig: LanguageModelCreateOptions | null = null;
 
+  // Security: System prompt ID (non-user-editable)
+  private systemPromptId: SystemPromptId = 'general';
+
   // Multimodal support flag
   private multimodalEnabled = false;
 
@@ -86,6 +104,9 @@ export class PromptManager {
   // Performance tracking
   private metrics: PromptMetrics[] = [];
   private lastOperationStartTime: Date | null = null;
+
+  // Quota overflow event tracking
+  private quotaOverflowListeners: Set<(event: Event) => void> = new Set();
 
   // ============================================================================
   // Constructor
@@ -136,6 +157,21 @@ export class PromptManager {
     return this.downloadProgress;
   }
 
+  /**
+   * Set system prompt ID (security: only predefined prompts allowed)
+   * @param promptId - ID of predefined system prompt
+   */
+  setSystemPromptId(promptId: SystemPromptId): void {
+    this.systemPromptId = promptId;
+  }
+
+  /**
+   * Get current system prompt ID
+   */
+  getSystemPromptId(): SystemPromptId {
+    return this.systemPromptId;
+  }
+
   // ============================================================================
   // Availability Checking
   // ============================================================================
@@ -167,7 +203,6 @@ export class PromptManager {
     config: LanguageModelCreateOptions,
     onProgress?: DownloadProgressCallback,
   ): Promise<void> {
-    console.log('PromptManager initialize.');
     try {
       this.state = 'initializing';
 
@@ -213,50 +248,19 @@ export class PromptManager {
         const multimodalStatus =
           await ChromeAIPromptService.checkMultimodalAvailability();
         this.multimodalEnabled = multimodalStatus === 'available';
-        console.log(
-          'PromptManager: multimodal availability =',
-          multimodalStatus,
-        );
-        console.log(
-          'PromptManager: multimodal enabled =',
-          this.multimodalEnabled,
-        );
-        console.log(
-          'PromptManager: instance created with expectedInputs=[{type:"image"}]',
-        );
       } catch (error) {
         console.warn('Failed to check multimodal support:', error);
         // Keep multimodal enabled since instance was created with expectedInputs
         this.multimodalEnabled = true;
-        console.log(
-          'PromptManager: multimodal enabled (via expectedInputs despite check failure)',
-        );
       }
 
       this.state = 'ready';
-      console.log('PromptManager initialized successfully.');
-      console.log('PromptManager: instance is null?', this.instance === null);
-      console.log('PromptManager: state =', this.state);
 
-      // Log context window and token information
-      if (this.instance?.inputQuota) {
-        console.log(
-          `PromptManager: Context window = ${this.instance.inputQuota} tokens`,
-        );
-      }
-      if (this.instance?.maxTokens) {
-        console.log(
-          `PromptManager: Max output tokens = ${this.instance.maxTokens}`,
-        );
-      }
-      if (this.instance?.tokensSoFar !== undefined) {
-        console.log(
-          `PromptManager: Tokens used so far = ${this.instance.tokensSoFar}`,
-        );
-      }
-      if (this.instance?.tokensLeft !== undefined) {
-        console.log(`PromptManager: Tokens left = ${this.instance.tokensLeft}`);
-      }
+      // Context window and token information available
+      // - this.instance.inputQuota: Total context window size
+      // - this.instance.maxTokens: Maximum response length
+      // - this.instance.tokensSoFar: Tokens used so far
+      // - this.instance.tokensLeft: Remaining tokens
     } catch (error) {
       console.error('PromptManager: Initialization FAILED:', error);
       console.error(
@@ -320,6 +324,15 @@ export class PromptManager {
    */
   destroy(): void {
     if (this.instance) {
+      // Clean up all quota overflow listeners
+      this.quotaOverflowListeners.forEach((callback) => {
+        ChromeAIPromptService.removeQuotaOverflowListener(
+          this.instance!,
+          callback,
+        );
+      });
+      this.quotaOverflowListeners.clear();
+
       ChromeAIPromptService.destroy(this.instance);
       this.instance = null;
     }
@@ -335,6 +348,7 @@ export class PromptManager {
 
   /**
    * Execute a prompt (non-streaming)
+   * SECURITY: Integrated with prompt injection detection and output validation
    * @param prompt - User prompt text
    * @param options - Optional prompt options
    * @returns Promise resolving to response string
@@ -348,6 +362,37 @@ export class PromptManager {
     this.state = 'prompting';
 
     try {
+      // SECURITY: Build secure prompt with delimiter-based isolation
+      const securePromptResult = buildSecurePrompt(
+        this.systemPromptId,
+        prompt,
+        undefined, // No context for basic prompts
+        {
+          validateInput: true,
+          sanitizeInput: true,
+          throwOnInjection: false, // Log but don't block to maintain UX
+        },
+      );
+
+      // SECURITY: Log injection detection if found
+      if (securePromptResult.detectionResult?.isInjection) {
+        logInjectionDetected(
+          getSessionId(),
+          prompt,
+          securePromptResult.detectionResult.category!,
+          securePromptResult.detectionResult.confidence,
+          false, // Not blocking, just detecting
+          'prompt-api',
+        );
+
+        // Warn user in console
+        console.warn(
+          `[SECURITY] Potential prompt injection detected:`,
+          securePromptResult.detectionResult.category,
+          `(confidence: ${(securePromptResult.detectionResult.confidence * 100).toFixed(1)}%)`,
+        );
+      }
+
       // Create abort controller
       this.abortController = new AbortController();
       const mergedOptions = {
@@ -355,16 +400,42 @@ export class PromptManager {
         signal: this.abortController.signal,
       };
 
-      // Execute with retry logic
+      // Execute with retry logic using secured prompt
       const result = await this.withRetry(() =>
-        ChromeAIPromptService.prompt(this.instance!, prompt, mergedOptions),
+        ChromeAIPromptService.prompt(
+          this.instance!,
+          securePromptResult.prompt,
+          mergedOptions,
+        ),
       );
+
+      // SECURITY: Validate AI output
+      const outputValidation = validateAIOutput(result, prompt, {
+        strictMode: false,
+        sanitizeHtmlContent: true,
+      });
+
+      if (!outputValidation.safe) {
+        logSuspiciousOutput(
+          getSessionId(),
+          result,
+          outputValidation.reason || 'Output validation failed',
+          'prompt-api',
+        );
+
+        console.warn(
+          `[SECURITY] Suspicious output detected:`,
+          outputValidation.reason,
+        );
+      }
 
       // Track metrics
       this.trackMetrics(startTime, true);
 
       this.state = 'ready';
-      return result;
+
+      // Return sanitized output
+      return outputValidation.sanitized;
     } catch (error) {
       this.trackMetrics(startTime, false, error);
       this.state = 'ready';
@@ -376,6 +447,7 @@ export class PromptManager {
 
   /**
    * Execute a prompt with streaming
+   * SECURITY: Integrated with prompt injection detection and output validation
    * @param prompt - User prompt text
    * @param onChunk - Callback for each chunk
    * @param options - Optional prompt options
@@ -394,6 +466,35 @@ export class PromptManager {
     this.state = 'prompting';
 
     try {
+      // SECURITY: Build secure prompt with delimiter-based isolation
+      const securePromptResult = buildSecurePrompt(
+        this.systemPromptId,
+        prompt,
+        undefined,
+        {
+          validateInput: true,
+          sanitizeInput: true,
+          throwOnInjection: false,
+        },
+      );
+
+      // SECURITY: Log injection detection if found
+      if (securePromptResult.detectionResult?.isInjection) {
+        logInjectionDetected(
+          getSessionId(),
+          prompt,
+          securePromptResult.detectionResult.category!,
+          securePromptResult.detectionResult.confidence,
+          false,
+          'prompt-api-streaming',
+        );
+
+        console.warn(
+          `[SECURITY] Potential prompt injection detected in streaming:`,
+          securePromptResult.detectionResult.category,
+        );
+      }
+
       // Create abort controller
       this.abortController = new AbortController();
       const mergedOptions = {
@@ -401,21 +502,43 @@ export class PromptManager {
         signal: this.abortController.signal,
       };
 
-      // Execute with retry logic
+      // Execute with retry logic using secured prompt
       const result = await this.withRetry(() =>
         ChromeAIPromptService.promptStreamingWithCallback(
           this.instance!,
-          prompt,
+          securePromptResult.prompt,
           onChunk,
           mergedOptions,
         ),
       );
 
+      // SECURITY: Validate AI output
+      const outputValidation = validateAIOutput(result, prompt, {
+        strictMode: false,
+        sanitizeHtmlContent: true,
+      });
+
+      if (!outputValidation.safe) {
+        logSuspiciousOutput(
+          getSessionId(),
+          result,
+          outputValidation.reason || 'Output validation failed',
+          'prompt-api-streaming',
+        );
+
+        console.warn(
+          `[SECURITY] Suspicious streaming output:`,
+          outputValidation.reason,
+        );
+      }
+
       // Track metrics
       this.trackMetrics(startTime, true);
 
       this.state = 'ready';
-      return result;
+
+      // Return sanitized output
+      return outputValidation.sanitized;
     } catch (error) {
       this.trackMetrics(startTime, false, error);
       this.state = 'ready';
@@ -427,6 +550,7 @@ export class PromptManager {
 
   /**
    * Execute a multimodal prompt with images and/or audio (non-streaming)
+   * SECURITY: Integrated with multimodal prompt injection detection and output validation
    * @param text - User prompt text
    * @param images - Array of ImageData
    * @param audios - Optional array of AudioData
@@ -452,12 +576,45 @@ export class PromptManager {
     this.state = 'prompting';
 
     try {
+      // SECURITY: Build secure multimodal prompt
+      const imageDescriptions = images.map(
+        (_, idx) => `Image ${idx + 1} uploaded`,
+      );
+      const securePromptResult = buildMultimodalSecurePrompt(
+        this.systemPromptId,
+        text,
+        imageDescriptions,
+        undefined,
+        {
+          validateInput: true,
+          sanitizeInput: true,
+          throwOnInjection: false,
+        },
+      );
+
+      // SECURITY: Log injection detection if found
+      if (securePromptResult.detectionResult?.isInjection) {
+        logInjectionDetected(
+          getSessionId(),
+          text,
+          securePromptResult.detectionResult.category!,
+          securePromptResult.detectionResult.confidence,
+          false,
+          'prompt-api-multimodal',
+        );
+
+        console.warn(
+          `[SECURITY] Potential prompt injection detected in multimodal:`,
+          securePromptResult.detectionResult.category,
+        );
+      }
+
       // Create abort controller
       this.abortController = new AbortController();
 
-      // Build multimodal message
+      // Build multimodal message with secured text
       const message = ChromeAIPromptService.buildMultimodalMessage(
-        text,
+        securePromptResult.prompt,
         images,
         audios,
       );
@@ -467,11 +624,33 @@ export class PromptManager {
         ChromeAIPromptService.appendMessage(this.instance!, [message]),
       );
 
+      // SECURITY: Validate AI output
+      const outputValidation = validateAIOutput(result, text, {
+        strictMode: false,
+        sanitizeHtmlContent: true,
+      });
+
+      if (!outputValidation.safe) {
+        logSuspiciousOutput(
+          getSessionId(),
+          result,
+          outputValidation.reason || 'Output validation failed',
+          'prompt-api-multimodal',
+        );
+
+        console.warn(
+          `[SECURITY] Suspicious multimodal output:`,
+          outputValidation.reason,
+        );
+      }
+
       // Track metrics
       this.trackMetrics(startTime, true);
 
       this.state = 'ready';
-      return result;
+
+      // Return sanitized output
+      return outputValidation.sanitized;
     } catch (error) {
       this.trackMetrics(startTime, false, error);
       this.state = 'ready';
@@ -483,6 +662,7 @@ export class PromptManager {
 
   /**
    * Execute a multimodal prompt with streaming (images and/or audio)
+   * SECURITY: Integrated with multimodal prompt injection detection and output validation
    * @param text - User prompt text
    * @param onChunk - Callback for each chunk
    * @param images - Array of ImageData
@@ -510,12 +690,45 @@ export class PromptManager {
     this.state = 'prompting';
 
     try {
+      // SECURITY: Build secure multimodal prompt
+      const imageDescriptions = images.map(
+        (_, idx) => `Image ${idx + 1} uploaded`,
+      );
+      const securePromptResult = buildMultimodalSecurePrompt(
+        this.systemPromptId,
+        text,
+        imageDescriptions,
+        undefined,
+        {
+          validateInput: true,
+          sanitizeInput: true,
+          throwOnInjection: false,
+        },
+      );
+
+      // SECURITY: Log injection detection if found
+      if (securePromptResult.detectionResult?.isInjection) {
+        logInjectionDetected(
+          getSessionId(),
+          text,
+          securePromptResult.detectionResult.category!,
+          securePromptResult.detectionResult.confidence,
+          false,
+          'prompt-api-multimodal-streaming',
+        );
+
+        console.warn(
+          `[SECURITY] Potential prompt injection detected in multimodal streaming:`,
+          securePromptResult.detectionResult.category,
+        );
+      }
+
       // Create abort controller
       this.abortController = new AbortController();
 
-      // Build multimodal message
+      // Build multimodal message with secured text
       const message = ChromeAIPromptService.buildMultimodalMessage(
-        text,
+        securePromptResult.prompt,
         images,
         audios,
       );
@@ -529,11 +742,33 @@ export class PromptManager {
         ),
       );
 
+      // SECURITY: Validate AI output
+      const outputValidation = validateAIOutput(result, text, {
+        strictMode: false,
+        sanitizeHtmlContent: true,
+      });
+
+      if (!outputValidation.safe) {
+        logSuspiciousOutput(
+          getSessionId(),
+          result,
+          outputValidation.reason || 'Output validation failed',
+          'prompt-api-multimodal-streaming',
+        );
+
+        console.warn(
+          `[SECURITY] Suspicious multimodal streaming output:`,
+          outputValidation.reason,
+        );
+      }
+
       // Track metrics
       this.trackMetrics(startTime, true);
 
       this.state = 'ready';
-      return result;
+
+      // Return sanitized output
+      return outputValidation.sanitized;
     } catch (error) {
       this.trackMetrics(startTime, false, error);
       this.state = 'ready';
@@ -676,6 +911,72 @@ export class PromptManager {
       return 6144; // Default for Gemini Nano
     }
     return this.instance.inputQuota || 6144;
+  }
+
+  /**
+   * Measure actual input usage using Chrome AI API
+   * @param input - String or message array to measure
+   * @param signal - Optional AbortSignal for cancellation
+   * @returns Promise resolving to token count, or null if not supported
+   */
+  async measureInputUsage(
+    input: string | Array<{ role: string; content: string }>,
+    signal?: AbortSignal,
+  ): Promise<number | null> {
+    if (!this.instance) {
+      throw new Error('Manager not initialized');
+    }
+
+    return await ChromeAIPromptService.measureInputUsage(
+      this.instance,
+      input,
+      signal,
+    );
+  }
+
+  /**
+   * Get current input usage (real-time tracking)
+   * @returns Current input usage in tokens, or null if not available
+   */
+  getInputUsage(): number | null {
+    if (!this.instance) {
+      return null;
+    }
+
+    return ChromeAIPromptService.getInputUsage(this.instance);
+  }
+
+  /**
+   * Register callback for quota overflow events
+   * @param callback - Function to call when quota is exceeded
+   */
+  onQuotaOverflow(callback: (event: Event) => void): void {
+    if (!this.instance) {
+      console.warn('Cannot register quotaoverflow listener: No instance');
+      return;
+    }
+
+    // Add to our tracking set
+    this.quotaOverflowListeners.add(callback);
+
+    // Register with the instance
+    ChromeAIPromptService.addQuotaOverflowListener(this.instance, callback);
+  }
+
+  /**
+   * Unregister callback for quota overflow events
+   * @param callback - Function to remove
+   */
+  offQuotaOverflow(callback: (event: Event) => void): void {
+    if (!this.instance) {
+      return;
+    }
+
+    // Remove from our tracking set
+    this.quotaOverflowListeners.delete(callback);
+
+    // Unregister from the instance
+    ChromeAIPromptService.removeQuotaOverflowListener(this.instance, callback);
   }
 
   /**

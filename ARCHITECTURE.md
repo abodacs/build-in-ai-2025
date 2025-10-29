@@ -121,7 +121,14 @@ chrome-ai-devbench/
 ├── src/
 │   ├── features/
 │   │   └── unified-playground/
-│   │       ├── shell/                 # Playground container
+│   │       ├── shell/                 # Playground container & UI
+│   │       ├── shared/                # Shared playground utilities
+│   │       │   ├── components/        # Shared components
+│   │       │   ├── design-system/     # Design system elements
+│   │       │   ├── hooks/             # Shared hooks
+│   │       │   ├── types/             # Shared types
+│   │       │   ├── utils/             # Shared utilities
+│   │       │   └── __tests__/         # Tests for shared code
 │   │       └── api-modules/
 │   │           ├── summarizer/        # Summarizer API module
 │   │           ├── translator/        # Translator API module
@@ -130,24 +137,56 @@ chrome-ai-devbench/
 │   │           ├── proofreader/       # Proofreader API module
 │   │           ├── language-detection/ # Language Detection module
 │   │           ├── prompt/            # Prompt API module
-│   │           └── shared/            # Shared components
+│   │           └── shared/            # Shared API module utilities
 │   ├── components/
 │   │   ├── ui/                        # shadcn/ui components
 │   │   ├── layout/                    # Layout components
-│   │   └── common/                    # Common utilities
-│   ├── hooks/                         # Global hooks
-│   ├── services/                      # Global services
-│   ├── stores/                        # Zustand stores
-│   ├── types/                         # TypeScript types
+│   │   ├── common/                    # Common utilities
+│   │   ├── code/                      # Code display components
+│   │   └── shared/                    # Shared UI components
+│   ├── assets/                        # Static assets (images, fonts)
+│   ├── providers/                     # React context providers
+│   ├── styles/                        # Global stylesheets & CSS
+│   ├── testing/                       # Test utilities & helpers
+│   ├── __tests__/                     # Unit tests (accessibility, integration, security)
+│   ├── hooks/                         # Global custom hooks
+│   ├── services/                      # Global services (AI service layer)
+│   ├── stores/                        # Zustand state management
+│   ├── types/                         # TypeScript type definitions
 │   ├── utils/                         # Utility functions
-│   └── lib/                           # Third-party integrations
+│   │   ├── codeGeneration/            # Code generation utilities
+│   │   └── __tests__/                 # Utils unit tests
+│   └── lib/                           # Third-party integrations (shadcn)
 ├── tests/
-│   ├── unit/                          # Unit tests
-│   ├── integration/                   # Integration tests
-│   └── e2e/                           # End-to-end tests
-├── public/                            # Static assets
-└── docs/                              # Documentation
+│   ├── accessibility/                 # Accessibility tests (a11y)
+│   ├── config/                        # Test configuration files
+│   ├── e2e/                           # End-to-end tests (Playwright)
+│   ├── fixtures/                      # Test fixtures & mock data
+│   └── test-utils/                    # Shared test utilities
+├── public/                            # Static assets (favicon, manifest)
+├── docs/                              # Documentation
+│   ├── architecture/                  # Architecture documentation
+│   ├── MEMORY_SAFETY.md              # Memory safety guidelines
+│   └── RESPONSIVE_DESIGN_GUIDE.md    # Responsive design patterns
+├── scripts/                           # Build & deployment scripts
+├── reports/                           # Generated reports (lighthouse)
+├── coverage/                          # Test coverage reports
+└── dist/                              # Production build output
 ```
+
+### Path Aliases
+
+> **TODO**: Review and standardize path alias convention
+>
+> **Current state**: The project uses `@/` as the path alias for imports (e.g., `import { Button } from '@/components/ui/button'`)
+>
+> **Action needed**: Decide whether to standardize on `@/` or migrate to `@chrome-ai-devbench/` as the import prefix throughout the codebase and documentation.
+>
+> **Related files**:
+>
+> - `tsconfig.json` - Path alias configuration
+> - `vite.config.ts` - Build tool alias configuration
+> - `src/components/shared/README.md` - Contains one reference to `@chrome-ai-devbench/`
 
 ## API Module Architecture
 

@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import viteCompression from 'vite-plugin-compression';
 import removeConsole from 'vite-plugin-remove-console';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -29,6 +30,13 @@ export default defineConfig({
       algorithm: 'brotliCompress',
       ext: '.br',
       deleteOriginFile: false,
+    }),
+    // Bundle analyzer - generates stats.html to visualize bundle
+    visualizer({
+      open: false,
+      gzipSize: true,
+      brotliSize: true,
+      filename: 'dist/stats.html',
     }),
   ],
   resolve: {
@@ -60,7 +68,9 @@ export default defineConfig({
       maxParallelFileOps: 20,
       treeshake: {
         preset: 'recommended',
-        moduleSideEffects: 'no-external',
+        moduleSideEffects: false, // More aggressive - assumes no side effects
+        propertyReadSideEffects: false,
+        tryCatchDeoptimization: false,
       },
       // PERFORMANCE OPTIMIZED: Manual chunking to reduce initial bundle size
       output: {

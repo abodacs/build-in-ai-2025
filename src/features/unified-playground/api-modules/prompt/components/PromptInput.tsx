@@ -4,7 +4,7 @@
  */
 
 import React, { useRef, useEffect, useMemo } from 'react';
-import { Send, Paperclip } from 'lucide-react';
+import { Send, Paperclip, Command } from 'lucide-react';
 import { FieldError } from '../../shared/components';
 import { TokenVisualization, type TokenBreakdown } from './TokenVisualization';
 import { estimateTokensAccurate } from '../utils/tokenCounter';
@@ -24,8 +24,14 @@ interface PromptInputProps {
   errorHelpText?: string;
   /** System prompt for token calculation */
   systemPrompt?: string;
-  /** Maximum tokens allowed */
+  /** Maximum tokens allowed for context window (e.g., 6144 for Gemini Nano) */
   maxTokens?: number;
+  /** Maximum response length per message */
+  maxResponseTokens?: number;
+  /** Real-time input usage from Chrome AI API (null if not available) */
+  realTimeInputUsage?: number | null;
+  /** Flag indicating quota overflow occurred */
+  quotaExceeded?: boolean;
   /** Callback for token optimization */
   onOptimizeTokens?: () => void;
 }
@@ -40,7 +46,10 @@ export const PromptInput: React.FC<PromptInputProps> = ({
   error,
   errorHelpText,
   systemPrompt = '',
-  maxTokens = 512,
+  maxTokens = 6144, // Context window size
+  maxResponseTokens = 2048, // Response length per message
+  realTimeInputUsage = null,
+  quotaExceeded = false,
   onOptimizeTokens,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -53,14 +62,16 @@ export const PromptInput: React.FC<PromptInputProps> = ({
 
     const inputTokens = value ? estimateTokensAccurate(value) + 4 : 0;
 
-    // Estimate response tokens based on maxTokens setting
-    // Typically reserve ~30% of remaining space for response
+    // Estimate response tokens based on maxResponseTokens setting
+    // Only estimate when there's actual user input (no input = no response)
     const usedTokens = systemPromptTokens + inputTokens;
     const remainingTokens = Math.max(0, maxTokens - usedTokens);
-    const estimatedResponseTokens = Math.min(
-      Math.floor(remainingTokens * 0.3),
-      200, // Cap at 200 tokens for estimate
-    );
+    const estimatedResponseTokens = !value
+      ? 0 // No input = no response estimate
+      : Math.min(
+          Math.floor(remainingTokens * 0.3),
+          maxResponseTokens || 200, // Cap at maxResponseTokens or 200
+        );
 
     const totalTokens = usedTokens + estimatedResponseTokens;
 
@@ -69,9 +80,9 @@ export const PromptInput: React.FC<PromptInputProps> = ({
       inputTokens,
       estimatedResponseTokens,
       totalTokens,
-      maxTokens,
+      maxTokens, // Context window limit
     };
-  }, [value, systemPrompt, maxTokens]);
+  }, [value, systemPrompt, maxTokens, maxResponseTokens]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -82,13 +93,46 @@ export const PromptInput: React.FC<PromptInputProps> = ({
     }
   }, [value]);
 
+  // Handle button click with logging
+  const handleSendClick = () => {
+    console.log('[PromptInput] Send button clicked', {
+      hasValue: !!value.trim(),
+      disabled,
+      valueLength: value.length,
+    });
+
+    if (!value.trim()) {
+      console.warn('[PromptInput] Cannot submit: empty value');
+      return;
+    }
+
+    if (disabled) {
+      console.warn('[PromptInput] Cannot submit: input is disabled');
+      return;
+    }
+
+    console.log('[PromptInput] Calling onSubmit handler');
+    onSubmit();
+  };
+
   // Handle keyboard shortcuts
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Enter to submit (without Shift)
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      console.log('[PromptInput] Enter key pressed', {
+        hasValue: !!value.trim(),
+        disabled,
+      });
+
       if (value.trim() && !disabled) {
+        console.log('[PromptInput] Submitting via Enter key');
         onSubmit();
+      } else {
+        console.warn('[PromptInput] Cannot submit via Enter:', {
+          hasValue: !!value.trim(),
+          disabled,
+        });
       }
     }
 
@@ -102,7 +146,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
     <div className="prompt-input-container space-y-2">
       {/* Textarea Container */}
       <div
-        className={`border rounded-lg bg-white dark:bg-gray-800 ${error ? 'border-red-400 dark:border-red-500' : ''}`}
+        className={`relative border rounded-lg bg-white dark:bg-gray-800 ${error ? 'border-red-400 dark:border-red-500' : ''}`}
       >
         <textarea
           ref={textareaRef}
@@ -115,13 +159,18 @@ export const PromptInput: React.FC<PromptInputProps> = ({
           aria-label="Message input"
           aria-invalid={!!error}
           aria-describedby={
-            error
-              ? 'prompt-input-error prompt-input-info prompt-input-shortcuts'
-              : 'prompt-input-info prompt-input-shortcuts'
+            error ? 'prompt-input-error prompt-input-info' : 'prompt-input-info'
           }
           className="w-full p-3 resize-none rounded-t-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px] max-h-[50vh] overflow-y-auto text-base md:text-sm"
           rows={3}
         />
+        {/* Keyboard Shortcut Hint */}
+        {!disabled && value.length > 0 && (
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] text-muted-foreground/60 pointer-events-none">
+            <Command className="w-3 h-3" />
+            <span>+Enter to send</span>
+          </div>
+        )}
 
         {/* Action Bar - Outside textarea */}
         <div className="flex items-center justify-between px-3 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-b-lg">
@@ -142,10 +191,11 @@ export const PromptInput: React.FC<PromptInputProps> = ({
 
           {/* Right: Send Button */}
           <button
-            onClick={onSubmit}
+            onClick={handleSendClick}
             disabled={disabled || !value.trim()}
             aria-label="Send message"
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
+            type="button"
           >
             <span>Send</span>
             <Send className="w-4 h-4" />
@@ -166,18 +216,10 @@ export const PromptInput: React.FC<PromptInputProps> = ({
       {/* Token Visualization */}
       <TokenVisualization
         breakdown={tokenBreakdown}
+        isMeasured={realTimeInputUsage !== null}
+        quotaExceeded={quotaExceeded}
         onOptimize={onOptimizeTokens}
       />
-
-      {/* Keyboard Shortcuts Help */}
-      <div className="flex justify-start">
-        <span
-          id="prompt-input-shortcuts"
-          className="text-xs text-gray-400 dark:text-gray-500"
-        >
-          Enter to send • Shift+Enter for newline • Esc to clear
-        </span>
-      </div>
     </div>
   );
 };

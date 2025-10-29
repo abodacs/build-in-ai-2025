@@ -165,13 +165,13 @@ describe('Accessibility Tests (WCAG 2.1 AA Compliance)', () => {
       renderApp();
 
       // Check for at least one landmark
-      const main = screen.queryByRole('main');
-      const complementary = screen.queryByRole('complementary');
-      const navigation = screen.queryByRole('navigation');
+      const main = screen.queryAllByRole('main');
+      const complementary = screen.queryAllByRole('complementary');
+      const navigation = screen.queryAllByRole('navigation');
 
-      expect([main, complementary, navigation].some((el) => el !== null)).toBe(
-        true,
-      );
+      expect(
+        [main, complementary, navigation].some((el) => el.length > 0),
+      ).toBe(true);
     });
 
     it('provides accessible names for interactive elements', () => {

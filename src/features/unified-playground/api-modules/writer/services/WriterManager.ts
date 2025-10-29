@@ -4,6 +4,8 @@
  * Extends BaseWritingManager to provide Writer-specific functionality.
  * Manages Writer instances, configuration, and operations.
  *
+ * SECURITY: Integrated OWASP LLM01:2025 prompt injection detection and output validation
+ *
  * @module writer/services/WriterManager
  */
 
@@ -16,6 +18,15 @@ import type {
   WriteOptions,
 } from '../types';
 import type { AvailabilityStatus } from '../../shared/types';
+
+// SECURITY: Import security utilities
+import { detectInjection } from '../../../shared/utils/promptInjectionDetection';
+import { validateAIOutput } from '../../../shared/utils/outputValidation';
+import {
+  logInjectionDetected,
+  logSuspiciousOutput,
+  getSessionId,
+} from '../../../shared/utils/securityLogger';
 
 // ============================================================================
 // WriterManager Class
@@ -147,6 +158,27 @@ export class WriterManager extends BaseWritingManager<
     // NOTE: User activation check is done earlier in useWriter.ts before any async operations.
     // We don't check it here because the transient activation expires after async boundaries.
 
+    // SECURITY: Detect potential prompt injection in input
+    const injectionDetection = detectInjection(prompt);
+    if (injectionDetection.isInjection) {
+      logInjectionDetected(
+        getSessionId(),
+        prompt,
+        injectionDetection.category || 'unknown',
+        injectionDetection.confidence,
+        false, // Don't block, just log
+        'writer-api',
+      );
+      console.warn(
+        `[SECURITY] Potential prompt injection detected in writer input:`,
+        {
+          category: injectionDetection.category,
+          confidence: injectionDetection.confidence,
+          severity: injectionDetection.severity,
+        },
+      );
+    }
+
     if (!this.config) {
       throw new Error('Configuration not set. Call getInstance() first.');
     }
@@ -163,10 +195,30 @@ export class WriterManager extends BaseWritingManager<
 
       const result = await instance.write(prompt, options);
 
+      // SECURITY: Validate AI output
+      const outputValidation = validateAIOutput(result, prompt, {
+        strictMode: false,
+        sanitizeHtmlContent: true,
+      });
+
+      if (!outputValidation.safe) {
+        logSuspiciousOutput(
+          getSessionId(),
+          result,
+          outputValidation.reason || 'Output validation failed',
+          'writer-api',
+        );
+        console.warn(`[SECURITY] Suspicious output detected from writer:`, {
+          reason: outputValidation.reason,
+          issues: outputValidation.issues,
+        });
+      }
+
       this.setState('ready');
       this.updateMetadata({ lastUsedAt: Date.now(), usageCount: 1 });
 
-      return result;
+      // Return sanitized output
+      return outputValidation.sanitized;
     } catch (error) {
       this.setState('error');
 
@@ -214,6 +266,27 @@ export class WriterManager extends BaseWritingManager<
     console.log('  → Context:', context ? `${context.length} chars` : 'none');
     console.log('  → Signal provided:', !!signal);
     console.log('  → Signal aborted:', signal?.aborted);
+
+    // SECURITY: Detect potential prompt injection in input
+    const injectionDetection = detectInjection(prompt);
+    if (injectionDetection.isInjection) {
+      logInjectionDetected(
+        getSessionId(),
+        prompt,
+        injectionDetection.category || 'unknown',
+        injectionDetection.confidence,
+        false, // Don't block, just log
+        'writer-api-streaming',
+      );
+      console.warn(
+        `[SECURITY] Potential prompt injection detected in writer streaming input:`,
+        {
+          category: injectionDetection.category,
+          confidence: injectionDetection.confidence,
+          severity: injectionDetection.severity,
+        },
+      );
+    }
 
     // NOTE: User activation check is done earlier in useWriter.ts before any async operations.
     // We don't check it here because the transient activation expires after async boundaries.
@@ -282,10 +355,34 @@ export class WriterManager extends BaseWritingManager<
       console.log(
         `✅ WriterManager: Streaming complete (${chunkCount} chunks, ${result.length} total chars)`,
       );
+
+      // SECURITY: Validate complete output
+      const outputValidation = validateAIOutput(result, prompt, {
+        strictMode: false,
+        sanitizeHtmlContent: true,
+      });
+
+      if (!outputValidation.safe) {
+        logSuspiciousOutput(
+          getSessionId(),
+          result,
+          outputValidation.reason || 'Output validation failed',
+          'writer-api-streaming',
+        );
+        console.warn(
+          `[SECURITY] Suspicious output detected from streaming writer:`,
+          {
+            reason: outputValidation.reason,
+            issues: outputValidation.issues,
+          },
+        );
+      }
+
       this.setState('ready');
       this.updateMetadata({ lastUsedAt: Date.now(), usageCount: 1 });
 
-      return result;
+      // Return sanitized output
+      return outputValidation.sanitized;
     } catch (error) {
       console.error('❌ WriterManager: Streaming error:', error);
       console.error('Signal aborted at error time:', signal?.aborted);

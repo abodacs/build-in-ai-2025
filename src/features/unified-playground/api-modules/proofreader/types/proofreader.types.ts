@@ -95,9 +95,6 @@ export interface ProofreaderCreateOptions {
  * Options for proofread operations
  */
 export interface ProofreadOptions {
-  /** Additional context for better corrections */
-  context?: string;
-
   /** Abort signal */
   signal?: AbortSignal;
 }

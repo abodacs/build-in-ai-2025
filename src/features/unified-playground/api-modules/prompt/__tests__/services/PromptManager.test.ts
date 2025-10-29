@@ -282,7 +282,11 @@ describe('PromptManager', () => {
       const options = { signal: new AbortController().signal };
       await manager.prompt('Test', options);
 
-      expect(mockInstance.prompt).toHaveBeenCalledWith('Test', options);
+      // Prompt is now wrapped with security delimiters for OWASP LLM01:2025 compliance
+      expect(mockInstance.prompt).toHaveBeenCalledWith(
+        expect.stringContaining('Test'),
+        options,
+      );
     });
 
     it('throws error when not initialized', async () => {
@@ -378,6 +382,41 @@ describe('PromptManager', () => {
       const uninitializedManager = new PromptManager();
 
       expect(uninitializedManager.isNearTokenLimit()).toBe(false);
+    });
+
+    it('measureInputUsage calls Chrome AI API', async () => {
+      const mockInstance = createMockLanguageModel();
+      mockAPI.create.mockResolvedValue(mockInstance);
+
+      await manager.reinitialize({});
+
+      const result = await manager.measureInputUsage('Test input');
+
+      expect(result).toBeGreaterThan(0);
+      expect(mockInstance.measureInputUsage).toHaveBeenCalled();
+    });
+
+    it('onQuotaOverflow/offQuotaOverflow manage listeners', async () => {
+      const mockInstance = createMockLanguageModel();
+      mockAPI.create.mockResolvedValue(mockInstance);
+
+      await manager.reinitialize({});
+
+      const callback = vi.fn();
+
+      // Register listener
+      manager.onQuotaOverflow(callback);
+      expect(mockInstance.addEventListener).toHaveBeenCalledWith(
+        'quotaoverflow',
+        callback,
+      );
+
+      // Unregister listener
+      manager.offQuotaOverflow(callback);
+      expect(mockInstance.removeEventListener).toHaveBeenCalledWith(
+        'quotaoverflow',
+        callback,
+      );
     });
   });
 

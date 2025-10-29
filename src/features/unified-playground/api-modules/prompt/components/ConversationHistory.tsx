@@ -101,7 +101,9 @@ const ConversationHistoryComponent: React.FC<ConversationHistoryProps> = ({
       <div className="p-4 border-b bg-white dark:bg-gray-800">
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="font-medium">Context Window</span>
+            <span className="font-medium">
+              Context Window (Conversation Limit)
+            </span>
             <span
               className={`font-mono ${
                 isAtLimit

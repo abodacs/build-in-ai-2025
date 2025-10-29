@@ -35,6 +35,7 @@ import { CodeModalSkeleton } from '@/components/code/CodeModalSkeleton';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { ProofreaderConfig } from '../types';
+import { generateProofreaderAPITests } from '@/utils/codeGeneration/testGenerator';
 
 // ============================================================================
 // Types
@@ -606,6 +607,10 @@ export function CodeModal({
     () => generateJavaScriptCode(config),
     [config],
   );
+  const testsCode = useMemo(
+    () => generateProofreaderAPITests(config),
+    [config],
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal>
@@ -746,9 +751,10 @@ export function CodeModal({
 
               {/* Code Tabs */}
               <Tabs defaultValue="javascript" className="w-full">
-                <TabsList className="w-full grid grid-cols-2">
+                <TabsList className="w-full grid grid-cols-3">
                   <TabsTrigger value="typescript">TypeScript</TabsTrigger>
                   <TabsTrigger value="javascript">JavaScript</TabsTrigger>
+                  <TabsTrigger value="tests">Tests</TabsTrigger>
                 </TabsList>
 
                 {/* TypeScript */}
@@ -781,6 +787,24 @@ export function CodeModal({
                     code={javascriptCode}
                     language="javascript"
                     filename="proofreader.js"
+                    showCopyButton
+                    showDownloadButton
+                    showThemeToggle={false}
+                    showLanguageBadge={false}
+                    forceTheme="dark"
+                  />
+                </TabsContent>
+
+                {/* Tests */}
+                <TabsContent value="tests" className="mt-4 space-y-3">
+                  <div className="text-sm text-slate-600 dark:text-slate-400">
+                    Concise Vitest test suite with type validation
+                  </div>
+
+                  <ThemedCodeBlock
+                    code={testsCode}
+                    language="typescript"
+                    filename="proofreader-api.test.ts"
                     showCopyButton
                     showDownloadButton
                     showThemeToggle={false}

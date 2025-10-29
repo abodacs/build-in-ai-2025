@@ -9,7 +9,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { ChromeAIProofreaderService } from '../services';
-import type { AvailabilityStatus, DownloadProgress } from '../../shared/types';
+import type {
+  LegacyAvailability as AvailabilityStatus,
+  DownloadProgress,
+} from '../../shared/types';
 
 // ============================================================================
 // Types
@@ -113,6 +116,11 @@ export function useProofreaderAvailability(): UseProofreaderAvailabilityReturn {
   // 2. Not currently downloading
   // 3. API is supported
   const isReady = availability === 'available' && !isDownloading && isSupported;
+  console.log('[useProofreaderAvailability] isReady =', isReady, {
+    availability,
+    isDownloading,
+    isSupported,
+  });
   const requiresDownload = availability === 'after-download';
 
   /**
