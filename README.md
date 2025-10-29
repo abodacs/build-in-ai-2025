@@ -41,10 +41,15 @@ While cloud-based AI is well-understood, browser-based on-device AI represents a
 Chrome AI DevBench provides a **comprehensive, interactive environment** where developers can:
 
 ✅ **Test all 7 Chrome AI APIs** in real-time with immediate visual feedback
+
 ✅ **Generate production-ready code** (TypeScript/JavaScript) with Cmd+K (Mac) or Ctrl+K (Windows/Linux)
+
 ✅ **Experiment with advanced features** like text chunking, multimodal input, diff visualization, and undo/redo
+
 ✅ **Learn production-ready patterns** through 2100+ tests covering error handling, retry logic, and resilience
+
 ✅ **Understand browser compatibility** with availability checks and graceful fallbacks
+
 ✅ **Deploy with confidence** using modular architecture, comprehensive documentation, and CI/CD pipeline
 
 ### Technical Challenges Solved
@@ -107,29 +112,94 @@ Chrome AI DevBench provides a **comprehensive, interactive environment** where d
 
 ### Unified Playground Interface
 
-> **Coming Soon**: Screenshot showing all 7 API modules in unified interface with AI Status counter
+<img src="assets/Summarizer%20API.png" alt="Summarizer API - Unified interface with sidebar navigation" width="800">
+
+_Complete interface showing all 7 API modules with configuration panel and model management_
+
+### Multimodal AI with Image Support
+
+<img src="assets/Prompt%20API.png" alt="Prompt API - Multimodal prompting interface" width="800">
+
+_Prompt API with multimodal input, streaming responses, and conversation history_
 
 ### Real-Time Code Generation (Cmd+K)
 
-> **Coming Soon**: Screenshot of CodeModal with TypeScript/JavaScript toggle and copy functionality
+<img src="assets/Code%20Generation%20Modal.png" alt="Code Generation Modal - TypeScript/JavaScript toggle" width="800">
+
+_Generated code modal with current configuration display, TypeScript/JavaScript/Tests tabs, and copy/download functionality_
 
 ### Advanced Features
 
-> **Coming Soon**: Screenshots showcasing:
->
-> - Side-by-side diff visualization (Rewriter API)
-> - CSS Custom Highlights (Proofreader API)
-> - Multimodal input (Prompt API with image upload)
-> - Text chunking configuration (Summarizer API)
+#### Side-by-Side Diff Visualization
+
+<img src="assets/Rewriter%20API.png" alt="Rewriter API - Three-view comparison with change statistics" width="800">
+
+_Rewriter API showing original, rewritten, and diff views with detailed comparison statistics and transformation controls_
+
+#### Grammar Correction with CSS Custom Highlights
+
+<img src="assets/Proofreader%20API.png" alt="Proofreader API - Inline corrections with filtering" width="800">
+
+_Proofreader API with CSS Custom Highlights, correction filtering by type, and individual correction management_
+
+#### Multilingual Translation Support
+
+<img src="assets/Translator%20API.png" alt="Translator API - Popular language pairs with streaming" width="800">
+
+_Translator API with popular language pairs, streaming mode, batch concurrency controls, and context support_
 
 ### Architecture Diagram
 
-> **Coming Soon**: Visual diagram showing:
->
-> - Unified playground shell architecture
-> - 7 modular API implementations
-> - Service layer pattern (ChromeAIService → Manager → ErrorHandler)
-> - State management flow (Zustand + React hooks)
+```mermaid
+flowchart TB
+    %% -- Define Styles for a Creative, Blueprint-like Feel --
+    classDef userStyle fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,font-weight:bold
+    classDef uiStyle fill:#fffde7,stroke:#f57f17,stroke-width:2px
+    classDef engineStyle fill:#e8f5e9,stroke:#2e7d32,stroke-width:3px,stroke-dasharray: 4 4
+    classDef resourceStyle fill:#fbe9e7,stroke:#d84315,stroke-width:2px
+    classDef outputStyle fill:#ede7f6,stroke:#5e35b1,stroke-width:2px,font-weight:bold
+
+    %% -- 1. The User --
+    DEV["Web Developer<br/><small>Uses the tool</small>"]
+
+    %% -- 2. The Workbench (UI Layer) --
+    subgraph The Workbench [Unified Playground UI]
+        direction LR
+        CONFIG["Configuration Panel<br/><small>• Select API<br/>• Set parameters</small>"]
+        CODEGEN["Code & Result Viewer<br/><small>Displays output</small>"]
+    end
+
+    %% -- 3. The Engine Room (Application Core) --
+    subgraph The Engine Room [Application Core - Runs Entirely in Browser]
+        direction TB
+        APP_LOGIC["App Logic & State<br/><small>Manages UI and workflow</small>"]
+        AI_ENGINE["Built-in AI Engine<br/><small>Performs all AI tasks on-device</small>"]
+        APP_LOGIC -- "3. Invokes AI Task" --> AI_ENGINE
+    end
+
+    %% -- 4. The Resource Shelf (Browser Capabilities) --
+    subgraph Resource Shelf [Browser-Provided Resources]
+        direction LR
+        MODELS["On-Device AI Models"]
+        STORAGE["Web Storage<br/><small>Sessions & Cache</small>"]
+    end
+
+    %% -- The Workflow (Connecting all the pieces with numbered steps) --
+    DEV -- "1. Configures Task" --> CONFIG
+    CONFIG -- "2. Dispatches Action" --> APP_LOGIC
+    AI_ENGINE -- "4. Loads Required Model" --> MODELS
+    APP_LOGIC -.-> STORAGE
+    AI_ENGINE -- "5. Returns Result" --> APP_LOGIC
+    APP_LOGIC -- "6. Updates Viewer" --> CODEGEN
+    CODEGEN -- "7. Final Output" --> OUTPUT["AI-Generated Code"]
+
+    %% -- Apply all the styles --
+    class DEV userStyle
+    class CONFIG,CODEGEN uiStyle
+    class APP_LOGIC,AI_ENGINE engineStyle
+    class MODELS,STORAGE resourceStyle
+    class OUTPUT outputStyle
+```
 
 ---
 
@@ -642,7 +712,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 - **Chrome AI Team** — For creating the amazing built-in AI APIs that power this project
 - **shadcn** — For the incredible UI component library (shadcn/ui)
-- **Vercel** — For Next Themes and inspiration
 - **Radix UI** — For accessible, unstyled UI primitives
 - **Chrome AI Community** — For feedback, testing, and contributions
 
