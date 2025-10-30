@@ -6,7 +6,7 @@
  * @module prompt/hooks/useFileUpload
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { MultimodalHandler } from '../services/MultimodalHandler';
 import type {
   ImageData,
@@ -368,6 +368,24 @@ export function useFileUpload(
     },
     [addFiles],
   );
+
+  // ============================================================================
+  // Cleanup
+  // ============================================================================
+
+  /**
+   * Cleanup blob URLs on unmount to prevent memory leaks
+   */
+  useEffect(() => {
+    return () => {
+      // Cleanup all blob URLs when component unmounts
+      if (handlerRef.current && files.length > 0) {
+        files.forEach((file) => {
+          handlerRef.current!.cleanup(file);
+        });
+      }
+    };
+  }, [files]);
 
   // ============================================================================
   // Return

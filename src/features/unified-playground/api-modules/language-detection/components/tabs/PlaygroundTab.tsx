@@ -49,6 +49,7 @@ export function LanguageDetectionMain() {
     availability,
     error: availabilityError,
     isReady,
+    startDownload,
   } = useLanguageDetectionAvailability();
 
   /**
@@ -221,6 +222,7 @@ export function LanguageDetectionMain() {
           isLoading={isDetecting}
           loadingPhase={isDetecting ? 'initializing' : null}
           error={error?.message || availabilityError || null}
+          onStartDownload={startDownload}
           modelInfo={{
             name: 'Language Detection Model',
             chromeVersion: '138+',

@@ -59,6 +59,7 @@ export const PlaygroundTab: React.FC = () => {
 
   // Hooks
   const availability = usePromptAvailability();
+  const { startDownload } = availability;
   const fileUpload = useFileUpload({ maxFiles: 3 });
   const prompt = usePrompt({ config });
   const history = useConversationHistory({
@@ -129,6 +130,12 @@ export const PlaygroundTab: React.FC = () => {
    */
   const handleSubmit = useCallback(async () => {
     if (!inputValue.trim()) {
+      return;
+    }
+
+    // Validate: Cannot send images without multimodal support
+    // The warning Alert is already shown above, so just prevent submission
+    if (fileUpload.fileCount > 0 && !availability.multimodalAvailable) {
       return;
     }
 
@@ -427,8 +434,8 @@ export const PlaygroundTab: React.FC = () => {
             </Alert>
           )}
 
-          {/* File Upload - Always visible when no files attached */}
-          {fileUpload.fileCount === 0 && (
+          {/* File Upload - Only visible when multimodal available and no files attached */}
+          {fileUpload.fileCount === 0 && availability.multimodalAvailable && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-700">
@@ -453,12 +460,37 @@ export const PlaygroundTab: React.FC = () => {
             </div>
           )}
 
+          {/* Warning when files attached but multimodal unavailable */}
+          {fileUpload.fileCount > 0 && !availability.multimodalAvailable && (
+            <Alert variant="destructive" className="animate-in fade-in-50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Images Cannot Be Processed</AlertTitle>
+              <AlertDescription>
+                <p className="mb-2">
+                  Multimodal (image) support is not available. Your attached
+                  images will not be sent to the AI.
+                </p>
+                <p className="text-sm">
+                  Please remove the images or enable multimodal support in{' '}
+                  <code className="bg-red-100 px-1 rounded">
+                    chrome://flags#prompt-api-for-gemini-nano-multimodal-input
+                  </code>
+                </p>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {fileUpload.fileCount > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-700">
                   Attached Images ({fileUpload.fileCount})
                 </span>
+                {!availability.multimodalAvailable && (
+                  <Badge variant="destructive" className="text-xs">
+                    Won&apos;t be processed
+                  </Badge>
+                )}
                 <button
                   onClick={fileUpload.clearFiles}
                   className="text-sm text-red-600 hover:text-red-700"
@@ -633,13 +665,7 @@ export const PlaygroundTab: React.FC = () => {
           }
           downloadProgress={prompt.downloadProgress}
           error={prompt.error || null}
-          onStartDownload={async () => {
-            try {
-              await prompt.initialize();
-            } catch (error) {
-              console.error('Manual download failed:', error);
-            }
-          }}
+          onStartDownload={startDownload}
           modelInfo={{
             name: 'Prompt Model',
             chromeVersion: '138+',

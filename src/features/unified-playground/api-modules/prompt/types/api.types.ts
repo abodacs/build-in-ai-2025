@@ -66,6 +66,15 @@ export interface LanguageModelCreateOptions {
   expectedInputs?: ExpectedInput[];
 
   /**
+   * Expected output types for language model responses
+   * Specifies which languages the model should support in outputs
+   * Chrome only supports: en (English), es (Spanish), ja (Japanese)
+   * @example [{type: 'text', languages: ['en']}]
+   * @example [{type: 'text', languages: ['en', 'es']}]
+   */
+  expectedOutputs?: ExpectedOutput[];
+
+  /**
    * Initial conversation prompts for multimodal sessions
    * Allows setting up conversation context with multimodal content
    */
@@ -116,6 +125,125 @@ export interface MultimodalContent {
 export interface ExpectedInput {
   /** Input type to enable */
   type: 'image' | 'audio';
+}
+
+/**
+ * Languages supported by Chrome's Prompt API (Gemini Nano)
+ * As of Chrome 138+, only 3 languages are supported for output
+ */
+export const SUPPORTED_OUTPUT_LANGUAGES = ['en', 'es', 'ja'] as const;
+
+/**
+ * Type-safe language code from the supported list
+ */
+export type SupportedLanguageCode = (typeof SUPPORTED_OUTPUT_LANGUAGES)[number];
+
+/**
+ * Language names for display in UI
+ */
+export const LANGUAGE_NAMES: Record<SupportedLanguageCode, string> = {
+  en: 'English',
+  es: 'Spanish (Español)',
+  ja: 'Japanese (日本語)',
+};
+
+/**
+ * Expected output type for language model responses
+ * Chrome validates language codes - only en, es, ja are supported
+ */
+export interface ExpectedOutput {
+  /** Output type - currently only 'text' is supported */
+  type: 'text';
+  /**
+   * Output languages - must be from SUPPORTED_OUTPUT_LANGUAGES
+   * Chrome will error if unsupported languages are specified
+   * @example ['en'] - English only
+   * @example ['en', 'es'] - English and Spanish
+   */
+  languages?: SupportedLanguageCode[];
+}
+
+// ============================================================================
+// Conversation Message Types (for prompt() with Message[])
+// ============================================================================
+
+/**
+ * Message role in a conversation
+ * - 'system': System instructions that guide model behavior
+ * - 'user': User messages/prompts
+ * - 'assistant': Model's previous responses
+ */
+export type MessageRole = 'system' | 'user' | 'assistant';
+
+/**
+ * Text content in a conversation message
+ * Used when building multimodal messages with multiple content items
+ */
+export interface TextContentItem {
+  type: 'text';
+  value: string;
+}
+
+/**
+ * Image content in a conversation message
+ * Supports both HTMLImageElement and Blob/File
+ */
+export interface ImageContentItem {
+  type: 'image';
+  value: HTMLImageElement | Blob;
+}
+
+/**
+ * Audio content in a conversation message
+ */
+export interface AudioContentItem {
+  type: 'audio';
+  value: Blob;
+}
+
+/**
+ * Content that can appear in a conversation message
+ * Can be:
+ * - Simple string (for text-only messages)
+ * - TextContentItem (for multimodal text)
+ * - ImageContentItem (for images)
+ * - AudioContentItem (for audio)
+ * - Array of content items (for mixed media messages)
+ */
+export type MessageContentType =
+  | string
+  | TextContentItem
+  | ImageContentItem
+  | AudioContentItem
+  | (TextContentItem | ImageContentItem | AudioContentItem)[];
+
+/**
+ * A conversation message for use with prompt() and append()
+ * Supports both text-only and multimodal content
+ *
+ * @example
+ * // Text-only message
+ * { role: 'user', content: 'Hello!' }
+ *
+ * @example
+ * // Multimodal message with text and image
+ * {
+ *   role: 'user',
+ *   content: [
+ *     { type: 'text', value: 'What is in this image?' },
+ *     { type: 'image', value: imageBlob }
+ *   ]
+ * }
+ */
+export interface Message {
+  /** Message role - who sent this message */
+  role: MessageRole;
+
+  /** Message content - can be text, images, or mixed */
+  content: MessageContentType;
+
+  /** Optional prefix flag for system messages */
+  prefix?: boolean;
 }
 
 // ============================================================================
@@ -210,23 +338,82 @@ export interface DownloadProgressEvent {
 export interface LanguageModel {
   /**
    * Execute a prompt and get a response
-   * @param prompt - The user prompt to send to the model
+   * Supports both simple string prompts and conversation arrays
+   *
+   * @param input - The prompt (string) or conversation (Message array)
    * @param options - Optional configuration for this request
    * @returns Promise resolving to the model's response
+   *
+   * @example
+   * // Simple string prompt
+   * await model.prompt("Hello, how are you?");
+   *
+   * @example
+   * // Conversation array with text
+   * await model.prompt([
+   *   { role: 'user', content: 'Hello!' },
+   *   { role: 'assistant', content: 'Hi there!' },
+   *   { role: 'user', content: 'Tell me about AI' }
+   * ]);
+   *
+   * @example
+   * // Multimodal conversation with images
+   * await model.prompt([
+   *   {
+   *     role: 'user',
+   *     content: [
+   *       { type: 'text', value: 'What is in this image?' },
+   *       { type: 'image', value: imageBlob }
+   *     ]
+   *   }
+   * ]);
    */
-  prompt(prompt: string, options?: PromptOptions): Promise<string>;
+  prompt(input: string | Message[], options?: PromptOptions): Promise<string>;
 
   /**
    * Execute a prompt with streaming support
    * Returns chunks of the response as they're generated
-   * @param prompt - The user prompt to send to the model
+   * Supports both simple string prompts and conversation arrays
+   *
+   * @param input - The prompt (string) or conversation (Message array)
    * @param options - Optional configuration for this request
-   * @returns ReadableStream of response chunks
+   * @returns AsyncIterable of response chunks
+   *
+   * @example
+   * // Simple string prompt streaming
+   * const stream = model.promptStreaming("Tell me a story");
+   * for await (const chunk of stream) {
+   *   console.log(chunk);
+   * }
+   *
+   * @example
+   * // Conversation array streaming
+   * const stream = model.promptStreaming([
+   *   { role: 'user', content: 'Continue this story: Once upon a time...' }
+   * ]);
+   * for await (const chunk of stream) {
+   *   console.log(chunk);
+   * }
+   *
+   * @example
+   * // Multimodal streaming with images
+   * const stream = model.promptStreaming([
+   *   {
+   *     role: 'user',
+   *     content: [
+   *       { type: 'text', value: 'Describe this image in detail' },
+   *       { type: 'image', value: imageBlob }
+   *     ]
+   *   }
+   * ]);
+   * for await (const chunk of stream) {
+   *   console.log(chunk);
+   * }
    */
   promptStreaming(
-    prompt: string,
+    input: string | Message[],
     options?: PromptOptions,
-  ): ReadableStream<string>;
+  ): AsyncIterable<string>;
 
   /**
    * Append multimodal message(s) to the conversation
@@ -242,9 +429,9 @@ export interface LanguageModel {
    * Used for sending images and audio alongside text with streaming response
    * Requires session created with expectedInputs
    * @param messages - Array of multimodal messages to append
-   * @returns ReadableStream of response chunks
+   * @returns AsyncIterable of response chunks
    */
-  appendStreaming?(messages: MultimodalContent[]): ReadableStream<string>;
+  appendStreaming?(messages: MultimodalContent[]): AsyncIterable<string>;
 
   /**
    * Count tokens in a given text
@@ -337,11 +524,18 @@ export interface LanguageModel {
 export interface LanguageModelAPI {
   /**
    * Check if the LanguageModel API is available
-   * @param options - Optional availability check options (e.g., for multimodal)
+   * @param options - Optional availability check options
+   * @param options.expectedInputs - Check if specific input types are supported (e.g., images)
+   * @param options.expectedOutputs - Check if specific output languages are supported
+   * @param options.topK - Check if specific topK value is supported
+   * @param options.temperature - Check if specific temperature value is supported
    * @returns Promise resolving to availability status
    */
   availability(options?: {
     expectedInputs?: ExpectedInput[];
+    expectedOutputs?: ExpectedOutput[];
+    topK?: number;
+    temperature?: number;
   }): Promise<LanguageModelAvailability>;
 
   /**
@@ -431,7 +625,7 @@ export function hasStreamingSupport(
   promptStreaming: (
     prompt: string,
     options?: PromptOptions,
-  ) => ReadableStream<string>;
+  ) => AsyncIterable<string>;
 } {
   return (
     'promptStreaming' in model && typeof model.promptStreaming === 'function'
@@ -476,7 +670,7 @@ export function hasMultimodalSupport(
   model: LanguageModel,
 ): model is LanguageModel & {
   append: (messages: MultimodalContent[]) => Promise<string>;
-  appendStreaming?: (messages: MultimodalContent[]) => ReadableStream<string>;
+  appendStreaming?: (messages: MultimodalContent[]) => AsyncIterable<string>;
 } {
   return 'append' in model && typeof model.append === 'function';
 }
@@ -488,7 +682,7 @@ export function hasMultimodalStreamingSupport(
   model: LanguageModel,
 ): model is LanguageModel & {
   append: (messages: MultimodalContent[]) => Promise<string>;
-  appendStreaming: (messages: MultimodalContent[]) => ReadableStream<string>;
+  appendStreaming: (messages: MultimodalContent[]) => AsyncIterable<string>;
 } {
   return (
     'append' in model &&

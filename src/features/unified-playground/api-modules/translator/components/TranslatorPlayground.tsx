@@ -114,6 +114,21 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
   // ============================================================================
 
   /**
+   * Start model download for the selected language pair
+   * For Translator API, download happens automatically during translation
+   */
+  const handleStartDownload = useCallback(async () => {
+    try {
+      // Trigger a small translation to initiate model download
+      // The download progress will be tracked by the useTranslatorAvailability hook
+      await translate('Hello');
+    } catch (error) {
+      console.error('[TranslatorPlayground] Download failed:', error);
+      // Error is already handled by useTranslator hook
+    }
+  }, [translate]);
+
+  /**
    * Handle language swap
    */
   const handleSwapLanguages = useCallback(() => {
@@ -547,6 +562,7 @@ export function TranslatorPlayground({ className }: TranslatorPlaygroundProps) {
           isLoading={isLoading}
           loadingPhase={isLoading ? 'initializing' : null}
           error={error?.message || availabilityError?.message || null}
+          onStartDownload={handleStartDownload}
           modelInfo={{
             name: 'Translator Model',
             chromeVersion: '138+',

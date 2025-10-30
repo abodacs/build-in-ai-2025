@@ -1,213 +1,229 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Origin Trial for Chrome AI Proofreader API -->
-    <meta http-equiv="origin-trial" content="A3Pg0YRNj6c/wK+l9r+4RN2E23P1B+0c+lf3PzL4c5uSRJydhLkt94mFRak7DHgejxMGxzYWVV73lwAGqgCnLw0AAACNeyJvcmlnaW4iOiJodHRwczovL2Nocm9tZS1haS1kZXZiZW5jaC5wYWdlcy5kZXY6NDQzIiwiZmVhdHVyZSI6IkFJUHJvb2ZyZWFkZXJBUEkiLCJleHBpcnkiOjE3NzkxNDg4MDAsImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Primary Meta Tags -->
-    <title>Chrome AI DevBench - Interactive AI API Playground</title>
-    <meta name="title" content="Chrome AI DevBench - Interactive AI API Playground" />
-    <meta name="description" content="Learn and experiment with Chrome's built-in AI APIs through interactive demos, security examples, and production-ready code patterns." />
+  <!-- Origin Trial for Chrome AI Proofreader API -->
+  <meta http-equiv="origin-trial"
+    content="A3Pg0YRNj6c/wK+l9r+4RN2E23P1B+0c+lf3PzL4c5uSRJydhLkt94mFRak7DHgejxMGxzYWVV73lwAGqgCnLw0AAACNeyJvcmlnaW4iOiJodHRwczovL2Nocm9tZS1haS1kZXZiZW5jaC5wYWdlcy5kZXY6NDQzIiwiZmVhdHVyZSI6IkFJUHJvb2ZyZWFkZXJBUEkiLCJleHBpcnkiOjE3NzkxNDg4MDAsImlzU3ViZG9tYWluIjp0cnVlLCJpc1RoaXJkUGFydHkiOnRydWV9">
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://chrome-ai-devbench.pages.dev/" />
-    <meta property="og:title" content="Chrome AI DevBench - Interactive AI API Playground" />
-    <meta property="og:description" content="Learn and experiment with Chrome's built-in AI APIs through interactive demos, security examples, and production-ready code patterns." />
-    <meta property="og:image" content="/og-image.png" />
+  <!-- Origin Trial for Chrome AI Prompt API -->
+  <meta http-equiv="origin-trial"
+    content="AgrngS1Trfxl0HgPoWWGUYuN54/UmHzvQO/v6NbvBKTAswnYAnSsw1pWM3EEwazbvRWdGACG+EEPTLJzP5a+BA4AAACDeyJvcmlnaW4iOiJodHRwczovL2Nocm9tZS1haS1kZXZiZW5jaC5wYWdlcy5kZXY6NDQzIiwiZmVhdHVyZSI6IkFJUHJvbXB0QVBJTXVsdGltb2RhbElucHV0IiwiZXhwaXJ5IjoxNzc0MzEwNDAwLCJpc1N1YmRvbWFpbiI6dHJ1ZX0=">
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://chrome-ai-devbench.pages.dev/" />
-    <meta property="twitter:title" content="Chrome AI DevBench - Interactive AI API Playground" />
-    <meta property="twitter:description" content="Learn and experiment with Chrome's built-in AI APIs through interactive demos, security examples, and production-ready code patterns." />
-    <meta property="twitter:image" content="/og-image.png" />
+  <!-- Primary Meta Tags -->
+  <title>Chrome AI DevBench - Interactive AI API Playground</title>
+  <meta name="title" content="Chrome AI DevBench - Interactive AI API Playground" />
+  <meta name="description"
+    content="Learn and experiment with Chrome's built-in AI APIs through interactive demos, security examples, and production-ready code patterns." />
 
-    <!-- Favicon -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="manifest" href="/site.webmanifest" />
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://chrome-ai-devbench.pages.dev/" />
+  <meta property="og:title" content="Chrome AI DevBench - Interactive AI API Playground" />
+  <meta property="og:description"
+    content="Learn and experiment with Chrome's built-in AI APIs through interactive demos, security examples, and production-ready code patterns." />
+  <meta property="og:image" content="/og-image.png" />
 
-    <!-- Performance: DNS Prefetch -->
-    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://chrome-ai-devbench.pages.dev/" />
+  <meta property="twitter:title" content="Chrome AI DevBench - Interactive AI API Playground" />
+  <meta property="twitter:description"
+    content="Learn and experiment with Chrome's built-in AI APIs through interactive demos, security examples, and production-ready code patterns." />
+  <meta property="twitter:image" content="/og-image.png" />
 
-    <!-- Performance: Preconnect to critical origins -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Favicon -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="manifest" href="/site.webmanifest" />
 
-    <!-- Fonts: Optimized with display=swap to prevent CLS and FOUT -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500&display=swap"
-      rel="stylesheet"
-    />
+  <!-- Performance: DNS Prefetch -->
+  <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="//fonts.gstatic.com" />
 
-    <!-- Theme -->
-    <meta name="theme-color" content="#000000" />
-    <meta name="color-scheme" content="dark light" />
+  <!-- Performance: Preconnect to critical origins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-    <!-- Security -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' *.pages.dev" />
-    <!-- Theme Initialization (prevent FOUC) -->
-    <script>
-      (function() {
-        try {
-          const theme = localStorage.getItem('theme') || 'system';
-          const root = document.documentElement;
+  <!-- Fonts: Optimized with display=swap to prevent CLS and FOUT -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500&display=swap"
+    rel="stylesheet" />
 
-          if (theme === 'dark') {
-            root.classList.add('dark');
-          } else if (theme === 'light') {
-            root.classList.remove('dark');
-          } else {
-            // System preference
-            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-              root.classList.add('dark');
-            }
-          }
-        } catch (e) {
-          // Fallback to system preference
+  <!-- Theme -->
+  <meta name="theme-color" content="#000000" />
+  <meta name="color-scheme" content="dark light" />
+
+  <!-- Security -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' *.pages.dev" />
+  <!-- Theme Initialization (prevent FOUC) -->
+  <script>
+    (function () {
+      try {
+        const theme = localStorage.getItem('theme') || 'system';
+        const root = document.documentElement;
+
+        if (theme === 'dark') {
+          root.classList.add('dark');
+        } else if (theme === 'light') {
+          root.classList.remove('dark');
+        } else {
+          // System preference
           if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.documentElement.classList.add('dark');
+            root.classList.add('dark');
           }
         }
-      })();
-    </script>
-  </head>
-  <body>
-    <div id="root">
-      <!-- PERFORMANCE: Inline loading skeleton for instant LCP (<0.5s) -->
-      <!-- This appears immediately while JavaScript loads, preventing 2.8s LCP delay -->
-      <style>
-        /* Critical CSS - inline for instant render without blocking */
-        #loading-skeleton {
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #ffffff;
-          font-family: system-ui, -apple-system, sans-serif;
+      } catch (e) {
+        // Fallback to system preference
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.classList.add('dark');
+        }
+      }
+    })();
+  </script>
+</head>
+
+<body>
+  <div id="root">
+    <!-- PERFORMANCE: Inline loading skeleton for instant LCP (<0.5s) -->
+    <!-- This appears immediately while JavaScript loads, preventing 2.8s LCP delay -->
+    <style>
+      /* Critical CSS - inline for instant render without blocking */
+      #loading-skeleton {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+
+      .dark #loading-skeleton {
+        background: #0a0a0a;
+      }
+
+      #loading-skeleton .container {
+        max-width: 64rem;
+        padding: 2rem;
+        width: 100%;
+      }
+
+      #loading-skeleton .header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+
+      #loading-skeleton .title {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+      }
+
+      .dark #loading-skeleton .title {
+        color: #f8fafc;
+      }
+
+      #loading-skeleton .subtitle {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-top: 1rem;
+        text-align: center;
+      }
+
+      .dark #loading-skeleton .subtitle {
+        color: #94a3b8;
+      }
+
+      /* Skeleton animation */
+      #loading-skeleton .skeleton {
+        background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s ease-in-out infinite;
+        border-radius: 0.5rem;
+      }
+
+      .dark #loading-skeleton .skeleton {
+        background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+        background-size: 200% 100%;
+      }
+
+      @keyframes loading {
+        0% {
+          background-position: 200% 0;
         }
 
-        .dark #loading-skeleton {
-          background: #0a0a0a;
+        100% {
+          background-position: -200% 0;
         }
+      }
 
-        #loading-skeleton .container {
-          max-width: 64rem;
-          padding: 2rem;
-          width: 100%;
+      #loading-skeleton .card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .dark #loading-skeleton .card {
+        background: #0f172a;
+        border-color: #1e293b;
+      }
+
+      #loading-skeleton .skeleton-line {
+        height: 1rem;
+        margin-bottom: 0.75rem;
+      }
+
+      #loading-skeleton .skeleton-line:last-child {
+        width: 60%;
+      }
+
+      /* Fade out when React mounts */
+      #loading-skeleton.fade-out {
+        animation: fadeOut 0.3s ease-out forwards;
+      }
+
+      @keyframes fadeOut {
+        to {
+          opacity: 0;
+          transform: translateY(-10px);
         }
+      }
+    </style>
 
-        #loading-skeleton .header {
-          text-align: center;
-          margin-bottom: 3rem;
-        }
-
-        #loading-skeleton .title {
-          font-size: 2.25rem;
-          font-weight: 700;
-          color: #0f172a;
-          margin-bottom: 0.5rem;
-        }
-
-        .dark #loading-skeleton .title {
-          color: #f8fafc;
-        }
-
-        #loading-skeleton .subtitle {
-          font-size: 0.875rem;
-          color: #64748b;
-          margin-top: 1rem;
-          text-align: center;
-        }
-
-        .dark #loading-skeleton .subtitle {
-          color: #94a3b8;
-        }
-
-        /* Skeleton animation */
-        #loading-skeleton .skeleton {
-          background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-          background-size: 200% 100%;
-          animation: loading 1.5s ease-in-out infinite;
-          border-radius: 0.5rem;
-        }
-
-        .dark #loading-skeleton .skeleton {
-          background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
-          background-size: 200% 100%;
-        }
-
-        @keyframes loading {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-
-        #loading-skeleton .card {
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
-          border-radius: 0.5rem;
-          padding: 1.5rem;
-          margin-bottom: 1rem;
-        }
-
-        .dark #loading-skeleton .card {
-          background: #0f172a;
-          border-color: #1e293b;
-        }
-
-        #loading-skeleton .skeleton-line {
-          height: 1rem;
-          margin-bottom: 0.75rem;
-        }
-
-        #loading-skeleton .skeleton-line:last-child {
-          width: 60%;
-        }
-
-        /* Fade out when React mounts */
-        #loading-skeleton.fade-out {
-          animation: fadeOut 0.3s ease-out forwards;
-        }
-
-        @keyframes fadeOut {
-          to {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-        }
-      </style>
-
-      <div id="loading-skeleton">
-        <div class="container">
-          <div class="header">
-            <h1 class="title">Chrome AI DevBench</h1>
-            <p class="subtitle">Interactive AI API Playground</p>
-          </div>
-
-          <div class="card">
-            <div class="skeleton skeleton-line"></div>
-            <div class="skeleton skeleton-line"></div>
-            <div class="skeleton skeleton-line"></div>
-          </div>
-
-          <div class="card">
-            <div class="skeleton skeleton-line"></div>
-            <div class="skeleton skeleton-line"></div>
-          </div>
-
-          <p class="subtitle" style="margin-top: 1rem;">
-            Loading playground...
-          </p>
+    <div id="loading-skeleton">
+      <div class="container">
+        <div class="header">
+          <h1 class="title">Chrome AI DevBench</h1>
+          <p class="subtitle">Interactive AI API Playground</p>
         </div>
+
+        <div class="card">
+          <div class="skeleton skeleton-line"></div>
+          <div class="skeleton skeleton-line"></div>
+          <div class="skeleton skeleton-line"></div>
+        </div>
+
+        <div class="card">
+          <div class="skeleton skeleton-line"></div>
+          <div class="skeleton skeleton-line"></div>
+        </div>
+
+        <p class="subtitle" style="margin-top: 1rem;">
+          Loading playground...
+        </p>
       </div>
     </div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  </div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

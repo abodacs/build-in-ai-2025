@@ -243,6 +243,10 @@ export interface LanguageModel extends EventTarget {
     input: string | Message[],
     options?: LanguageModelAppendOptions,
   ): Promise<void>;
+  appendStreaming?(
+    input: string | Message[],
+    options?: LanguageModelAppendOptions,
+  ): AsyncIterable<string>;
   clone(options?: LanguageModelCloneOptions): Promise<LanguageModel>;
   measureInputUsage(
     input: string | Message[],

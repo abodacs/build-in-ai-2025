@@ -3,7 +3,7 @@
  * Enterprise-grade component with proper architecture patterns, security, and performance
  */
 
-import { useEffect, Suspense, useMemo } from 'react';
+import { Suspense } from 'react';
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
 import { LoadingSpinner } from '../shared/components/LoadingScreen';
 import { Header } from '@/components/layout/header/Header';
@@ -15,12 +15,10 @@ import {
   Zap,
   Sparkles,
   Shield,
-  Activity,
   Github,
   ExternalLink,
 } from 'lucide-react';
 import { usePlaygroundState } from '../shared/hooks/usePlaygroundState';
-import { usePerformanceMetrics } from '../shared/hooks/usePerformanceMetrics';
 import { cn } from '@/lib/utils';
 
 // ============================================================================
@@ -30,7 +28,6 @@ import { cn } from '@/lib/utils';
 interface PlaygroundContainerProps {
   children?: React.ReactNode;
   className?: string;
-  showPerformanceMetrics?: boolean;
   enableKeyboardShortcuts?: boolean;
 }
 
@@ -111,54 +108,9 @@ function PlaygroundSuspenseFallback() {
 export function PlaygroundContainer({
   children,
   className,
-  showPerformanceMetrics = true,
 }: PlaygroundContainerProps) {
   // State management with custom hooks
   const { hasAvailableApis, availableApiCount } = usePlaygroundState();
-
-  const { performanceScore, measureComponentRender, optimizationSuggestions } =
-    usePerformanceMetrics();
-
-  // ============================================================================
-  // Performance Tracking (using useEffect to avoid infinite loops)
-  // ============================================================================
-
-  useEffect(() => {
-    const stopMeasure = measureComponentRender('PlaygroundContainer');
-    return () => {
-      stopMeasure();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only measure on mount/unmount
-
-  // Memoize performance warning card to prevent excessive re-renders
-  const performanceWarningCard = useMemo(() => {
-    if (!showPerformanceMetrics || optimizationSuggestions.length === 0) {
-      return null;
-    }
-
-    return (
-      <div className="mb-6 animate-fadeInDown">
-        <Card className="border-yellow-500/20 bg-yellow-500/5 p-4">
-          <div className="flex items-start gap-3">
-            <Activity className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h2 className="font-semibold text-yellow-700 mb-2">
-                Performance Optimization
-              </h2>
-              <ul className="space-y-1 text-sm text-yellow-700/80">
-                {optimizationSuggestions
-                  .slice(0, 3)
-                  .map((suggestion, index) => (
-                    <li key={index}>• {suggestion}</li>
-                  ))}
-              </ul>
-            </div>
-          </div>
-        </Card>
-      </div>
-    );
-  }, [showPerformanceMetrics, optimizationSuggestions]);
 
   // ============================================================================
   // Render
@@ -177,9 +129,6 @@ export function PlaygroundContainer({
 
         {/* Main Content */}
         <main className="container mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-screen-2xl">
-          {/* Performance Insights - Memoized */}
-          {performanceWarningCard}
-
           <Suspense fallback={<PlaygroundSuspenseFallback />}>
             <div className="animate-fadeInUp">
               {children || (
@@ -205,16 +154,12 @@ export function PlaygroundContainer({
                         <span>Secure</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-blue-600" />
-                        <span>Performance: {performanceScore}/100</span>
-                      </div>
-                      <div className="flex items-center gap-2">
                         <Zap className="w-4 h-4 text-purple-600" />
                         <span>{availableApiCount}/7 APIs Ready</span>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                       <Card className="p-4 hover-lift transition-all duration-200 cursor-pointer border-green-200 dark:border-green-800">
                         <h3 className="font-semibold mb-2 flex items-center gap-2">
                           <Shield className="w-4 h-4 text-green-600" />
@@ -223,17 +168,6 @@ export function PlaygroundContainer({
                         <p className="text-sm text-muted-foreground">
                           Input validation, XSS protection, and enterprise
                           security standards.
-                        </p>
-                      </Card>
-
-                      <Card className="p-4 hover-lift transition-all duration-200 cursor-pointer border-blue-200 dark:border-blue-800">
-                        <h3 className="font-semibold mb-2 flex items-center gap-2">
-                          <Activity className="w-4 h-4 text-blue-600" />
-                          Performance Optimized
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Real-time metrics, Core Web Vitals tracking, and
-                          optimization hints.
                         </p>
                       </Card>
 

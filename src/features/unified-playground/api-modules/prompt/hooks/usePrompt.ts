@@ -108,6 +108,9 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
   // Track quota overflow callback for cleanup
   const quotaCallbackRef = useRef<((event: Event) => void) | null>(null);
 
+  // Guard against concurrent initialization
+  const isInitializingRef = useRef(false);
+
   // State
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -153,7 +156,14 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
    * not automatically in useEffect.
    */
   const initialize = useCallback(async () => {
+    // Prevent concurrent initialization
+    if (isInitializingRef.current) {
+      console.warn('[usePrompt] Initialization already in progress, skipping');
+      return;
+    }
+
     try {
+      isInitializingRef.current = true;
       setIsLoading(true);
       setError(null);
 
@@ -218,6 +228,7 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
       setIsInitialized(false);
       throw err;
     } finally {
+      isInitializingRef.current = false;
       setIsLoading(false);
     }
   }, [config, autoSave, enableHistory]);
@@ -289,9 +300,19 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
         // Execute prompt - use multimodal if images provided
         let response: string;
         if (images && images.length > 0) {
+          // Validate images before sending
+          const invalidImages = images.filter(
+            (img: any) => !img.file || !img.dataUrl || !img.mimeType,
+          );
+          if (invalidImages.length > 0) {
+            throw new Error(
+              `Invalid images detected: ${invalidImages.length} image(s) are missing required data`,
+            );
+          }
+
           response = await promptManagerRef.current.promptMultimodal(
             text,
-            images,
+            images as any,
             [],
           );
         } else {
@@ -312,6 +333,14 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
 
         // Update metrics
         updateMetrics();
+
+        // Update real-time input usage after prompt execution
+        if (promptManagerRef.current) {
+          const updatedUsage = promptManagerRef.current.getInputUsage();
+          if (updatedUsage !== null) {
+            setRealTimeInputUsage(updatedUsage);
+          }
+        }
 
         return response;
       } catch (err) {
@@ -395,21 +424,34 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
           chunksReceived++;
           accumulatedContent += chunk;
 
-          // Update UI state
+          // Update UI state - batch both updates together
           setCurrentResponse(accumulatedContent);
-          setStreamingState((prev) => ({
-            ...prev,
+          setStreamingState({
+            status: 'streaming',
             content: accumulatedContent,
             chunksReceived,
+            startTime,
+            endTime: null,
             timeToFirstChunk: firstChunkTime,
-          }));
+            error: null,
+          });
         };
 
         if (images && images.length > 0) {
+          // Validate images before streaming
+          const invalidImages = images.filter(
+            (img: any) => !img.file || !img.dataUrl || !img.mimeType,
+          );
+          if (invalidImages.length > 0) {
+            throw new Error(
+              `Invalid images detected: ${invalidImages.length} image(s) are missing required data`,
+            );
+          }
+
           response = await promptManagerRef.current.promptMultimodalStreaming(
             text,
             onChunk,
-            images,
+            images as any,
             [],
           );
         } else {
@@ -445,6 +487,14 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
 
         // Update metrics
         updateMetrics();
+
+        // Update real-time input usage after streaming execution
+        if (promptManagerRef.current) {
+          const updatedUsage = promptManagerRef.current.getInputUsage();
+          if (updatedUsage !== null) {
+            setRealTimeInputUsage(updatedUsage);
+          }
+        }
 
         return response;
       } catch (err) {

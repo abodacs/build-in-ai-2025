@@ -18,6 +18,15 @@ export type {
   MultimodalContentItem,
   MultimodalContent,
   ExpectedInput,
+  ExpectedOutput,
+  SupportedLanguageCode,
+  // Conversation Messages (for prompt() with Message[])
+  MessageRole as APIMessageRole,
+  MessageContentType,
+  TextContentItem,
+  ImageContentItem,
+  AudioContentItem,
+  Message as APIMessage,
   // Availability
   LanguageModelAvailability,
   // Errors
@@ -39,6 +48,9 @@ export type {
 } from './api.types';
 
 export {
+  // Language Support Constants
+  SUPPORTED_OUTPUT_LANGUAGES,
+  LANGUAGE_NAMES,
   // Type Guards
   hasStreamingSupport,
   hasTokenCountingSupport,

@@ -17,8 +17,15 @@ import type {
   LanguageModelCapabilities,
   LanguageModelParameterBounds,
   DownloadProgress,
+  SupportedLanguageCode,
+  ExpectedInput,
+  ExpectedOutput,
+  APIMessage,
+  MultimodalContent,
 } from '../types';
+import { SUPPORTED_OUTPUT_LANGUAGES } from '../types';
 import { normalizeAvailability } from '../../shared/utils/normalizeAvailability';
+import { ALLOWED_SYSTEM_PROMPTS } from '@/features/unified-playground/shared/utils/promptConstruction';
 
 // ============================================================================
 // Helper Functions
@@ -72,11 +79,29 @@ function getUserFriendlyError(error: any): string {
     return 'AI model download required (~22GB). This is a one-time process. Please ensure stable internet connection.';
   }
 
+  // Check for multimodal-specific errors (must come before generic "not available")
+  if (
+    errorMessage.includes('multimodal') ||
+    errorMessage.includes('expectedinputs') ||
+    errorMessage.includes('expected inputs') ||
+    errorMessage.includes('image input') ||
+    (errorMessage.includes('not supported') && errorMessage.includes('input'))
+  ) {
+    return 'Multimodal (image) input is not available. Text-only mode is active. The basic Prompt API works, but image support requires additional Chrome flags. Enable chrome://flags#prompt-api-for-gemini-nano-multimodal-input and restart Chrome to use images.';
+  }
+
   if (
     errorMessage.includes('not available') ||
     errorMessage.includes('not supported')
   ) {
     return 'Prompt API is not available. Please enable it in chrome://flags#prompt-api-for-gemini-nano-multimodal-input';
+  }
+
+  if (
+    errorMessage.includes('language') ||
+    errorMessage.includes('supported language codes')
+  ) {
+    return 'Only English (en), Spanish (es), and Japanese (ja) are currently supported. Chrome Prompt API has limited language support.';
   }
 
   if (
@@ -132,6 +157,35 @@ export class ChromeAIPromptService {
   }
 
   /**
+   * Validate if language codes are supported by Chrome's Prompt API
+   * Chrome only supports: en (English), es (Spanish), ja (Japanese)
+   * @param languages - Array of language codes to validate
+   * @returns Validation result with supported/unsupported languages
+   */
+  static validateLanguages(languages: string[]): {
+    valid: boolean;
+    supported: string[];
+    unsupported: string[];
+  } {
+    const supported: string[] = [];
+    const unsupported: string[] = [];
+
+    languages.forEach((lang) => {
+      if (SUPPORTED_OUTPUT_LANGUAGES.includes(lang as SupportedLanguageCode)) {
+        supported.push(lang);
+      } else {
+        unsupported.push(lang);
+      }
+    });
+
+    return {
+      valid: unsupported.length === 0,
+      supported,
+      unsupported,
+    };
+  }
+
+  /**
    * Check LanguageModel availability
    * @returns Promise resolving to availability status
    */
@@ -171,6 +225,143 @@ export class ChromeAIPromptService {
       return normalizeAvailability(status);
     } catch (error) {
       console.warn('Multimodal availability check failed:', error);
+      return 'no';
+    }
+  }
+
+  /**
+   * Check if specific language output is supported
+   * Validates languages before checking to prevent Chrome API errors
+   * Chrome only supports: en (English), es (Spanish), ja (Japanese)
+   * @param languages - Array of ISO language codes to check
+   * @returns Promise with availability status and validation details
+   */
+  static async checkLanguageAvailability(languages: string[]): Promise<{
+    availability: LanguageModelAvailability;
+    validation: ReturnType<typeof ChromeAIPromptService.validateLanguages>;
+  }> {
+    // Validate languages first to prevent API errors
+    const validation = this.validateLanguages(languages);
+
+    // If no valid languages, return 'no' immediately
+    if (validation.supported.length === 0) {
+      return {
+        availability: 'no',
+        validation,
+      };
+    }
+
+    try {
+      if (!this.isSupported()) {
+        return { availability: 'no', validation };
+      }
+
+      const api = this.getAPI();
+      // Only pass supported languages to avoid Chrome API error
+      const status = await api.availability({
+        expectedOutputs: [
+          {
+            type: 'text',
+            languages: validation.supported as SupportedLanguageCode[],
+          },
+        ],
+      });
+
+      return {
+        availability: normalizeAvailability(status),
+        validation,
+      };
+    } catch (error) {
+      console.warn('Language availability check failed:', error);
+      return { availability: 'no', validation };
+    }
+  }
+
+  /**
+   * Check availability with specific configuration parameters
+   * More accurate than checkAvailability() - validates the exact parameters you plan to use
+   *
+   * This prevents false positives by checking availability with the SAME parameters
+   * you'll use for create(). Recommended pattern:
+   *
+   * @example
+   * const config = {
+   *   topK: 1,
+   *   temperature: 0,
+   *   expectedInputs: [{ type: 'image' }],
+   *   expectedOutputs: [{ type: 'text', languages: ['en'] }],
+   * };
+   *
+   * // Check with exact config
+   * const availability = await ChromeAIPromptService.checkAvailabilityWithConfig(config);
+   *
+   * // If available, create with SAME config
+   * if (availability === 'available') {
+   *   const instance = await ChromeAIPromptService.createInstance(config);
+   * }
+   *
+   * @param options - The same configuration you plan to use for create()
+   * @returns Promise resolving to availability status
+   */
+  static async checkAvailabilityWithConfig(
+    options: LanguageModelCreateOptions,
+  ): Promise<LanguageModelAvailability> {
+    try {
+      if (!this.isSupported()) {
+        return 'no';
+      }
+
+      const api = this.getAPI();
+
+      // Build availability check options from create options
+      // Only pass parameters that are relevant to availability checking
+      const checkOptions: {
+        topK?: number;
+        temperature?: number;
+        expectedInputs?: ExpectedInput[];
+        expectedOutputs?: ExpectedOutput[];
+      } = {};
+
+      // Pass topK if specified
+      if (options.topK !== undefined) {
+        checkOptions.topK = options.topK;
+      }
+
+      // Pass temperature if specified
+      if (options.temperature !== undefined) {
+        checkOptions.temperature = options.temperature;
+      }
+
+      // Pass expectedInputs if specified
+      if (options.expectedInputs && options.expectedInputs.length > 0) {
+        checkOptions.expectedInputs = options.expectedInputs;
+      }
+
+      // Pass expectedOutputs if specified
+      if (options.expectedOutputs && options.expectedOutputs.length > 0) {
+        checkOptions.expectedOutputs = options.expectedOutputs;
+      }
+
+      console.log(
+        '[ChromeAIPromptService] Checking availability with config:',
+        checkOptions,
+      );
+
+      // Check availability with the exact parameters
+      const status = await api.availability(checkOptions);
+      const normalized = normalizeAvailability(status);
+
+      console.log(
+        '[ChromeAIPromptService] Availability check result:',
+        normalized,
+      );
+
+      return normalized;
+    } catch (error) {
+      console.warn(
+        '[ChromeAIPromptService] Availability check with config failed:',
+        error,
+      );
       return 'no';
     }
   }
@@ -293,6 +484,93 @@ export class ChromeAIPromptService {
   // ============================================================================
 
   /**
+   * Build Chrome API options from application config
+   * Filters out application-level parameters that Chrome API doesn't accept
+   * and converts systemPromptId to initialPrompts format
+   *
+   * @param appConfig - Application configuration with both Chrome API and app-level params
+   * @returns Sanitized options object containing only valid Chrome API parameters
+   */
+  private static buildChromeAPIOptions(
+    appConfig: any,
+  ): LanguageModelCreateOptions {
+    const chromeOptions: any = {};
+
+    // Sampling parameters (Chrome API)
+    if (appConfig.temperature !== undefined) {
+      chromeOptions.temperature = appConfig.temperature;
+    }
+    if (appConfig.topK !== undefined) {
+      chromeOptions.topK = appConfig.topK;
+    }
+
+    // Multimodal configuration (Chrome API)
+    if (appConfig.expectedInputs !== undefined) {
+      chromeOptions.expectedInputs = appConfig.expectedInputs;
+    }
+    if (appConfig.expectedOutputs !== undefined) {
+      chromeOptions.expectedOutputs = appConfig.expectedOutputs;
+    }
+
+    // Control parameters (Chrome API)
+    if (appConfig.signal !== undefined) {
+      chromeOptions.signal = appConfig.signal;
+    }
+    if (appConfig.monitor !== undefined) {
+      chromeOptions.monitor = appConfig.monitor;
+    }
+
+    // Advanced features (Chrome API)
+    if (appConfig.tools !== undefined) {
+      chromeOptions.tools = appConfig.tools;
+    }
+
+    // Convert systemPromptId to initialPrompts (Chrome API format)
+    if (appConfig.systemPromptId) {
+      // Validate systemPromptId before accessing
+      const allowedIds = Object.keys(ALLOWED_SYSTEM_PROMPTS);
+      if (!allowedIds.includes(appConfig.systemPromptId)) {
+        console.warn(
+          `[ChromeAIPromptService] Invalid systemPromptId: ${appConfig.systemPromptId}. Using default.`,
+        );
+      } else {
+        const systemPromptConfig =
+          ALLOWED_SYSTEM_PROMPTS[
+            appConfig.systemPromptId as keyof typeof ALLOWED_SYSTEM_PROMPTS
+          ];
+        if (systemPromptConfig?.prompt) {
+          chromeOptions.initialPrompts = [
+            {
+              role: 'system',
+              content: systemPromptConfig.prompt,
+            },
+          ];
+        }
+      }
+    }
+
+    // If initialPrompts already provided, use it (takes precedence)
+    if (appConfig.initialPrompts !== undefined) {
+      chromeOptions.initialPrompts = appConfig.initialPrompts;
+    }
+
+    // Application-level parameters that should NOT be passed to Chrome API:
+    // - enableStreaming, enableAutoSave, enableHistory, maxHistoryLength,
+    // - enableMarkdown, enableCodeHighlight, maxTokens, systemPromptId
+    // These are intentionally filtered out
+
+    console.log(
+      '[ChromeAIPromptService] Filtered app config → Chrome API options:',
+      {
+        input: appConfig,
+        output: chromeOptions,
+      },
+    );
+
+    return chromeOptions;
+  }
+
+  /**
    * Create LanguageModel instance
    * @param options - Creation options
    * @returns Promise resolving to LanguageModel instance
@@ -324,8 +602,22 @@ export class ChromeAIPromptService {
         this.validateOptions(options);
       }
 
+      // Filter and sanitize options for Chrome API
+      // If no options provided, create proper default config
+      const chromeOptions: LanguageModelCreateOptions = options
+        ? this.buildChromeAPIOptions(options)
+        : {
+            expectedInputs: [{ type: 'image' as const }],
+            temperature: 0.8,
+            topK: 8,
+          };
+
       const api = this.getAPI();
-      const instance = await api.create(options);
+      console.log(
+        '[ChromeAIPromptService] Creating LanguageModel instance with filtered Chrome API options:',
+        chromeOptions,
+      );
+      const instance = await api.create(chromeOptions);
 
       return instance;
     } catch (error: any) {
@@ -379,6 +671,10 @@ export class ChromeAIPromptService {
     options: LanguageModelCreateOptions,
     onProgress: (loaded: number, total: number) => void,
   ): Promise<LanguageModel> {
+    console.log(
+      '[ChromeAIPromptService] Creating instance with download monitoring',
+      options,
+    );
     const optionsWithMonitor: LanguageModelCreateOptions = {
       ...options,
       monitor: (m: EventTarget) => {
@@ -412,12 +708,16 @@ export class ChromeAIPromptService {
       const result = await instance.prompt(prompt, options);
       return result;
     } catch (error: any) {
-      // Throw user-friendly error, preserving AbortError name
+      // Throw user-friendly error, preserving AbortError name and stack trace
       const friendlyMessage = getUserFriendlyError(error);
-      const wrappedError = new Error(friendlyMessage);
+      const wrappedError = new Error(friendlyMessage, { cause: error });
       // Preserve AbortError name so retry logic can detect it
       if (error?.name === 'AbortError') {
         wrappedError.name = 'AbortError';
+      }
+      // Preserve stack trace from original error if available
+      if (error?.stack) {
+        wrappedError.stack = error.stack;
       }
       throw wrappedError;
     }
@@ -428,13 +728,13 @@ export class ChromeAIPromptService {
    * @param instance - LanguageModel instance
    * @param prompt - User prompt text
    * @param options - Optional prompt options
-   * @returns ReadableStream of response chunks
+   * @returns AsyncIterable of response chunks
    */
   static promptStreaming(
     instance: LanguageModel,
     prompt: string,
     options?: PromptOptions,
-  ): ReadableStream<string> {
+  ): AsyncIterable<string> {
     if (!instance.promptStreaming) {
       throw new Error('Streaming is not supported by this model instance.');
     }
@@ -458,25 +758,155 @@ export class ChromeAIPromptService {
   ): Promise<string> {
     try {
       const stream = this.promptStreaming(instance, prompt, options);
-      const reader = stream.getReader();
       let fullResponse = '';
 
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-
-          if (done) {
-            break;
-          }
-
-          fullResponse += value;
-          onChunk(value);
-        }
-
-        return fullResponse;
-      } finally {
-        reader.releaseLock();
+      for await (const chunk of stream) {
+        fullResponse += chunk;
+        onChunk(chunk);
       }
+
+      return fullResponse;
+    } catch (error: any) {
+      // Throw user-friendly error, preserving AbortError name
+      const friendlyMessage = getUserFriendlyError(error);
+      const wrappedError = new Error(friendlyMessage);
+      if (error?.name === 'AbortError') {
+        wrappedError.name = 'AbortError';
+      }
+      throw wrappedError;
+    }
+  }
+
+  /**
+   * Execute a prompt with conversation array (Message[])
+   * Supports both text-only and multimodal content in conversation format
+   *
+   * @param instance - LanguageModel instance
+   * @param messages - Array of conversation messages
+   * @param options - Optional prompt options
+   * @returns Promise resolving to response string
+   *
+   * @example
+   * // Text-only conversation
+   * const response = await ChromeAIPromptService.promptWithConversation(instance, [
+   *   { role: 'user', content: 'Hello!' },
+   *   { role: 'assistant', content: 'Hi there!' },
+   *   { role: 'user', content: 'Tell me about AI' }
+   * ]);
+   *
+   * @example
+   * // Multimodal conversation with images
+   * const response = await ChromeAIPromptService.promptWithConversation(instance, [
+   *   {
+   *     role: 'user',
+   *     content: [
+   *       { type: 'text', value: 'What is in this image?' },
+   *       { type: 'image', value: imageBlob }
+   *     ]
+   *   }
+   * ]);
+   */
+  static async promptWithConversation(
+    instance: LanguageModel,
+    messages: APIMessage[],
+    options?: PromptOptions,
+  ): Promise<string> {
+    try {
+      // Chrome's LanguageModel.prompt() natively accepts Message[]
+      const result = await instance.prompt(messages, options);
+      return result;
+    } catch (error: any) {
+      // Throw user-friendly error, preserving AbortError name and stack trace
+      const friendlyMessage = getUserFriendlyError(error);
+      const wrappedError = new Error(friendlyMessage, { cause: error });
+      // Preserve AbortError name so retry logic can detect it
+      if (error?.name === 'AbortError') {
+        wrappedError.name = 'AbortError';
+      }
+      // Preserve stack trace from original error if available
+      if (error?.stack) {
+        wrappedError.stack = error.stack;
+      }
+      throw wrappedError;
+    }
+  }
+
+  /**
+   * Execute a prompt with conversation array and streaming
+   * Supports both text-only and multimodal content in conversation format
+   *
+   * @param instance - LanguageModel instance
+   * @param messages - Array of conversation messages
+   * @param options - Optional prompt options
+   * @returns ReadableStream of response chunks
+   *
+   * @example
+   * // Streaming text conversation
+   * const stream = ChromeAIPromptService.promptStreamingWithConversation(instance, [
+   *   { role: 'user', content: 'Tell me a story' }
+   * ]);
+   *
+   * @example
+   * // Streaming multimodal conversation
+   * const stream = ChromeAIPromptService.promptStreamingWithConversation(instance, [
+   *   {
+   *     role: 'user',
+   *     content: [
+   *       { type: 'text', value: 'Describe this image in detail' },
+   *       { type: 'image', value: imageBlob }
+   *     ]
+   *   }
+   * ]);
+   */
+  static promptStreamingWithConversation(
+    instance: LanguageModel,
+    messages: APIMessage[],
+    options?: PromptOptions,
+  ): AsyncIterable<string> {
+    if (!instance.promptStreaming) {
+      throw new Error('Streaming is not supported by this model instance.');
+    }
+
+    // Chrome's LanguageModel.promptStreaming() natively accepts Message[]
+    return instance.promptStreaming(messages, options);
+  }
+
+  /**
+   * Execute a prompt with conversation array, streaming, and process chunks via callback
+   *
+   * @param instance - LanguageModel instance
+   * @param messages - Array of conversation messages
+   * @param onChunk - Callback for each chunk
+   * @param options - Optional prompt options
+   * @returns Promise resolving to complete response
+   *
+   * @example
+   * const response = await ChromeAIPromptService.promptStreamingWithConversationCallback(
+   *   instance,
+   *   [{ role: 'user', content: 'Tell me a story' }],
+   *   (chunk) => console.log('Received:', chunk)
+   * );
+   */
+  static async promptStreamingWithConversationCallback(
+    instance: LanguageModel,
+    messages: APIMessage[],
+    onChunk: (chunk: string) => void,
+    options?: PromptOptions,
+  ): Promise<string> {
+    try {
+      const stream = this.promptStreamingWithConversation(
+        instance,
+        messages,
+        options,
+      );
+      let fullResponse = '';
+
+      for await (const chunk of stream) {
+        fullResponse += chunk;
+        onChunk(chunk);
+      }
+
+      return fullResponse;
     } catch (error: any) {
       // Throw user-friendly error, preserving AbortError name
       const friendlyMessage = getUserFriendlyError(error);
@@ -718,20 +1148,41 @@ export class ChromeAIPromptService {
    * Append multimodal message(s) to the conversation (non-streaming)
    * @param instance - LanguageModel instance
    * @param messages - Array of multimodal messages
+   * @param options - Optional prompt options including AbortSignal
    * @returns Promise resolving to response string
    */
   static async appendMessage(
     instance: LanguageModel,
-    messages: any[], // MultimodalContent[]
+    messages: MultimodalContent[],
+    options?: PromptOptions,
   ): Promise<string> {
     try {
-      if (!instance.append) {
+      if (!('append' in instance)) {
         throw new Error(
           'Multimodal append not supported. Session must be created with expectedInputs: [{type: "image"}, {type: "audio"}]',
         );
       }
 
-      const result = await instance.append(messages);
+      // Create a promise that rejects when aborted
+      const abortPromise = new Promise<never>((_, reject) => {
+        if (options?.signal) {
+          if (options.signal.aborted) {
+            const abortError = new Error('Operation aborted');
+            abortError.name = 'AbortError';
+            reject(abortError);
+          } else {
+            options.signal.addEventListener('abort', () => {
+              const abortError = new Error('Operation aborted');
+              abortError.name = 'AbortError';
+              reject(abortError);
+            });
+          }
+        }
+      });
+
+      const result = options?.signal
+        ? await Promise.race([instance.append!(messages), abortPromise])
+        : await instance.append!(messages);
       return result;
     } catch (error: any) {
       // Throw user-friendly error, preserving AbortError name
@@ -749,41 +1200,64 @@ export class ChromeAIPromptService {
    * @param instance - LanguageModel instance
    * @param messages - Array of multimodal messages
    * @param onChunk - Callback for each chunk
+   * @param options - Optional prompt options including AbortSignal
    * @returns Promise resolving to complete response
    */
   static async appendMessageStreaming(
     instance: LanguageModel,
-    messages: any[], // MultimodalContent[]
+    messages: MultimodalContent[],
     onChunk: (chunk: string) => void,
+    options?: PromptOptions,
   ): Promise<string> {
     try {
-      if (!instance.appendStreaming) {
+      if (!('appendStreaming' in instance)) {
         throw new Error(
           'Multimodal streaming not supported. Session must be created with expectedInputs and support appendStreaming.',
         );
       }
 
-      const stream = instance.appendStreaming(messages);
-      const reader = stream.getReader();
+      // Check if already aborted
+      if (options?.signal?.aborted) {
+        const abortError = new Error('Operation aborted');
+        abortError.name = 'AbortError';
+        throw abortError;
+      }
+
+      const stream = instance.appendStreaming!(messages);
       let fullResponse = '';
+      let isAborted = false;
+
+      // Set up abort handler - don't throw from event handler
+      const abortHandler = () => {
+        isAborted = true;
+      };
+
+      // Register abort listener if signal provided
+      if (options?.signal) {
+        options.signal.addEventListener('abort', abortHandler);
+      }
 
       try {
-        while (true) {
-          const { done, value } = await reader.read();
-
-          if (done) {
-            break;
+        for await (const chunk of stream) {
+          // Check for abort between chunks
+          if (isAborted || options?.signal?.aborted) {
+            const abortError = new Error('Operation aborted');
+            abortError.name = 'AbortError';
+            throw abortError;
           }
-
-          fullResponse += value;
-          onChunk(value);
+          fullResponse += chunk;
+          onChunk(chunk);
         }
-
-        return fullResponse;
       } finally {
-        reader.releaseLock();
+        // Clean up abort listener - check if signal exists before removing
+        if (options?.signal && abortHandler) {
+          options.signal.removeEventListener('abort', abortHandler);
+        }
       }
+
+      return fullResponse;
     } catch (error: any) {
+      console.error('Error in appendMessageStreaming:', error);
       // Throw user-friendly error, preserving AbortError name
       const friendlyMessage = getUserFriendlyError(error);
       const wrappedError = new Error(friendlyMessage);
@@ -809,11 +1283,12 @@ export class ChromeAIPromptService {
     if (options.temperature !== undefined) {
       if (
         typeof options.temperature !== 'number' ||
+        !Number.isFinite(options.temperature) ||
         options.temperature < 0 ||
         options.temperature > 2
       ) {
         throw new Error(
-          `Invalid temperature: ${options.temperature}. Must be a number between 0 and 2.`,
+          `Invalid temperature: ${options.temperature}. Must be a finite number between 0 and 2.`,
         );
       }
     }
@@ -822,12 +1297,13 @@ export class ChromeAIPromptService {
     if (options.topK !== undefined) {
       if (
         typeof options.topK !== 'number' ||
+        !Number.isFinite(options.topK) ||
         options.topK < 1 ||
         options.topK > 128 ||
         !Number.isInteger(options.topK)
       ) {
         throw new Error(
-          `Invalid topK: ${options.topK}. Must be an integer between 1 and 128.`,
+          `Invalid topK: ${options.topK}. Must be a finite integer between 1 and 128.`,
         );
       }
     }
@@ -836,12 +1312,13 @@ export class ChromeAIPromptService {
     if (options.maxTokens !== undefined) {
       if (
         typeof options.maxTokens !== 'number' ||
+        !Number.isFinite(options.maxTokens) ||
         options.maxTokens < 1 ||
         options.maxTokens > 4096 ||
         !Number.isInteger(options.maxTokens)
       ) {
         throw new Error(
-          `Invalid maxTokens: ${options.maxTokens}. Must be an integer between 1 and 4096.`,
+          `Invalid maxTokens: ${options.maxTokens}. Must be a finite integer between 1 and 4096.`,
         );
       }
     }

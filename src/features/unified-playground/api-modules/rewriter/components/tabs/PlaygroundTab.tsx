@@ -81,6 +81,7 @@ export function PlaygroundTab() {
     isSupported,
     requiresDownload,
     isReady,
+    startDownload,
   } = useRewriterAvailability();
 
   // Toast hook
@@ -590,6 +591,7 @@ export function PlaygroundTab() {
           isLoading={isLoading}
           loadingPhase={isLoading ? 'initializing' : null}
           error={error?.message || availabilityError || null}
+          onStartDownload={startDownload}
           modelInfo={{
             name: 'Rewriter Model',
             chromeVersion: '138+',
