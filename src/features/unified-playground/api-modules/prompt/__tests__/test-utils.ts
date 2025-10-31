@@ -63,6 +63,40 @@ export function createMockLanguageModel(): LanguageModel {
 
       return stream;
     }),
+    // Multimodal support - append and appendStreaming
+    append: vi.fn().mockResolvedValue('Mock append response'),
+    appendStreaming: vi.fn(() => {
+      // Create a ReadableStream mock that is async iterable
+      const chunks = ['Mock ', 'append ', 'streaming'];
+      let index = 0;
+
+      const stream = {
+        getReader: () => ({
+          read: vi.fn(async () => {
+            if (index < chunks.length) {
+              return { done: false, value: chunks[index++] };
+            }
+            return { done: true, value: undefined };
+          }),
+          releaseLock: vi.fn(),
+        }),
+        // Make the stream async iterable for for-await-of loops
+        [Symbol.asyncIterator]: async function* () {
+          const reader = stream.getReader();
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              yield value;
+            }
+          } finally {
+            reader.releaseLock();
+          }
+        },
+      } as any;
+
+      return stream;
+    }),
     countPromptTokens: vi.fn().mockResolvedValue(10),
     // Chrome AI API: measureInputUsage
     measureInputUsage: vi.fn(async (input: any, options?: any) => {
@@ -133,6 +167,9 @@ export function setupLanguageModelAPIMock() {
   vi.clearAllMocks();
   delete (global as any).LanguageModel;
   delete (globalThis as any).LanguageModel;
+  if (typeof window !== 'undefined') {
+    delete (window as any).LanguageModel;
+  }
 
   const mockCreate = vi.fn().mockResolvedValue(createMockLanguageModel());
   const mockAvailability = vi
@@ -143,9 +180,11 @@ export function setupLanguageModelAPIMock() {
     defaultTopK: 3,
     maxTopK: 128,
     defaultTemperature: 0.7,
+    expectedInputs: [{ type: 'text' }, { type: 'image' }],
+    expectedOutputs: [{ type: 'text', languages: ['en'] }],
   });
 
-  // Mock global LanguageModel on both global and globalThis
+  // Mock global LanguageModel on global, globalThis, and window
   const mockAPI = {
     create: mockCreate,
     availability: mockAvailability,
@@ -154,6 +193,9 @@ export function setupLanguageModelAPIMock() {
 
   (global as any).LanguageModel = mockAPI;
   (globalThis as any).LanguageModel = mockAPI;
+  if (typeof window !== 'undefined') {
+    (window as any).LanguageModel = mockAPI;
+  }
 
   return {
     create: mockCreate,
@@ -165,6 +207,9 @@ export function setupLanguageModelAPIMock() {
 export function cleanupLanguageModelAPIMock() {
   delete (global as any).LanguageModel;
   delete (globalThis as any).LanguageModel;
+  if (typeof window !== 'undefined') {
+    delete (window as any).LanguageModel;
+  }
   vi.clearAllMocks();
 }
 
