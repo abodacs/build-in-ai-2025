@@ -210,6 +210,9 @@ export class ChromeAIService {
         format: 'plain-text' as const,
         length: 'medium' as const,
         sharedContext: '',
+        // IMPORTANT: outputLanguage must be specified to ensure optimal output quality
+        // and properly attest to output safety. Chrome supports: 'en', 'es', 'ja'
+        // Default to 'en' (English) for model download operations
         outputLanguage: 'en' as const,
         monitor(m: EventTarget) {
           console.log('[ChromeAIService] Monitor callback invoked');
