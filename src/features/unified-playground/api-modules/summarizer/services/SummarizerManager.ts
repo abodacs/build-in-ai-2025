@@ -21,13 +21,13 @@ import { ChromeAICompatibility } from './ChromeAICompatibility';
 import { ErrorHandler } from './ErrorHandler';
 
 // SECURITY: Import security utilities
-import { detectInjection } from '../../../shared/utils/promptInjectionDetection';
-import { validateAIOutput } from '../../../shared/utils/outputValidation';
+import { detectInjection } from '@/features/unified-playground/shared/utils/promptInjectionDetection';
+import { validateAIOutput } from '@/features/unified-playground/shared/utils/outputValidation';
 import {
   logInjectionDetected,
   logSuspiciousOutput,
   getSessionId,
-} from '../../../shared/utils/securityLogger';
+} from '@/features/unified-playground/shared/utils/securityLogger';
 
 // ============================================================================
 // Default Options

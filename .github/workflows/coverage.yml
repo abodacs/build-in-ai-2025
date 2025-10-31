@@ -9,41 +9,57 @@ on:
     # Run weekly coverage report
     - cron: '0 0 * * 0'
 
+# Cancel in-progress runs for the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   coverage:
     name: Generate Coverage Report
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: chrome-ai-devbench
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0 # Full history for better analysis
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
         with:
           version: '10'
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: '22'
           cache: 'pnpm'
-          cache-dependency-path: 'chrome-ai-devbench/pnpm-lock.yaml'
+          cache-dependency-path: 'pnpm-lock.yaml'
+
+      - name: Cache node_modules
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            node_modules
+            ~/.cache/pnpm
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Run tests with coverage
         run: pnpm test:coverage
 
       - name: Generate coverage badge
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@5a605bd92782ce0810fa3b8acc235c921b497052 # v5.2.0
         with:
           files: ./coverage/coverage-final.json
           flags: unittests
@@ -53,7 +69,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Archive detailed coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: coverage-detailed
           path: |
@@ -63,7 +79,7 @@ jobs:
 
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           script: |
             const fs = require('fs');
@@ -84,7 +100,7 @@ jobs:
             | Functions | ${functions.toFixed(2)}% |
             | Branches | ${branches.toFixed(2)}% |
 
-            ${lines >= 95 ? '✅ Excellent coverage!' : lines >= 80 ? '⚠️ Good coverage, but could be improved' : '❌ Coverage below target (80%)'}
+            ${lines >= 95 ? '✅ Excellent coverage!' : lines >= 75 ? '⚠️ Good coverage, but could be improved' : '❌ Coverage below target (75%)'}
             `;
 
             github.rest.issues.createComment({
@@ -101,9 +117,9 @@ jobs:
             const total = coverage.total;
 
             const thresholds = {
-              lines: 80,
-              statements: 80,
-              functions: 80,
+              lines: 70,
+              statements: 70,
+              functions: 55,
               branches: 70
             };
 

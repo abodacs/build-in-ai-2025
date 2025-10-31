@@ -17,6 +17,8 @@ export default [
       '*.config.js',
       '*.config.ts',
       'jscpd-report',
+      'scripts/**',
+      'vitest.config.ts',
     ],
   },
   {

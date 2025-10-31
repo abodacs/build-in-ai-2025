@@ -90,6 +90,7 @@ export function PlaygroundTab() {
     isSupported,
     requiresDownload,
     isReady,
+    startDownload,
   } = useWriterAvailability();
 
   // Toast hook
@@ -460,6 +461,7 @@ export function PlaygroundTab() {
           isLoading={isLoading}
           loadingPhase={isLoading ? 'initializing' : null}
           error={error?.message || availabilityError || null}
+          onStartDownload={startDownload}
           modelInfo={{
             name: 'Writer Model',
             chromeVersion: '138+',

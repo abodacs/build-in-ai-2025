@@ -7,7 +7,7 @@
  * @module prompt/hooks/usePromptAvailability
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChromeAIPromptService } from '../services/ChromeAIPromptService';
 import type {
   LanguageModelAvailability,
@@ -73,6 +73,9 @@ interface UsePromptAvailabilityReturn {
   /** Requires download (alias for availability === 'after-download') */
   requiresDownload: boolean;
 
+  /** Is multimodal (image input) supported */
+  multimodalAvailable: boolean;
+
   /** Detailed availability information (legacy) */
   details: AvailabilityCheckResult | null;
 }
@@ -103,6 +106,15 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
     useState<DownloadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [details, setDetails] = useState<AvailabilityCheckResult | null>(null);
+  const [multimodalAvailable, setMultimodalAvailable] = useState(false);
+
+  // Ref to track current availability value (prevents stale closures)
+  const availabilityRef = useRef<LanguageModelAvailability>(availability);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    availabilityRef.current = availability;
+  }, [availability]);
 
   // Computed values
   const isSupported = ChromeAIPromptService.isSupported();
@@ -176,16 +188,25 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
         return;
       }
 
-      // Check availability status
+      // Check availability status and multimodal support in parallel
       console.log('[usePromptAvailability] Checking availability status...');
-      const availabilityStatus =
-        await ChromeAIPromptService.checkAvailability();
+      const [availabilityStatus, multimodalStatus] = await Promise.all([
+        ChromeAIPromptService.checkAvailability(),
+        ChromeAIPromptService.checkMultimodalAvailability(),
+      ]);
 
       console.log(
         '[usePromptAvailability] Availability status =',
         availabilityStatus,
       );
+      console.log(
+        '[usePromptAvailability] Multimodal status =',
+        multimodalStatus,
+      );
+
       setAvailability(availabilityStatus);
+      setMultimodalAvailable(multimodalStatus === 'available');
+
       setRequirements({
         minChromeVersion: 138,
         requiredFlags: ['prompt-api-for-gemini-nano-multimodal-input'],
@@ -242,14 +263,17 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
    * Start model download
    */
   const startDownload = useCallback(async () => {
+    // Use ref to get current availability value (prevents stale closure)
+    const currentAvailability = availabilityRef.current;
+
     console.log('[usePromptAvailability] startDownload called', {
-      availability,
+      availability: currentAvailability,
     });
 
-    if (availability !== 'after-download') {
+    if (currentAvailability !== 'after-download') {
       console.warn(
         '[usePromptAvailability] Model download not needed. Current availability:',
-        availability,
+        currentAvailability,
       );
       return;
     }
@@ -292,7 +316,7 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
       setDownloadProgress(null);
       console.log('[usePromptAvailability] Download cleanup complete');
     }
-  }, [availability, checkAvailability]);
+  }, [checkAvailability]); // Removed 'availability' - using availabilityRef instead
 
   // ============================================================================
   // Auto-check on Mount
@@ -322,6 +346,7 @@ export function usePromptAvailability(): UsePromptAvailabilityReturn {
     isSupported,
     isReady,
     requiresDownload,
+    multimodalAvailable,
     details,
   };
 }

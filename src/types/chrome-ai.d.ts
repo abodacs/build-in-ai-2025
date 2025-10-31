@@ -239,10 +239,8 @@ export interface LanguageModel extends EventTarget {
     input: string | Message[],
     options?: LanguageModelPromptOptions,
   ): AsyncIterable<string>;
-  append(
-    input: string | Message[],
-    options?: LanguageModelAppendOptions,
-  ): Promise<void>;
+  append(messages: Message[]): Promise<string>;
+  appendStreaming?(messages: Message[]): AsyncIterable<string>;
   clone(options?: LanguageModelCloneOptions): Promise<LanguageModel>;
   measureInputUsage(
     input: string | Message[],
@@ -254,6 +252,11 @@ export interface LanguageModel extends EventTarget {
   readonly temperature: number;
   readonly inputQuota: number;
   readonly inputUsage: number;
+
+  // Legacy token properties (for backward compatibility with tests)
+  readonly maxTokens?: number;
+  readonly tokensSoFar?: number;
+  readonly tokensLeft?: number;
 
   onquotaoverflow: ((event: Event) => void) | null;
   addEventListener(

@@ -21,6 +21,10 @@ vi.mock('../../services/ChromeAIPromptService', () => ({
   ChromeAIPromptService: {
     isSupported: vi.fn().mockReturnValue(true),
     checkAvailability: vi.fn().mockResolvedValue('available'),
+    checkMultimodalAvailability: vi.fn().mockResolvedValue({
+      available: 'available',
+      hasMultimodalSupport: true,
+    }),
     checkDetailedAvailability: vi.fn().mockResolvedValue({
       availability: 'available',
       isSupported: true,

@@ -436,6 +436,7 @@ export function logSuspiciousOutput(
   reason: string,
   apiEndpoint: string,
 ): void {
+  if (!output || output.length === 0) return;
   securityLogger.logEvent({
     eventType: 'suspicious_output',
     severity: 'high',

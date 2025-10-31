@@ -104,14 +104,43 @@ Object.defineProperty(globalThis, 'Proofreader', {
   },
 });
 
+// Mock LanguageModel API (both in globalThis and window)
+// Factory function to create fresh mock instances for each test
+const createLanguageModelInstance = () => ({
+  prompt: vi.fn().mockResolvedValue('Mock response'),
+  promptStreaming: vi.fn().mockImplementation(async function* () {
+    yield 'Mock streaming response';
+  }),
+  append: vi.fn().mockResolvedValue('Mock append response'),
+  appendStreaming: vi.fn().mockImplementation(async function* () {
+    yield 'Mock append streaming response';
+  }),
+  destroy: vi.fn().mockResolvedValue(undefined),
+  clone: vi.fn().mockImplementation(() => createLanguageModelInstance()),
+});
+
+const languageModelMock = {
+  create: vi
+    .fn()
+    .mockImplementation(() => Promise.resolve(createLanguageModelInstance())),
+  capabilities: vi.fn().mockResolvedValue({
+    available: 'readily',
+    expectedInputs: [{ type: 'text' }, { type: 'image' }],
+    expectedOutputs: [{ type: 'text', languages: ['en'] }],
+  }),
+  availability: vi.fn().mockResolvedValue('readily'),
+};
+
 Object.defineProperty(globalThis, 'LanguageModel', {
   writable: true,
   configurable: true,
-  value: {
-    create: vi.fn(),
-    capabilities: vi.fn(),
-    availability: vi.fn().mockResolvedValue('available'),
-  },
+  value: languageModelMock,
+});
+
+Object.defineProperty(window, 'LanguageModel', {
+  writable: true,
+  configurable: true,
+  value: languageModelMock,
 });
 
 Object.defineProperty(globalThis, 'LanguageDetector', {

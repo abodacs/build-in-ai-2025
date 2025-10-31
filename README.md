@@ -12,14 +12,14 @@
 
 ## Overview
 
-> **TL;DR**: Chrome AI DevBench is the **first production-ready platform** that unifies all 7 Chrome Built-in AI APIs, enabling **compound workflows and privacy-first AI applications that were previously impossible** without expensive cloud infrastructure. With 2133 tests across 80 test files and real-time code generation, it demonstrates how on-device AI can eliminate backend costs while ensuring data privacy.
+> **TL;DR**: Chrome AI DevBench is the **first production-ready platform** that unifies all 7 Chrome Built-in AI APIs, enabling **compound workflows and privacy-first AI applications that were previously impossible** without expensive cloud infrastructure. With 200+ tests across 80 test files and real-time code generation, it demonstrates how on-device AI can eliminate backend costs while ensuring data privacy.
 
 > **🌐 [Try the Live Demo Now](https://chrome-ai-devbench.pages.dev)** — No installation required, works in Chrome 138+
 
 ### Key Metrics
 
 - **API Coverage**: 7 APIs (Summarizer, Translator, Writer, Rewriter, Proofreader, Language Detection, Prompt)
-- **Test Suite**: 2133 tests across 80 test files
+- **Test Suite**: 200+ tests across 80 test files
 - **Coverage Target**: 80% (branches, functions, lines, statements per Vitest configuration)
 - **Type Safety**: TypeScript 5+ strict mode with Zod runtime validation
 - **Bundle Size**: 425 KB gzipped (398 KB JS + 27 KB CSS)
@@ -321,7 +321,7 @@ Chrome AI DevBench is the only platform that:
 1. **Unifies All 7 APIs**: Comprehensive implementation of every Chrome Built-in AI API in a single platform. Other projects implement 1-3 APIs maximum.
 2. **Provides Real-Time Code Generation**: Interactive code generation with Cmd+K/Ctrl+K shortcut. Competitors require manual code copying from scattered documentation.
 3. **Implements Compound Workflows**: Production-ready multi-API chains demonstrating real-world use cases (detect language → translate → proofread → rewrite).
-4. **Achieves Production-Grade Testing**: 2133 tests across 80 test files with 80% coverage target. Only Chrome AI project with comprehensive test suite.
+4. **Achieves Production-Grade Testing**: 200+ tests across 80 test files with 80% coverage target. Only Chrome AI project with comprehensive test suite.
 5. **Includes Multimodal Support**: First playground with Prompt API image upload functionality (up to 10MB images alongside text prompts).
 6. **Demonstrates Advanced UI Patterns**: CSS Custom Highlights API integration for grammar correction with browser-native rendering performance.
 

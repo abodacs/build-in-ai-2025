@@ -103,6 +103,18 @@ export function validateAIOutput(
   let requiresReview = false;
   let confidenceScore = 1.0;
 
+  // Handle null/undefined/non-string output gracefully
+  if (!output || typeof output !== 'string') {
+    return {
+      safe: false,
+      sanitized: '',
+      warnings: ['Invalid output: Output is null, undefined, or not a string'],
+      reason: 'Invalid output type',
+      requiresReview: true,
+      confidence: 0,
+    };
+  }
+
   // Check for system prompt leakage
   const leakageCheck = checkSystemPromptLeakage(output);
   if (leakageCheck.detected) {

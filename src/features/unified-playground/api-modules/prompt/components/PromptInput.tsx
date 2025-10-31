@@ -56,6 +56,32 @@ export const PromptInput: React.FC<PromptInputProps> = ({
 
   // Calculate token breakdown in real-time
   const tokenBreakdown: TokenBreakdown = useMemo(() => {
+    // When realTimeInputUsage is available, use it as the base (includes conversation history)
+    if (realTimeInputUsage !== null) {
+      // Current input tokens (what will be added if submitted)
+      const inputTokens = value ? estimateTokensAccurate(value) + 4 : 0;
+
+      // Total tokens used so far (from API measurement) + current input
+      const usedTokens = realTimeInputUsage + inputTokens;
+      const remainingTokens = Math.max(0, maxTokens - usedTokens);
+
+      // Estimate response tokens based on maxResponseTokens setting
+      const estimatedResponseTokens = !value
+        ? 0 // No input = no response estimate
+        : Math.min(Math.floor(remainingTokens * 0.3), maxResponseTokens || 200);
+
+      const totalTokens = usedTokens + estimatedResponseTokens;
+
+      return {
+        systemPromptTokens: 0, // Included in realTimeInputUsage
+        inputTokens,
+        estimatedResponseTokens,
+        totalTokens,
+        maxTokens,
+      };
+    }
+
+    // Fall back to estimation when realTimeInputUsage is not available
     const systemPromptTokens = systemPrompt
       ? estimateTokensAccurate(systemPrompt) + 4 // +4 for structure
       : 0;
@@ -82,7 +108,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({
       totalTokens,
       maxTokens, // Context window limit
     };
-  }, [value, systemPrompt, maxTokens, maxResponseTokens]);
+  }, [value, systemPrompt, maxTokens, maxResponseTokens, realTimeInputUsage]);
 
   // Auto-resize textarea
   useEffect(() => {

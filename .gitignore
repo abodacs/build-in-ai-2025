@@ -152,3 +152,7 @@ playwright/.cache/
 
 # Code duplication reports
 jscpd-report/
+
+# Mutation testing
+.stryker-tmp/
+mutation-report/

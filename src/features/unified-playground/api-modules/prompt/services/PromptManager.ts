@@ -17,6 +17,8 @@ import type {
   DownloadProgress,
   LanguageModelAvailability,
   PromptMetrics,
+  ImageContentItem,
+  AudioContentItem,
 } from '../types';
 
 // Security utilities
@@ -86,6 +88,9 @@ export class PromptManager {
 
   // Multimodal support flag
   private multimodalEnabled = false;
+
+  // Cache multimodal availability to prevent loss during config updates
+  private multimodalInitiallyAvailable = false;
 
   // Download tracking
   private downloadInProgress = false;
@@ -209,19 +214,63 @@ export class PromptManager {
       // Validate configuration
       ChromeAIPromptService.validateOptions(config);
 
-      // Add multimodal support (image input) to enable appendStreaming
-      const multimodalConfig: LanguageModelCreateOptions = {
+      // Check multimodal availability using Chrome AI's availability() API
+      // This is for diagnostic purposes - we'll try with expectedInputs regardless
+      console.log(
+        '[PromptManager] Checking multimodal availability with config:',
+        config,
+      );
+
+      const api = ChromeAIPromptService.getAPI();
+      let availabilityCheckPassed = false;
+
+      try {
+        const multimodalAvailability = await api.availability({
+          topK: config.topK || 1,
+          temperature: config.temperature || 0,
+          expectedInputs: [{ type: 'image' }],
+          expectedOutputs: [{ type: 'text', languages: ['en'] }],
+        });
+
+        availabilityCheckPassed =
+          multimodalAvailability === 'available' ||
+          multimodalAvailability === 'after-download';
+
+        console.log(
+          '[PromptManager] Multimodal availability check result:',
+          multimodalAvailability,
+          '| Check passed:',
+          availabilityCheckPassed,
+        );
+      } catch (error) {
+        console.warn(
+          '[PromptManager] Multimodal availability check failed:',
+          error,
+        );
+      }
+
+      // ALWAYS create session with expectedInputs (optimistic approach)
+      // Chrome will gracefully ignore if not supported
+      const sessionConfig: LanguageModelCreateOptions = {
         ...config,
         expectedInputs: [{ type: 'image' }],
+        expectedOutputs: [{ type: 'text', languages: ['en'] }],
       };
 
-      // Create instance with download monitoring
+      console.log(
+        '[PromptManager] Creating session with MULTIMODAL support (always includes expectedInputs)',
+        availabilityCheckPassed
+          ? '- Availability check passed'
+          : '- Availability check did not pass, but trying anyway',
+      );
+
+      // Create instance with appropriate config (multimodal or text-only)
       if (onProgress) {
         this.downloadInProgress = true;
 
         this.instance =
           await ChromeAIPromptService.createInstanceWithMonitoring(
-            multimodalConfig,
+            sessionConfig,
             (loaded, total) => {
               const progress: DownloadProgress = {
                 loaded,
@@ -237,22 +286,113 @@ export class PromptManager {
         this.downloadProgress = null;
       } else {
         this.instance =
-          await ChromeAIPromptService.createInstance(multimodalConfig);
+          await ChromeAIPromptService.createInstance(sessionConfig);
       }
 
-      this.currentConfig = multimodalConfig;
+      this.currentConfig = sessionConfig;
 
-      // Multimodal support is now enabled via expectedInputs
-      // Check if multimodal (image) input is supported
-      try {
-        const multimodalStatus =
-          await ChromeAIPromptService.checkMultimodalAvailability();
-        this.multimodalEnabled = multimodalStatus === 'available';
-      } catch (error) {
-        console.warn('Failed to check multimodal support:', error);
-        // Keep multimodal enabled since instance was created with expectedInputs
-        this.multimodalEnabled = true;
+      // DETAILED DIAGNOSTICS: Log everything about the instance
+      console.log('[PromptManager] ========== INSTANCE DIAGNOSTICS ==========');
+      console.log('[PromptManager] Instance type:', typeof this.instance);
+      console.log(
+        '[PromptManager] Instance constructor:',
+        this.instance?.constructor?.name,
+      );
+
+      // Check each method individually
+      console.log('[PromptManager] Method checks:');
+      console.log('  append:');
+      console.log('    - "append" in instance:', 'append' in this.instance);
+      console.log(
+        '    - typeof instance.append:',
+        typeof (this.instance as any).append,
+      );
+
+      console.log('  appendStreaming:');
+      console.log(
+        '    - "appendStreaming" in instance:',
+        'appendStreaming' in this.instance,
+      );
+      console.log(
+        '    - typeof instance.appendStreaming:',
+        typeof (this.instance as any).appendStreaming,
+      );
+
+      // Log all properties
+      console.log(
+        '[PromptManager] Own properties:',
+        Object.getOwnPropertyNames(this.instance),
+      );
+
+      // Check prototype chain
+      const proto = Object.getPrototypeOf(this.instance);
+      console.log(
+        '[PromptManager] Prototype properties:',
+        proto ? Object.getOwnPropertyNames(proto) : 'none',
+      );
+
+      // MANDATORY: Validate instance has multimodal methods
+      // Since we ALWAYS create with expectedInputs, instance MUST support multimodal
+      const hasAppend =
+        'append' in this.instance && typeof this.instance.append === 'function';
+      let hasAppendStreaming =
+        'appendStreaming' in this.instance &&
+        typeof this.instance.appendStreaming === 'function';
+
+      console.log('[PromptManager] Final validation:', {
+        hasAppend,
+        hasAppendStreaming,
+      });
+      console.log('[PromptManager] =====================================');
+
+      // MANDATORY: append method is required for multimodal
+      if (!hasAppend) {
+        this.destroy();
+        throw new Error(
+          'CRITICAL: Multimodal support (append method) is required but not available. ' +
+            'This application requires Chrome 138+ with the flag ' +
+            'chrome://flags#prompt-api-for-gemini-nano-multimodal-input enabled. ' +
+            'Please enable the flag and restart Chrome.',
+        );
       }
+
+      // OPTIONAL: appendStreaming enhances multimodal with streaming support
+      // Add polyfill if missing
+      if (!hasAppendStreaming) {
+        console.warn(
+          '[PromptManager] ⚠️  appendStreaming not available natively. ' +
+            'Adding polyfill wrapper around append().',
+        );
+
+        // Add appendStreaming polyfill that wraps append
+        (this.instance as any).appendStreaming = async function* (
+          messages: any,
+        ) {
+          console.log('[PromptManager] Using appendStreaming polyfill');
+          const result = await (this as any).append(messages);
+          yield result;
+        };
+
+        hasAppendStreaming = true;
+        console.log('[PromptManager] ✅ appendStreaming polyfill added');
+      }
+
+      // Always set to true - instance was created with expectedInputs and validated above
+      this.multimodalEnabled = true;
+
+      // Cache the initial multimodal status
+      if (!this.multimodalInitiallyAvailable) {
+        this.multimodalInitiallyAvailable = true;
+      }
+
+      console.log(
+        '[PromptManager] ✅ Session created with multimodal support',
+        {
+          availabilityCheckPassed,
+          append: hasAppend,
+          appendStreaming: hasAppendStreaming,
+        },
+      );
 
       this.state = 'ready';
 
@@ -297,8 +437,32 @@ export class PromptManager {
   async updateConfig(
     config: Partial<LanguageModelCreateOptions>,
   ): Promise<void> {
-    const newConfig = { ...this.currentConfig, ...config };
+    // Validate current config exists before updating
+    if (!this.currentConfig) {
+      throw new Error(
+        'Cannot update config: Manager not initialized. Call initialize() first.',
+      );
+    }
+
+    const wasMultimodal = this.multimodalEnabled;
+    // CRITICAL: Always preserve expectedInputs to maintain multimodal support
+    const newConfig = {
+      ...this.currentConfig,
+      ...config,
+      expectedOutputs: [{ type: 'text', languages: ['en'] }],
+      // Force multimodal - never allow removal
+      expectedInputs: [{ type: 'image' }],
+    };
+
     await this.reinitialize(newConfig as LanguageModelCreateOptions);
+
+    // Warn if multimodal support was lost during config update
+    if (wasMultimodal && !this.multimodalEnabled) {
+      console.warn(
+        '[PromptManager] WARNING: Multimodal support was lost during config update. ' +
+          'This may indicate an incompatible parameter combination or temporary API issue.',
+      );
+    }
   }
 
   /**
@@ -324,22 +488,30 @@ export class PromptManager {
    */
   destroy(): void {
     if (this.instance) {
-      // Clean up all quota overflow listeners
+      // Store reference before clearing to prevent race conditions
+      const instanceToDestroy = this.instance;
+
+      // Set to null first to prevent any new operations
+      this.instance = null;
+
+      // Clean up all quota overflow listeners on the stored instance
       this.quotaOverflowListeners.forEach((callback) => {
         ChromeAIPromptService.removeQuotaOverflowListener(
-          this.instance!,
+          instanceToDestroy,
           callback,
         );
       });
       this.quotaOverflowListeners.clear();
 
-      ChromeAIPromptService.destroy(this.instance);
-      this.instance = null;
+      // Destroy the instance last
+      ChromeAIPromptService.destroy(instanceToDestroy);
     }
 
     this.cancelOperation();
     this.state = 'idle';
     this.currentConfig = null;
+    // Note: We intentionally preserve multimodalInitiallyAvailable
+    // so it persists across reinitializations
   }
 
   // ============================================================================
@@ -552,24 +724,20 @@ export class PromptManager {
    * Execute a multimodal prompt with images and/or audio (non-streaming)
    * SECURITY: Integrated with multimodal prompt injection detection and output validation
    * @param text - User prompt text
-   * @param images - Array of ImageData
-   * @param audios - Optional array of AudioData
+   * @param images - Array of ImageContentItem
+   * @param audios - Optional array of AudioContentItem
    * @returns Promise resolving to response string
    */
   async promptMultimodal(
     text: string,
-    images: any[] = [], // ImageData[]
-    audios: any[] = [], // AudioData[]
+    images: ImageContentItem[] = [],
+    audios: AudioContentItem[] = [],
   ): Promise<string> {
     this.ensureReady();
     this.validatePrompt(text);
 
-    // Check if multimodal is supported
-    if (!this.multimodalEnabled) {
-      throw new Error(
-        'Multimodal input is not supported. Please ensure chrome://flags#prompt-api-for-gemini-nano-multimodal-input is enabled and restart Chrome.',
-      );
-    }
+    // multimodalEnabled is always true - validated at initialization
+    // No need to check here as instance was validated to have append/appendStreaming methods
 
     const startTime = Date.now();
     this.lastOperationStartTime = new Date();
@@ -621,7 +789,9 @@ export class PromptManager {
 
       // Execute with retry logic
       const result = await this.withRetry(() =>
-        ChromeAIPromptService.appendMessage(this.instance!, [message]),
+        ChromeAIPromptService.appendMessage(this.instance!, [message], {
+          signal: this.abortController!.signal,
+        }),
       );
 
       // SECURITY: Validate AI output
@@ -644,15 +814,15 @@ export class PromptManager {
         );
       }
 
-      // Track metrics
-      this.trackMetrics(startTime, true);
+      // Track metrics with image count
+      this.trackMetrics(startTime, true, undefined, images.length);
 
       this.state = 'ready';
 
       // Return sanitized output
       return outputValidation.sanitized;
     } catch (error) {
-      this.trackMetrics(startTime, false, error);
+      this.trackMetrics(startTime, false, error, images.length);
       this.state = 'ready';
       throw error;
     } finally {
@@ -665,25 +835,21 @@ export class PromptManager {
    * SECURITY: Integrated with multimodal prompt injection detection and output validation
    * @param text - User prompt text
    * @param onChunk - Callback for each chunk
-   * @param images - Array of ImageData
-   * @param audios - Optional array of AudioData
+   * @param images - Array of ImageContentItem
+   * @param audios - Optional array of AudioContentItem
    * @returns Promise resolving to complete response
    */
   async promptMultimodalStreaming(
     text: string,
     onChunk: StreamingChunkCallback,
-    images: any[] = [], // ImageData[]
-    audios: any[] = [], // AudioData[]
+    images: ImageContentItem[] = [],
+    audios: AudioContentItem[] = [],
   ): Promise<string> {
     this.ensureReady();
     this.validatePrompt(text);
 
-    // Check if multimodal is supported
-    if (!this.multimodalEnabled) {
-      throw new Error(
-        'Multimodal input is not supported. Please ensure chrome://flags#prompt-api-for-gemini-nano-multimodal-input is enabled and restart Chrome.',
-      );
-    }
+    // multimodalEnabled is always true - validated at initialization
+    // No need to check here as instance was validated to have append/appendStreaming methods
 
     const startTime = Date.now();
     this.lastOperationStartTime = new Date();
@@ -734,11 +900,15 @@ export class PromptManager {
       );
 
       // Execute with retry logic
+      // Use promptStreaming which natively supports Message[] (multimodal)
       const result = await this.withRetry(() =>
-        ChromeAIPromptService.appendMessageStreaming(
+        ChromeAIPromptService.promptStreamingWithConversationCallback(
           this.instance!,
           [message],
           onChunk,
+          {
+            signal: this.abortController!.signal,
+          },
         ),
       );
 
@@ -762,15 +932,15 @@ export class PromptManager {
         );
       }
 
-      // Track metrics
-      this.trackMetrics(startTime, true);
+      // Track metrics with image count
+      this.trackMetrics(startTime, true, undefined, images.length);
 
       this.state = 'ready';
 
       // Return sanitized output
       return outputValidation.sanitized;
     } catch (error) {
-      this.trackMetrics(startTime, false, error);
+      this.trackMetrics(startTime, false, error, images.length);
       this.state = 'ready';
       throw error;
     } finally {
@@ -845,15 +1015,19 @@ export class PromptManager {
     startTime: number,
     success: boolean,
     error?: unknown,
+    imageCount = 0,
   ): void {
     const endTime = Date.now();
     const executionTime = endTime - startTime;
+
+    // Estimate tokens for images (approximate 200 tokens per image based on vision models)
+    const estimatedImageTokens = imageCount * 200;
 
     const metric: PromptMetrics = {
       executionTime,
       timeToFirstToken: null, // Not tracked in non-streaming
       tokensPerSecond: null,
-      tokensUsed: 0, // Would need token counting
+      tokensUsed: estimatedImageTokens, // Estimated tokens for images
       initTime: null,
       startTime: this.lastOperationStartTime!,
       endTime: new Date(endTime),
@@ -991,6 +1165,47 @@ export class PromptManager {
   // ============================================================================
 
   /**
+   * Check if error is retriable (network/transient) vs permanent (validation/abort)
+   */
+  private isRetriableError(error: any): boolean {
+    if (!error) return false;
+
+    // Don't retry on abort
+    if (error?.name === 'AbortError') {
+      return false;
+    }
+
+    // Don't retry on validation errors
+    if (
+      error?.message?.includes('Invalid') ||
+      error?.message?.includes('not supported') ||
+      error?.message?.includes('not initialized') ||
+      error?.message?.includes('not available')
+    ) {
+      return false;
+    }
+
+    // Don't retry on quota exceeded errors
+    if (
+      error?.message?.includes('quota') ||
+      error?.message?.includes('Quota')
+    ) {
+      return false;
+    }
+
+    // Don't retry on permission errors
+    if (
+      error?.message?.includes('permission') ||
+      error?.message?.includes('Permission')
+    ) {
+      return false;
+    }
+
+    // Retry on network errors, timeouts, and other transient issues
+    return true;
+  }
+
+  /**
    * Execute operation with retry logic
    */
   private async withRetry<T>(operation: () => Promise<T>): Promise<T> {
@@ -1003,13 +1218,8 @@ export class PromptManager {
       } catch (error: any) {
         lastError = error;
 
-        // Don't retry on abort
-        if (error?.name === 'AbortError') {
-          throw error;
-        }
-
-        // Don't retry on validation errors
-        if (error?.message?.includes('Invalid')) {
+        // Check if error is retriable
+        if (!this.isRetriableError(error)) {
           throw error;
         }
 

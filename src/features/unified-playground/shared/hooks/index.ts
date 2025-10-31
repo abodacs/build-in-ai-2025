@@ -6,9 +6,6 @@
  * @module shared/hooks
  */
 
-// Performance metrics
-export { usePerformanceMetrics } from './usePerformanceMetrics';
-
 // Playground state
 export { usePlaygroundState } from './usePlaygroundState';
 
