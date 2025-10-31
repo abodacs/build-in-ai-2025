@@ -508,6 +508,16 @@ export class ChromeAIPromptService {
       chromeOptions.topK = appConfig.topK;
     }
 
+    // System prompt (Chrome API)
+    if (appConfig.systemPrompt !== undefined) {
+      chromeOptions.systemPrompt = appConfig.systemPrompt;
+    }
+
+    // Token limit (Chrome API)
+    if (appConfig.maxTokens !== undefined) {
+      chromeOptions.maxTokens = appConfig.maxTokens;
+    }
+
     // Multimodal configuration (Chrome API)
     if (appConfig.expectedInputs !== undefined) {
       chromeOptions.expectedInputs = appConfig.expectedInputs;
@@ -560,7 +570,7 @@ export class ChromeAIPromptService {
 
     // Application-level parameters that should NOT be passed to Chrome API:
     // - enableStreaming, enableAutoSave, enableHistory, maxHistoryLength,
-    // - enableMarkdown, enableCodeHighlight, maxTokens, systemPromptId
+    // - enableMarkdown, enableCodeHighlight, systemPromptId
     // These are intentionally filtered out
 
     console.log(

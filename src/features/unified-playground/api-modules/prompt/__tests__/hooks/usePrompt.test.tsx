@@ -199,6 +199,7 @@ describe('usePrompt', () => {
     const mockInstance = createMockLanguageModel();
     mockInstance.prompt = vi.fn().mockResolvedValue('response');
     mockInstance.measureInputUsage = vi.fn().mockResolvedValue(12); // Mock returns positive token count
+    mockInstance.inputUsage = 12; // Set inputUsage to reflect the usage after prompt execution
     mockAPI.create.mockResolvedValue(mockInstance);
 
     const { result } = renderHook(() => usePrompt());
