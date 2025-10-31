@@ -340,11 +340,11 @@ jobs:
   # Deploy Preview (Cloudflare Pages)
   # ==========================================================================
   deploy-preview:
+    if: false # github.event_name == 'pull_request'
     name: Deploy Preview
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [build, test]
-    if: github.event_name == 'pull_request'
 
     steps:
       - name: Checkout code
@@ -400,11 +400,11 @@ jobs:
   # Deploy Production
   # ==========================================================================
   deploy-production:
+    if: false # github.ref == 'refs/heads/main' && github.event_name == 'push'
     name: Deploy Production
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [build, test, security]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
       - name: Checkout code
