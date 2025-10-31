@@ -219,6 +219,7 @@ export class ChromeAIPromptService {
       const api = this.getAPI();
       const status = await api.availability({
         expectedInputs: [{ type: 'image' }],
+        expectedOutputs: [{ type: 'text', languages: ['en'] }],
       });
 
       // Normalize Chrome API status to internal AvailabilityStatus
@@ -494,7 +495,10 @@ export class ChromeAIPromptService {
   private static buildChromeAPIOptions(
     appConfig: any,
   ): LanguageModelCreateOptions {
-    const chromeOptions: any = {};
+    const chromeOptions: any = {
+      expectedInputs: [{ type: 'image' }],
+      expectedOutputs: [{ type: 'text', languages: ['en'] }],
+    };
 
     // Sampling parameters (Chrome API)
     if (appConfig.temperature !== undefined) {
@@ -608,6 +612,7 @@ export class ChromeAIPromptService {
         ? this.buildChromeAPIOptions(options)
         : {
             expectedInputs: [{ type: 'image' as const }],
+            expectedOutputs: [{ type: 'text', languages: ['en'] }],
             temperature: 0.8,
             topK: 8,
           };
@@ -617,7 +622,130 @@ export class ChromeAIPromptService {
         '[ChromeAIPromptService] Creating LanguageModel instance with filtered Chrome API options:',
         chromeOptions,
       );
-      const instance = await api.create(chromeOptions);
+
+      // Create instance
+      const instance: LanguageModel = await api.create(chromeOptions);
+
+      // DETAILED DIAGNOSTICS: Log everything about the instance
+      console.log(
+        '[ChromeAIPromptService] ========== INSTANCE DIAGNOSTICS ==========',
+      );
+      console.log('[ChromeAIPromptService] Instance type:', typeof instance);
+      console.log(
+        '[ChromeAIPromptService] Instance constructor:',
+        instance?.constructor?.name,
+      );
+
+      // Check each method individually
+      console.log('[ChromeAIPromptService] Method checks:');
+      console.log('  append:');
+      console.log('    - "append" in instance:', 'append' in instance);
+      console.log(
+        '    - typeof instance.append:',
+        typeof (instance as any).append,
+      );
+      console.log('    - instance.append:', (instance as any).append);
+
+      console.log('  appendStreaming:');
+      console.log(
+        '    - "appendStreaming" in instance:',
+        'appendStreaming' in instance,
+      );
+      console.log(
+        '    - typeof instance.appendStreaming:',
+        typeof (instance as any).appendStreaming,
+      );
+      console.log(
+        '    - instance.appendStreaming:',
+        (instance as any).appendStreaming,
+      );
+
+      // Log all properties
+      console.log(
+        '[ChromeAIPromptService] Own properties:',
+        Object.getOwnPropertyNames(instance),
+      );
+      console.log('[ChromeAIPromptService] All keys:', Object.keys(instance));
+
+      // Check prototype chain
+      const proto = Object.getPrototypeOf(instance);
+      console.log(
+        '[ChromeAIPromptService] Prototype properties:',
+        proto ? Object.getOwnPropertyNames(proto) : 'none',
+      );
+
+      // Final validation results
+      console.log('[ChromeAIPromptService] Validation results:', {
+        hasAppend:
+          'append' in instance && typeof instance.append === 'function',
+        hasAppendStreaming:
+          'appendStreaming' in instance &&
+          typeof instance.appendStreaming === 'function',
+        hasPrompt:
+          'prompt' in instance && typeof instance.prompt === 'function',
+        hasPromptStreaming:
+          'promptStreaming' in instance &&
+          typeof instance.promptStreaming === 'function',
+      });
+      console.log(
+        '[ChromeAIPromptService] =====================================',
+      );
+
+      // MANDATORY: Validate multimodal support (append method required)
+      // appendStreaming is optional and will be checked below
+      if (!('append' in instance) || typeof instance.append !== 'function') {
+        // Clean up the invalid instance before throwing
+        try {
+          await (instance as LanguageModel).destroy();
+          console.log(
+            '[ChromeAIPromptService] Destroyed invalid instance without multimodal support',
+          );
+        } catch (cleanupError) {
+          console.warn(
+            '[ChromeAIPromptService] Failed to cleanup invalid instance:',
+            cleanupError,
+          );
+        }
+
+        throw new Error(
+          'Multimodal support (append method) not available. ' +
+            'This application requires Chrome 138+ with the flag ' +
+            'chrome://flags#prompt-api-for-gemini-nano-multimodal-input enabled. ' +
+            'Please enable the flag and restart Chrome.',
+        );
+      }
+
+      // Check for appendStreaming and add polyfill if missing
+      let hasMultimodalStreaming =
+        'appendStreaming' in instance &&
+        typeof instance.appendStreaming === 'function';
+
+      if (!hasMultimodalStreaming) {
+        console.warn(
+          '[ChromeAIPromptService] ⚠️  appendStreaming not available natively. ' +
+            'Adding polyfill wrapper around append().',
+        );
+
+        // Add appendStreaming polyfill that wraps append
+        (instance as any).appendStreaming = async function* (messages: any) {
+          console.log('[ChromeAIPromptService] Using appendStreaming polyfill');
+          const result = await (this as any).append(messages);
+          yield result;
+        };
+
+        hasMultimodalStreaming = true;
+        console.log(
+          '[ChromeAIPromptService] ✅ appendStreaming polyfill added',
+        );
+      }
+
+      console.log(
+        '[ChromeAIPromptService] ✅ Instance created with multimodal support',
+        {
+          append: true,
+          appendStreaming: hasMultimodalStreaming,
+        },
+      );
 
       return instance;
     } catch (error: any) {
@@ -1157,7 +1285,7 @@ export class ChromeAIPromptService {
     options?: PromptOptions,
   ): Promise<string> {
     try {
-      if (!('append' in instance)) {
+      if (!('append' in instance) || typeof instance.append !== 'function') {
         throw new Error(
           'Multimodal append not supported. Session must be created with expectedInputs: [{type: "image"}, {type: "audio"}]',
         );
@@ -1181,8 +1309,8 @@ export class ChromeAIPromptService {
       });
 
       const result = options?.signal
-        ? await Promise.race([instance.append!(messages), abortPromise])
-        : await instance.append!(messages);
+        ? await Promise.race([instance.append(messages), abortPromise])
+        : await instance.append(messages);
       return result;
     } catch (error: any) {
       // Throw user-friendly error, preserving AbortError name
@@ -1210,7 +1338,10 @@ export class ChromeAIPromptService {
     options?: PromptOptions,
   ): Promise<string> {
     try {
-      if (!('appendStreaming' in instance)) {
+      if (
+        !('appendStreaming' in instance) ||
+        typeof instance.appendStreaming !== 'function'
+      ) {
         throw new Error(
           'Multimodal streaming not supported. Session must be created with expectedInputs and support appendStreaming.',
         );
@@ -1223,7 +1354,7 @@ export class ChromeAIPromptService {
         throw abortError;
       }
 
-      const stream = instance.appendStreaming!(messages);
+      const stream = instance.appendStreaming(messages);
       let fullResponse = '';
       let isAborted = false;
 

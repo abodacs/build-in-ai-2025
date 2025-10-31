@@ -254,6 +254,7 @@ export class PromptManager {
       const sessionConfig: LanguageModelCreateOptions = {
         ...config,
         expectedInputs: [{ type: 'image' }],
+        expectedOutputs: [{ type: 'text', languages: ['en'] }],
       };
 
       console.log(
@@ -290,28 +291,107 @@ export class PromptManager {
 
       this.currentConfig = sessionConfig;
 
-      // Detect if multimodal is actually supported by checking appendStreaming existence
-      // The availability check provides diagnostic info, but actual capability is determined
-      // by whether the instance has the appendStreaming method
-      // Use 'in' operator to check prototype chain, not direct property access
-      const hasAppendStreaming =
+      // DETAILED DIAGNOSTICS: Log everything about the instance
+      console.log('[PromptManager] ========== INSTANCE DIAGNOSTICS ==========');
+      console.log('[PromptManager] Instance type:', typeof this.instance);
+      console.log(
+        '[PromptManager] Instance constructor:',
+        this.instance?.constructor?.name,
+      );
+
+      // Check each method individually
+      console.log('[PromptManager] Method checks:');
+      console.log('  append:');
+      console.log('    - "append" in instance:', 'append' in this.instance);
+      console.log(
+        '    - typeof instance.append:',
+        typeof (this.instance as any).append,
+      );
+
+      console.log('  appendStreaming:');
+      console.log(
+        '    - "appendStreaming" in instance:',
+        'appendStreaming' in this.instance,
+      );
+      console.log(
+        '    - typeof instance.appendStreaming:',
+        typeof (this.instance as any).appendStreaming,
+      );
+
+      // Log all properties
+      console.log(
+        '[PromptManager] Own properties:',
+        Object.getOwnPropertyNames(this.instance),
+      );
+
+      // Check prototype chain
+      const proto = Object.getPrototypeOf(this.instance);
+      console.log(
+        '[PromptManager] Prototype properties:',
+        proto ? Object.getOwnPropertyNames(proto) : 'none',
+      );
+
+      // MANDATORY: Validate instance has multimodal methods
+      // Since we ALWAYS create with expectedInputs, instance MUST support multimodal
+      const hasAppend =
+        'append' in this.instance && typeof this.instance.append === 'function';
+      let hasAppendStreaming =
         'appendStreaming' in this.instance &&
         typeof this.instance.appendStreaming === 'function';
 
-      this.multimodalEnabled = hasAppendStreaming;
+      console.log('[PromptManager] Final validation:', {
+        hasAppend,
+        hasAppendStreaming,
+      });
+      console.log('[PromptManager] =====================================');
+
+      // MANDATORY: append method is required for multimodal
+      if (!hasAppend) {
+        this.destroy();
+        throw new Error(
+          'CRITICAL: Multimodal support (append method) is required but not available. ' +
+            'This application requires Chrome 138+ with the flag ' +
+            'chrome://flags#prompt-api-for-gemini-nano-multimodal-input enabled. ' +
+            'Please enable the flag and restart Chrome.',
+        );
+      }
+
+      // OPTIONAL: appendStreaming enhances multimodal with streaming support
+      // Add polyfill if missing
+      if (!hasAppendStreaming) {
+        console.warn(
+          '[PromptManager] ⚠️  appendStreaming not available natively. ' +
+            'Adding polyfill wrapper around append().',
+        );
+
+        // Add appendStreaming polyfill that wraps append
+        (this.instance as any).appendStreaming = async function* (
+          messages: any,
+        ) {
+          console.log('[PromptManager] Using appendStreaming polyfill');
+          const result = await (this as any).append(messages);
+          yield result;
+        };
+
+        hasAppendStreaming = true;
+        console.log('[PromptManager] ✅ appendStreaming polyfill added');
+      }
+
+      // Always set to true - instance was created with expectedInputs and validated above
+      this.multimodalEnabled = true;
 
       // Cache the initial multimodal status
-      if (this.multimodalEnabled && !this.multimodalInitiallyAvailable) {
+      if (!this.multimodalInitiallyAvailable) {
         this.multimodalInitiallyAvailable = true;
       }
 
       console.log(
-        '[PromptManager] Session created. Multimodal streaming available:',
-        this.multimodalEnabled,
-        '| Availability check passed:',
-        availabilityCheckPassed,
-        '| Has appendStreaming:',
-        hasAppendStreaming,
+        '[PromptManager] ✅ Session created with multimodal support',
+        {
+          availabilityCheckPassed,
+          append: hasAppend,
+          appendStreaming: hasAppendStreaming,
+        },
       );
 
       this.state = 'ready';
@@ -365,7 +445,14 @@ export class PromptManager {
     }
 
     const wasMultimodal = this.multimodalEnabled;
-    const newConfig = { ...this.currentConfig, ...config };
+    // CRITICAL: Always preserve expectedInputs to maintain multimodal support
+    const newConfig = {
+      ...this.currentConfig,
+      ...config,
+      expectedOutputs: [{ type: 'text', languages: ['en'] }],
+      // Force multimodal - never allow removal
+      expectedInputs: [{ type: 'image' }],
+    };
 
     await this.reinitialize(newConfig as LanguageModelCreateOptions);
 
@@ -649,12 +736,8 @@ export class PromptManager {
     this.ensureReady();
     this.validatePrompt(text);
 
-    // Check if multimodal is supported
-    if (!this.multimodalEnabled) {
-      throw new Error(
-        'Multimodal input is not supported. Please ensure chrome://flags#prompt-api-for-gemini-nano-multimodal-input is enabled and restart Chrome.',
-      );
-    }
+    // multimodalEnabled is always true - validated at initialization
+    // No need to check here as instance was validated to have append/appendStreaming methods
 
     const startTime = Date.now();
     this.lastOperationStartTime = new Date();
@@ -765,12 +848,8 @@ export class PromptManager {
     this.ensureReady();
     this.validatePrompt(text);
 
-    // Check if multimodal is supported
-    if (!this.multimodalEnabled) {
-      throw new Error(
-        'Multimodal input is not supported. Please ensure chrome://flags#prompt-api-for-gemini-nano-multimodal-input is enabled and restart Chrome.',
-      );
-    }
+    // multimodalEnabled is always true - validated at initialization
+    // No need to check here as instance was validated to have append/appendStreaming methods
 
     const startTime = Date.now();
     this.lastOperationStartTime = new Date();
@@ -821,8 +900,9 @@ export class PromptManager {
       );
 
       // Execute with retry logic
+      // Use promptStreaming which natively supports Message[] (multimodal)
       const result = await this.withRetry(() =>
-        ChromeAIPromptService.appendMessageStreaming(
+        ChromeAIPromptService.promptStreamingWithConversationCallback(
           this.instance!,
           [message],
           onChunk,

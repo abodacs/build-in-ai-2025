@@ -422,7 +422,7 @@ export interface LanguageModel {
    * @param messages - Array of multimodal messages to append
    * @returns Promise resolving to the model's response
    */
-  append?(messages: MultimodalContent[]): Promise<string>;
+  append(messages: MultimodalContent[]): Promise<string>;
 
   /**
    * Append multimodal message(s) with streaming support
@@ -431,7 +431,7 @@ export interface LanguageModel {
    * @param messages - Array of multimodal messages to append
    * @returns AsyncIterable of response chunks
    */
-  appendStreaming?(messages: MultimodalContent[]): AsyncIterable<string>;
+  appendStreaming(messages: MultimodalContent[]): AsyncIterable<string>;
 
   /**
    * Count tokens in a given text
