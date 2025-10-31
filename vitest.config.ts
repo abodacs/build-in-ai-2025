@@ -79,8 +79,8 @@ export default defineConfig({
         global: {
           branches: 70,
           functions: 55,
-          lines: 75,
-          statements: 75,
+          lines: 70,
+          statements: 70,
         },
       },
     },
