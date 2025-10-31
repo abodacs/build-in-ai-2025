@@ -19,9 +19,6 @@ jobs:
     name: Generate Coverage Report
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: chrome-ai-devbench
 
     steps:
       - name: Checkout code

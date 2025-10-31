@@ -220,6 +220,7 @@ describe('PromptManager', () => {
       expect(currentConfig).toEqual({
         ...config,
         expectedInputs: [{ type: 'image' }],
+        expectedOutputs: [{ type: 'text', languages: ['en'] }],
       });
     });
 
