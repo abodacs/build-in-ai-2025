@@ -30,16 +30,7 @@ describe('usePrompt', () => {
   });
 
   it('initializes instance on mount', async () => {
-    mockAPI.create.mockResolvedValue({
-      prompt: vi.fn(),
-      promptStreaming: vi.fn(),
-      destroy: vi.fn(),
-      maxTokens: 4096,
-      tokensSoFar: 0,
-      tokensLeft: 4096,
-      topK: 3,
-      temperature: 0.7,
-    });
+    mockAPI.create.mockResolvedValue(createMockLanguageModel());
 
     const { result } = renderHook(() => usePrompt());
 
@@ -53,16 +44,8 @@ describe('usePrompt', () => {
   });
 
   it('executes basic prompt', async () => {
-    const mockInstance = {
-      prompt: vi.fn().mockResolvedValue('AI response'),
-      promptStreaming: vi.fn(),
-      destroy: vi.fn(),
-      maxTokens: 4096,
-      tokensSoFar: 0,
-      tokensLeft: 4096,
-      topK: 3,
-      temperature: 0.7,
-    };
+    const mockInstance = createMockLanguageModel();
+    mockInstance.prompt = vi.fn().mockResolvedValue('AI response');
     mockAPI.create.mockResolvedValue(mockInstance);
 
     const { result } = renderHook(() => usePrompt());
@@ -100,16 +83,8 @@ describe('usePrompt', () => {
       }),
     };
 
-    const mockInstance = {
-      prompt: vi.fn(),
-      promptStreaming: vi.fn().mockReturnValue(mockStream),
-      destroy: vi.fn(),
-      maxTokens: 4096,
-      tokensSoFar: 0,
-      tokensLeft: 4096,
-      topK: 3,
-      temperature: 0.7,
-    };
+    const mockInstance = createMockLanguageModel();
+    mockInstance.promptStreaming = vi.fn().mockReturnValue(mockStream);
     mockAPI.create.mockResolvedValue(mockInstance);
 
     const { result } = renderHook(() => usePrompt());
@@ -129,11 +104,8 @@ describe('usePrompt', () => {
   });
 
   it('handles prompt errors', async () => {
-    const mockInstance = {
-      prompt: vi.fn().mockRejectedValue(new Error('Prompt failed')),
-      promptStreaming: vi.fn(),
-      destroy: vi.fn(),
-    };
+    const mockInstance = createMockLanguageModel();
+    mockInstance.prompt = vi.fn().mockRejectedValue(new Error('Prompt failed'));
     mockAPI.create.mockResolvedValue(mockInstance);
 
     const { result } = renderHook(() => usePrompt());
@@ -208,11 +180,9 @@ describe('usePrompt', () => {
 
   it('destroys instance on unmount', async () => {
     const mockDestroy = vi.fn();
-    mockAPI.create.mockResolvedValue({
-      prompt: vi.fn(),
-      promptStreaming: vi.fn(),
-      destroy: mockDestroy,
-    });
+    const mockInstance = createMockLanguageModel();
+    mockInstance.destroy = mockDestroy;
+    mockAPI.create.mockResolvedValue(mockInstance);
 
     const { result, unmount } = renderHook(() => usePrompt());
 
