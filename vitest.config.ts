@@ -33,6 +33,9 @@ export default defineConfig({
     hookTimeout: 5000, // 5 seconds for hooks
     teardownTimeout: 3000, // 3 seconds for cleanup
 
+    // Slow test detection
+    slowTestThreshold: 1000, // Warn if test takes more than 1 second
+
     // Reduce output noise for faster runs
     reporters: process.env.CI ? ['default', 'json'] : ['default'],
 
