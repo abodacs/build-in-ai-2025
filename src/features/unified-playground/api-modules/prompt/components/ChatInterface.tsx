@@ -5,7 +5,7 @@
  */
 
 import React, { memo } from 'react';
-import { MessageSquare, StopCircle } from 'lucide-react';
+import { MessageSquare, StopCircle, AlertCircle } from 'lucide-react';
 import type { Message } from '../types';
 import { MessageBubble } from './MessageBubble';
 
@@ -16,6 +16,9 @@ interface ChatInterfaceProps {
   onCopyMessage?: (content: string) => void;
   onStop?: () => void;
   onExamplePromptClick?: (prompt: string) => void;
+  userActivationRequired?: boolean;
+  userActivationMessage?: string;
+  onActivate?: () => void;
 }
 
 const ChatInterfaceComponent: React.FC<ChatInterfaceProps> = ({
@@ -25,6 +28,9 @@ const ChatInterfaceComponent: React.FC<ChatInterfaceProps> = ({
   onCopyMessage,
   onStop,
   onExamplePromptClick,
+  userActivationRequired = false,
+  userActivationMessage = '',
+  onActivate,
 }) => {
   if (messages.length === 0 && !isStreaming) {
     return (
@@ -34,6 +40,39 @@ const ChatInterfaceComponent: React.FC<ChatInterfaceProps> = ({
         aria-live="polite"
       >
         <div className="text-center space-y-6 max-w-2xl">
+          {/* User Activation Warning */}
+          {userActivationRequired && userActivationMessage && (
+            <div
+              className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg"
+              role="alert"
+              aria-live="assertive"
+            >
+              <div className="flex items-start gap-3">
+                <AlertCircle
+                  className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+                  aria-hidden="true"
+                />
+                <div className="flex-1 text-left">
+                  <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                    User Activation Required
+                  </p>
+                  <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                    {userActivationMessage}
+                  </p>
+                  {onActivate && (
+                    <button
+                      onClick={onActivate}
+                      className="mt-3 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                      aria-label="Click to activate the Prompt API"
+                    >
+                      Click Here to Activate
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <MessageSquare
             className="w-16 h-16 mx-auto text-blue-400"
             aria-hidden="true"

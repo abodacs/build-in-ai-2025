@@ -18,6 +18,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { PromptManager } from '../services/PromptManager';
 import { SessionManager } from '../services/SessionManager';
 import { MultimodalHandler } from '../services/MultimodalHandler';
+import { ChromeAIPromptService } from '../services/ChromeAIPromptService';
 import type {
   PromptConfig,
   Message,
@@ -55,6 +56,11 @@ interface UsePromptReturn {
   currentResponse: string;
   streamingState: StreamingState;
   downloadProgress: DownloadProgress | null;
+
+  // User Activation
+  userActivationRequired: boolean;
+  userActivationMessage: string;
+  checkUserActivation: () => void;
 
   // Actions
   initialize: () => Promise<void>;
@@ -145,6 +151,26 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
   );
   const [quotaExceeded, setQuotaExceeded] = useState(false);
 
+  // User activation state
+  const [userActivationRequired, setUserActivationRequired] = useState(false);
+  const [userActivationMessage, setUserActivationMessage] = useState('');
+
+  // ============================================================================
+  // User Activation Check
+  // ============================================================================
+
+  /**
+   * Check user activation status and update state
+   * This should be called before attempting API operations
+   */
+  const checkUserActivation = useCallback(() => {
+    const { active, message, actionRequired } =
+      ChromeAIPromptService.checkUserActivation();
+    setUserActivationRequired(actionRequired);
+    setUserActivationMessage(message);
+    return active;
+  }, []);
+
   // ============================================================================
   // Initialization
   // ============================================================================
@@ -162,10 +188,20 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
       return;
     }
 
+    // Check user activation before attempting initialization
+    const isActivationActive = checkUserActivation();
+    if (!isActivationActive) {
+      setError(
+        'User interaction required. Please click a button to activate the Prompt API.',
+      );
+      return;
+    }
+
     try {
       isInitializingRef.current = true;
       setIsLoading(true);
       setError(null);
+      setUserActivationRequired(false); // Clear activation warning
 
       // Create managers if they don't exist
       if (!promptManagerRef.current) {
@@ -702,6 +738,11 @@ export function usePrompt(options: UsePromptOptions = {}): UsePromptReturn {
     currentResponse,
     streamingState,
     downloadProgress,
+
+    // User Activation
+    userActivationRequired,
+    userActivationMessage,
+    checkUserActivation,
 
     // Actions
     initialize,

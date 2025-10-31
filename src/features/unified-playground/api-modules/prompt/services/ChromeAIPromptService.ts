@@ -75,6 +75,21 @@ function getUserFriendlyError(error: any): string {
     return 'Please click a button to start. The Prompt API requires user interaction.';
   }
 
+  // Handle model crash errors
+  if (errorMessage.includes('crashed') || errorMessage.includes('crash')) {
+    return (
+      'Chrome AI model has crashed and is disabled. To recover:\n\n' +
+      '1. Close ALL Chrome windows (not just tabs)\n' +
+      '2. Restart Chrome completely\n' +
+      '3. Navigate to chrome://components/\n' +
+      '4. Find "Optimization Guide On Device Model"\n' +
+      '5. Click "Check for update" or "Remove"\n' +
+      '6. Ensure 8GB+ RAM and 4GB+ VRAM available\n' +
+      '7. Reload this page and try again\n\n' +
+      'If the issue persists, the model may need time to recover or your system may not meet requirements.'
+    );
+  }
+
   if (errorMessage.includes('download') || errorMessage.includes('model')) {
     return 'AI model download required (~22GB). This is a one-time process. Please ensure stable internet connection.';
   }
@@ -138,6 +153,56 @@ export class ChromeAIPromptService {
     const supported =
       typeof window !== 'undefined' && 'LanguageModel' in window;
     return supported;
+  }
+
+  /**
+   * Check user activation status
+   *
+   * Chrome requires user interaction (click, keypress, etc.) before allowing
+   * certain API operations like creating LanguageModel instances.
+   *
+   * @returns Object with activation status and user-friendly message
+   *
+   * @example
+   * ```typescript
+   * const { active, message } = ChromeAIPromptService.checkUserActivation();
+   * if (!active) {
+   *   showWarning(message); // Show UI warning to user
+   * }
+   * ```
+   */
+  static checkUserActivation(): {
+    active: boolean;
+    message: string;
+    actionRequired: boolean;
+  } {
+    // Check if user activation API is available
+    if (typeof navigator === 'undefined' || !('userActivation' in navigator)) {
+      // API not available - assume activation is not required or already present
+      return {
+        active: true,
+        message: '',
+        actionRequired: false,
+      };
+    }
+
+    const userActivation = (navigator as any).userActivation;
+    const isActive = userActivation?.isActive ?? false;
+
+    if (isActive) {
+      return {
+        active: true,
+        message: 'User activation is active. You can use the Prompt API.',
+        actionRequired: false,
+      };
+    }
+
+    return {
+      active: false,
+      message:
+        'User interaction required. Please click this message or any button to activate the Prompt API.',
+      actionRequired: true,
+    };
   }
 
   /**

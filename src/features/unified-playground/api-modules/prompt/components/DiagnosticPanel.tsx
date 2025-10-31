@@ -258,11 +258,27 @@ export const DiagnosticPanel: React.FC = () => {
               {getStatusIcon(diagnostics.userActivationActive)}
               <span className="text-sm font-medium">User Activation</span>
             </div>
-            {getStatusBadge(
-              diagnostics.userActivationActive,
-              'Active',
-              'Inactive',
-            )}
+            <div className="flex items-center gap-2">
+              {getStatusBadge(
+                diagnostics.userActivationActive,
+                'Active',
+                'Inactive',
+              )}
+              {diagnostics.userActivationActive === false && (
+                <Button
+                  onClick={() => {
+                    // User activation happens automatically when button is clicked
+                    runDiagnostics();
+                  }}
+                  size="sm"
+                  variant="outline"
+                  className="text-xs"
+                  aria-label="Click to activate user interaction"
+                >
+                  Activate
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Model Download Status */}

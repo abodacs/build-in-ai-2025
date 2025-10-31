@@ -133,6 +133,14 @@ export class ChromeAICompatibility {
       return rawAvailability as SummarizerAvailability;
     }
 
+    // Handle 'unavailable' status (returned when model has crashed or is disabled)
+    if (rawAvailability === 'unavailable') {
+      console.log(
+        '[ChromeAICompatibility] Chrome AI is unavailable (model may have crashed or is disabled)',
+      );
+      return 'no';
+    }
+
     // Playground API might return: 'not-available', 'downloadable', 'available'
     const playgroundAvailability = rawAvailability as PlaygroundAvailability;
 
