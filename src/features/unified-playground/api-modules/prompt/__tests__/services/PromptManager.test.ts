@@ -161,6 +161,7 @@ describe('PromptManager', () => {
 
       expect(mockAPI.create).toHaveBeenCalledWith({
         expectedInputs: [{ type: 'image' }],
+        expectedOutputs: [{ type: 'text', languages: ['en'] }],
       });
       expect(manager.isReady()).toBe(true);
     });
@@ -178,6 +179,7 @@ describe('PromptManager', () => {
         expect.objectContaining({
           ...config,
           expectedInputs: [{ type: 'image' }],
+          expectedOutputs: [{ type: 'text', languages: ['en'] }],
         }),
       );
     });
@@ -193,6 +195,7 @@ describe('PromptManager', () => {
         expect.objectContaining({
           temperature: 0.9,
           expectedInputs: [{ type: 'image' }],
+          expectedOutputs: [{ type: 'text', languages: ['en'] }],
         }),
       );
     });
@@ -207,6 +210,7 @@ describe('PromptManager', () => {
           systemPrompt: 'Test',
           temperature: 0.8,
           expectedInputs: [{ type: 'image' }],
+          expectedOutputs: [{ type: 'text', languages: ['en'] }],
         }),
       );
     });
