@@ -88,7 +88,14 @@ describe('ChromeAIPromptService', () => {
       const instance = await ChromeAIPromptService.createInstance();
 
       expect(instance).toBeDefined();
-      expect(mockAPI.create).toHaveBeenCalledWith(undefined);
+      expect(mockAPI.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          expectedInputs: [{ type: 'image' }],
+          expectedOutputs: [{ type: 'text', languages: ['en'] }],
+          temperature: 0.8,
+          topK: 8,
+        }),
+      );
     });
 
     it('creates instance with custom system prompt', async () => {
@@ -138,7 +145,11 @@ describe('ChromeAIPromptService', () => {
       await ChromeAIPromptService.createInstance(options);
 
       expect(mockAPI.create).toHaveBeenCalledWith(
-        expect.objectContaining(options),
+        expect.objectContaining({
+          ...options,
+          expectedInputs: [{ type: 'image' }],
+          expectedOutputs: [{ type: 'text', languages: ['en'] }],
+        }),
       );
     });
 

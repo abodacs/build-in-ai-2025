@@ -253,6 +253,11 @@ export interface LanguageModel extends EventTarget {
   readonly inputQuota: number;
   readonly inputUsage: number;
 
+  // Legacy token properties (for backward compatibility with tests)
+  readonly maxTokens?: number;
+  readonly tokensSoFar?: number;
+  readonly tokensLeft?: number;
+
   onquotaoverflow: ((event: Event) => void) | null;
   addEventListener(
     type: 'quotaoverflow',
