@@ -198,6 +198,7 @@ describe('usePrompt', () => {
   it('estimates tokens for context window', async () => {
     const mockInstance = createMockLanguageModel();
     mockInstance.prompt = vi.fn().mockResolvedValue('response');
+    mockInstance.measureInputUsage = vi.fn().mockResolvedValue(12); // Mock returns positive token count
     mockAPI.create.mockResolvedValue(mockInstance);
 
     const { result } = renderHook(() => usePrompt());
@@ -207,7 +208,9 @@ describe('usePrompt', () => {
       await result.current.prompt('Hello world');
     });
 
-    expect(result.current.estimatedTokens).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(result.current.estimatedTokens).toBeGreaterThan(0);
+    });
   });
 
   it('tracks context window usage', async () => {
