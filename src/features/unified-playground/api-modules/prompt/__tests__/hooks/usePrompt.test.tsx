@@ -126,11 +126,10 @@ describe('usePrompt', () => {
   });
 
   it('cancels in-progress operation', async () => {
-    const mockInstance = {
-      prompt: vi.fn(() => new Promise((resolve) => setTimeout(resolve, 1000))),
-      promptStreaming: vi.fn(),
-      destroy: vi.fn(),
-    };
+    const mockInstance = createMockLanguageModel();
+    mockInstance.prompt = vi.fn(
+      () => new Promise((resolve) => setTimeout(resolve, 1000)),
+    );
     mockAPI.create.mockResolvedValue(mockInstance);
 
     const { result } = renderHook(() => usePrompt());
@@ -148,11 +147,7 @@ describe('usePrompt', () => {
   });
 
   it('updates config', async () => {
-    const mockInstance = {
-      prompt: vi.fn(),
-      promptStreaming: vi.fn(),
-      destroy: vi.fn(),
-    };
+    const mockInstance = createMockLanguageModel();
     mockAPI.create.mockResolvedValue(mockInstance);
 
     const { result } = renderHook(() => usePrompt());
@@ -196,11 +191,8 @@ describe('usePrompt', () => {
   });
 
   it('estimates tokens for context window', async () => {
-    const mockInstance = {
-      prompt: vi.fn().mockResolvedValue('response'),
-      promptStreaming: vi.fn(),
-      destroy: vi.fn(),
-    };
+    const mockInstance = createMockLanguageModel();
+    mockInstance.prompt = vi.fn().mockResolvedValue('response');
     mockAPI.create.mockResolvedValue(mockInstance);
 
     const { result } = renderHook(() => usePrompt());
