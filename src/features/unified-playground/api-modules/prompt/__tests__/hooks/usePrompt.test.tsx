@@ -81,6 +81,11 @@ describe('usePrompt', () => {
         }),
         releaseLock: vi.fn(),
       }),
+      [Symbol.asyncIterator]: async function* () {
+        for (const chunk of chunks) {
+          yield chunk;
+        }
+      },
     };
 
     const mockInstance = createMockLanguageModel();
