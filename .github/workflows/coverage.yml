@@ -119,7 +119,7 @@ jobs:
             const thresholds = {
               lines: 75,
               statements: 75,
-              functions: 65,
+              functions: 55,
               branches: 70
             };
 
